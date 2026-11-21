@@ -110,6 +110,23 @@ async function main() {
     });
     check("受信箱の準備中は、段階を保存して一覧に出す", seen.join(",") === "searching,narrowing,drafting", seen.join(","));
     check("準備が終われば、一覧には進み具合を出さない", inbox.listView(inbox.getInboxItem(pit.id)!).progress === null);
+
+    // ---- 候補の根拠から元のページへ1回で飛ぶ（URL がある活動だけ。架空の活動・架空のリンクは付けない）
+    const { originalUrl } = await import("../lib/originalUrl");
+    check("PR・リリースなどの URL はそのまま", originalUrl("https://github.com/x/y/pull/1") === "https://github.com/x/y/pull/1");
+    check("架空のリンク（example.com）や空は付けない", originalUrl("https://example.com/published/1") === null && originalUrl("") === null && originalUrl(undefined) === null);
+    const { activities } = await import("../lib/data");
+    const withUrl = activities().find((a) => originalUrl(a.url));
+    const fictional = activities().find((a) => !a.url);
+    if (withUrl && fictional) {
+      const base0 = res.candidates[0];
+      const fake = { ...res, candidates: [{ ...base0, evidence: [{ id: withUrl.id, type: withUrl.type, date: withUrl.date, title: withUrl.title, where: null }, { id: fictional.id, type: fictional.type, date: fictional.date, title: fictional.title, where: null }] }] };
+      board.saveSampleProposal("req003", fake, [], 0);
+      const ev = board.boardDetail("req003")!.result!.candidates[0].evidence;
+      check("保存済みの候補にも、開くときに元のページの URL を補う", ev[0].url === withUrl.url && !ev[1].url, `${ev[0].url} / ${ev[1].url}`);
+    } else {
+      check("（URL のある活動がないので、補う動きの確認は省略）", true);
+    }
   } finally {
     fs.writeFileSync(cardsFile, backup);
     for (const f of [process.env.INBOX_FILE!, process.env.SAMPLE_PROPOSALS_FILE!, process.env.DRAFTS_FILE!]) fs.rmSync(f, { force: true });

@@ -14,6 +14,7 @@ export function Approved({
   draftError,
   draftNote,
   resume = false,
+  dateSentence = null,
   onBack,
   onRetryDraft,
   onRecord,
@@ -25,6 +26,8 @@ export function Approved({
   draftNote: string | null;
   /** 声かけ中の人の返事を記録しに戻ってきた（声かけ文は作り直さない） */
   resume?: boolean;
+  /** 主催者への返事に入れてよい「空いていそうな日」の1文（日程が未定の依頼で、日が見つかったときだけ） */
+  dateSentence?: string | null;
   onBack: () => void;
   onRetryDraft: () => void;
   onRecord: (r: OutreachResult, reason?: DeclineReason) => Promise<void>;
@@ -63,7 +66,9 @@ export function Approved({
         </section>
       )}
       {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} />}
-      {draft?.organizer_reply && <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} />}
+      {draft?.organizer_reply && (
+        <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} dateSentence={dateSentence} />
+      )}
       {resume && !draft && !drafting && (
         <section className="surface pad-lg">
           <p className="meta">声かけ文は前に作ったものを使ってください。作り直すこともできます。</p>
@@ -84,12 +89,15 @@ export function Approved({
 export function AcceptedView({
   detail,
   reply,
+  dateSentence = null,
   showOthers,
   onToggleOthers,
   onOpenCard,
 }: {
   detail: BoardDetail;
   reply: { name: string; text: string } | null;
+  /** 決まった人の「空いていそうな日」の1文（あれば） */
+  dateSentence?: string | null;
   showOthers: boolean;
   onToggleOthers: () => void;
   onOpenCard: (employeeId: string) => void;
@@ -123,7 +131,7 @@ export function AcceptedView({
         </div>
       </section>
       {reply ? (
-        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted />
+        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted dateSentence={dateSentence} />
       ) : (
         <section className="surface pad-lg">
           <h3 className="h3">主催者への返事（下書き）</h3>
@@ -135,8 +143,20 @@ export function AcceptedView({
 }
 
 /** 主催者への返事（X で返す短い文）。送信はしない。直してコピーするだけ */
-function OrganizerReply({ text, note, accepted = false }: { text: string; note: string | null; accepted?: boolean }) {
+function OrganizerReply({
+  text,
+  note,
+  accepted = false,
+  dateSentence = null,
+}: {
+  text: string;
+  note: string | null;
+  accepted?: boolean;
+  /** 「この日あたりなら調整しやすそうです（本人に確認します）」の1文。ボタンを押したときだけ本文に入れる */
+  dateSentence?: string | null;
+}) {
   const [value, setValue] = useState(text);
+  const hasDate = !!dateSentence && value.includes(dateSentence);
   return (
     <section className="surface pad-lg" aria-labelledby="reply-title">
       <h3 id="reply-title" className="h3">
@@ -154,10 +174,22 @@ function OrganizerReply({ text, note, accepted = false }: { text: string; note: 
       </label>
       <div className="btn-row">
         <CopyButton text={value} label="返事をコピー" primary />
+        {dateSentence && (
+          <button
+            type="button"
+            className="btn"
+            disabled={hasDate}
+            title={dateSentence}
+            onClick={() => setValue((v) => `${v.trimEnd()}${v.trimEnd().endsWith("。") || v.trimEnd().endsWith("！") ? "" : "。"}${dateSentence}`)}
+          >
+            {hasDate ? "空いていそうな日を入れました" : "空いていそうな日を入れる"}
+          </button>
+        )}
         <button type="button" className="btn" disabled={value === text} onClick={() => setValue(text)}>
           下書きに戻す
         </button>
       </div>
+      {dateSentence && !hasDate && <p className="meta">入れる文：{dateSentence}（本人に確認する前の目安。押したときだけ入れます）</p>}
     </section>
   );
 }

@@ -363,3 +363,6 @@ textarea.input { resize: vertical; }
 .voices-chip { align-self: flex-start; }
 .voice-list { list-style: none; margin: 0; padding: 0; }
 .voice-list .cand p + p { margin-top: 4px; }
+
+/* 候補の横：空いていそうな日（本人に確認する前の目安） */
+.free-dates { margin: 4px 0; padding: 4px 8px; border-left: 3px solid var(--accent-line); background: var(--accent-soft); border-radius: 4px; }

@@ -238,6 +238,14 @@ async function main() {
   const n2 = "日程は1月20日を候補にしていましたが、会場の都合で 1月27日 に変更になりました。";
   const o2 = otherDatesInConversation(n2, "1月27日 に変更になりました", "2027-01-27", R);
   check("N2：引用より前の候補日 1月20日 を返す（前か後かが分かる）", o2.length === 1 && o2[0].date === "2027-01-20" && o2[0].before_quote === true, JSON.stringify(o2));
+  // 空白の入り方が違う引用（読み取りの照合と同じく、NFKC にそろえて空白を無視して探す）
+  const sp = "日程は1月20日を候補にしていましたが、会場の都合で\n1月 27日に変更に　なりました。\n懇親会は1月28日です。";
+  for (const q of ["1月27日に変更になりました", "1月 27 日 に 変更に なりました", "１月２７日に変更になりました"]) {
+    const os = otherDatesInConversation(sp, q, "2027-01-27", R);
+    const by = Object.fromEntries(os.map((o) => [o.date, o.before_quote]));
+    check(`空白の入り方が違う引用でも位置が分かる（「${q.replace(/\n/g, "⏎")}」）`, os.length === 2 && by["2027-01-20"] === true && by["2027-01-28"] === false, JSON.stringify(os));
+  }
+  check("引用が会話にないときは、どの日付も引用の前とはしない", otherDatesInConversation(sp, "2月3日に変更", "2027-02-03", R).every((o) => o.before_quote === false));
   const one = "開催は12月15日（火）です。当日は12/15の19時からです。";
   check("同じ日を言い直しただけなら別の日付はない", otherDatesInConversation(one, "開催は12月15日（火）です。", "2026-12-15", R).length === 0);
   check("暦にない日付は別の日付に数えない", otherDatesInConversation("開催は12月15日です。2月30日は休み", "開催は12月15日です。", "2026-12-15", R).length === 0);

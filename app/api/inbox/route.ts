@@ -4,7 +4,7 @@
 // localhost からのリクエストだけ受け付ける。
 import { runAgent } from "@/lib/agent";
 import { addToInbox, parseInboxInput } from "@/lib/inbox";
-import { acquireApiSlot, apiBusyResponse } from "@/lib/apiSlots";
+import { acquireApiSlotWait, apiBusyResponse } from "@/lib/apiSlots";
 import { boardList } from "@/lib/board";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
 import { extractIntakeWithAgent } from "@/lib/intake";
@@ -18,8 +18,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = parseInboxInput(body);
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
-  // API を使う操作は同時に2件まで（lib/apiSlots.ts）。候補づくりが裏で終わるまで1件分を持つ
-  const release = acquireApiSlot();
+  // API を使う操作は同時に2件まで（lib/apiSlots.ts。空いていなければ最大60秒待つ）。候補づくりが裏で終わるまで1件分を持つ
+  const release = await acquireApiSlotWait(req.signal);
   if (!release) return apiBusyResponse();
   // 登録してすぐ返す。指名の読み取りと候補づくり（既存の runAgent）は裏で続く
   const item = addToInbox(parsed.input, (request, emit) => runAgent(request, emit), extractIntakeWithAgent, release);

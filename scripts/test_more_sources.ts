@@ -98,6 +98,20 @@ async function main() {
     // 読んだ投稿は種類 slack の活動として入り、根拠から投稿（permalink）に飛べる
     const slackActs = activities().filter((a) => a.type === "slack");
     check("Slack の投稿は種類 slack の活動として入り、url は permalink", slackActs.length === 2 && slackActs.every((a) => a.url?.startsWith("https://example.slack.com/archives/C_SHARE/")));
+
+    // デモ用の本人（e031）に対応づけた投稿：DEMO_PERSON が off なら活動に出さない（エラーにしない）、on なら本人の活動
+    const postsFile = process.env.SLACK_POSTS_FILE!;
+    const saved = JSON.parse(fs.readFileSync(postsFile, "utf-8"));
+    fs.writeFileSync(postsFile, JSON.stringify([...saved, { id: "slk900", employee_id: "e031", posted_at: "2026-11-21T09:00:00.000Z", permalink: "https://example.slack.com/archives/C_SHARE/p900", text: "本人の投稿のテストです。".repeat(4) }]));
+    process.env.DEMO_PERSON = "off";
+    const off = activities();
+    check("DEMO_PERSON が off なら、本人（e031）の投稿は活動に出さない（ほかの投稿はそのまま）", !off.some((a) => a.id === "slk900") && off.filter((a) => a.type === "slack").length === 2);
+    check("off でも検索などはエラーにならない", (() => { try { executeTool("search_activities", { query: "本人の投稿" }); return true; } catch { return false; } })());
+    process.env.DEMO_PERSON = "on";
+    const { employees } = await import("../lib/data");
+    const on = activities().find((a) => a.id === "slk900");
+    check("DEMO_PERSON が on なら、本人の活動として出る（本人は社員にいる）", on?.author_id === "e031" && employees().some((e) => e.id === "e031"));
+    delete process.env.DEMO_PERSON;
   } finally {
     fs.writeFileSync(CARDS, original);
     fs.rmSync(tmp, { recursive: true, force: true });

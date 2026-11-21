@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Activity } from "./data";
 import { dataSource } from "./dataSource";
+import { DEMO_ID, demoPersonOn } from "./demoPerson";
 
 export interface BlogPost {
   id: string;
@@ -34,7 +35,8 @@ export interface SlackPost {
 }
 
 const SRC = () => path.join(process.cwd(), "data", "sources");
-export const SLACK_POSTS_FILE = () => process.env.SLACK_POSTS_FILE || path.join(SRC(), "slack_posts.json");
+export const SLACK_POSTS_FILE = () =>
+  process.env.SLACK_POSTS_FILE || path.join(SRC(), "slack_posts.json");
 
 export function moreSourcesOn(): boolean {
   if (dataSource()) return false;
@@ -42,16 +44,26 @@ export function moreSourcesOn(): boolean {
 }
 
 function readJson<T>(file: string, fallback: T): T {
-  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as T) : fallback;
+  return fs.existsSync(file)
+    ? (JSON.parse(fs.readFileSync(file, "utf-8")) as T)
+    : fallback;
 }
 
-export const blogPosts = (): BlogPost[] => (moreSourcesOn() ? readJson<BlogPost[]>(path.join(SRC(), "blog_posts.json"), []) : []);
-export const slackPosts = (): SlackPost[] => (moreSourcesOn() ? readJson<SlackPost[]>(SLACK_POSTS_FILE(), []) : []);
+export const blogPosts = (): BlogPost[] =>
+  moreSourcesOn()
+    ? readJson<BlogPost[]>(path.join(SRC(), "blog_posts.json"), [])
+    : [];
+export const slackPosts = (): SlackPost[] =>
+  moreSourcesOn() ? readJson<SlackPost[]>(SLACK_POSTS_FILE(), []) : [];
 
 /** ブログ記事の活動 id → 同じ記事の published id（カードを「ブログ済み」にするため） */
 export function blogPublishedIds(activityIds: string[]): string[] {
   const byId = new Map(blogPosts().map((b) => [b.id, b.published_id]));
-  return [...new Set(activityIds.map((id) => byId.get(id)).filter((x): x is string => !!x))];
+  return [
+    ...new Set(
+      activityIds.map((id) => byId.get(id)).filter((x): x is string => !!x),
+    ),
+  ];
 }
 
 export function moreActivities(): Activity[] {
@@ -66,16 +78,20 @@ export function moreActivities(): Activity[] {
     repo: null,
     url: b.url,
   }));
-  const slack: Activity[] = slackPosts().map((s) => ({
-    id: s.id,
-    type: "slack",
-    author_id: s.employee_id,
-    date: s.posted_at.slice(0, 10),
-    title: s.text.replace(/\s+/g, " ").slice(0, 40),
-    body: s.text,
-    channel: null,
-    repo: null,
-    url: s.permalink,
-  }));
+  // デモ用の本人（e031）に対応づけた投稿は、本人を入れているとき（DEMO_PERSON=on）だけ活動にする。
+  // off のときは本人が社員にいないので出さない（保存はしたまま。on にすれば出る）
+  const slack: Activity[] = slackPosts()
+    .filter((s) => s.employee_id !== DEMO_ID || demoPersonOn())
+    .map((s) => ({
+      id: s.id,
+      type: "slack",
+      author_id: s.employee_id,
+      date: s.posted_at.slice(0, 10),
+      title: s.text.replace(/\s+/g, " ").slice(0, 40),
+      body: s.text,
+      channel: null,
+      repo: null,
+      url: s.permalink,
+    }));
   return [...blogs, ...slack];
 }

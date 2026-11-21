@@ -44,7 +44,8 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.701Z",
-    "updated_at": "2026-11-21T08:24:57.701Z"
+    "updated_at": "2026-11-21T08:24:57.701Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-02",
@@ -75,7 +76,8 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.742Z",
-    "updated_at": "2026-11-21T08:24:57.742Z"
+    "updated_at": "2026-11-21T08:24:57.742Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-03",
@@ -102,7 +104,8 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.781Z",
-    "updated_at": "2026-11-21T08:24:57.781Z"
+    "updated_at": "2026-11-21T08:24:57.781Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-04",
@@ -141,7 +144,8 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.820Z",
-    "updated_at": "2026-11-21T08:24:57.820Z"
+    "updated_at": "2026-11-21T08:24:57.820Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-05",
@@ -189,7 +193,8 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.854Z",
-    "updated_at": "2026-11-21T08:24:57.854Z"
+    "updated_at": "2026-11-21T08:24:57.854Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-06",
@@ -221,22 +226,25 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.895Z",
-    "updated_at": "2026-11-21T08:24:57.895Z"
+    "updated_at": "2026-11-21T08:24:57.895Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-07",
     "employee_id": "e031",
-    "summary": "LayerXの自律型AI Agentハッカソン（2026年11月）で、「Techイベントを一気通貫で支援せよ」というテーマに取り組み、技術広報向けのエージェントを作った。社内で発信されずに埋もれている取り組みを拾い、イベント運営の手作業を減らすことをねらった。Slackの依頼チャンネルの投稿を受信箱に入れ、準備ができたら同じスレッドに候補を返すボットまで実装した。",
+    "summary": "LayerXの自律型AI Agentハッカソン（2026年11月）で「Techイベントを一気通貫で支援せよ」というテーマに取り組み、技術広報向けのエージェントを作った。社内で発信されずに埋もれている取り組みを拾い、イベント運営の手作業を減らすことをねらって、Slackの依頼チャンネルの投稿を受信箱に入れ、準備ができたら同じスレッドに候補を返すボットまで実装した。作り始める前に「送信機能は作らない」「人を評価する情報は画面にしか出さない」と、やらないことを決めたことで、あとから迷う場面が減った。",
     "themes": [
       "技術広報を支えるAIエージェントを1日で作る：社内の埋もれた取り組みを発信につなげる",
-      "Slackの依頼からエージェントが候補を返すまで：ハッカソンで作った仕組み"
+      "Slackの依頼からエージェントが候補を返すまで：ハッカソンで作った仕組み",
+      "先に「やらないこと」を決める：送信しない・人の評価を外に出さない社内AIエージェントの作り方"
     ],
     "evidence_activity_ids": [
       "act327",
-      "act328"
+      "act328",
+      "slk003"
     ],
     "format": "lt",
-    "format_reason": "AIエージェントの時流に合う、できたばかりの成果で、まだ数字はないため、作ったものを見せる短いLTが向いている。",
+    "format_reason": "1日のハッカソンで作った仕組みと設計の決め方が中心で数字はまだないため、5〜10分で要点を話すのが合っているため。",
     "publication_status": "unpublished",
     "published_ids": [],
     "latest_activity_date": "2026-11-21",
@@ -248,7 +256,8 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.927Z",
-    "updated_at": "2026-11-21T08:24:57.927Z"
+    "updated_at": "2026-11-21T13:34:23.690Z",
+    "reactions": []
   },
   {
     "card_id": "card-e031-08",
@@ -273,6 +282,62 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T08:24:57.969Z",
-    "updated_at": "2026-11-21T08:24:57.969Z"
+    "updated_at": "2026-11-21T08:24:57.969Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e031-09",
+    "employee_id": "e031",
+    "summary": "ハッカソンで、Claude Code のセッションを3つ同時に動かして開発する進め方を試した。セッションごとに担当（画面・裏側・データ）を分け、マージする順番を先に決めておいたところ、コードのぶつかりはほとんど出なかった。うまくいかなかった点も含めてまとめたいと本人が書いている。",
+    "themes": [
+      "Claude Code を3つ並べて開発する：画面・裏側・データで担当を分けるハッカソンの進め方",
+      "AIのセッションを並べたときにぶつからないためのマージ順の決め方",
+      "生成AIで並行開発してうまくいかなかったこと：ハッカソンでの振り返り"
+    ],
+    "evidence_activity_ids": [
+      "slk002"
+    ],
+    "format": "lt",
+    "format_reason": "生成AIを使った開発生産性という今注目されている話題で、進め方と結果が1つにまとまっていて5〜10分で話しやすく、登壇経験のない本人の最初の一歩にも向いているため。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-11-21",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T13:34:23.616Z",
+    "updated_at": "2026-11-21T13:34:23.616Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e031-10",
+    "employee_id": "e031",
+    "summary": "NxTENDの運営で、イベントの準備作業をすべて書き出し、「誰が・いつ・何を」やるかの表にまとめた。これまで毎回ゼロから考えていた段取りが表を見るだけで回るようになり、初めて運営に入った人でも動けるようになった。",
+    "themes": [
+      "毎回ゼロから考えない技術イベント運営：準備作業を「誰が・いつ・何を」の表にする",
+      "初めての運営メンバーでも動けるイベント準備の段取り表"
+    ],
+    "evidence_activity_ids": [
+      "slk001"
+    ],
+    "format": "blog",
+    "format_reason": "数字や細かい中身はまだ少ないものの、表の実物を見せながら書けばコミュニティ運営者にすぐ役立つ記事になるため。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-11-21",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T13:34:23.657Z",
+    "updated_at": "2026-11-21T13:34:23.657Z",
+    "reactions": []
   }
 ]

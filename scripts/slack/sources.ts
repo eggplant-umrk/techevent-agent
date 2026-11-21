@@ -103,6 +103,7 @@ export async function readSlackSources(reader: SlackReader, opts: { channels: st
   const seen = new Set(posts.map((p) => p.permalink));
 
   for (const channel of opts.channels) {
+    let step = "チャンネルの情報（conversations.info）";
     try {
       const info = (await reader.conversations.info({ channel })).channel;
       // 公開チャンネルだけ。非公開・DM・グループDM・アーカイブ済みは読まない
@@ -113,6 +114,7 @@ export async function readSlackSources(reader: SlackReader, opts: { channels: st
       const oldest = state[channel];
       const msgs: SlackMessage[] = [];
       let cursor: string | undefined;
+      step = "投稿の読み取り（conversations.history）";
       for (let page = 0; page < 10; page++) {
         const res = await reader.conversations.history({ channel, oldest, limit: 200, cursor });
         msgs.push(...(res.messages ?? []));
@@ -130,6 +132,7 @@ export async function readSlackSources(reader: SlackReader, opts: { channels: st
           if (why === "unmapped" && m.user) result.unmapped_users[m.user] = (result.unmapped_users[m.user] ?? 0) + 1;
           continue;
         }
+        step = "投稿のリンク（chat.getPermalink）";
         const permalink = (await reader.chat.getPermalink({ channel, message_ts: m.ts })).permalink;
         if (!permalink || seen.has(permalink)) continue;
         seen.add(permalink);
@@ -146,8 +149,10 @@ export async function readSlackSources(reader: SlackReader, opts: { channels: st
       state[channel] = latest;
       result.channels.push({ channel, read, status: "ok" });
     } catch (e) {
-      // エラーの内容だけ（トークンは出さない）
-      result.channels.push({ channel, read: 0, status: "error", note: e instanceof Error ? e.message.replace(/xox[a-z]-[\w-]+/g, "（トークン）") : "不明なエラー" });
+      // エラーの内容だけ（トークンは出さない）。権限が足りないときは、どの呼び出しにどの権限が要るかを添える
+      const msg = e instanceof Error ? e.message.replace(/xox[a-z]-[\w-]+/g, "（トークン）") : "不明なエラー";
+      const data = (e as { data?: { needed?: string; error?: string } }).data;
+      result.channels.push({ channel, read: 0, status: "error", note: `${step}で失敗：${msg}${data?.needed ? `（必要な権限：${data.needed}）` : ""}` });
     }
   }
   if (result.added.length) writeJson(POSTS_FILE(), [...posts, ...result.added]);

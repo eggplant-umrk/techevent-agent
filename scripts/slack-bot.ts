@@ -46,6 +46,10 @@ async function readSourcesMain() {
   const allowed = process.env.SLACK_ALLOWED_TEAM_ID?.trim();
   if (allowed && auth.team_id !== allowed) fail(`接続先のワークスペース（${auth.team}）が SLACK_ALLOWED_TEAM_ID と違うため止めました`);
   console.log(`ワークスペース：${auth.team}（${auth.team_id}）／読むチャンネル ${channels.length}件`);
+  // 権限の名前だけ（トークンは出さない）。読むには channels:read と channels:history が要る
+  const scopes = (auth.response_metadata as { scopes?: string[] } | undefined)?.scopes ?? [];
+  const lacking = ["channels:read", "channels:history"].filter((x) => !scopes.includes(x));
+  console.log(`ボットの権限：${scopes.join(", ") || "（取得できませんでした）"}${lacking.length ? `／足りない権限：${lacking.join(", ")}` : ""}`);
   const r = await readSlackSources(client as never, { channels, botUserId: String(auth.user_id) });
   for (const l of reportLines(r)) console.log(l);
 }

@@ -128,11 +128,14 @@
       "act325",
       "act326",
       "act327",
-      "act328"
+      "act328",
+      "slk001",
+      "slk002",
+      "slk003"
     ],
-    "updated_at": "2026-11-21T09:53:12.262Z",
+    "updated_at": "2026-11-21T13:34:23.707Z",
     "last": {
-      "sent": 128,
+      "sent": 3,
       "dropped": {},
       "deferred": 0
     }

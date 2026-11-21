@@ -295,51 +295,49 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
   };
 }
 
-export async function runAgent(
-  request: SpeakingRequest,
-  emit: (e: AgentEvent) => void,
-  opts: { withAlternativePitch?: boolean } = {},
-): Promise<ProposalResult | null> {
-  const client = getClient();
-  const runId = randomUUID();
-  const models = chooseModels();
-  emit({
-    type: "start",
-    run_id: runId,
-    loop_model: models.loop,
-    heavy_model: models.heavy,
-    switched: models.switched,
-    total_usd: models.totalUsd,
-    switch_usd: models.switchUsd,
-  });
+// ---------------------------------------------------------------------------
+// Agent のループ（依頼 → 人を探す、カード → 出し先を探す の両方で使う）
+// ---------------------------------------------------------------------------
+export interface LoopSpec<T> {
+  runId: string;
+  model: string;
+  /** 毎回同じ指示文（プロンプトキャッシュの対象） */
+  system: string;
+  tools: Anthropic.Tool[];
+  firstMessage: string;
+  /** これを呼んだら最終回答 */
+  submitTool: string;
+  /** 提出の検証。エラーがあれば差し戻す */
+  validate: (input: T, seen: Set<string>) => string[];
+  submittedSummary: (input: T) => string;
+  /** 提出以外のツールを実行する。seen には「この調査で見たid」を足す */
+  runTool: (name: string, input: unknown, seen: Set<string>) => { ok: boolean; result: unknown; summary: string };
+}
 
-  const system: Anthropic.TextBlockParam[] = [{ type: "text", text: systemPrompt(), cache_control: { type: "ephemeral" } }];
-  const messages: Anthropic.MessageParam[] = [
-    {
-      role: "user",
-      content: `次の登壇依頼に対して、ネタ帳から候補を3人まで提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
-    },
-  ];
+/** ツールを呼びながら考え、提出ツールで終わる。上限 MAX_STEPS 回。作業ログは emit で流す */
+export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) => void): Promise<{ submitted: T | null; steps: number }> {
+  const client = getClient();
+  const system: Anthropic.TextBlockParam[] = [{ type: "text", text: spec.system, cache_control: { type: "ephemeral" } }];
+  const messages: Anthropic.MessageParam[] = [{ role: "user", content: spec.firstMessage }];
   const seen = new Set<string>();
-  let result: ProposalResult | null = null;
   let step = 0;
 
   for (step = 1; step <= MAX_STEPS; step++) {
     emit({ type: "step", n: step, max: MAX_STEPS });
     const res = await client.messages.create({
-      model: models.loop,
+      model: spec.model,
       max_tokens: 16000,
       system,
-      tools: PROPOSAL_TOOLS,
+      tools: spec.tools,
       messages,
       cache_control: { type: "ephemeral" }, // auto-caches the growing conversation prefix
       thinking: { type: "adaptive", display: "summarized" },
       output_config: { effort: "medium" },
     });
-    const u = recordUsage(runId, "loop", res.model, res.usage);
+    const u = recordUsage(spec.runId, "loop", res.model, res.usage);
     emit({
       type: "usage",
-      run_usd: runUsd(runId),
+      run_usd: runUsd(spec.runId),
       total_usd: totalUsd(),
       cache_read: u.cache_read_input_tokens,
       input: u.input_tokens + u.cache_creation_input_tokens,
@@ -360,7 +358,7 @@ export async function runAgent(
     messages.push({ role: "assistant", content: res.content });
 
     if (toolUses.length === 0) {
-      messages.push({ role: "user", content: `${SUBMIT_TOOL} を呼んで最終回答を出してください。` });
+      messages.push({ role: "user", content: `${spec.submitTool} を呼んで最終回答を出してください。` });
       continue;
     }
     if (res.stop_reason === "max_tokens") {
@@ -369,40 +367,75 @@ export async function runAgent(
     }
 
     const results: Anthropic.ToolResultBlockParam[] = [];
-    let submitted: SubmitInput | null = null;
+    let submitted: T | null = null;
     for (const t of toolUses) {
       emit({ type: "tool_call", id: t.id, name: t.name, input: t.input });
-      if (t.name === SUBMIT_TOOL) {
-        const input = t.input as SubmitInput;
-        const errs = validateSubmit(input, seen, request.nominated_employee_id ?? null, request);
+      if (t.name === spec.submitTool) {
+        const input = t.input as T;
+        const errs = spec.validate(input, seen);
         if (errs.length) {
           emit({ type: "retry", message: errs.join("／") });
           emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: "差し戻し：" + errs.join("／") });
           results.push({ type: "tool_result", tool_use_id: t.id, is_error: true, content: errs.join("\n") });
         } else {
           submitted = input;
-          emit({ type: "tool_result", id: t.id, name: t.name, ok: true, summary: `候補${input.candidates.length}人を提出` });
+          emit({ type: "tool_result", id: t.id, name: t.name, ok: true, summary: spec.submittedSummary(input) });
           results.push({ type: "tool_result", tool_use_id: t.id, content: "受け付けました" });
         }
         continue;
       }
-      const { ok, result: out } = executeTool(t.name, t.input);
-      collectSeenIds(t.name, out, seen);
-      emit({ type: "tool_result", id: t.id, name: t.name, ok, summary: summarize(t.name, out) });
+      const { ok, result: out, summary } = spec.runTool(t.name, t.input, seen);
+      emit({ type: "tool_result", id: t.id, name: t.name, ok, summary });
       results.push({ type: "tool_result", tool_use_id: t.id, is_error: !ok || undefined, content: JSON.stringify(out) });
     }
 
-    if (submitted) {
-      result = buildResult(runId, request, submitted);
-      break;
-    }
+    if (submitted) return { submitted, steps: step };
 
     const content: Anthropic.ContentBlockParam[] = [...results];
     if (step === MAX_STEPS - 1) {
-      content.push({ type: "text", text: `残り1回です。次の応答で必ず ${SUBMIT_TOOL} を呼んでください。` });
+      content.push({ type: "text", text: `残り1回です。次の応答で必ず ${spec.submitTool} を呼んでください。` });
     }
     messages.push({ role: "user", content });
   }
+  return { submitted: null, steps: Math.min(step, MAX_STEPS) };
+}
+
+export async function runAgent(
+  request: SpeakingRequest,
+  emit: (e: AgentEvent) => void,
+  opts: { withAlternativePitch?: boolean } = {},
+): Promise<ProposalResult | null> {
+  const runId = randomUUID();
+  const models = chooseModels();
+  emit({
+    type: "start",
+    run_id: runId,
+    loop_model: models.loop,
+    heavy_model: models.heavy,
+    switched: models.switched,
+    total_usd: models.totalUsd,
+    switch_usd: models.switchUsd,
+  });
+
+  const { submitted, steps: step } = await runToolLoop<SubmitInput>(
+    {
+      runId,
+      model: models.loop,
+      system: systemPrompt(),
+      tools: PROPOSAL_TOOLS,
+      firstMessage: `次の登壇依頼に対して、ネタ帳から候補を3人まで提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
+      submitTool: SUBMIT_TOOL,
+      validate: (input, seen) => validateSubmit(input, seen, request.nominated_employee_id ?? null, request),
+      submittedSummary: (input) => `候補${input.candidates.length}人を提出`,
+      runTool: (name, input, seen) => {
+        const { ok, result: out } = executeTool(name, input);
+        collectSeenIds(name, out, seen);
+        return { ok, result: out, summary: summarize(name, out) };
+      },
+    },
+    emit,
+  );
+  const result: ProposalResult | null = submitted ? buildResult(runId, request, submitted) : null;
 
   if (!result) {
     emit({ type: "error", message: `上限（${MAX_STEPS}回）までに候補を出せませんでした` });

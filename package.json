@@ -20,6 +20,7 @@
     "test:prep": "tsx scripts/test_proposal_prep.ts",
     "test:reviewed": "tsx scripts/test_notebook_reviewed.ts",
     "test:edge": "tsx scripts/test_edge_cases.ts",
+    "test:replycheck": "tsx scripts/test_reply_check.ts",
     "try:edge": "tsx scripts/try_edge_cases.ts",
     "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",

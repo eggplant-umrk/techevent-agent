@@ -222,7 +222,7 @@ export async function draftOrganizerReply(
 - 社内の評価に当たる情報は書かない：忙しさ・予定・登壇回数や経験・アンケートの反応・ほかの候補や比較・社内の判断。ほかの社員の名前も書かない
 - ${PLAIN_TEXT_RULE}`;
   const facts = organizerReplyFacts(request, candidate);
-  const problemsOf = (t: string) => [...internalTermProblems([{ where: "主催者への返事", text: t }]), ...organizerReplyProblems(t, candidate.name, others)];
+  const problemsOf = (t: string) => [...internalTermProblems([{ where: "主催者への返事", text: t }]), ...organizerReplyProblems(t, candidate.name, others, { conversation: request.message, facts })];
   let cost = 0;
   let model = "";
   let reply = "";

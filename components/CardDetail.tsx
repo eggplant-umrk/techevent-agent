@@ -137,7 +137,7 @@ export function CardDetail({
             {e?.name ?? card.employee_id}
           </h2>
           <p className="meta">
-            {e?.business_unit}・{e?.role}・登壇{e?.past_talk_count ?? 0}回{e?.last_talk_date ? `（最終 ${e.last_talk_date}）` : ""}・忙しさ{e?.workload}
+            {e?.business_unit}・{e?.role}・登壇{e?.past_talk_count ?? 0}回{e?.last_talk_date ? `（最終 ${e.last_talk_date}）` : ""}・{e?.busy_text}
           </p>
           <div className="tags">
             <CardMarks card={card} />

@@ -7,6 +7,7 @@ import { activities, employeeById, type SpeakingRequest } from "./data";
 import { chooseModels, recordUsage } from "./usage";
 import type { UsageEntry } from "./data";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
+import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
 
 export interface HeavyResult<T> {
   value: T;
@@ -141,6 +142,7 @@ export async function draftOutreach(
   request: SpeakingRequest,
   candidate: { employee_id: string; theme: string; reason: string; evidence_activity_ids: string[] },
 ): Promise<HeavyResult<OutreachDraft>> {
+  await loadCalendarIfConfigured();
   const emp = employeeById(candidate.employee_id);
   if (!emp) throw new Error(`社員 ${candidate.employee_id} は見つかりません`);
   const evidence = activities()
@@ -160,7 +162,7 @@ export async function draftOutreach(
 ${requestText(request)}
 
 # 声をかける相手
-${emp.name}（${emp.business_unit}／${emp.role}）／登壇${emp.past_talk_count}回／忙しさ${emp.workload}
+${emp.name}（${emp.business_unit}／${emp.role}）／登壇${emp.past_talk_count}回／${busyText(busynessFor(emp.id))}
 
 # テーマ案
 ${candidate.theme}
@@ -204,6 +206,7 @@ export async function draftVenueOutreach(
     cautions: string[];
   },
 ): Promise<HeavyResult<OutreachDraft>> {
+  await loadCalendarIfConfigured();
   const emp = employeeById(card.employee_id);
   if (!emp) throw new Error(`社員 ${card.employee_id} は見つかりません`);
   const evidence = activities()
@@ -228,7 +231,7 @@ ${venue.name}
 注意点：${venue.cautions.join("／") || "なし"}
 
 # 声をかける相手
-${emp.name}（${emp.business_unit}／${emp.role}）／登壇${emp.past_talk_count}回／忙しさ${emp.workload}
+${emp.name}（${emp.business_unit}／${emp.role}）／登壇${emp.past_talk_count}回／${busyText(busynessFor(emp.id))}
 
 # 発表タイトル案
 ${venue.theme}
@@ -263,6 +266,7 @@ export async function alternativePitch(
   nomineeAssessment: string | null,
   alternatives: Array<{ employee_id: string; theme: string; reason: string }>,
 ): Promise<HeavyResult<string>> {
+  await loadCalendarIfConfigured();
   const nominee = request.nominated_employee_id ? employeeById(request.nominated_employee_id) : undefined;
   const alts = alternatives
     .map((a) => {
@@ -282,7 +286,7 @@ ${requestText(request)}
 指名のきっかけ：${request.reference ? `${request.reference.title}` : "不明"}
 
 # 指名された人
-${nominee ? `${nominee.name}（${nominee.business_unit}／${nominee.role}／登壇${nominee.past_talk_count}回／忙しさ${nominee.workload}）` : "不明"}
+${nominee ? `${nominee.name}（${nominee.business_unit}／${nominee.role}／登壇${nominee.past_talk_count}回／${busyText(busynessFor(nominee.id))}）` : "不明"}
 確認結果：${nomineeAssessment ?? "（なし）"}
 
 # 代わりに推す人

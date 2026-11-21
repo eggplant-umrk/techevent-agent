@@ -1,8 +1,10 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
 import Anthropic from "@anthropic-ai/sdk";
+import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
+import { talkTag, type TalkTag } from "./talkTag";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
-import { MAX_STEPS, TODAY } from "./config";
+import { MAX_CANDIDATES, MAX_STEPS } from "./config";
 import { activities, employeeById, requests, schedules, type SpeakingRequest } from "./data";
 import { dateProblems } from "./dates";
 import { internalTermProblems } from "./plainText";
@@ -32,7 +34,10 @@ export interface CandidateCard {
   name: string;
   business_unit: string;
   role: string;
-  workload: number;
+  /** 今後2週間の予定の埋まり具合を言葉で（例：今後2週間は勤務時間の7割が予定で埋まっている／予定は不明）。lib/busyness.ts で計算 */
+  busy_text: string;
+  /** 登壇経験の印（初登壇／半年以内に登壇／登壇経験あり）。lib/talkTag.ts でコードが付ける。順位には使わない */
+  talk_tag: TalkTag;
   past_talk_count: number;
   last_talk_date: string | null;
   theme: string;
@@ -112,7 +117,7 @@ function summarize(name: string, result: unknown): string {
     case "list_employees":
       return `${(result as unknown[]).length}人`;
     case "get_employee":
-      return `${r.name}／忙しさ${r.workload}／登壇${r.past_talk_count}回／発信${r.published_count}件`;
+      return `${r.name}／${r.busy}／登壇${r.past_talk_count}回／発信${r.published_count}件`;
     case "get_speaking_history":
       return `${r.name}：登壇${r.past_talk_count}回、最終 ${r.last_talk_date ?? "なし"}`;
     case "check_schedule":
@@ -200,10 +205,10 @@ function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string
       `指名の依頼なので、指名された本人（${nomineeId}）を必ず候補に入れてください。根拠は依頼そのものなので取り組みの根拠は空でよいです。忙しい・予定が重なるなら conditional にして、caveat に理由と代案（共同登壇やモデレーター役など）を書いてください`,
     );
   }
-  if (n > 3) errs.push("候補は3人までにしてください");
-  if (n < 3 && (!input.no_fit || input.no_fit.reasons.length === 0)) {
+  if (n > MAX_CANDIDATES) errs.push(`候補は${MAX_CANDIDATES}人までにしてください`);
+  if (n === 0 && (!input.no_fit || input.no_fit.reasons.length === 0)) {
     errs.push(
-      "候補が3人に満たないときは no_fit に「見つからない理由」と「次に確認すべきこと」を書いてください。条件付きの候補（confidence=conditional と caveat）で3人まで埋められないか、先に考えてください",
+      "候補がいないときは no_fit に「見つからない理由」と「次に確認すべきこと」を書いてください。根拠はあるが引っかかる点がある人は、条件付きの候補（confidence=conditional と caveat）として出せないか、先に考えてください",
     );
   }
   const acts = new Map(activities().map((a) => [a.id, a]));
@@ -234,17 +239,14 @@ function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string
   return errs;
 }
 
-function daysBetween(a: string, b: string) {
-  return Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
-}
-
 /** Cautions computed from data, added to the agent's own so the 3 decline reasons are always visible. */
 function systemCautions(employeeId: string, eventDate: string | undefined): string[] {
   const e = employeeById(employeeId);
   if (!e) return [];
   const out: string[] = [];
-  if (e.last_talk_date && daysBetween(e.last_talk_date, TODAY) <= 180) out.push(`最近登壇した（${e.last_talk_date}）`);
-  if (e.workload >= 4) out.push(`忙しい（忙しさ${e.workload}）`);
+  // 登壇の経験は注意点にしない（順位も下げない）。候補の印 talk_tag で見せる
+  const busy = busynessFor(employeeId);
+  if (busy.known && busy.level === "詰まっている") out.push(busyText(busy));
   if (eventDate) {
     const hit = schedules().find((s) => s.employee_id === employeeId && s.from <= eventDate && s.to >= eventDate);
     if (hit) out.push(`予定が重なる（${hit.kind} ${hit.from}〜${hit.to}）`);
@@ -261,7 +263,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
     summary: input.summary,
     nominee_assessment: input.nominee_assessment,
     learnings_applied: input.learnings_applied,
-    no_fit: input.candidates.length < 3 ? input.no_fit : null,
+    no_fit: input.candidates.length === 0 ? input.no_fit : null,
     candidates: input.candidates.map((c, i) => {
       const e = employeeById(c.employee_id)!;
       const sys = systemCautions(c.employee_id, request.event?.date);
@@ -273,7 +275,8 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
         name: e.name,
         business_unit: e.business_unit,
         role: e.role,
-        workload: e.workload,
+        busy_text: busyText(busynessFor(e.id)),
+        talk_tag: talkTag(e),
         past_talk_count: e.past_talk_count,
         last_talk_date: e.last_talk_date,
         theme: c.theme,
@@ -405,6 +408,7 @@ export async function runAgent(
   emit: (e: AgentEvent) => void,
   opts: { withAlternativePitch?: boolean } = {},
 ): Promise<ProposalResult | null> {
+  await loadCalendarIfConfigured(); // iCal を使う設定のときだけ読む（社員一覧の予定の埋まりに使う）
   const runId = randomUUID();
   const models = chooseModels();
   emit({
@@ -423,7 +427,7 @@ export async function runAgent(
       model: models.loop,
       system: systemPrompt(),
       tools: PROPOSAL_TOOLS,
-      firstMessage: `次の登壇依頼に対して、ネタ帳から候補を3人まで提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
+      firstMessage: `次の登壇依頼に対して、ネタ帳から、合う候補を${MAX_CANDIDATES}人まで提案してください（合う人がいるだけ）。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
       submitTool: SUBMIT_TOOL,
       validate: (input, seen) => validateSubmit(input, seen, request.nominated_employee_id ?? null, request),
       submittedSummary: (input) => `候補${input.candidates.length}人を提出`,

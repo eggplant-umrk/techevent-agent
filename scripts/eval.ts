@@ -42,6 +42,24 @@ if (!process.argv.includes("--offline")) {
 delete process.env.DATA_SOURCE;
 
 const PASS_RATE = 0.9;
+
+/** 候補の人数（0〜5人、0人なら見つからない理由）・並び（自信のある候補が先）・登壇経験の印 */
+function countCheck(label: string, result: ProposalResult | null): Check {
+  if (!result) return { name: `${label} 候補は5人まで・自信のある候補が先・印あり`, pass: false, detail: "結果なし" };
+  const c = result.candidates;
+  const problems: string[] = [];
+  if (c.length > 5) problems.push(`${c.length}人`);
+  if (c.length === 0 && !result.no_fit?.reasons.length) problems.push("0人なのに見つからない理由がない");
+  const firstCond = c.findIndex((x) => x.confidence === "conditional");
+  if (firstCond >= 0 && c.slice(firstCond).some((x) => x.confidence === "strong")) problems.push("条件付きの後に自信のある候補");
+  const noTag = c.filter((x) => !["初登壇", "半年以内に登壇", "登壇経験あり"].includes(String(x.talk_tag))).map((x) => x.employee_id);
+  if (noTag.length) problems.push(`印なし: ${noTag.join(",")}`);
+  return {
+    name: `${label} 候補は5人まで・自信のある候補が先・印あり`,
+    pass: problems.length === 0,
+    detail: problems.join(" / ") || `${c.length}人（自信あり${c.filter((x) => x.confidence === "strong").length}・条件付き${c.filter((x) => x.confidence === "conditional").length}）`,
+  };
+}
 const WRITEBACK_REQUEST = "req003";
 
 /**
@@ -357,7 +375,8 @@ async function main() {
 
     checks.push({ name: `${r.id} 根拠idが実在`, pass: !!result && badEvidence.length === 0 && badCards.length === 0, detail: [...badEvidence, ...badCards].join(", ") || `${evidenceIds.length}件すべて実在` });
     checks.push({ name: `${r.id} 送信なし`, pass: sendHits.length === 0, detail: sendHits.join(" / ") || sendOk });
-    checks.push({ name: `${r.id} 想定候補が上位3人`, pass: anyHit, detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+    checks.push({ name: `${r.id} 想定候補が候補（5人まで）にいる`, pass: anyHit, detail: `候補=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+    checks.push(countCheck(r.id, result));
     const conds = result?.candidates.filter((c) => c.confidence === "conditional") ?? [];
     const noCaveat = conds.filter((c) => !c.caveat?.trim()).map((c) => c.employee_id);
     const badConf = result?.candidates.filter((c) => c.confidence !== "strong" && c.confidence !== "conditional").map((c) => c.employee_id) ?? [];
@@ -391,7 +410,7 @@ async function main() {
     }
 
     console.log(
-      `  top3: ${result?.candidates.map((c) => `${c.employee_id} ${c.name}[${c.confidence}]`).join(" / ") || "(なし)"}${result?.no_fit ? `（3人未満: ${result.no_fit.reasons[0]}）` : ""}`,
+      `  候補${result?.candidates.length ?? 0}人: ${result?.candidates.map((c) => `${c.employee_id} ${c.name}[${c.confidence}・${c.talk_tag ?? "印なし"}]`).join(" / ") || "(なし)"}${result?.no_fit ? `（見つからない理由: ${result.no_fit.reasons[0]}）` : ""}`,
     );
     for (const c of conds) console.log(`    条件付き ${c.name}：${c.caveat}`);
     console.log(`  想定のいずれか=${anyHit ? "○" : "×"} 主候補=${primaryHit ? "○" : "×"}${altOk === null ? "" : ` 代わりの提案=${altOk ? "○" : "×"}`}  $${usd.toFixed(3)}（${steps}回）`);
@@ -457,7 +476,8 @@ async function main() {
         pass: !!nominee && nominee.is_nominee && nominee.evidence_request_id === item.id,
         detail: nominee ? `${nominee.rank}位・${nominee.confidence}${nominee.caveat ? `：${nominee.caveat}` : ""}` : `${INBOX_CASE.nominee} が候補にいない`,
       });
-      checks.push({ name: "受信箱：想定候補が上位3人", pass: exp.ids.some((id) => top3.includes(id)), detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+      checks.push({ name: "受信箱：想定候補が候補（5人まで）にいる", pass: exp.ids.some((id) => top3.includes(id)), detail: `候補=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+      checks.push(countCheck("受信箱", res ?? null));
       checks.push({ name: "受信箱：根拠idが実在", pass: evIds.every((id) => actIds.has(id)), detail: `${evIds.length}件` });
       checks.push({ name: "受信箱：使う人向けの文に内部の言葉がない", pass: plainErrs.length === 0, detail: plainErrs.join(" / ") || "なし" });
       checks.push({ name: "受信箱：送信なし", pass: sendHits.length === 0, detail: sendHits.join(" / ") || "送信の処理・ルートなし" });

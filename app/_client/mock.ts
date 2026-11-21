@@ -130,7 +130,7 @@ ${c.name.split(" ")[0]}さんの取り組みを拝見して、
       { minutes: 1, heading: "まとめ", points: ["持ち帰ってほしい1つのこと"] },
     ],
     tips_for_pr: [
-      `忙しさは${c.workload}です。準備にかかる時間の目安を最初に伝えると返事がもらいやすくなります。`,
+      `${c.busy_text ?? "予定は不明"}。準備にかかる時間の目安を最初に伝えると返事がもらいやすくなります。`,
       ...c.cautions.map((x) => `注意点：${x}`),
     ],
   };
@@ -383,7 +383,7 @@ export function mockApi(real: Api): Api {
         own ??
         (anyProfile
           ? ({ ...anyProfile, cautions: [], caveat: null } as Candidate) // profile only; cautions belong to another request
-          : ({ name: "候補", workload: 3, cautions: [], ...body.candidate } as unknown as Candidate));
+          : ({ name: "候補", busy_text: "予定は不明", cautions: [], ...body.candidate } as unknown as Candidate));
       const req = requests.find((r) => r.id === body.request_id);
       total += 0.04;
       return { draft: draftFor({ ...cand, theme: body.candidate.theme, reason: body.candidate.reason }, req), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
@@ -425,7 +425,7 @@ export function mockApi(real: Api): Api {
             created_at: now,
             updated_at: now,
             employee: cand
-              ? { id: c.employee_id, name: cand.name, business_unit: cand.business_unit, role: cand.role, past_talk_count: cand.past_talk_count, last_talk_date: cand.last_talk_date, workload: cand.workload }
+              ? { id: c.employee_id, name: cand.name, business_unit: cand.business_unit, role: cand.role, past_talk_count: cand.past_talk_count, last_talk_date: cand.last_talk_date, busy_text: cand.busy_text }
               : null,
             evidence: [],
             announcements: [],

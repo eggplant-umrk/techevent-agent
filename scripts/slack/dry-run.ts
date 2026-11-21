@@ -76,6 +76,11 @@ async function main() {
     check("画面へのリンクが絶対URL", p[1]?.text.includes(`<http://127.0.0.1:${PORT}/?inbox=`) ?? false);
     check("投稿先はすべて依頼のチャンネルのスレッド", p.every((x) => x.channel === CH && x.thread_ts === "200.1"));
 
+    p = await run("1人だけ合う依頼", "200.2");
+    check("候補1人でも返す", p[1]?.text.includes("候補が出ました（1人）") && p[1].text.includes("1. *") && !p[1].text.includes("2. *"), p[1]?.text.split("\n")[0]);
+    p = await run("5人いる依頼", "200.3");
+    check("候補5人でも番号と印を崩さず返す", p[1]?.text.includes("候補が出ました（5人）") && p[1].text.includes("5. *") && p[1].text.includes("初登壇｜") && p[1].text.includes("半年以内に登壇｜"), p[1]?.text.split("\n")[0]);
+
     p = await run("Rustの組み込みで見つからない依頼", "201.1");
     check("no_fit は見つからない理由を返す", p[1]?.text.startsWith("合う候補が見つかりませんでした") && p[1].text.includes("• "), p[1]?.text.split("\n")[0]);
 

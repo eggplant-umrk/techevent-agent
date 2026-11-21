@@ -1,5 +1,7 @@
 // Agent tools over data/*.json. Results are kept short (top 10, 200-char bodies).
 import type Anthropic from "@anthropic-ai/sdk";
+import { busyForAgent, busynessFor, slotsFor } from "./busyness";
+import { dataSource } from "./dataSource";
 import { activities, employeeById, employees, events, published, schedules } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
 import { filterCards, getCardById, loadCards, outreachSummary, type CardFilter } from "./cards";
@@ -34,13 +36,13 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
   },
   {
     name: "list_employees",
-    description: "条件で社員を絞り込む。得意分野タグ・事業部・忙しさの上限・登壇回数の上限で絞れる。",
+    description: "条件で社員を絞り込む。得意分野タグ・事業部・今後2週間の予定の埋まり（%）の上限・登壇回数の上限で絞れる。予定が不明な人は、埋まりの上限では除かない。",
     input_schema: {
       type: "object",
       properties: {
         business_unit: { type: "string" },
         tag: { type: "string", description: "得意分野タグの部分一致" },
-        max_workload: { type: "integer", description: "忙しさ(1-5)の上限" },
+        max_busy_percent: { type: "integer", description: "今後2週間の平日・勤務時間（10〜19時）のうち予定で埋まっている割合（%）の上限" },
         max_talk_count: { type: "integer", description: "過去の登壇回数の上限" },
       },
       additionalProperties: false,
@@ -48,7 +50,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
   },
   {
     name: "get_employee",
-    description: "社員1人の詳細（得意分野・忙しさ・登壇回数・直近の取り組み件数・発信数）を見る。",
+    description: "社員1人の詳細（得意分野・今後2週間の予定の埋まり・登壇回数・直近の取り組み件数・発信数）を見る。",
     input_schema: {
       type: "object",
       properties: { id: { type: "string" } },
@@ -92,7 +94,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
   {
     name: SUBMIT_TOOL,
     description:
-      "最終回答。候補を3人まで、おすすめ順に出す。これを呼んだら作業は終わり。自信のある候補（confidence=strong）を先に並べ、足りない分は条件付きの候補（confidence=conditional）として、何が引っかかるかを caveat に書いて3人まで埋める。本当に誰もいないときだけ候補を空にして no_fit を書く。根拠の取り組みIDは、この調査でカードや検索結果から実際に見たものだけを書く。",
+      "最終回答。合う候補を5人まで、テーマの合い方と根拠の順に出す（人数はそろえない）。これを呼んだら作業は終わり。自信のある候補（confidence=strong）を先に、根拠はあるが引っかかる点がある候補（confidence=conditional）を後に並べ、conditional には何が引っかかるかを caveat に書く。登壇の経験では順位を変えない。本当に誰もいないときだけ候補を空にして no_fit を書く。根拠の取り組みIDは、この調査でカードや検索結果から実際に見たものだけを書く。",
     strict: true,
     input_schema: {
       type: "object",
@@ -111,7 +113,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
         no_fit: {
           type: ["object", "null"],
           description:
-            "候補が3人に満たないときだけ書く（条件付きの候補を含めても3人に届かない、または誰もいないとき）。3人そろえばnull",
+            "候補が0人のときだけ書く（条件付きの候補も含めて誰もいないとき）。1人以上いればnull",
           properties: {
             reasons: { type: "array", items: { type: "string" }, description: "合う候補が見つからない理由" },
             next_checks: { type: "array", items: { type: "string" }, description: "技術広報が次に確認すべきこと" },
@@ -150,7 +152,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
               caveat: {
                 type: ["string", "null"],
                 description:
-                  "conditional のとき必須。何が引っかかるかを1文で（例：忙しさ5で準備時間が取れるか要確認／テーマが少しずれる（障害対応ではなくオンコール改善）／根拠が1件だけ）。strong ならnull",
+                  "conditional のとき必須。何が引っかかるかを1文で（例：今後2週間は勤務時間の8割が予定で埋まっていて、準備時間が取れるか要確認／テーマが少しずれる（障害対応ではなくオンコール改善）／根拠が1件だけ）。strong ならnull",
               },
             },
             required: [
@@ -242,17 +244,23 @@ export function searchActivities(input: Input) {
   };
 }
 
+/** 予定の埋まりが上限以下か。予定が不明な人は除かない（不明は不明として候補の注意点に書く）。 */
+function busyAtMost(id: string, maxPercent: number): boolean {
+  const b = busynessFor(id);
+  return !b.known || b.percent <= maxPercent;
+}
+
 export function listEmployees(input: Input) {
   const unit = str(input.business_unit);
   const tag = str(input.tag)?.toLowerCase();
-  const maxW = num(input.max_workload);
+  const maxB = num(input.max_busy_percent);
   const maxT = num(input.max_talk_count);
   return employees()
     .filter(
       (e) =>
         (!unit || e.business_unit === unit) &&
         (!tag || e.expertise_tags.some((t) => t.toLowerCase().includes(tag))) &&
-        (maxW === undefined || e.workload <= maxW) &&
+        (maxB === undefined || busyAtMost(e.id, maxB)) &&
         (maxT === undefined || e.past_talk_count <= maxT),
     )
     .map((e) => ({
@@ -263,7 +271,7 @@ export function listEmployees(input: Input) {
       tags: e.expertise_tags,
       talks: e.past_talk_count,
       last_talk: e.last_talk_date,
-      workload: e.workload,
+      busy: busyForAgent(busynessFor(e.id)),
     }));
 }
 
@@ -272,8 +280,12 @@ export function getEmployee(input: Input) {
   const e = employeeById(id);
   if (!e) return { error: `社員 ${id} は見つかりません` };
   const acts = activities().filter((a) => a.author_id === id);
+  const { workload: _fixed, ...rest } = e; // 決め打ちの忙しさは使わない（予定から計算した値を渡す）
+  const busy = busynessFor(id);
   return {
-    ...e,
+    ...rest,
+    busy: busyForAgent(busy),
+    busy_slots_in_2_weeks: busy.slots.length,
     recent_activity_count: acts.length,
     recent_activity_titles: acts.slice(-5).map((a) => `${a.id} ${a.date} ${a.title}`),
     published_count: published().filter((p) => p.author_id === id).length,
@@ -307,6 +319,15 @@ export function checkSchedule(input: Input) {
   const id = str(input.id) ?? "";
   const date = str(input.date) ?? "";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "date は YYYY-MM-DD で指定してください" };
+  const slots = slotsFor(id);
+  if (!slots) return { id, date, conflict: false, nearby: [], note: "予定は不明（カレンダーにつながっていない）。本人への確認が必要" };
+  if (dataSource() === "github") {
+    // 本人の予定は iCal だけ。終日の予定（出張・休暇など）を、架空データの schedules と同じ扱いにする
+    const near = slots
+      .filter((s) => s.all_day && s.start <= addDays(date, 4) && s.end > addDays(date, -3))
+      .map((s) => ({ from: s.start, to: addDays(s.end, -1), kind: "終日の予定", overlaps_event_day: s.start <= date && s.end > date }));
+    return { id, date, conflict: near.some((s) => s.overlaps_event_day), nearby: near, note: near.length === 0 ? "前後3日に終日の予定はありません" : undefined };
+  }
   const lo = addDays(date, -3);
   const hi = addDays(date, 3);
   const items = schedules()
@@ -461,7 +482,7 @@ export function searchCards(input: Input) {
       employee: `${c.employee_id} ${e?.name ?? ""}`,
       unit: e?.business_unit,
       talks: e?.past_talk_count,
-      workload: e?.workload,
+      busy: e ? busyForAgent(busynessFor(e.id)) : "予定は不明",
       themes: c.themes,
       summary: clip(c.summary, 120),
       evidence_activity_ids: c.evidence_activity_ids,
@@ -488,7 +509,7 @@ export function getCard(input: Input) {
     ...c,
     // イベント後の反応は、採用済みのものだけを文で渡す（提案中・見送りは渡さない）
     reactions: reactionLines(c),
-    employee: e ? `${e.id} ${e.name}｜${e.business_unit}｜忙しさ${e.workload}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}` : c.employee_id,
+    employee: e ? `${e.id} ${e.name}｜${e.business_unit}｜${busyForAgent(busynessFor(e.id))}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}` : c.employee_id,
     evidence: c.evidence_activity_ids.map((id) => {
       const a = acts.get(id);
       return a ? `${a.id} ${a.date} [${a.type}] ${a.title}` : id;

@@ -562,12 +562,12 @@
       "アーキテクチャ",
       "金融システム"
     ],
-    "author_id": "e001",
-    "business_unit": "CTO室",
+    "author_id": "e004",
+    "business_unit": "Fintech",
     "published_at": "2026-11-02T10:00:00+09:00",
     "genre": "登壇資料",
     "target_reader": "SaaSと金融の両方に関心のあるエンジニア",
-    "team": "CTO室"
+    "team": "Fintech 勘定系チーム"
   },
   {
     "id": "pub040",

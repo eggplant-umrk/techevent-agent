@@ -506,7 +506,8 @@ rules_doc = {
 
 
 def dump(name, obj):
-    (OUT / name).write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    # newline="\n": keep LF on Windows so regenerating does not rewrite every file.
+    (OUT / name).write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 dump("employees.json", employees)
@@ -535,7 +536,7 @@ PUB = [
     ("e001", "2026-03-23", "登壇資料", "マルチエージェント設計の勘所", ["AIエージェント", "LLM"], "AIエージェントを作るエンジニア"),
     ("e001", "2026-05-18", "登壇資料", "生成AIプロダクト開発の現実", ["LLM"], "生成AIプロダクトの開発者"),
     ("e001", "2026-09-30", "メンバーのブログ", "LLMプロダクトのアーキテクチャ選定", ["LLM", "アーキテクチャ"], "LLMプロダクトの技術選定をする人"),
-    ("e001", "2026-11-02", "登壇資料", "金融とSaaSのあいだ ─ layerx.go #17", ["アーキテクチャ", "金融システム"], "SaaSと金融の両方に関心のあるエンジニア"),
+    ("e004", "2026-11-02", "登壇資料", "金融とSaaSのあいだ ─ layerx.go #17", ["アーキテクチャ", "金融システム"], "SaaSと金融の両方に関心のあるエンジニア"),
     ("e002", "2025-02-10", "メンバーのブログ", "EMになって1年で変えたこと", ["チームビルディング"], "新任のEM"),
     ("e002", "2025-07-07", "登壇資料", "SaaS開発組織のスピードを保つ仕組み", ["プロダクト開発プロセス"], "開発組織のリーダー"),
     ("e002", "2025-10-20", "登壇資料", "プロダクト開発の速さを支える型", ["TypeScript", "プロダクト開発プロセス"], "TypeScriptで開発するチーム"),

@@ -71,7 +71,7 @@ export function PersonDetail({
             {p.name}
           </h2>
           <span className="tags">
-            {p.reviewed && <Tag tone="ok">確認済み</Tag>}
+            {p.reviewed && <Tag tone="ok">情報を確認済み</Tag>}
           </span>
         </div>
         <p className="meta">
@@ -118,7 +118,7 @@ export function PersonDetail({
           ) : (
             <>
               <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={save}>
-                {busy ? "保存しています…" : "保存して確認済みにする"}
+                {busy ? "保存しています…" : "保存して情報を確認済みにする"}
               </button>
               <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setEditing(false)}>
                 やめる

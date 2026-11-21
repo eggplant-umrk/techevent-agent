@@ -10,7 +10,7 @@ type Filter = "unpublished" | "noTalk";
 /**
  * ネタ帳タブの左：人の一覧（社員全員。カードのない人も出す）。
  * 1行：名前・所属／得意分野（3つまで）／未発信のネタの数。予定はネタ帳タブには出さない。
- * 印は「今は控えたい」「確認済み」だけ。
+ * 印は「今は控えたい」「情報を確認済み」だけ。未発信のネタが 0 のときは数を出さない。
  */
 export function People({
   people,
@@ -199,14 +199,16 @@ export function People({
                 <span className="tags nb-marks">
                   {p.is_demo && <Tag tone="accent">本人（デモ）</Tag>}
                   {p.speaking_intent === "hold" && <Tag tone="warn">今は控えたい</Tag>}
-                  {p.reviewed && <Tag tone="ok">確認済み</Tag>}
+                  {p.reviewed && <Tag tone="ok">情報を確認済み</Tag>}
                 </span>
               </span>
               <span className="person-line">
                 <span className="nb-theme">{p.expertise_tags.slice(0, 3).join("・")}</span>
-                <span className="meta person-num" title="未発信のネタ">
-                  未発信 {p.unpublished_cards}
-                </span>
+                {p.unpublished_cards > 0 && (
+                  <span className="meta person-num" title="未発信のネタ">
+                    未発信 {p.unpublished_cards}
+                  </span>
+                )}
               </span>
             </button>
           </li>

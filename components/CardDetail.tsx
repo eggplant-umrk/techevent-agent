@@ -407,7 +407,7 @@ export function CardDetail({
           ) : (
             <>
               <button type="button" className="btn btn-primary" disabled={busy} onClick={save}>
-                {busy ? "保存しています…" : "保存して確認済みにする"}
+                {busy ? "保存しています…" : "保存して内容を確認済みにする"}
               </button>
               <button type="button" className="btn" disabled={busy} onClick={() => setEditing(false)}>
                 やめる

@@ -760,7 +760,7 @@ export default function Home() {
           ) : (
             <div className="panel">
               <section className="surface pad-lg">
-                <p className="meta">左から人を選ぶと、その人のネタ・予定・最近の活動が出ます。</p>
+                <p className="meta">左から人を選ぶと、その人のネタ・ブログ・最近の活動が出ます。</p>
               </section>
             </div>
           )}

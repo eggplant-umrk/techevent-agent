@@ -66,7 +66,6 @@ export default async function EventPage({
           イベントについて
         </h2>
         <p style={{ lineHeight: 1.9 }}>{ev.description}</p>
-        <p className="meta">告知文は架空です（データからコードで作った文）。</p>
       </article>
     </main>
   );

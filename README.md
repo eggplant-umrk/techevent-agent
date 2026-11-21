@@ -115,6 +115,22 @@ npm run notebook -- pending
 
 （新しい活動がある社員だけを読みます。全30人分を作り直すと約$0.45）
 
+#### イベント後のアンケート（v0.4）
+
+画面上部の「イベント」で過去イベントを開き、「アンケートを分析する」を押すと、Agentがアンケート（`data/surveys.json`・架空）を読んで登壇者のカードに書き戻します。件数・平均はコードで数えます。書き戻した提案（確認済みカードの反応・需要あり・テーマ案）はカード詳細で採用／見送りします。1イベント約$0.05〜0.1。
+
+```bash
+npm run test:surveys
+```
+
+（APIなしのテスト）
+
+```bash
+npx tsx scripts/analyze_surveys.ts all
+```
+
+（本番で分析して `docs/survey_latest.json` に残す。`data/cards.json` は元に戻す。続けて `npx tsx scripts/update_postevent_mock.ts` で `?mock` の再生データを作る）
+
 ### 評価
 
 2段で評価します（APIクレジットを使います。全件で約$0.75）。

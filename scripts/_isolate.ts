@@ -4,6 +4,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+// 評価・テストは「今日」を固定して動かす（ふだんは日本時間の実際の日付。lib/clock.ts）
+if (!process.env.FIXED_TODAY) process.env.FIXED_TODAY = "2026-11-21";
+
 if (!process.env.DATA_RUNTIME_DIR) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "techevent-runtime-"));
   process.env.DATA_RUNTIME_DIR = dir;

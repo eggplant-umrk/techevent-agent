@@ -3,7 +3,7 @@
 // - サンプルの依頼（requests.json）：event.date
 // - 過去のイベント（events.json）
 import { loadCards } from "./cards";
-import { TODAY } from "./config";
+import { todayJst } from "./clock";
 import { employeeById, events, requests } from "./data";
 import { findDates } from "./dates";
 import { listInbox, type InboxItem } from "./inbox";
@@ -31,7 +31,7 @@ export function eventDateFromText(text: string, receivedAt: string): string | nu
   return sameYear < limit ? make(recvYear + 1) : sameYear;
 }
 
-export const isPast = (date: string | null | undefined, today = TODAY) => !!date && date < today;
+export const isPast = (date: string | null | undefined, today = todayJst()) => !!date && date < today;
 
 export function inboxEventDate(it: Pick<InboxItem, "text" | "received_at"> & { intake?: InboxItem["intake"] }): string | null {
   // 会話から1日に決まった日程を読み取れていればそれを使う（日程が未定なら受信箱に残す）
@@ -40,7 +40,7 @@ export function inboxEventDate(it: Pick<InboxItem, "text" | "received_at"> & { i
 }
 
 /** 受信箱に出す依頼か（開催日が過ぎたものはアーカイブへ） */
-export function isActiveInboxItem(it: Pick<InboxItem, "text" | "received_at"> & { intake?: InboxItem["intake"] }, today = TODAY): boolean {
+export function isActiveInboxItem(it: Pick<InboxItem, "text" | "received_at"> & { intake?: InboxItem["intake"] }, today = todayJst()): boolean {
   return !isPast(inboxEventDate(it), today);
 }
 
@@ -74,7 +74,7 @@ function outcomesOf(requestId: string) {
 
 const acceptedNames = (requestId: string) => [...new Set(outcomesOf(requestId).filter((o) => o.result === "accepted").map((o) => o.name))];
 
-export function archiveRows(today = TODAY): ArchiveRow[] {
+export function archiveRows(today = todayJst()): ArchiveRow[] {
   const rows: ArchiveRow[] = [];
   for (const it of listInbox()) {
     const d = inboxEventDate(it);
@@ -116,7 +116,7 @@ export interface ArchiveDetail extends ArchiveRow {
   outcomes: Array<{ name: string; result: string; reason: string | null; date: string }>;
 }
 
-export function archiveDetail(kind: ArchiveKind, id: string, today = TODAY): ArchiveDetail | undefined {
+export function archiveDetail(kind: ArchiveKind, id: string, today = todayJst()): ArchiveDetail | undefined {
   const row = archiveRows(today).find((r) => r.kind === kind && r.id === id);
   if (!row) return undefined;
   if (kind === "inbox") {

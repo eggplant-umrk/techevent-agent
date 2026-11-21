@@ -2,6 +2,7 @@
 // Every write goes through validation: evidence must be real activity ids by the card's
 // owner, and published ids must be real items by the same person. Nothing invalid is saved.
 import fs from "node:fs";
+import { nowJst } from "./clock";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
 import { blogPublishedIds } from "./moreSources";
@@ -152,7 +153,7 @@ export function getCardById(id: string): Card | undefined {
   return loadCards().find((c) => c.card_id === id);
 }
 
-const now = () => new Date().toISOString();
+const now = () => nowJst();
 
 function nextCardId(cards: Card[], employeeId: string): string {
   const n = cards.filter((c) => c.employee_id === employeeId).length;

@@ -4,6 +4,7 @@
 // - 個人を特定できる列（メール・名前など）は取り込み時に捨てる。保存も Agent への受け渡しもしない
 // - Google への API 連携は作らない（CSV を選ぶか貼るだけ）
 import Anthropic from "@anthropic-ai/sdk";
+import { nowJst } from "./clock";
 import fs from "node:fs";
 import path from "node:path";
 import { getClient } from "./anthropic";
@@ -247,7 +248,7 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
       role: iRole !== undefined && (r[iRole] ?? "").trim() ? r[iRole].trim() : null,
     });
   });
-  return { event_id: eventId, source, imported_at: new Date().toISOString(), rows: body.length, columns, answers, unmatched_rows: unmatched, talk_titles: titles };
+  return { event_id: eventId, source, imported_at: nowJst(), rows: body.length, columns, answers, unmatched_rows: unmatched, talk_titles: titles };
 }
 
 // ---------------------------------------------------------------------------

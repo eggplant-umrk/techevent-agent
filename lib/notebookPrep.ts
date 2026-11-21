@@ -6,6 +6,7 @@
 // - 流す前の金額の見積もり（上限は .env の NOTEBOOK_BUDGET_USD、なければ $1）
 // - 保存の前の重複カードの検査（同じ人の同じ取り組み）
 import fs from "node:fs";
+import { nowJst } from "./clock";
 import { readOverlay, writeOverlay } from "./runtime";
 import type { Card, CardInput } from "./cards";
 import type { Activity } from "./data";
@@ -170,7 +171,7 @@ export function processedIds(employeeId: string, acts: Activity[], legacyDate: s
 
 export function saveProgress(employeeId: string, processed: Set<string>, last: Progress["last"]) {
   const all = readProgressAll();
-  all[employeeId] = { processed: [...processed].sort(), updated_at: new Date().toISOString(), last };
+  all[employeeId] = { processed: [...processed].sort(), updated_at: nowJst(), last };
   writeOverlay(progressBases(), "notebook_progress.json", all);
 }
 

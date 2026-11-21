@@ -1,5 +1,6 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
 import Anthropic from "@anthropic-ai/sdk";
+import { todayJst } from "./clock";
 import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
 import { blogToLt, talkTag, withoutTalkTagRepeats, type TalkTag } from "./talkTag";
 import { randomUUID } from "node:crypto";
@@ -74,9 +75,11 @@ export interface ProposalResult {
   alternative_pitch?: string;
 }
 
-const SYSTEM_PROMPT_CACHE: { text?: string } = {};
+const SYSTEM_PROMPT_CACHE: { text?: string; day?: string } = {};
 function systemPrompt() {
-  // Built once per process so the bytes never change between steps.
+  // 同じ日のうちは作り直さない（手順の間で中身が変わらず、プロンプトのキャッシュが効く）。日付が変わったら作り直す
+  if (SYSTEM_PROMPT_CACHE.day !== todayJst()) SYSTEM_PROMPT_CACHE.text = undefined;
+  SYSTEM_PROMPT_CACHE.day = todayJst();
   return (SYSTEM_PROMPT_CACHE.text ??= buildSystemPrompt());
 }
 

@@ -1,8 +1,8 @@
 // 外部イベント（data/external_events.json）。ファイルを読むだけで、外部サイトにはアクセスしない。
 // 締切の判定・必ず書く注意点はここ（コード）で決める。
 import fs from "node:fs";
+import { todayJst } from "./clock";
 import path from "node:path";
-import { TODAY } from "./config";
 import { schedules } from "./data";
 
 export type CfpStatus = "open" | "closed" | "unknown";
@@ -56,7 +56,7 @@ export function deadlineDate(e: ExternalEvent): string | null {
 const days = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 
 /** 締切済み：closed、または締切が今日より前 */
-export function isClosed(e: ExternalEvent, today = TODAY): boolean {
+export function isClosed(e: ExternalEvent, today = todayJst()): boolean {
   if (e.cfp_status === "closed") return true;
   const dl = deadlineDate(e);
   return !!dl && dl < today;
@@ -71,7 +71,7 @@ const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10
  * - 締切が近い（14日以内）
  * - 本人の予定が開催日の前後3日に重なる
  */
-export function requiredCautions(e: ExternalEvent, employeeId: string | null, today = TODAY): string[] {
+export function requiredCautions(e: ExternalEvent, employeeId: string | null, today = todayJst()): string[] {
   const out: string[] = [];
   if (e.cfp_status === "unknown") out.push("締切は公式で要確認");
   if (!e.event_date) out.push("開催日は要確認");
@@ -123,7 +123,7 @@ export function searchExternalEvents(input: { query?: string; from?: string; to?
         event_date: e.event_date,
         cfp_status: e.cfp_status,
         cfp_deadline: dl,
-        days_left: dl ? days(TODAY, dl) : null,
+        days_left: dl ? days(todayJst(), dl) : null,
         can_apply: !isClosed(e),
         format: e.format,
         themes: themesOf(e),

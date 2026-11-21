@@ -2,8 +2,7 @@
 // process.env, which Next.js fills from .env on the server. Nothing here is
 // exposed to the browser.
 
-/** The demo's "today". Fixed so the system prompt stays byte-identical (prompt cache). */
-export const TODAY = "2026-11-21";
+/** 「今日」は lib/clock.ts の todayJst()（日本時間の実際の日付。評価・テストだけ FIXED_TODAY で固定） */
 
 /** 候補の上限。合う人がいるだけ出す（0人なら見つからない理由を返す）。 */
 export const MAX_CANDIDATES = 5;

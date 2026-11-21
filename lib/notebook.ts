@@ -2,12 +2,13 @@
 // published items and creates / updates cards with upsert_card. The system prompt
 // (instructions + roster + published list) is identical across employees, so it is cached.
 import Anthropic from "@anthropic-ai/sdk";
+import { todayJst } from "./clock";
 import { readOverlay, writeOverlay } from "./runtime";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { loadCards, upsertCard, type CardInput } from "./cards";
-import { TODAY, TRENDS } from "./config";
+import { TRENDS } from "./config";
 import { employees, notebookActivities as activities, published } from "./data"; // リリースノートは別の流れ（lib/releaseCards.ts）で読む
 import { UPSERT_CARD_DEF } from "./tools";
 import { dataFile } from "./dataSource";
@@ -67,7 +68,7 @@ export type NotebookEvent =
 
 const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです。社内の取り組みを読んで「ネタ帳」のカードを作り、育てます。カードは「誰が・何をして・どんなテーマなら社外で話せる／書けるか」を1枚にまとめたものです。技術広報はこのネタ帳を見て、登壇やブログの声かけをします。
 
-今日は${TODAY}です。今の時流：${TRENDS.join("／")}
+今日は${todayJst()}です。今の時流：${TRENDS.join("／")}
 
 # 1回の仕事
 社員1人分の「前回以降の新しい活動」（PR・コミット・設計ドキュメント・Slack投稿・週報）と、その人の発信済みの記録、既存のカードの要約が渡されます。前回までの活動は既存のカードにまとめ済みなので、渡されません。雑談・重複・typo や依存の更新などは、コードで先に落としてあります。社外に出す価値のある取り組みごとにカードを作るか更新して、upsert_card を呼んでください。
@@ -111,9 +112,11 @@ function buildSystem(): string {
   return `${INSTRUCTIONS}\n\n# 社員一覧\n${roster}`;
 }
 
-let SYSTEM: string | undefined;
+// 同じ日のうちは作り直さない。日付が変わったら作り直す（指示文に今日の日付が入るため）
+let SYSTEM_CACHE: { day: string; text: string } | undefined;
+const cachedSystem = () => (SYSTEM_CACHE?.day === todayJst() ? SYSTEM_CACHE.text : (SYSTEM_CACHE = { day: todayJst(), text: buildSystem() }).text);
 /** 指示文（社員一覧つき）の文字数（見積もり用） */
-export const notebookSystemChars = () => (SYSTEM ??= buildSystem()).length;
+export const notebookSystemChars = () => cachedSystem().length;
 
 type Prepared = ReturnType<typeof prepareEmployee>;
 
@@ -154,7 +157,7 @@ export async function updateNotebook(
   const { loop: model } = chooseModels();
   const ids = targets === "pending" ? pendingEmployees() : targets;
   emit({ type: "start", run_id: runId, model, targets: ids });
-  const systemText = (SYSTEM ??= buildSystem());
+  const systemText = cachedSystem();
   const state = loadState();
   const cfg = prepConfig();
 

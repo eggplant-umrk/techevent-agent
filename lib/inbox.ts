@@ -2,6 +2,7 @@
 // 状態は processing（準備中）→ ready（準備済み）／error（エラー）。
 // 依頼は既存の依頼と同じ形（SpeakingRequest）に変換して流すので、承認・下書き・書き戻しはそのまま使える。
 import fs from "node:fs";
+import { byTimeDesc, nowJst } from "./clock";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { withPitchLater, type AgentEvent, type ProposalResult } from "./agent";
@@ -108,7 +109,7 @@ function withStale(it: InboxItem): InboxItem {
 export function listInbox(): InboxItem[] {
   return load()
     .map(withStale)
-    .sort((a, b) => (a.received_at < b.received_at ? 1 : -1));
+    .sort((a, b) => byTimeDesc(a.received_at, b.received_at)); // 前の記録（…Z）と新しい記録（+09:00）が混ざっても時刻で並べる
 }
 
 export function getInboxItem(id: string): InboxItem | undefined {
@@ -117,7 +118,7 @@ export function getInboxItem(id: string): InboxItem | undefined {
 }
 
 export function markOpened(id: string) {
-  update(id, (it) => (it.opened_at ? it : { ...it, opened_at: new Date().toISOString() }));
+  update(id, (it) => (it.opened_at ? it : { ...it, opened_at: nowJst() }));
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +234,7 @@ export function addToInbox(input: InboxInput, runner: Runner, extractor?: Intake
 
 /** 登録だけする（候補づくりは始めない）。評価スクリプトが自分で prepare を待つときに使う */
 export function registerInbox(input: InboxInput): InboxItem {
-  const now = new Date().toISOString();
+  const now = nowJst();
   const item: InboxItem = {
     id: newId(),
     source: input.source,
@@ -297,7 +298,7 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       result,
       events,
       run_usd: runUsd,
-      finished_at: new Date().toISOString(),
+      finished_at: nowJst(),
       pitch_status: needsPitch ? "pending" : null,
       date_suggestions: dateSuggestions,
     }));
@@ -308,7 +309,7 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       error: err instanceof Error ? err.message : "候補を出せませんでした",
       events,
       run_usd: runUsd,
-      finished_at: new Date().toISOString(),
+      finished_at: nowJst(),
     }));
   }
   if (pitchJob) await makePitch(id, pitchJob.request, pitchJob.result, pitcher);
@@ -341,7 +342,7 @@ async function makePitch(id: string, request: SpeakingRequest, result: ProposalR
 
 /** もう一度探す（画面の「もう一度探す」とは別に、エラーの依頼を準備し直すとき用） */
 export function restart(id: string, runner: Runner, extractor?: IntakeExtractor) {
-  update(id, (x) => ({ ...x, status: "processing", started_at: new Date().toISOString(), finished_at: null, error: null }));
+  update(id, (x) => ({ ...x, status: "processing", started_at: nowJst(), finished_at: null, error: null }));
   void prepare(id, runner, extractor);
 }
 

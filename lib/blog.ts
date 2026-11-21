@@ -1,9 +1,10 @@
 // "ブログのネタを出す": pick 3 unpublished cards that would make good blog posts.
 // One call, structured output. Only unpublished cards are offered; ブログ済み/登壇済み never appear.
 import { randomUUID } from "node:crypto";
+import { todayJst } from "./clock";
 import { getClient } from "./anthropic";
 import { loadCards, outreachSummary, type Card } from "./cards";
-import { TODAY, TRENDS } from "./config";
+import { TRENDS } from "./config";
 import { activities, employeeById } from "./data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 import { internalTerms, PLAIN_TEXT_RULE } from "./plainText";
@@ -64,7 +65,7 @@ export async function suggestBlogIdeas(
   const res = await getClient().messages.create({
     model,
     max_tokens: 8000,
-    system: `あなたはLayerXの技術広報を手伝います。イベントがなくても発信できるように、ネタ帳の未発信カードからブログにしやすいものを${count}枚選びます（渡されたカードが${count}枚以下なら、そのカードについてブログ案を書きます）。今日は${TODAY}。時流：${TRENDS.join("／")}
+    system: `あなたはLayerXの技術広報を手伝います。イベントがなくても発信できるように、ネタ帳の未発信カードからブログにしやすいものを${count}枚選びます（渡されたカードが${count}枚以下なら、そのカードについてブログ案を書きます）。今日は${todayJst()}。時流：${TRENDS.join("／")}
 選ぶ基準：
 - 数字や具体的な工夫があり、1本の記事として読者が持ち帰れるものがある
 - 登壇経験の少ない人を優先する（発信する人としない人の差を埋めたい）

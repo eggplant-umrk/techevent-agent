@@ -1,0 +1,31 @@
+# push と pull request のたびに、API を使わない確認だけを流す（型チェック・テスト・結合テストの保存済み結果の判定）。
+# 秘密の値（API キー・Slack のトークンなど）は使わない。.env もない状態で動く。
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: 依存を入れる
+        run: npm ci --no-audit --no-fund
+      - name: 型チェック（キャッシュなし）
+        run: npm run typecheck
+      - name: テスト（API なし。scripts/test_*.ts と eval --offline）
+        run: npm test

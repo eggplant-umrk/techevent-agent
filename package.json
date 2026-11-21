@@ -15,6 +15,7 @@
     "test:release": "tsx scripts/test_release_notes.ts",
     "test:runtime": "tsx scripts/test_runtime.ts",
     "test:loop": "tsx scripts/test_notebook_loop.ts",
+    "test:prep": "tsx scripts/test_proposal_prep.ts",
     "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",
     "usage": "tsx scripts/usage_report.ts",

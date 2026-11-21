@@ -139,7 +139,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
               cautions: {
                 type: "array",
                 items: { type: "string" },
-                description: "注意点（最近登壇した／忙しい／予定が重なる など）",
+                description: "コードで出せない注意点だけ（テーマが少しずれる／根拠が1件だけ／社外に出してよい範囲の確認 など）。予定の埋まり・予定の重なり・日程が未定・登壇経験・カードが未確認はコードが足すので書かない。なければ空配列",
               },
               is_alternative_to_nominee: {
                 type: "boolean",

@@ -6,9 +6,13 @@
 // - Edits, adopt/drop, and outcomes are kept in memory only.
 import type { Api, DraftResponse } from "./api";
 import proposals from "./proposals.json";
+import postevent from "./postevent.json";
 import venueFixtures from "./venues.json";
 import type {
   AgentEvent,
+  EventAnalysis,
+  Reaction,
+  SurveyEvent,
   BlogIdea,
   Candidate,
   Card,
@@ -23,6 +27,11 @@ import type {
 } from "./types";
 
 type Fixture = { result: Proposal; run_usd: number };
+
+/** アンケート分析の保存済みの結果（scripts/update_postevent_mock.ts が本番の分析結果から作る）。
+ *  cards：その分析でカードに書き戻した反応と、テーマ案（未確認）に足したもの */
+type PostEventFixture = { analysis: EventAnalysis; cards: Record<string, { reactions: Reaction[]; pending_themes_added: string[] }> };
+const POSTEVENT = postevent as unknown as Record<string, PostEventFixture>;
 /** Saved eval results can predate newer candidate fields; fill the defaults so the screens get the current shape. */
 const FIXTURES: Record<string, Fixture> = Object.fromEntries(
   Object.entries(proposals as unknown as Record<string, Fixture>).map(([k, f]) => [
@@ -134,6 +143,8 @@ export function mockApi(real: Api): Api {
   let lastCards: NotebookCard[] = [];
   /** Cards created in memory when a candidate without a card is approved (same rule as /api/outcome). */
   const created: NotebookCard[] = [];
+  /** モックで分析を再生したイベント */
+  const analyzed = new Map<string, EventAnalysis>();
 
   // 受信箱（手元だけ）
   const inboxItems: InboxListItem[] = [];
@@ -447,6 +458,63 @@ export function mockApi(real: Api): Api {
       patch(cardId, (c) => ({
         pending_themes: c.pending_themes.filter((t) => t !== theme),
         themes: accept ? [...c.themes, theme].slice(-3) : c.themes,
+      }));
+    },
+    // ---- イベント後のアンケート（保存済みの分析結果を再生。書き戻しはメモリの中だけ）
+    async events() {
+      const list = await real.events();
+      return list.map((e) => ({ ...e, analyzed: analyzed.has(e.id) }));
+    },
+    async eventDetail(id) {
+      const d = await real.eventDetail(id);
+      return { ...d, analysis: analyzed.get(id) ?? null };
+    },
+    async analyzeEvent(id, onEvent) {
+      const f = POSTEVENT[id];
+      const emit = async (e: SurveyEvent, ms = 500) => {
+        await wait(ms);
+        onEvent(e);
+      };
+      if (!f) {
+        await emit({ type: "error", message: "このイベントには保存済みの分析結果がありません（モックでは再生できません）" }, 200);
+        return;
+      }
+      const answers = f.analysis.talks.reduce((a, t) => a + t.stats.count, 0);
+      await emit({ type: "start", run_id: "mock-survey", model: f.analysis.model, event_id: id, talks: f.analysis.talks.length, answers, sentences: f.analysis.labels.length, excluded: f.analysis.talks.reduce((a, t) => a + t.stats.excluded, 0) }, 100);
+      await emit({ type: "step", n: 1, max: 3 }, 1500);
+      total += f.analysis.run_usd;
+      await emit({ type: "usage", run_usd: f.analysis.run_usd, total_usd: total }, 100);
+      if (!lastCards.length) await this.cards();
+      for (const [cardId, c] of Object.entries(f.cards)) {
+        if (!lastCards.some((x) => x.card_id === cardId)) continue;
+        patch(cardId, (x) => {
+          const ids = new Set(c.reactions.map((r) => r.id));
+          const known = new Set([...x.themes, ...x.pending_themes]);
+          return {
+            reactions: [...(x.reactions ?? []).filter((r) => !ids.has(r.id)), ...c.reactions],
+            pending_themes: [...x.pending_themes, ...c.pending_themes_added.filter((t) => !known.has(t))],
+          };
+        });
+      }
+      for (const w of f.analysis.writebacks) await emit({ type: "writeback", message: w }, 250);
+      analyzed.set(id, f.analysis);
+      await emit({ type: "done", analysis: f.analysis, run_usd: f.analysis.run_usd, total_usd: total }, 100);
+    },
+    async importSurvey(id, csv) {
+      // モックでは Agent に聞かず、保存もしない（列の読み取り結果を見せるだけ）
+      const res = await fetch(`/api/events/${encodeURIComponent(id)}/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csv, save: false, ask: false }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error ?? "取り込めませんでした");
+      return j;
+    },
+    async resolveReaction(cardId, reactionId, accept) {
+      await wait(200);
+      patch(cardId, (c) => ({
+        reactions: (c.reactions ?? []).map((r) => (r.id === reactionId ? { ...r, status: accept ? "adopted" : "dismissed" } : r)),
       }));
     },
   };

@@ -19,7 +19,8 @@ import type {
 import { AgentSteps, type LogItem } from "@/components/AgentSteps";
 import { Approved } from "@/components/Approved";
 import { CardDetail } from "@/components/CardDetail";
-import { Header } from "@/components/Header";
+import { Header, type View } from "@/components/Header";
+import { EventsView } from "@/components/Events";
 import { Inbox } from "@/components/Inbox";
 import { usd } from "@/components/labels";
 import { Notebook, type NbLogLine } from "@/components/Notebook";
@@ -31,6 +32,7 @@ const msg = (err: unknown, fallback: string) => (err instanceof Error && err.mes
 export default function Home() {
   const [api, setApi] = useState<Api>(realApi);
   const [debug, setDebug] = useState(false);
+  const [view, setView] = useState<View>("requests");
 
   // notebook
   const [cards, setCards] = useState<NotebookCard[]>([]);
@@ -374,6 +376,8 @@ export default function Home() {
   return (
     <div className="app">
       <Header
+        view={view}
+        onView={setView}
         debug={debug}
         runUsd={runUsd}
         totalUsd={totalUsd}
@@ -389,9 +393,13 @@ export default function Home() {
         </p>
       )}
 
-      <Inbox items={inboxItems} loaded={inboxLoaded} openId={mode === "inbox" ? inboxId : null} onOpen={(id) => void openInbox(id)} />
+      {view === "requests" && <Inbox items={inboxItems} loaded={inboxLoaded} openId={mode === "inbox" ? inboxId : null} onOpen={(id) => void openInbox(id)} />}
 
       <main className="main">
+        {view === "events" ? (
+          <EventsView api={api} onOpenCard={(id) => openCard(id)} onCardsChanged={() => void loadCards()} />
+        ) : (
+          <>
         <Notebook
           cards={cards}
           units={units}
@@ -447,6 +455,8 @@ export default function Home() {
             </>
           )}
         </div>
+          </>
+        )}
       </main>
 
       {detailCard && (
@@ -457,6 +467,10 @@ export default function Home() {
           onClose={() => setDetail(null)}
           onSave={async (p) => {
             await api.editCard(detailCard.card_id, p);
+            await loadCards();
+          }}
+          onResolveReaction={async (reactionId, accept) => {
+            await api.resolveReaction(detailCard.card_id, reactionId, accept);
             await loadCards();
           }}
           onResolve={async (theme, accept) => {

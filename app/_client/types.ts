@@ -9,6 +9,15 @@ export type { OutreachDraft } from "@/lib/heavy";
 export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
 export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
+export type { Reaction } from "@/lib/cards";
+export type { EventAnalysis, EventListItem, NegativeItem, PositiveTheme, SurveyEvent, TalkAnalysis, TalkStats } from "@/lib/surveys";
+export type { ColumnInfo, ColumnRole } from "@/lib/surveyCsv";
+import type { SurveyImport } from "@/lib/surveyCsv";
+/** POST /api/events/{id}/import の返り値（回答そのものは返さない） */
+export type ImportResult = Omit<SurveyImport, "answers"> & { answers: number; saved: boolean };
+import type { eventDetail } from "@/lib/surveys";
+/** GET /api/events/{id} の形 */
+export type EventDetail = NonNullable<ReturnType<typeof eventDetail>>;
 export type { VenueCard, VenueEvent, VenueResult } from "@/lib/venues";
 
 /** カード → 出し先：声かけ文の下書きを頼むときの本文（イベントの情報はサーバーがデータから引き直す） */

@@ -46,8 +46,33 @@ export interface Card {
   reviewed_at: string | null;
   /** Which fields 技術広報 changed by hand (summary / themes / format / format_reason / evidence). */
   edited_fields: string[];
+  /** イベント後のアンケートから書き戻した反応（lib/surveys.ts）。提案中のものは技術広報が採用／見送りする */
+  reactions?: Reaction[];
   created_at: string;
   updated_at: string;
+}
+
+/** イベント後の反応。reception＝登壇者のカードへの「反応のまとめ」、demand＝別の社員のカードへの「需要あり」 */
+export interface Reaction {
+  id: string;
+  kind: "reception" | "demand";
+  /** pending＝提案中（技術広報が採用／見送り）、adopted＝カードに入っている（提案で使う）、dismissed＝見送り */
+  status: "pending" | "adopted" | "dismissed";
+  event_id: string;
+  event_title: string;
+  event_date: string;
+  /** reception：反応のまとめ1行。demand：参加者が聞きたいテーマ */
+  text: string;
+  hits: string[];
+  stumbles: string[];
+  /** コードで数えた件数・平均（reception だけ） */
+  count: number | null;
+  average: number | null;
+  /** 根拠の回答id */
+  response_ids: string[];
+  /** demand：その声が出た登壇の登壇者 */
+  from_speaker_id: string | null;
+  added_at: string;
 }
 
 function readCardFile(file: string): Card[] {
@@ -68,6 +93,7 @@ function withDefaults(c: Card): Card {
     evidence_request_ids: c.evidence_request_ids ?? [],
     pending_themes: c.pending_themes ?? [],
     edited_fields: c.edited_fields ?? [],
+    reactions: c.reactions ?? [],
   };
 }
 
@@ -81,6 +107,16 @@ function saveCards(cards: Card[]) {
     return;
   }
   fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");
+}
+
+/** カード1枚をまとめて書き換える（lib/surveys.ts の書き戻し用）。見つからなければ null */
+export function patchCard(cardId: string, fn: (c: Card) => Card): Card | null {
+  const cards = loadCards();
+  const i = cards.findIndex((c) => c.card_id === cardId);
+  if (i < 0) return null;
+  cards[i] = { ...fn(cards[i]), updated_at: now() };
+  saveCards(cards);
+  return cards[i];
 }
 
 export function getCardById(id: string): Card | undefined {

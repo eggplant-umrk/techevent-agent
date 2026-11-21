@@ -1,0 +1,49 @@
+// Shapes the screens use. Server types are imported read-only from lib/.
+import type { CandidateCard, ProposalResult } from "@/lib/agent";
+import type { Card, DeclineReason, OutreachResult } from "@/lib/cards";
+
+export type { AgentEvent, CandidateCard, ProposalResult } from "@/lib/agent";
+export type { Card, CardFormat, DeclineReason, OutreachResult } from "@/lib/cards";
+export type { SpeakingRequest } from "@/lib/data";
+export type { OutreachDraft } from "@/lib/heavy";
+export type { NotebookEvent } from "@/lib/notebook";
+export type { ModelChoice } from "@/lib/usage";
+
+/** One card as GET /api/cards returns it (card + joined employee, evidence, publication records). */
+export type NotebookCard = Card & {
+  employee: {
+    id: string;
+    name: string;
+    business_unit: string;
+    role: string;
+    past_talk_count: number;
+    last_talk_date: string | null;
+    workload: number;
+  } | null;
+  evidence: Array<{ id: string; type: string; date: string; title: string; body: string; where: string | null }>;
+  announcements: Array<{ id: string; date: string; title: string }>;
+  published: Array<{ id: string; date: string; genre: string; title: string; url: string }>;
+};
+
+export type BlogIdea = { card_id: string; title: string; why_easy_to_blog: string; outline: string[] };
+
+export type CardPatch = Partial<Pick<Card, "summary" | "themes" | "format" | "format_reason">>;
+
+export interface OutcomeBody {
+  request_id: string;
+  custom_text?: string;
+  card_id: string | null;
+  result: OutreachResult;
+  reason?: DeclineReason;
+  candidate: { employee_id: string; theme: string; reason: string; evidence_activity_ids: string[] };
+}
+
+export interface DraftBody {
+  run_id: string;
+  request_id?: string;
+  custom_text?: string;
+  candidate: OutcomeBody["candidate"];
+}
+
+export type Proposal = ProposalResult;
+export type Candidate = CandidateCard;

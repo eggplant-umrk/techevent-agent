@@ -227,19 +227,9 @@ export function safeSlackPermalink(url: string | null | undefined): string | nul
 
 /** 入口でコードが止めるときの文（API を呼ぶ前） */
 export const NO_REQUEST_TEXT = "依頼の文が見つかりません（記号だけ・URL だけの文は受け付けません。URL の中身は読みません）";
-/** 意味のある文字（かな・漢字・英字）がこれより少ない文は、依頼の文がないとみなす */
-export const MIN_MEANINGFUL_CHARS = 3;
-
-/** 依頼の文がありそうか（コード）。URL とアカウント名（@…）を除いて、かな・漢字・英字が少なすぎなければ true */
-export function hasRequestText(text: string): boolean {
-  const t = text
-    .normalize("NFKC")
-    .replace(/https?:\/\/\S+/gi, " ")
-    .replace(/www\.\S+/gi, " ")
-    .replace(/@[A-Za-z0-9_]+/g, " ");
-  const meaningful = t.match(/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}A-Za-z]/gu) ?? [];
-  return meaningful.length >= MIN_MEANINGFUL_CHARS;
-}
+// 依頼の文がありそうかの入口のチェックは lib/requestText.ts（Slack ボットも同じものを使う）
+import { hasRequestText } from "./requestText";
+export { hasRequestText, MIN_MEANINGFUL_CHARS } from "./requestText";
 
 export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } | { ok: false; error: string } {
   if (!body || typeof body !== "object") return { ok: false, error: "JSON の本文がありません" };

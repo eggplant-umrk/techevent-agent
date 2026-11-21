@@ -293,9 +293,11 @@ export default function Home() {
   // 受信箱は数秒ごとに見直す（Slackから届いた依頼や、準備が終わった依頼をすぐ出すため。サーバー内の読み込みだけでAPI代はかからない）
   useEffect(() => {
     if (!apiReady) return;
-    const t = setInterval(loadInbox, 4000);
+    // 準備中の依頼があるあいだは2秒ごと（進み具合を早めに出す）、なければ4秒ごと
+    const preparing = inboxItems.some((x) => x.status === "processing");
+    const t = setInterval(loadInbox, preparing ? 2000 : 4000);
     return () => clearInterval(t);
-  }, [apiReady, loadInbox]);
+  }, [apiReady, loadInbox, inboxItems]);
 
   // ?inbox={id} で開いたら、その依頼の候補画面を開く
   useEffect(() => {
@@ -632,6 +634,7 @@ export default function Home() {
             compact={running || !!result}
             mock={api.mock}
             loading={mode === "inbox" && !!inboxId && !inbox}
+            progress={mode === "inbox" ? inboxItems.find((x) => x.id === inboxId)?.progress ?? null : null}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
           </RequestInput>

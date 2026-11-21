@@ -395,3 +395,6 @@ textarea.input { resize: vertical; }
 
 /* 声かけ文・主催者への返事の入力欄：中身に合わせて高さを伸ばす（入れ子のスクロールでページが進まないように） */
 .draft-text, .reply-text { field-sizing: content; min-height: 6em; max-height: none; }
+
+/* 候補ができるまでの進み具合（1行） */
+.progress-line { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }

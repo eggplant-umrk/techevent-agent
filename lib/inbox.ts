@@ -11,6 +11,7 @@ import { buildDateSuggestions, type DateSuggestions } from "./dateSuggest";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
+import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
 const FILE = () => process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json");
@@ -31,6 +32,8 @@ export interface InboxMeta {
 export interface InboxItem {
   id: string;
   source: InboxSource;
+  /** 準備中の進み具合（段階の言葉だけ。画面に1行で出す） */
+  progress?: Progress | null;
   meta: InboxMeta | null;
   text: string;
   received_at: string;
@@ -267,6 +270,9 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
   const events: AgentEvent[] = [];
   let runUsd = 0;
   let pitchJob: { request: SpeakingRequest; result: ProposalResult } | null = null;
+  // 進み具合（画面に1行で出す）。作業ログの流れから段階を決め、変わったときだけ保存する
+  let stage: ProgressStage = "reading";
+  update(id, (x) => ({ ...x, progress: progressOf(stage) }));
   try {
     if (extractor && !it.nominee) {
       const { nominee, intake } = await readIntake(it.text, it.received_at, extractor, id);
@@ -281,6 +287,11 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       runner(request, (e) => {
         events.push(e);
         if (e.type === "done") runUsd = e.run_usd;
+        const next = nextStage(stage, e as { type: string; name?: string });
+        if (next !== stage) {
+          stage = next;
+          update(id, (x) => ({ ...x, progress: progressOf(stage) }));
+        }
       }),
     );
     const result = raw ? addNomineeNote(addNomineeNote(raw, note), undecided) : null;
@@ -374,6 +385,8 @@ export interface InboxListItem {
   no_fit: boolean;
   error: string | null;
   permalink: string | null;
+  /** 準備中の進み具合（段階の言葉だけ。lib/progressStage.ts） */
+  progress?: Progress | null;
 }
 
 export function listView(it: InboxItem): InboxListItem {
@@ -390,6 +403,7 @@ export function listView(it: InboxItem): InboxListItem {
     no_fit: !!it.result && it.result.candidates.length === 0,
     error: it.status === "error" ? it.error : null,
     permalink: it.meta?.permalink ?? null,
+    progress: it.status === "processing" ? it.progress ?? null : null,
   };
 }
 

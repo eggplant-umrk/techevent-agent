@@ -3,6 +3,7 @@
 import type { BoardDetail, IntakeField } from "@/app/_client/types";
 import { md } from "./labels";
 import { inboxTitle, StageTag, sourceLabel } from "./Inbox";
+import { progressOf, progressText, type Progress } from "@/lib/progressStage";
 import { Spinner, Tag } from "./ui";
 
 /** inbox：受信箱から開いた依頼／custom：手で追加（受信箱に入る）。サンプルの依頼も受信箱に並ぶ（入口は受信箱だけ） */
@@ -36,6 +37,7 @@ export function RequestInput({
   compact,
   mock = false,
   loading = false,
+  progress = null,
   children,
 }: {
   mode: RequestMode;
@@ -55,6 +57,8 @@ export function RequestInput({
   mock?: boolean;
   /** 受信箱の依頼を読み込んでいる間 */
   loading?: boolean;
+  /** 準備中の進み具合（受信箱の一覧から。段階の言葉だけ） */
+  progress?: Progress | null;
   /** The agent's steps, shown under the request without another frame. */
   children?: React.ReactNode;
 }) {
@@ -131,6 +135,12 @@ export function RequestInput({
             <summary>依頼文を読む</summary>
             <p className="pre small">{inbox.text}</p>
           </details>
+          {preparing && (
+            <div className="progress-line" aria-live="polite">
+              <Spinner label={progressText(progress ?? progressOf("reading"))} />
+              <span className="meta">候補ができるまで30秒ほどかかります。このまま待つか、ほかの依頼を見ていても大丈夫です。</span>
+            </div>
+          )}
           {inbox.status === "error" && <p className="error-line" role="alert">{inbox.error ?? "候補を出せませんでした"}。「もう一度探す」を押してください。</p>}
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import type { BoardListItem, BoardSource, RequestStage } from "@/app/_client/types";
 import { STAGE_LABEL, STAGE_TONE } from "@/lib/requestStage";
+import { progressOf, progressText } from "@/lib/progressStage";
 import { md } from "./labels";
 import { Tag } from "./ui";
 
@@ -27,7 +28,7 @@ function stageLine(it: BoardListItem): string {
   if (s.stage === "outreach") return `${names(s.outreach_to)}に声かけ中（返事待ち）`;
   if (s.stage === "declined") return `${names(s.declined_by)}が辞退。次の人を選べます`;
   if (s.stage === "new") return "開いて「ネタ帳から候補を出す」を押すと、候補を準備します";
-  if (s.stage === "preparing") return "Agentがネタ帳を探しています";
+  if (s.stage === "preparing") return progressText(it.progress ?? progressOf("reading"));
   if (s.stage === "error") return it.error ?? "候補を出せませんでした";
   if (it.no_fit) return "合う候補は見つかりませんでした（理由を確認できます）";
   // 候補は2人まで出して「ほかN人」（名前が途中で切れないように）

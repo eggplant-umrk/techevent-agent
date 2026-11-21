@@ -40,7 +40,7 @@ LayerX 自律型 AI Agent ハッカソン 2026/11 テーマ3「Techイベント�
 
 ## ディレクトリ構成・技術スタック
 
-MVPの仕様は [docs/spec.md](docs/spec.md)（v0.2：ネタ帳Agent）。
+MVPの仕様は [docs/spec.md](docs/spec.md)（v0.4：ネタ帳Agent）。保存の入口の一覧は [docs/storage.md](docs/storage.md)、発表のあとと将来の作業は [docs/roadmap.md](docs/roadmap.md)。
 
 中心は「Agentが育て続けるネタ帳（カード）」で、動きは3つだけ：カードを作る（ネタ帳を更新）／カードから選ぶ（依頼への提案・ブログのネタ）／カードに書き戻す（承認・承諾・辞退・公開）。
 
@@ -252,6 +252,14 @@ npm run reset:demo
 ```
 
 本物の Slack から読んだ投稿（`data/sources/slack_posts.json`）はコミットしません。
+
+### テスト（API なし）
+
+```bash
+npm test
+```
+
+API を使わないテスト（`scripts/test_*.ts`）と、保存済みの結果の判定（`eval --offline`）を順に全部流します。1つでも失敗すると、最後に一覧を出して失敗で終わります。一部だけ流すときは `npm test -- inbox stage` のように名前の一部を書きます。`.env` は要りません。push のたびに GitHub Actions（`.github/workflows/ci.yml`）でも、型チェック（`npm run typecheck`）とあわせて流れます。
 
 ### 評価
 

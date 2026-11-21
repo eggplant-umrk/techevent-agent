@@ -71,11 +71,20 @@ export function PersonDetail({
             {p.name}
           </h2>
           <span className="tags">
-            {p.reviewed && <Tag tone="ok">確認済み</Tag>}
+            {p.reviewed && <Tag tone="ok">情報を確認済み</Tag>}
           </span>
         </div>
         <p className="meta">
-          {[p.business_unit, p.role, detail.talk_tag, `登壇${p.past_talk_count}回${p.last_talk_date ? `（最終 ${p.last_talk_date}）` : ""}`].filter((x) => x && x.trim()).join("・")}
+          {[
+            p.business_unit,
+            // 役職が所属の名前で始まるとき（「CTO室 エンジニア」）は、所属を重ねない
+            p.role?.startsWith(p.business_unit) ? p.role.slice(p.business_unit.length).trim() : p.role,
+            detail.talk_tag,
+            // 初登壇なら「登壇0回」は同じことなので出さない
+            p.past_talk_count ? `登壇${p.past_talk_count}回${p.last_talk_date ? `（最終 ${p.last_talk_date}）` : ""}` : "",
+          ]
+            .filter((x) => x && x.trim())
+            .join("・")}
         </p>
 
         {!editing ? (
@@ -118,7 +127,7 @@ export function PersonDetail({
           ) : (
             <>
               <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={save}>
-                {busy ? "保存しています…" : "保存して確認済みにする"}
+                {busy ? "保存しています…" : "保存して情報を確認済みにする"}
               </button>
               <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setEditing(false)}>
                 やめる

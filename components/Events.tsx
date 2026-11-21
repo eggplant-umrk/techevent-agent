@@ -27,6 +27,8 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState<Array<{ text: string; tone: "info" | "ok" | "warn" | "error" }>>([]);
+  const [debug, setDebug] = useState(false);
+  useEffect(() => setDebug(new URLSearchParams(window.location.search).has("debug")), []);
 
   const load = useCallback(async () => {
     try {
@@ -86,7 +88,7 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
           >
             イベントページを開く
           </a>
-          {!d.event.connpass_url?.trim() && <span className="meta">（架空のイベントのため、アプリの中の架空のページを開きます）</span>}
+          {!d.event.connpass_url?.trim() && <span className="meta">（架空のイベントページ）</span>}
         </p>
         <h3 className="h4">登壇</h3>
         <ul className="plain-list small">
@@ -108,20 +110,27 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
             {r ? (
               <>
                 平均{r.average.toFixed(1)}
-                <span className="meta">（{r.rated}件・1〜5の分布 {r.distribution.join("・")}）</span>
+                <span className="meta">
+                  （{r.rated}件：
+                  {[4, 3, 2, 1, 0]
+                    .map((i) => `${i + 1}点 ${r.distribution[i]}件`)
+                    .join("／")}
+                  ）
+                </span>
               </>
             ) : (
               <span className="meta">満足度の列がありません</span>
             )}
           </dd>
         </dl>
-        <SourceInfo d={d} />
+        {/* 取り込んだ CSV の列の読み取りは作った人向けなので ?debug のときだけ */}
+        {debug && <SourceInfo d={d} />}
         <ImportBox api={api} id={id} onImported={async () => (await load(), onChanged())} />
         <div className="btn-row">
           <button type="button" className="btn btn-primary" disabled={running || total === 0} onClick={analyze}>
             {running ? "分析しています…" : a ? "もう一度分析する" : "アンケートを分析する"}
           </button>
-          <span className="meta">{total ? "件数・平均はコードで数えています" : "CSVを取り込むと分析できます"}</span>
+          {!total && <span className="meta">CSVを取り込むと分析できます</span>}
         </div>
         {(log.length > 0 || running) && (
           <div className="steps-wrap">
@@ -141,7 +150,7 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
         <>
           {a.sample && (
             <p className="small caveat" role="note">
-              架空のアンケートの結果です（保存済みの分析結果を表示しています。CSV を取り込んで分析し直すと、ここが置き換わります）。
+              架空のアンケートの結果です。
             </p>
           )}
           <section className="surface cands" aria-labelledby="pos-title">
@@ -218,21 +227,39 @@ function NegList({ title, items }: { title: string; items: OverviewNegative[] })
         <p className="meta">ありませんでした。</p>
       ) : (
         <ul className="neg-list">
-          {items.map((i, k) => (
-            <li key={k}>
-              <span>{i.text}</span>
-              <span className="meta">{i.count > 1 ? `　${i.count}件` : "　1件"}</span>
-              {i.attack && (
-                <>
-                  {" "}
-                  <Tag tone="warn">人を攻撃する言葉（カードには残しません）</Tag>
-                </>
-              )}
-            </li>
-          ))}
+          {items.map((i, k) =>
+            i.attack ? (
+              <AttackItem key={k} text={i.text} count={i.count} />
+            ) : (
+              <li key={k}>
+                <span>{i.text}</span>
+                <span className="meta">{i.count > 1 ? `　${i.count}件` : "　1件"}</span>
+              </li>
+            ),
+          )}
         </ul>
       )}
     </div>
+  );
+}
+
+/** 人を攻撃する言葉は、はじめは隠しておく（押したときだけ原文を出す。カードには残さない） */
+function AttackItem({ text, count }: { text: string; count: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li>
+      {open ? <span>{text}</span> : <span className="meta">（人を攻撃する言葉のため隠しています）</span>}
+      <span className="meta">{`　${count}件`}</span>{" "}
+      <button type="button" className="link" aria-expanded={open} onClick={() => setOpen((x) => !x)}>
+        {open ? "隠す" : "原文を見る"}
+      </button>
+      {open && (
+        <>
+          {" "}
+          <Tag tone="warn">人を攻撃する言葉（カードには残しません）</Tag>
+        </>
+      )}
+    </li>
   );
 }
 

@@ -1,4 +1,5 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
+import { originalUrl } from "./originalUrl";
 import Anthropic from "@anthropic-ai/sdk";
 import { computedCautions, dropComputableCautions, prefetchForAgent } from "./proposalPrep";
 import { todayJst } from "./clock";
@@ -49,7 +50,8 @@ export interface CandidateCard {
   last_talk_date: string | null;
   theme: string;
   reason: string;
-  evidence: Array<{ id: string; type: string; date: string; title: string; where: string | null }>;
+  /** url：元のページ（PR・Slack の投稿・ブログ・リリース）。架空の活動にはない */
+  evidence: Array<{ id: string; type: string; date: string; title: string; where: string | null; url?: string | null }>;
   cautions: string[];
   is_alternative_to_nominee: boolean;
   /** "strong" = confident pick; "conditional" = usable pick with a stated catch. Strong ones come first. */
@@ -324,7 +326,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
         evidence: c.evidence_activity_ids
           .map((id) => acts.get(id))
           .filter((a): a is NonNullable<typeof a> => !!a)
-          .map((a) => ({ id: a.id, type: a.type, date: a.date, title: a.title, where: a.channel ?? a.repo })),
+          .map((a) => ({ id: a.id, type: a.type, date: a.date, title: a.title, where: a.channel ?? a.repo, url: originalUrl(a.url) })),
         cautions,
         is_alternative_to_nominee: c.is_alternative_to_nominee,
         confidence: c.confidence,

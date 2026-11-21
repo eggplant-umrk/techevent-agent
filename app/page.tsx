@@ -261,7 +261,14 @@ export default function Home() {
   const units = useMemo(() => [...new Set(people.map((p) => p.business_unit))].sort(), [people]);
   const personCards = useMemo(() => (personId ? cards.filter((c) => c.employee_id === personId) : []), [cards, personId]);
 
+  /** 狭い画面（一覧と詳細が縦に積まれるとき）は、選んだら詳細までスクロールする（何も起きないように見えないように） */
+  function revealPanel() {
+    if (typeof window === "undefined" || window.innerWidth > 860) return;
+    requestAnimationFrame(() => document.querySelector(".panel")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
   async function openPerson(id: string) {
+    revealPanel();
     setVoicesOpen(false);
     setUnassignedOpen(false);
     setPersonId(id);
@@ -274,6 +281,7 @@ export default function Home() {
   }
 
   async function openArchive(kind: ArchiveKind, id: string) {
+    revealPanel();
     setArchiveKey(`${kind}:${id}`);
     try {
       setArchiveDetail(await api.archiveDetail(kind, id));
@@ -285,9 +293,11 @@ export default function Home() {
   // 受信箱は数秒ごとに見直す（Slackから届いた依頼や、準備が終わった依頼をすぐ出すため。サーバー内の読み込みだけでAPI代はかからない）
   useEffect(() => {
     if (!apiReady) return;
-    const t = setInterval(loadInbox, 4000);
+    // 準備中の依頼があるあいだは2秒ごと（進み具合を早めに出す）、なければ4秒ごと
+    const preparing = inboxItems.some((x) => x.status === "processing");
+    const t = setInterval(loadInbox, preparing ? 2000 : 4000);
     return () => clearInterval(t);
-  }, [apiReady, loadInbox]);
+  }, [apiReady, loadInbox, inboxItems]);
 
   // ?inbox={id} で開いたら、その依頼の候補画面を開く
   useEffect(() => {
@@ -405,6 +415,7 @@ export default function Home() {
   }
 
   async function openInbox(id: string) {
+    revealPanel();
     setTabState("inbox");
     setMode("inbox");
     setInboxId(id);
@@ -622,6 +633,8 @@ export default function Home() {
             onAdd={addManual}
             compact={running || !!result}
             mock={api.mock}
+            loading={mode === "inbox" && !!inboxId && !inbox}
+            progress={mode === "inbox" ? inboxItems.find((x) => x.id === inboxId)?.progress ?? null : null}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
           </RequestInput>
@@ -748,10 +761,17 @@ export default function Home() {
                 loadPeople();
               }}
             />
+          ) : personId ? (
+            // 選んだ人を読み込んでいる間（2〜3秒）。前の人のままだと押せていないように見えるので、読み込み中を出す
+            <div className="panel" aria-busy="true">
+              <section className="surface pad-lg">
+                <Spinner label={`${people.find((x) => x.id === personId)?.name ?? ""}さんを読み込んでいます…`} />
+              </section>
+            </div>
           ) : (
             <div className="panel">
               <section className="surface pad-lg">
-                <p className="meta">左から人を選ぶと、その人のネタ・予定・最近の活動が出ます。</p>
+                <p className="meta">左から人を選ぶと、その人のネタ・ブログ・最近の活動が出ます。</p>
               </section>
             </div>
           )}
@@ -762,7 +782,8 @@ export default function Home() {
         <main className="main">
           <ArchiveList rows={archiveRows} loaded={archiveLoaded} openKey={archiveKey} onOpen={(k, id) => void openArchive(k, id)} />
           <ArchiveView
-            detail={archiveDetail}
+            detail={archiveDetail && archiveKey === `${archiveDetail.kind}:${archiveDetail.id}` ? archiveDetail : null}
+            loading={!!archiveKey && (!archiveDetail || archiveKey !== `${archiveDetail.kind}:${archiveDetail.id}`)}
             api={api}
             onChanged={() => {
               void loadCards();

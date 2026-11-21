@@ -9,6 +9,10 @@ import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
 import { recordsFor, requestState } from "@/lib/requestStage";
 import { eventUrlsIn } from "@/lib/eventUrls";
+import { PROGRESS_ORDER, progressOf } from "@/lib/progressStage";
+
+/** モックで、貼った依頼の準備にかける時間（本物は約30秒。モックは4段階を順に見せるだけ） */
+const MOCK_PREP_MS = 10000;
 
 /** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
 const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
@@ -210,6 +214,8 @@ export function mockApi(real: Api): Api {
   const drafts = new Map<string, OutreachDraft>();
   /** 担当者を割り当てた担当者未定のネタ（手元だけ。一覧から外す） */
   const assigned = new Set<string>();
+  /** 手で貼った依頼を追加した時刻（準備の進み具合の再現） */
+  const addedAt = new Map<string, number>();
   /** 代わりの人を推す文ができる時刻（モックの「作成中」の再現） */
   const pitchReadyAt = new Map<string, number>();
   const inboxTexts = new Map<string, string>();
@@ -228,7 +234,12 @@ export function mockApi(real: Api): Api {
     const nameOf = (eid: string) => cards.find((c) => c.employee_id === eid)?.employee?.name ?? eid;
     const base = x.status === "processing" ? "processing" : x.status === "error" ? "error" : "ready";
     const date = eventDateOf(x.id);
-    return { ...x, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date };
+    const started = addedAt.get(x.id);
+    const progress =
+      x.status === "processing" && started !== undefined
+        ? progressOf(PROGRESS_ORDER[Math.min(PROGRESS_ORDER.length - 1, Math.floor((Date.now() - started) / (MOCK_PREP_MS / PROGRESS_ORDER.length)))])
+        : null;
+    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date };
   }
   function acceptedReply(id: string, state: BoardListItem["state"]): BoardDetail["accepted_reply"] {
     for (const p of state.accepted_by) {
@@ -368,10 +379,12 @@ export function mockApi(real: Api): Api {
       const title = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
       inboxItems.unshift({ id, source: "manual", status: "processing", received_at: now, is_new: true, title: title.slice(0, 70), candidate_names: [], no_fit: false, error: null, permalink: null });
       inboxTexts.set(id, text);
+      // 準備の進み具合：本物と同じ4段階を、2.5秒ずつ順に進めて約10秒で準備済みにする
+      addedAt.set(id, Date.now());
       setTimeout(() => {
         const it = inboxItems.find((x) => x.id === id);
         if (it) Object.assign(it, { status: "ready", no_fit: true });
-      }, 2500);
+      }, MOCK_PREP_MS);
       return { id };
     },
     async inboxDetail(id) {

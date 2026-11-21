@@ -14,7 +14,7 @@
 | 最新にする | `git pull` | `git status` が「working tree clean」で、main の最新のコミットになっている |
 | 発表用の画面の操作の結果を片付ける | `npm run reset:demo` | 「初期状態に戻しました」（または「片付けるものはありませんでした」）が出る（消さずに data/runtime-backup/ に退避） |
 | 見せる用の置き場を片付ける | `npm run reset:share` | 同じく「初期状態に戻しました」か「片付けるものはありませんでした」（発表用のデータには触らない） |
-| テストが通る | `npm run test:hardening` と `npm run test:security` と `npx tsx scripts/eval.ts all --offline` | 「すべて合格」が2つと「段階1 結合テスト：69/69」 |
+| テストが通る | `npm run test:hardening` と `npm run test:security` と `npx tsx scripts/eval.ts all --offline`（API なしのテストを全部まとめて流すなら `npm test`） | 「すべて合格」が2つと「段階1 結合テスト：69/69」 |
 | 開発サーバーを止める | 動かしているターミナルで Ctrl+C | `netstat -ano \| findstr :3000` に LISTENING が出ない（`.next` がぶつからないように） |
 | 本番用のビルド | `npm run build` | 「✓ Compiled successfully」と、一覧に「ƒ Proxy (Middleware)」がある |
 | ボットは1つだけ | PowerShell：`Get-CimInstance Win32_Process -Filter "Name='node.exe'" \| ? CommandLine -like '*slack-bot*' \| Select ProcessId, CommandLine` | 出てくるのが1行だけ（0なら `npm run slack` で起動、2以上なら古いほうを止める） |

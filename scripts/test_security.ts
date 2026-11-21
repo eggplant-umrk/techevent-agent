@@ -1,5 +1,6 @@
 // 窓口の入口・API 代の上限・登壇者の評価の写り込み・個人情報の伏せ方のテスト（APIは使わない・data/ に書き込まない）。
 //   npm run test:security
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ・金額の記録は一時ファイル）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -110,6 +111,11 @@ async function main() {
   check("上限より下なら止めない", checkBudget("POST", "/api/agent", 4.99).ok);
   process.env.SHARE_STARTED_AT = "2000-01-01T00:00:00Z";
   process.env.SHARE_BUDGET_USD = "0.000001";
+  // 金額の記録（一時ファイル）に1件入れて、入口での上限の確認を必ず流す（本物の data/usage.json は読まない・書かない）
+  fs.writeFileSync(
+    process.env.USAGE_FILE!,
+    JSON.stringify([{ at: new Date().toISOString(), run_id: "test-security", purpose: "loop", model: "test", input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, cost_usd: 1 }]),
+  );
   const hasUsage = (await import("../lib/data")).usage().length > 0;
   if (hasUsage) {
     const mod = await import(`../proxy?budget=${Date.now()}`);

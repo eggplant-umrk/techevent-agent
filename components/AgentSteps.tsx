@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { Proposal } from "@/app/_client/types";
 import { TOOL_LABEL } from "./labels";
 import { Spinner } from "./ui";
+import { progressOf, progressText, stageOfEvents } from "@/lib/progressStage";
 
 export type LogItem =
   | { kind: "thinking"; text: string }
@@ -77,13 +78,15 @@ export function AgentSteps({ log, running, seconds, result }: { log: LogItem[]; 
     </ol>
   );
 
-  if (running)
+  if (running) {
+    // 動いている間は、考えた内容や内部の名前は出さず、今の段階を1行だけ出す（作業ログの流れから決める）
+    const stage = stageOfEvents(log.flatMap((l) => (l.kind === "tool" ? [{ type: "tool_call", name: l.name }] : [])));
     return (
-      <div className="steps-wrap">
-        {list}
-        <Spinner label={`考えています…（${seconds}秒）`} />
+      <div className="steps-wrap" aria-live="polite">
+        <Spinner label={`${progressText(progressOf(stage))}・${seconds}秒`} />
       </div>
     );
+  }
 
   return (
     <div className="steps-wrap">

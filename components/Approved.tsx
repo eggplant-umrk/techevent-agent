@@ -224,7 +224,7 @@ function OrganizerReply({
           </button>
         )}
         <button type="button" className="btn" disabled={value === text} onClick={() => setValue(text)}>
-          下書きに戻す
+          最初の下書きに戻す
         </button>
       </div>
       {dateSentence && !hasDate && <p className="meta">入れる文：{dateSentence}（本人に確認する前の目安。押したときだけ入れます）</p>}
@@ -240,6 +240,19 @@ function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | nul
 
   return (
     <>
+      {/* 読む前にコピーしてしまわないよう、「声をかける前に」を声かけ文の上に置く */}
+      {draft.tips_for_pr.length > 0 && (
+        <section className="surface pad-lg tips" aria-labelledby="tips-title">
+          <h3 id="tips-title" className="h3">
+            声をかける前に
+          </h3>
+          <ul className="plain-list small">
+            {draft.tips_for_pr.map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section className="surface pad-lg" aria-labelledby="draft-title">
         <div className="row-between">
           <h3 id="draft-title" className="h3">
@@ -267,7 +280,7 @@ function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | nul
               setMessage(draft.message);
             }}
           >
-            下書きに戻す
+            最初の下書きに戻す
           </button>
         </div>
       </section>
@@ -297,16 +310,6 @@ function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | nul
         <div className="btn-row">
           <CopyButton text={outlineText} label="構成案をコピー" />
         </div>
-        {draft.tips_for_pr.length > 0 && (
-          <div className="tips">
-            <h4 className="h4">声をかける前に</h4>
-            <ul className="plain-list small">
-              {draft.tips_for_pr.map((t, i) => (
-                <li key={i}>{t}</li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
     </>
   );

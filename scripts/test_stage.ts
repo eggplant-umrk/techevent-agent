@@ -88,6 +88,45 @@ async function main() {
     check("承諾を取り消すと、声かけ中に戻る", u1.status === 200 && board.boardDetail("req004")!.state.stage === "outreach");
     const u2 = await call({ request_id: "req004", card_id: card2.card_id });
     check("最後の記録が承諾でなければ取り消せない（声かけは戻さない）", u2.status === 400 && board.boardDetail("req004")!.state.stage === "outreach");
+
+    // ---- 候補ができるまでの進み具合（段階の言葉だけ。作業ログの流れからコードで決める）
+    const { nextStage, stageOfEvents, progressText, progressOf, PROGRESS_LABEL } = await import("../lib/progressStage");
+    check("はじめは「依頼を読んでいます」", stageOfEvents([]) === "reading" && progressText(progressOf("reading")) === "依頼を読んでいます（1/4）");
+    check("ネタ帳・投稿を探したら「ネタ帳を探しています」", stageOfEvents([{ type: "tool_call", name: "search_cards" }]) === "searching");
+    check("カード・予定を確かめたら「候補を絞っています」", stageOfEvents([{ type: "tool_call", name: "search_cards" }, { type: "tool_call", name: "check_schedule" }]) === "narrowing");
+    check("提出したら「下書きを準備しています」", stageOfEvents([{ type: "tool_call", name: "submit_candidates" }]) === "drafting");
+    check("段階は戻らない（絞ったあとにまた探しても）", nextStage("narrowing", { type: "tool_call", name: "search_activities" }) === "narrowing");
+    check("考えた内容（thinking）では段階を変えない", nextStage("reading", { type: "thinking" }) === "reading");
+    check("段階の言葉に内部の名前（道具の名前）を出さない", Object.values(PROGRESS_LABEL).every((t) => !/[a-z_]{4,}/.test(t)));
+    const inbox = await import("../lib/inbox");
+    const seen: string[] = [];
+    const pit = inbox.registerInbox({ text: "どなたか登壇できますか（進み具合のテスト）", source: "manual" });
+    await inbox.prepare(pit.id, async (_request, emit) => {
+      for (const name of ["search_cards", "get_card", "submit_candidates"]) {
+        emit({ type: "tool_call", id: name, name, input: {} } as never);
+        seen.push(inbox.getInboxItem(pit.id)!.progress?.stage ?? "none");
+      }
+      return null;
+    });
+    check("受信箱の準備中は、段階を保存して一覧に出す", seen.join(",") === "searching,narrowing,drafting", seen.join(","));
+    check("準備が終われば、一覧には進み具合を出さない", inbox.listView(inbox.getInboxItem(pit.id)!).progress === null);
+
+    // ---- 候補の根拠から元のページへ1回で飛ぶ（URL がある活動だけ。架空の活動・架空のリンクは付けない）
+    const { originalUrl } = await import("../lib/originalUrl");
+    check("PR・リリースなどの URL はそのまま", originalUrl("https://github.com/x/y/pull/1") === "https://github.com/x/y/pull/1");
+    check("架空のリンク（example.com）や空は付けない", originalUrl("https://example.com/published/1") === null && originalUrl("") === null && originalUrl(undefined) === null);
+    const { activities } = await import("../lib/data");
+    const withUrl = activities().find((a) => originalUrl(a.url));
+    const fictional = activities().find((a) => !a.url);
+    if (withUrl && fictional) {
+      const base0 = res.candidates[0];
+      const fake = { ...res, candidates: [{ ...base0, evidence: [{ id: withUrl.id, type: withUrl.type, date: withUrl.date, title: withUrl.title, where: null }, { id: fictional.id, type: fictional.type, date: fictional.date, title: fictional.title, where: null }] }] };
+      board.saveSampleProposal("req003", fake, [], 0);
+      const ev = board.boardDetail("req003")!.result!.candidates[0].evidence;
+      check("保存済みの候補にも、開くときに元のページの URL を補う", ev[0].url === withUrl.url && !ev[1].url, `${ev[0].url} / ${ev[1].url}`);
+    } else {
+      check("（URL のある活動がないので、補う動きの確認は省略）", true);
+    }
   } finally {
     fs.writeFileSync(cardsFile, backup);
     for (const f of [process.env.INBOX_FILE!, process.env.SAMPLE_PROPOSALS_FILE!, process.env.DRAFTS_FILE!]) fs.rmSync(f, { force: true });

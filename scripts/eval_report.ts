@@ -135,7 +135,8 @@ if (prevEntry) {
   md += `| 結合テスト | ${prev.checks.filter((c) => c.pass).length}/${prev.checks.length}（${Math.round(prev.pass_rate * 100)}%） | ${after.checks.filter((c) => c.pass).length}/${after.checks.length}（${Math.round(after.pass_rate * 100)}%） |\n`;
   md += `| 想定候補が上位3人 | ${prev.rows.filter((r) => r.any_hit).length}/${prev.rows.length} | ${after.rows.filter((r) => r.any_hit).length}/${after.rows.length} |\n`;
   md += `| 候補の数（5件の合計） | ${count(prev)} | ${count(after)} |\n`;
-  md += `| うち条件付き | —（区分なし） | ${condCount(after)} |\n`;
+  const hasConf = (x: typeof after) => x.rows.some((r) => (r.result?.candidates ?? []).some((c) => c.confidence));
+  md += `| うち条件付き | ${hasConf(prev) ? condCount(prev) : "—（区分なし）"} | ${condCount(after)} |\n`;
   md += `| 3人未満の依頼 | ${shortCount(prev)} | ${shortCount(after)} |\n`;
   md += `| テーマ案の質：全候補の平均 | ${f2(qAll(prev, "after_scores"))} | ${f2(qAll(after, "after_scores"))} |\n`;
   md += `| テーマ案の質：1位の平均 | ${f2(qTop(prev))} | ${f2(qTop(after))} |\n`;

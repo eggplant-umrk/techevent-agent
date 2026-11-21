@@ -26,20 +26,26 @@ export async function POST(req: Request) {
     return Response.json({ error: "辞退の理由を選んでください" }, { status: 400 });
   }
 
+  const request = resolveRequest(body);
   let cardId = body.card_id;
   if (!cardId) {
     const c = body.candidate;
     if (!c) return Response.json({ error: "カードがありません" }, { status: 400 });
+    // A nominee may have no activity on the theme; the request that named them is the evidence.
+    // Decided here from the stored request, not from anything the browser sends.
+    const isNominee = !!request?.nominated_employee_id && request.nominated_employee_id === c.employee_id;
+    const noActivity = !c.evidence_activity_ids?.length;
     const made = upsertCard({
       card_id: null,
       employee_id: c.employee_id,
       summary: c.reason,
       themes: [c.theme],
-      evidence_activity_ids: c.evidence_activity_ids,
+      evidence_activity_ids: c.evidence_activity_ids ?? [],
       format: "lt",
-      format_reason: "依頼への提案から作成したカード",
+      format_reason: isNominee && noActivity ? "指名の依頼から作成したカード（根拠は依頼そのもの）" : "依頼への提案から作成したカード",
       published_ids: [],
       announcement_activity_ids: [],
+      evidence_request_ids: isNominee ? [request!.id] : [],
     });
     if (!made.ok) return Response.json({ error: made.errors.join(" / ") }, { status: 400 });
     cardId = made.card!.card_id;
@@ -47,7 +53,6 @@ export async function POST(req: Request) {
     return Response.json({ error: `カード ${cardId} は存在しません` }, { status: 400 });
   }
 
-  const request = resolveRequest(body);
   const card = appendOutreach(cardId, {
     request_id: body.request_id,
     result: body.result,

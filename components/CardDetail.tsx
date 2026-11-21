@@ -163,7 +163,12 @@ export function CardDetail({
 
         <section className="block">
           <h3 className="h3">根拠の投稿</h3>
-          {card.evidence.length === 0 && <p className="meta">発信済みの記録がもとになっているカードです。</p>}
+          {card.evidence.length === 0 &&
+            (card.evidence_request_ids?.length ? (
+              <p className="meta">指名の依頼（{card.evidence_request_ids.join("、")}）がもとになっているカードです。取り組みの投稿はまだありません。</p>
+            ) : (
+              <p className="meta">発信済みの記録がもとになっているカードです。</p>
+            ))}
           <ul className="ev-list">
             {card.evidence.map((ev) => (
               <li key={ev.id} id={`ev-${ev.id}`} className={openEv === ev.id ? "is-open" : undefined}>

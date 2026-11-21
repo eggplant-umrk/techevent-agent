@@ -86,6 +86,10 @@ for c in data.get("cards.json", []):
     for pid in c["published_ids"]:
         check(pid in pub_by_id and pub_by_id[pid]["author_id"] == c["employee_id"], f"{c['card_id']} bad published id {pid}")
     check(1 <= len(c["themes"]) <= 3, f"{c['card_id']} themes")
+    req_by_id = {r["id"]: r for r in reqs}
+    for rid in c.get("evidence_request_ids", []):
+        check(rid in req_by_id and req_by_id[rid].get("nominated_employee_id") == c["employee_id"], f"{c['card_id']} bad request id {rid}")
+    check(bool(c["evidence_activity_ids"] or c["published_ids"] or c.get("evidence_request_ids")), f"{c['card_id']} has no evidence")
 
 print(f"employees={len(emps)} activities={len(acts)} {dict(types)} events={len(evs)} requests={len(reqs)} rules={len(rules)}")
 print(f"top5 talk share={top5_share:.0%}  attendance rate range="

@@ -3,7 +3,7 @@
 // owner, and published ids must be real items by the same person. Nothing invalid is saved.
 import fs from "node:fs";
 import path from "node:path";
-import { activities, employeeById, employees, published } from "./data";
+import { activities, employeeById, employees, published, requests } from "./data";
 
 const FILE = path.join(process.cwd(), "data", "cards.json");
 
@@ -33,6 +33,8 @@ export interface Card {
   latest_activity_date: string;
   /** "公開しました" posts: a record of publication, not evidence of the work. */
   announcement_activity_ids: string[];
+  /** Requests that named this person. Evidence for a nominee who has no activity on the theme. */
+  evidence_request_ids: string[];
   /** Theme ideas the agent proposed for a reviewed card. Shown as 未確認 until accepted or rejected. */
   pending_themes: string[];
   outreach_history: OutreachEntry[];
@@ -52,6 +54,7 @@ export function loadCards(): Card[] {
   return raw.map((c) => ({
     ...c,
     announcement_activity_ids: c.announcement_activity_ids ?? [],
+    evidence_request_ids: c.evidence_request_ids ?? [],
     pending_themes: c.pending_themes ?? [],
     edited_fields: c.edited_fields ?? [],
   }));
@@ -84,6 +87,8 @@ export interface CardInput {
   format_reason: string;
   published_ids: string[];
   announcement_activity_ids: string[];
+  /** Only for a nominee: the request(s) that named them. Must name this employee. */
+  evidence_request_ids?: string[];
 }
 
 /** Returns error messages; empty means the input can be saved. */
@@ -94,8 +99,16 @@ export function validateCardInput(input: CardInput, cards = loadCards()): string
   if (!Array.isArray(input.themes) || input.themes.length < 1 || input.themes.length > 3) errs.push("themes は1〜3個にしてください");
   if (!["talk", "lt", "blog"].includes(input.format)) errs.push("format は talk / lt / blog のどれかです");
   const acts = new Map(activities().map((a) => [a.id, a]));
-  if (!input.evidence_activity_ids?.length && !input.published_ids?.length) {
-    errs.push("根拠の activity id がありません（発信済みの取り組みなら published_ids を入れてください）");
+  if (!input.evidence_activity_ids?.length && !input.published_ids?.length && !input.evidence_request_ids?.length) {
+    errs.push("根拠の activity id がありません（発信済みの取り組みなら published_ids、指名された本人なら依頼のidを入れてください）");
+  }
+  if (input.evidence_request_ids?.length) {
+    const reqs = new Map(requests().map((r) => [r.id, r]));
+    for (const id of input.evidence_request_ids) {
+      const r = reqs.get(id);
+      if (!r) errs.push(`依頼 ${id} は存在しません`);
+      else if (r.nominated_employee_id !== input.employee_id) errs.push(`依頼 ${id} は ${input.employee_id} を指名していません`);
+    }
   }
   for (const id of input.evidence_activity_ids ?? []) {
     const a = acts.get(id);
@@ -169,6 +182,11 @@ export function upsertCard(input: CardInput): UpsertOutcome {
   const evidence = [...new Set(input.evidence_activity_ids ?? [])];
   const announcements = [...new Set(input.announcement_activity_ids ?? [])];
   const pubIds = [...new Set(input.published_ids ?? [])];
+  const reqIds = [...new Set(input.evidence_request_ids ?? [])];
+  const requestDate = () =>
+    requests()
+      .filter((r) => reqIds.includes(r.id))
+      .reduce((m, r) => ((r.received_at ?? "") > m ? r.received_at ?? "" : m), "");
 
   if (!input.card_id) {
     const card: Card = {
@@ -181,8 +199,9 @@ export function upsertCard(input: CardInput): UpsertOutcome {
       format_reason: input.format_reason.trim(),
       publication_status: statusFrom(pubIds),
       published_ids: pubIds,
-      latest_activity_date: latestDate([...evidence, ...announcements], pubIds),
+      latest_activity_date: latestDate([...evidence, ...announcements], pubIds) || requestDate(),
       announcement_activity_ids: announcements,
+      evidence_request_ids: reqIds,
       pending_themes: [],
       outreach_history: [],
       reviewed: false,
@@ -203,9 +222,10 @@ export function upsertCard(input: CardInput): UpsertOutcome {
   const facts = {
     evidence_activity_ids: mergedEvidence,
     announcement_activity_ids: mergedAnn,
+    evidence_request_ids: [...new Set([...prev.evidence_request_ids, ...reqIds])],
     published_ids: mergedPubs,
     publication_status: statusFrom(mergedPubs),
-    latest_activity_date: latestDate([...mergedEvidence, ...mergedAnn], mergedPubs),
+    latest_activity_date: latestDate([...mergedEvidence, ...mergedAnn], mergedPubs) || prev.latest_activity_date,
     updated_at: t,
   };
 
@@ -278,6 +298,7 @@ export function editCard(
     format_reason: patch.format_reason ?? prev.format_reason,
     published_ids: prev.published_ids,
     announcement_activity_ids: prev.announcement_activity_ids,
+    evidence_request_ids: prev.evidence_request_ids,
   };
   const errors = validateCardInput(next, cards);
   if (errors.length) return { ok: false, errors };
@@ -294,7 +315,8 @@ export function editCard(
     summary: next.summary.trim(),
     themes: clean(next.themes),
     evidence_activity_ids: [...new Set(next.evidence_activity_ids)],
-    latest_activity_date: latestDate([...next.evidence_activity_ids, ...prev.announcement_activity_ids], prev.published_ids),
+    latest_activity_date:
+      latestDate([...next.evidence_activity_ids, ...prev.announcement_activity_ids], prev.published_ids) || prev.latest_activity_date,
     format: next.format,
     format_reason: next.format_reason.trim(),
     reviewed: true,

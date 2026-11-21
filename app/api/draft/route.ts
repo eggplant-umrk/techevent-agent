@@ -4,6 +4,7 @@ import { draftCandidate, saveDraft } from "@/lib/board";
 import { activities } from "@/lib/data";
 import { runUsd, totalUsd } from "@/lib/usage";
 import { slotted } from "@/lib/apiSlots";
+import { userErrorText } from "@/lib/userError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ async function handlePost(req: Request) {
       total_usd: totalUsd(),
     });
   } catch (err) {
-    return Response.json({ error: err instanceof Error ? err.message : "不明なエラー" }, { status: 500 });
+    return Response.json({ error: userErrorText(err, { where: "下書き" }) }, { status: 500 });
   }
 }
 

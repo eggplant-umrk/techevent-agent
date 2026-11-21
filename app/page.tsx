@@ -385,6 +385,16 @@ export default function Home() {
     setResume(false);
   }
 
+  /** 「依頼ではなさそう」と読んだ1件を、人が依頼として進める（候補づくりは裏で続き、一覧の読み直しで出てくる） */
+  async function proceedInbox(id: string) {
+    try {
+      await api.inboxProceed(id);
+    } catch (err) {
+      setLog((l) => [...l, { kind: "note", tone: "error", text: `進められませんでした（${msg(err, "不明なエラー")}）` }]);
+    }
+    await refreshInbox(id);
+  }
+
   /** 依頼の状態だけを読み直す（結果を記録したあと。候補や作業ログはそのまま） */
   async function refreshInbox(id: string) {
     try {
@@ -635,6 +645,7 @@ export default function Home() {
             mock={api.mock}
             loading={mode === "inbox" && !!inboxId && !inbox}
             progress={mode === "inbox" ? inboxItems.find((x) => x.id === inboxId)?.progress ?? null : null}
+            onProceed={mode === "inbox" && inboxId ? () => void proceedInbox(inboxId) : undefined}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
           </RequestInput>

@@ -269,3 +269,179 @@ export function replySentence(dates: string[]): string | null {
   if (!dates.length) return null;
   return `${dates.map(dateLabel).join("・")}あたりなら調整しやすそうです（本人に確認します）。`;
 }
+
+// ---------------------------------------------------------------------------
+// 会話の中の日付を読む（コード。lib/intake.ts の日程の確かめから使う想定）
+//   読める形：2026-12-15・2026/12/15・2026.12.15(火)・2026年12月15日・12/15・12月15日・全角の数字、
+//             英語の月名（February 18, 2027・Feb. 18・18 February 2027）、
+//             「12月15日、16日」「12月15日と16日」「12/15・16」（2つ目は月を省いた日。2つの日付として数える）、
+//             「12/15〜16」「12月15日〜17日」（期間。1日には決めない）
+//   暦にない日付（2月30日・4月31日など）は「読めたが日付ではない」として返し、日程には決めない
+// ---------------------------------------------------------------------------
+export interface DateInText {
+  /** 会話の中の書き方そのまま */
+  text: string;
+  /** 正規化（NFKC）した文の中の位置 */
+  index: number;
+  /** 書かれていた年（なければ null） */
+  year: number | null;
+  month: number;
+  day: number;
+  /** 暦にある日付か（2月30日などは false） */
+  valid: boolean;
+  /** 期間（〜）の一部か */
+  in_range: boolean;
+}
+
+const EN_MONTH: Record<string, number> = {
+  jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3, apr: 4, april: 4, may: 5, jun: 6, june: 6,
+  jul: 7, july: 7, aug: 8, august: 8, sep: 9, sept: 9, september: 9, oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12,
+};
+const EN_MONTHS = Object.keys(EN_MONTH).sort((a, b) => b.length - a.length).join("|");
+
+/** 年・月・日が暦にあるか（年がなければ、うるう年も含めて2月29日までを認める） */
+function onCalendar(y: number | null, m: number, d: number): boolean {
+  if (m < 1 || m > 12 || d < 1) return false;
+  return d <= lastDay(y ?? 2028, m);
+}
+
+const NUM_DATE = /(?:(\d{4})\s*[-/.年]\s*)?(\d{1,2})\s*[-/.月]\s*(\d{1,2})\s*日?/g;
+const EN_MD = new RegExp(String.raw`\b(${EN_MONTHS})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s+(\d{4}))?`, "gi");
+const EN_DM = new RegExp(String.raw`\b(\d{1,2})(?:st|nd|rd|th)?\s+(${EN_MONTHS})\.?(?:,?\s+(\d{4}))?\b`, "gi");
+/** 日付のすぐあとの「、16日」「と16日」「・16」（月を省いた2つ目の日） */
+//   2つ目の日は「日」で終わるか、すぐあとが区切り・文の終わりのときだけ（「12/15、19時から」「12/15、20名」の 19・20 は日付にしない）
+const MORE_DAY = /^\s*(?:[、,・]|と|か|または|又は|および|及び|or|and)\s*(\d{1,2})(?:\s*日|(?=\s*(?:[(（)）、,。・]|$|と|か|または|or\b|and\b)))/i;
+/** 日付のすぐあとの「〜16日」「~12/17」（期間の終わり） */
+const RANGE_TO = /^\s*[〜~～\-–]\s*(?:(\d{4})\s*[-/.年]\s*)?(?:(\d{1,2})\s*[-/.月]\s*)?(\d{1,2})(?:\s*日|(?![\d:：時分名人件]))/;
+
+/** 会話（または引用）の中の日付をすべて読む。重なる読み方は先に見つけたものを使う */
+export function datesInText(raw: string): DateInText[] {
+  const text = raw.normalize("NFKC");
+  const found: DateInText[] = [];
+  const taken: Array<[number, number]> = [];
+  const free = (a: number, b: number) => taken.every(([x, y]) => b <= x || a >= y);
+  const add = (t: string, index: number, year: number | null, month: number, day: number, inRange = false) => {
+    found.push({ text: t, index, year, month, day, valid: onCalendar(year, month, day), in_range: inRange });
+  };
+  const follow = (end: number, year: number | null, month: number) => {
+    // 月を省いた2つ目の日（「、16日」）と、期間の終わり（「〜16日」）
+    let rest = text.slice(end);
+    const more = rest.match(MORE_DAY);
+    if (more) {
+      add(more[0].trim(), end + (more.index ?? 0), year, month, Number(more[1]));
+      taken.push([end, end + more[0].length]);
+      return true;
+    }
+    const to = rest.match(RANGE_TO);
+    if (to) {
+      add(to[0].trim(), end, to[1] ? Number(to[1]) : year, to[2] ? Number(to[2]) : month, Number(to[3]), true);
+      taken.push([end, end + to[0].length]);
+      return true;
+    }
+    return false;
+  };
+
+  // 英語の月名（数字の読み方より先。「Feb 18, 2027」の 18, 2027 を数字の日付と読まないように）
+  for (const re of [EN_MD, EN_DM]) {
+    for (const m of text.matchAll(re)) {
+      const i = m.index ?? 0;
+      if (!free(i, i + m[0].length)) continue;
+      const md = re === EN_MD;
+      const month = EN_MONTH[(md ? m[1] : m[2]).toLowerCase().replace(/\.$/, "")];
+      const day = Number(md ? m[2] : m[1]);
+      taken.push([i, i + m[0].length]);
+      const year = m[3] ? Number(m[3]) : null;
+      add(m[0], i, year, month, day, RANGE_TO.test(text.slice(i + m[0].length)));
+      follow(i + m[0].length, year, month);
+    }
+  }
+  for (const m of text.matchAll(NUM_DATE)) {
+    const i = m.index ?? 0;
+    if (!free(i, i + m[0].length)) continue;
+    const year = m[1] ? Number(m[1]) : null;
+    // ピリオド区切りは年があるときだけ日付とみなす（「1.5倍」「v2.3」などを読まない）
+    if (!year && /^\d{1,2}\s*\.\s*\d/.test(m[0])) continue;
+    // 「1-2人」「3-4件」のようなハイフンの数の幅は、年がなければ読まない
+    if (!year && /^\d{1,2}\s*-\s*\d/.test(m[0])) continue;
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    if (month < 1 || month > 12) continue;
+    taken.push([i, i + m[0].length]);
+    const inRange = RANGE_TO.test(text.slice(i + m[0].length));
+    add(m[0], i, year, month, day, inRange);
+    follow(i + m[0].length, year, month);
+  }
+  return found.sort((a, b) => a.index - b.index);
+}
+
+/** 年が書かれていない日付に年を付ける。受信日の30日前より前になるなら翌年（lib/intake.ts の checkDate と同じ決め方） */
+export function withYear(d: Pick<DateInText, "year" | "month" | "day">, receivedAt: string): string {
+  if (d.year) return ymd(d.year, d.month, d.day);
+  const received = receivedAt.slice(0, 10);
+  const y = Number(received.slice(0, 4));
+  const limit = addDays(received, -30);
+  const same = ymd(y, d.month, d.day);
+  return same < limit ? ymd(y + 1, d.month, d.day) : same;
+}
+
+/**
+ * 引用（会話の一節）から、日程をちょうど1日に決められるか。決められなければ date は null で、理由を返す。
+ * - 日付がない・2つ以上ある（「12月15日、16日」も2つ）・期間（〜）・暦にない（2月30日）なら決めない
+ * - 「候補」「未定」などの言い回しの判定は、呼ぶ側（lib/intake.ts の NOT_FIXED）が続けて行う
+ */
+export function decideDate(quote: string, receivedAt: string): { date: string | null; reason: string | null } {
+  const ds = datesInText(quote);
+  const head = quote.slice(0, 30);
+  if (ds.length === 0) return { date: null, reason: `「${head}」からは日付が1日に決まりません` };
+  const bad = ds.find((d) => !d.valid);
+  if (bad) return { date: null, reason: `「${bad.text}」は暦にない日付なので、日程に決めません` };
+  if (ds.length > 1 || ds[0].in_range) return { date: null, reason: `日程は「${head}」で、まだ1日に決まっていません` };
+  return { date: withYear(ds[0], receivedAt), reason: null };
+}
+
+/**
+ * 会話（NFKC 済み）の中で引用の位置を探す。NFKC にそろえ、空白（改行を含む）の違いは無視する
+ * （lib/intake.ts の読み取りの照合と同じ決め方）。見つかれば会話の中の [at, end)、なければ at = -1
+ */
+export function findQuote(normText: string, quote: string): { at: number; end: number } {
+  const q = quote.normalize("NFKC").replace(/\s+/g, "");
+  if (!q) return { at: -1, end: -1 };
+  // 空白を除いた会話と、その1文字ずつが元の会話のどこにあったか
+  let compact = "";
+  const pos: number[] = [];
+  for (let i = 0; i < normText.length; i++) {
+    if (/\s/.test(normText[i])) continue;
+    compact += normText[i];
+    pos.push(i);
+  }
+  const c = compact.indexOf(q);
+  if (c < 0) return { at: -1, end: -1 };
+  return { at: pos[c], end: pos[c + q.length - 1] + 1 };
+}
+
+/**
+ * 会話全体の中にある、決めた日付とは別の日付（暦にあるものだけ。年を付けた形）。
+ * 引用の前にあるか後にあるか（before_quote）も返す。会話のあとのほうで日程が変わることがあるので、どう扱うかは呼ぶ側が決める。
+ * 例：「開催は 2026.12.15(火) です。※チラシには12/16（水）と…」で 2026-12-15 を決めたら、12/16 を返す
+ */
+export function otherDatesInConversation(
+  text: string,
+  quote: string,
+  decided: string,
+  receivedAt: string,
+): Array<{ date: string; text: string; before_quote: boolean }> {
+  const norm = text.normalize("NFKC");
+  const { at: qAt, end: qEnd } = findQuote(norm, quote);
+  const out: Array<{ date: string; text: string; before_quote: boolean }> = [];
+  const seen = new Set<string>();
+  for (const d of datesInText(norm)) {
+    if (!d.valid) continue;
+    const date = withYear(d, receivedAt);
+    if (date === decided || seen.has(date)) continue;
+    // 引用の中の日付は、引用そのものの判定（decideDate）で扱うので、ここでは外の日付だけ
+    if (qAt >= 0 && d.index >= qAt && d.index < qEnd) continue;
+    seen.add(date);
+    out.push({ date, text: d.text, before_quote: qAt >= 0 ? d.index < qAt : false });
+  }
+  return out;
+}

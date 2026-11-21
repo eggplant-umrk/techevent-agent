@@ -5,6 +5,7 @@
 //   - npm run reset:demo で data/runtime/ を片付けると、元のデータだけの初期状態に戻る
 //   - 評価・テストは DATA_RUNTIME_DIR を一時フォルダにして、元のデータだけで動く
 import fs from "node:fs";
+import { writeFileAtomic } from "./fileStore";
 import path from "node:path";
 import { dataSource } from "./dataSource";
 
@@ -23,10 +24,9 @@ export function readJsonFile<T>(file: string, fallback: T): T {
 }
 
 function writeJsonFile(file: string, value: unknown) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
   const text = JSON.stringify(value, null, 2) + "\n";
   if (fs.existsSync(/*turbopackIgnore: true*/ file) && fs.readFileSync(/*turbopackIgnore: true*/ file, "utf-8") === text) return;
-  fs.writeFileSync(/*turbopackIgnore: true*/ file, text, "utf-8");
+  writeFileAtomic(file, text); // 一時ファイルに書いてから置き換える（書きかけを残さない）
 }
 
 // ---------------------------------------------------------------------------

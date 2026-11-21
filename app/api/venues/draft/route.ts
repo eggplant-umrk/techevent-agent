@@ -4,6 +4,7 @@ import { deadlineDate, externalEventById, isClosed, requiredCautions } from "@/l
 import { draftVenueOutreach } from "@/lib/heavy";
 import { runUsd, totalUsd } from "@/lib/usage";
 import { slotted } from "@/lib/apiSlots";
+import { userErrorText } from "@/lib/userError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ async function handlePost(req: Request) {
     });
     return Response.json({ draft: r.value, model: r.model, fell_back: r.fellBack, run_usd: runUsd(b.run_id), total_usd: totalUsd() });
   } catch (err) {
-    return Response.json({ error: err instanceof Error ? err.message : "不明なエラー" }, { status: 500 });
+    return Response.json({ error: userErrorText(err, { where: "出し先の下書き" }) }, { status: 500 });
   }
 }
 

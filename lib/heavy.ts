@@ -5,7 +5,7 @@ import { getClient } from "./anthropic";
 import { HEAVY_FALLBACK_MODEL } from "./config";
 import { activities, employeeById, employees, type SpeakingRequest } from "./data";
 import { INTAKE_LABEL } from "./intake";
-import { fallbackOrganizerReply, ORGANIZER_REPLY_MAX, organizerReplyProblems } from "./organizerReply";
+import { CONTACT_PROBLEM, fallbackOrganizerReply, ORGANIZER_REPLY_MAX, organizerReplyProblems } from "./organizerReply";
 import { chooseModels, recordUsage } from "./usage";
 import type { UsageEntry } from "./data";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
@@ -222,7 +222,7 @@ export async function draftOrganizerReply(
 - 社内の評価に当たる情報は書かない：忙しさ・予定・登壇回数や経験・アンケートの反応・ほかの候補や比較・社内の判断。ほかの社員の名前も書かない
 - ${PLAIN_TEXT_RULE}`;
   const facts = organizerReplyFacts(request, candidate);
-  const problemsOf = (t: string) => [...internalTermProblems([{ where: "主催者への返事", text: t }]), ...organizerReplyProblems(t, candidate.name, others)];
+  const problemsOf = (t: string) => [...internalTermProblems([{ where: "主催者への返事", text: t }]), ...organizerReplyProblems(t, candidate.name, others, { conversation: request.message, facts })];
   let cost = 0;
   let model = "";
   let reply = "";
@@ -235,6 +235,8 @@ export async function draftOrganizerReply(
     reply = ((JSON.parse(r.text || "{}") as { organizer_reply?: string }).organizer_reply ?? "").trim();
     problems = problemsOf(reply);
     if (!problems.length) return { reply, note: null, model, cost_usd: cost };
+    // 電話番号・メールアドレスの形が出たら、作り直さずに決まった文に差し替える
+    if (problems.some((p) => p.startsWith(CONTACT_PROBLEM))) break;
   }
   return {
     reply: safeOrganizerReply(request, candidate.name, candidate.theme, others),

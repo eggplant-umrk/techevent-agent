@@ -30,6 +30,8 @@ function stageLine(it: BoardListItem): string {
   if (s.stage === "new") return "開いて「ネタ帳から候補を出す」を押すと、候補を準備します";
   if (s.stage === "preparing") return progressText(it.progress ?? progressOf("reading"));
   if (s.stage === "error") return it.error ?? "候補を出せませんでした";
+  // 依頼ではない・不適切と読んだもの（候補づくりは走らせていない）。「候補なし」と見分けられるように
+  if (it.kind_label) return `${it.kind_label}${it.kind_reason ? `（${it.kind_reason}）` : ""}`;
   if (it.no_fit) return "合う候補は見つかりませんでした（理由を確認できます）";
   // 候補は2人まで出して「ほかN人」（名前が途中で切れないように）
   const shown = it.candidate_names.slice(0, 2).join("・");

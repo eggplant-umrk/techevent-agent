@@ -5,6 +5,7 @@
 // - 声かけ文・主催者への返事の下書きを保存して、承諾済みの依頼を開き直したときにも出す
 // 評価用のデータ（requests.json）と結合テストの動きは変えない（ここは画面用の読み書きだけ）。
 import { originalUrl } from "./originalUrl";
+import { writeJsonAtomic } from "./fileStore";
 import fs from "node:fs";
 import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
@@ -29,8 +30,7 @@ function readJson<T>(file: string, fallback: T): T {
   }
 }
 function writeJson(file: string, value: unknown) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", "utf-8");
+  writeJsonAtomic(file, value);
 }
 
 // ---- サンプルの依頼の候補（画面で出したもの） --------------------------------------------

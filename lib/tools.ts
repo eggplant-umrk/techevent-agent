@@ -14,6 +14,7 @@ import {
   type OutcomeResult,
 } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
+import { filterCards, getCardById, loadCards, outreachSummary, type CardFilter } from "./cards";
 
 const clip = (s: string, n = BODY_CHARS) => (s.length > n ? s.slice(0, n) + "…" : s);
 const nameOf = (id: string) => employeeById(id)?.name ?? id;
@@ -353,7 +354,147 @@ export function recordOutcome(args: {
   return entry;
 }
 
+// ---------------------------------------------------------------------------
+// Notebook (cards) tools
+// ---------------------------------------------------------------------------
+export const SEARCH_CARDS_DEF: Anthropic.Tool = {
+  name: "search_cards",
+  description:
+    "ネタ帳（カード）を探す。依頼への提案では最初にこれを使う。queryはスペース区切りのキーワード。filterで未発信だけ・登壇経験なし・事業部・確認済みだけに絞れる。上位10枚を、テーマ案・要約・発信状況・確認済みか・打診履歴の要約つきで返す。",
+  input_schema: {
+    type: "object",
+    properties: {
+      query: { type: "string", description: "キーワード（スペース区切り）。空なら全件を新しい順" },
+      filter: {
+        type: "object",
+        properties: {
+          unpublished_only: { type: "boolean" },
+          no_talk_experience: { type: "boolean" },
+          business_unit: { type: "string" },
+          reviewed_only: { type: "boolean" },
+        },
+        additionalProperties: false,
+      },
+    },
+    required: ["query"],
+    additionalProperties: false,
+  },
+};
+
+export const GET_CARD_DEF: Anthropic.Tool = {
+  name: "get_card",
+  description: "カード1枚の詳細（根拠の投稿のタイトルと日付、発信済みの記録、打診履歴のすべて）を見る。",
+  input_schema: {
+    type: "object",
+    properties: { card_id: { type: "string" } },
+    required: ["card_id"],
+    additionalProperties: false,
+  },
+};
+
+export const UPSERT_CARD_DEF: Anthropic.Tool = {
+  name: "upsert_card",
+  description:
+    "カードを作る（card_id=null）か、既存のカードを更新する（card_id を指定）。ネタ帳の更新のときだけ使う。根拠は、この社員本人の実在する activity id だけ。存在しないidや他人のidは保存されずエラーが返る。",
+  strict: true,
+  input_schema: {
+    type: "object",
+    properties: {
+      card_id: { type: ["string", "null"], description: "更新するカードのid。新しいカードはnull" },
+      employee_id: { type: "string" },
+      summary: { type: "string", description: "取り組みの要約（2〜3文。何をして、どんな成果か。数字があれば入れる）" },
+      themes: {
+        type: "array",
+        items: { type: "string" },
+        description: "話せるテーマ案を1〜3個。本人の取り組みから絞った具体的なタイトル",
+      },
+      evidence_activity_ids: { type: "array", items: { type: "string" } },
+      format: { type: "string", enum: ["talk", "lt", "blog"], description: "おすすめの形" },
+      format_reason: { type: "string", description: "その形をすすめる理由（1文）" },
+      published_ids: {
+        type: "array",
+        items: { type: "string" },
+        description: "この取り組みをすでに発信した published の id。なければ空配列",
+      },
+    },
+    required: ["card_id", "employee_id", "summary", "themes", "evidence_activity_ids", "format", "format_reason", "published_ids"],
+    additionalProperties: false,
+  },
+};
+
+export function searchCards(input: Input) {
+  const query = str(input.query) ?? "";
+  const filter = (input.filter && typeof input.filter === "object" ? input.filter : {}) as CardFilter;
+  const terms = query
+    .split(/[\s　、,]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  const emps = new Map(employees().map((e) => [e.id, e]));
+  const acts = new Map(activities().map((a) => [a.id, a]));
+  const cards = filterCards(loadCards(), filter);
+  const scored = cards
+    .map((c) => {
+      const e = emps.get(c.employee_id);
+      const themes = c.themes.join(" ").toLowerCase();
+      const summary = c.summary.toLowerCase();
+      const tags = (e?.expertise_tags ?? []).join(" ").toLowerCase();
+      const ev = c.evidence_activity_ids.map((id) => acts.get(id)?.title ?? "").join(" ").toLowerCase();
+      let score = terms.length ? 0 : 1;
+      for (const t of terms) {
+        if (themes.includes(t)) score += 3;
+        else if (summary.includes(t)) score += 2;
+        else if (tags.includes(t) || ev.includes(t)) score += 1;
+      }
+      if (score > 0 && c.reviewed) score += 1; // reviewed cards first among equals
+      return { c, e, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score || (b.c.latest_activity_date > a.c.latest_activity_date ? 1 : -1));
+  return {
+    total_cards: cards.length,
+    total_hits: scored.length,
+    results: scored.slice(0, SEARCH_LIMIT).map(({ c, e, score }) => ({
+      card_id: c.card_id,
+      employee: `${c.employee_id} ${e?.name ?? ""}`,
+      unit: e?.business_unit,
+      talks: e?.past_talk_count,
+      workload: e?.workload,
+      themes: c.themes,
+      summary: clip(c.summary, 120),
+      format: c.format,
+      publication_status: c.publication_status,
+      reviewed: c.reviewed,
+      latest_activity_date: c.latest_activity_date,
+      outreach: outreachSummary(c),
+      score,
+    })),
+  };
+}
+
+export function getCard(input: Input) {
+  const id = str(input.card_id) ?? "";
+  const c = getCardById(id);
+  if (!c) return { error: `カード ${id} は見つかりません` };
+  const acts = new Map(activities().map((a) => [a.id, a]));
+  const pubs = new Map(published().map((p) => [p.id, p]));
+  const e = employeeById(c.employee_id);
+  return {
+    ...c,
+    employee: e ? `${e.id} ${e.name}｜${e.business_unit}｜忙しさ${e.workload}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}` : c.employee_id,
+    evidence: c.evidence_activity_ids.map((id) => {
+      const a = acts.get(id);
+      return a ? `${a.id} ${a.date} [${a.type}] ${a.title}` : id;
+    }),
+    published: c.published_ids.map((id) => {
+      const p = pubs.get(id);
+      return p ? `${p.id} ${p.published_at.slice(0, 10)} ${p.genre} ${p.title}` : id;
+    }),
+  };
+}
+
 const IMPL: Record<string, (input: Input) => unknown> = {
+  search_cards: searchCards,
+  get_card: getCard,
   read_learnings: () => readLearningsTool(),
   search_activities: searchActivities,
   list_employees: listEmployees,

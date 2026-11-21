@@ -144,6 +144,22 @@ function sampleList(): BoardListItem[] {
     });
 }
 
+/** 同じ文かどうかを比べる形（前後の空白・改行の違い、全角の空白、空白の続きは同じとみなす） */
+export const sameTextKey = (text: string) => text.replace(/\r\n?/g, "\n").replace(/[ \t　]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{2,}/g, "\n").trim();
+
+/**
+ * 同じ文の依頼が、すでに受信箱にあるか（アーカイブ〔開催日が過ぎたもの〕は除く）。あればその id。
+ * 貼り直し・連打で同じ依頼が何件も入らないように、追加の窓口が使う。
+ */
+export function findActiveDuplicate(text: string): string | null {
+  const key = sameTextKey(text);
+  if (!key) return null;
+  const hit = listInbox()
+    .filter((it) => sameTextKey(it.text) === key)
+    .find((it) => stateOf(it.id, it.status, inboxEventDate(it)).stage !== "archived");
+  return hit?.id ?? null;
+}
+
 /** 受信箱の一覧：届いた依頼（開催日が過ぎたものはアーカイブへ）とサンプルの依頼。新しい順 */
 export function boardList(): BoardListItem[] {
   const inbox = listInbox()

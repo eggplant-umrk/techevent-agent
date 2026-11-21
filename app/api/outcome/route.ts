@@ -25,7 +25,20 @@ const lastFor = (card: Card, requestId: string) => card.outreach_history.filter(
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as Body | null;
-  if (!body || typeof body !== "object" || typeof body.request_id !== "string") {
+  // JSON でない本文・形の違う本文は、500 ではなく 400 と理由
+  const c0 = body?.candidate;
+  if (
+    !body ||
+    typeof body !== "object" ||
+    typeof body.request_id !== "string" ||
+    (body.card_id != null && typeof body.card_id !== "string") ||
+    (c0 != null &&
+      (typeof c0 !== "object" ||
+        typeof c0.employee_id !== "string" ||
+        typeof c0.theme !== "string" ||
+        typeof c0.reason !== "string" ||
+        (c0.evidence_activity_ids != null && (!Array.isArray(c0.evidence_activity_ids) || c0.evidence_activity_ids.some((x) => typeof x !== "string")))))
+  ) {
     return Response.json({ error: "送られた内容が読めません" }, { status: 400 });
   }
   if (!RESULTS.includes(body.result)) return Response.json({ error: "result が不正です" }, { status: 400 });

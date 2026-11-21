@@ -374,6 +374,9 @@ export function mockApi(real: Api): Api {
     },
     async inboxAdd(text) {
       await wait(200);
+      // 本物と同じ：同じ文の依頼がもうあれば、足さずにそれを開く
+      const norm = (t: string) => t.replace(/\r\n?/g, "\n").replace(/[ \t　]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{2,}/g, "\n").trim();
+      for (const [dupId, t] of inboxTexts) if (norm(t) === norm(text) && inboxItems.some((x) => x.id === dupId)) return { id: dupId, duplicate: true };
       const id = `inb-mock-${inboxItems.length + 1}`;
       const now = new Date().toISOString();
       const title = text.split(/\r?\n/).find((l) => l.trim()) ?? text;

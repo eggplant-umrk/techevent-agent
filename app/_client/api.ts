@@ -60,7 +60,8 @@ export interface Api {
   /** 受信箱の一覧（新しい順） */
   inbox(): Promise<BoardListItem[]>;
   /** 手で追加（受信箱に入る入口の1つ） */
-  inboxAdd(text: string): Promise<{ id: string }>;
+  /** 同じ文の依頼がすでにあれば、足さずにその id と duplicate: true */
+  inboxAdd(text: string): Promise<{ id: string; duplicate?: boolean }>;
   /** 受信箱の1件（保存した候補と作業ログつき） */
   inboxDetail(id: string): Promise<BoardDetail>;
   /** 開いた印を付ける */

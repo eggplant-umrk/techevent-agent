@@ -40,10 +40,18 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const body = (await req.json()) as {
+  const body = (await req.json().catch(() => null)) as {
     card_id: string;
     patch: Partial<Pick<Card, "summary" | "themes" | "format" | "format_reason">>;
-  };
+  } | null;
+  // JSON でない本文・形の違う本文は、500 ではなく 400 と理由
+  if (!body || typeof body !== "object" || typeof body.card_id !== "string" || !body.patch || typeof body.patch !== "object" || Array.isArray(body.patch)) {
+    return Response.json({ error: "送られた内容が読めません" }, { status: 400 });
+  }
+  const p = body.patch;
+  if ((p.summary !== undefined && typeof p.summary !== "string") || (p.format_reason !== undefined && typeof p.format_reason !== "string") || (p.format !== undefined && typeof p.format !== "string") || (p.themes !== undefined && (!Array.isArray(p.themes) || p.themes.some((t) => typeof t !== "string")))) {
+    return Response.json({ error: "送られた内容が読めません" }, { status: 400 });
+  }
   const out = editCard(body.card_id, body.patch);
   if (!out.ok) return Response.json({ error: out.errors.join(" / ") }, { status: 400 });
   return Response.json({ ok: true, card: out.card });

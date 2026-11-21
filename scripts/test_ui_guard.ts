@@ -63,6 +63,83 @@ async function main() {
     check("結果の記録：JSON でない本文は 400 と「送られた内容が読めません」", bad.status === 400 && badJson?.error === "送られた内容が読めません", `${bad.status}`);
   }
 
+  // ---- 4. JSON でない本文・形の違う本文は 400（docs/abuse_test.md の3つの窓口） ----
+  {
+    const H = { host: "localhost:3000", "content-type": "application/json" };
+    const { PATCH: cardsPatch } = await import("../app/api/cards/route");
+    const { POST: pending } = await import("../app/api/cards/pending/route");
+    const { POST: agent } = await import("../app/api/agent/route");
+    const { POST: outcome } = await import("../app/api/outcome/route");
+    const call = async (name: string, fn: (r: Request) => Promise<Response>, url: string, method: string, body: string) => {
+      const r = await fn(new Request(`http://localhost:3000${url}`, { method, headers: H, body }));
+      const j = (await r.json().catch(() => null)) as { error?: string } | null;
+      check(`${name}`, r.status === 400 && j?.error === "送られた内容が読めません", `${r.status} ${j?.error ?? "（本文なし）"}`);
+    };
+    await call("カードを直す（PATCH /api/cards）：JSON でない本文は 400", cardsPatch, "/api/cards", "PATCH", "{壊れた");
+    await call("カードを直す：形の違う本文（patch が文字列）は 400", cardsPatch, "/api/cards", "PATCH", JSON.stringify({ card_id: "card-e011-01", patch: "x" }));
+    await call("カードを直す：テーマが文字列の並びでなければ 400", cardsPatch, "/api/cards", "PATCH", JSON.stringify({ card_id: "card-e011-01", patch: { themes: [1, 2] } }));
+    await call("候補づくり（/api/agent）：JSON でない本文は 400", agent, "/api/agent", "POST", "request_id=req001");
+    await call("候補づくり：request_id が文字列でなければ 400", agent, "/api/agent", "POST", JSON.stringify({ request_id: 12 }));
+    await call("結果の記録（/api/outcome）：空の本文は 400", outcome, "/api/outcome", "POST", "");
+    await call("結果の記録：candidate の形が違えば 400", outcome, "/api/outcome", "POST", JSON.stringify({ request_id: "req001", card_id: null, result: "approved", candidate: { employee_id: "e002", theme: 3 } }));
+    await call("新しいテーマ案（/api/cards/pending）：JSON でない本文は 400", pending, "/api/cards/pending", "POST", "null");
+    const ok = await cardsPatch(new Request("http://localhost:3000/api/cards", { method: "PATCH", headers: H, body: JSON.stringify({ card_id: "card-e011-01", patch: { summary: "直した要約" } }) }));
+    check("正しい本文は今までどおり通る", ok.status === 200, `${ok.status}`);
+  }
+
+  // ---- 5. 同じ会話の重複：足さずに、受信箱にある依頼を開く ----
+  {
+    const { registerInbox, listInbox } = await import("../lib/inbox");
+    const { findActiveDuplicate } = await import("../lib/board");
+    const { POST: inboxPost } = await import("../app/api/inbox/route");
+    const text = "@organizer 来月のLT会でLayerXさんの枠を1つ用意しています！\n12月18日（金）19時からです。テーマは自由です。";
+    const first = registerInbox({ text, source: "manual" }); // 候補づくりは始めない（API を使わない）
+    const n = listInbox().length;
+    const again = await inboxPost(
+      new Request("http://localhost:3000/api/inbox", {
+        method: "POST",
+        headers: { host: "localhost:3000", "content-type": "application/json" },
+        body: JSON.stringify({ text: `  ${text.replace("\n", "\r\n\r\n")}　 `, source: "manual" }),
+      }),
+    );
+    const j = (await again.json()) as { id?: string; duplicate?: boolean };
+    check("同じ文（空白・改行の違いだけ）を貼り直したら、足さずに前の依頼を返す", again.status === 200 && j.id === first.id && j.duplicate === true && listInbox().length === n, JSON.stringify(j));
+    const slack = await inboxPost(
+      new Request("http://localhost:3000/api/inbox", {
+        method: "POST",
+        headers: { host: "localhost:3000", "content-type": "application/json" },
+        body: JSON.stringify({ text, source: "slack", meta: { channel: "C1", ts: "1.2" } }),
+      }),
+    );
+    const sj = (await slack.json()) as { id?: string; duplicate?: boolean };
+    check("Slack から同じ文が来ても足さない（連投）", sj.id === first.id && sj.duplicate === true && listInbox().length === n);
+    check("違う文は重複にしない", findActiveDuplicate(text + "\n会場は渋谷です。") === null);
+    const past = registerInbox({ text: "LT会のご依頼です。2026年10月2日（金）19時から、テーマは自由です。", source: "manual" });
+    check("開催日が過ぎた依頼（アーカイブ）と同じ文なら、重複にしない（新しく足す）", findActiveDuplicate(past.text) === null);
+    const page = fs.readFileSync(path.join(process.cwd(), "app", "page.tsx"), "utf-8");
+    check("画面：同じ依頼のときは、その依頼を開いて「同じ依頼がもうあります」と出す", page.includes("同じ依頼がもうあります") && /if \(duplicate\) setDupNotice/.test(page));
+    const mock = fs.readFileSync(path.join(process.cwd(), "app", "_client", "mock.ts"), "utf-8");
+    check("?mock でも同じ動き", mock.includes("duplicate: true"));
+  }
+
+  // ---- 6. フォント：Google Fonts から取らず、手元のファイルを使う ----
+  {
+    const read = (f: string) => fs.readFileSync(path.join(process.cwd(), f), "utf-8");
+    const layout = read("app/layout.tsx");
+    check("画面は Google Fonts（next/font/google）を使わない", !layout.includes("next/font/google") && layout.includes('import "./fonts.css"'));
+    const css = read("app/fonts.css");
+    const urls = [...css.matchAll(/url\("\/fonts\/([^"]+)"\)/g)].map((m) => m[1]);
+    const missing = urls.filter((u) => !fs.existsSync(path.join(process.cwd(), "public", "fonts", u)));
+    check("フォントのファイルは手元（public/fonts/）にあり、外の URL を読まない", urls.length > 100 && !missing.length && !/https?:\/\//.test(css.replace(/\/\*[\s\S]*?\*\//g, "")), `${urls.length}件・足りない${missing.length}件`);
+    check("Inter と Noto Sans JP の両方がある", /font-family:"Inter"/.test(css) && /font-family:"Noto Sans JP"/.test(css));
+    const g = read("app/globals.css");
+    check("読めないときは端末の文字で出す（font-family の最後に端末の文字）", /font-family: "Inter", "Noto Sans JP", [^;]*system-ui, sans-serif;/.test(g) && !g.includes("var(--font-"));
+    const src = [layout, g, read("next.config.ts")].join("\n");
+    check("どこからも fonts.googleapis.com・fonts.gstatic.com を読まない", !/fonts\.(googleapis|gstatic)\.com/.test(src));
+    const { config } = await import("../proxy");
+    check("フォントは入口（合言葉）を通さずに読める（合言葉の画面でもフォントが出る）", config.matcher.some((m: string) => m.includes("fonts/")));
+  }
+
   // ---- 2. 生のエラー文 ----
   {
     const { userErrorText, apiErrorKind } = await import("../lib/userError");

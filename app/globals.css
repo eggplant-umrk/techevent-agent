@@ -29,7 +29,8 @@ html, body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-inter), var(--font-noto), "Noto Sans JP", system-ui, sans-serif;
+  /* フォントは手元のファイル（app/fonts.css・public/fonts/）。読めないときは端末の文字で出す */
+  font-family: "Inter", "Noto Sans JP", "Yu Gothic UI", "Hiragino Sans", "Meiryo", system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

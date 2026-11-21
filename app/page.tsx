@@ -70,6 +70,8 @@ export default function Home() {
   const [cards, setCards] = useState<NotebookCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** 同じ文の依頼を貼ったとき：新しく足さずに前の依頼を開いたことを知らせる */
+  const [dupNotice, setDupNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
   const [nbRunning, setNbRunning] = useState(false);
   const [nbLog, setNbLog] = useState<NbLogLine[]>([]);
@@ -425,6 +427,7 @@ export default function Home() {
   }
 
   async function openInbox(id: string) {
+    setDupNotice(null);
     revealPanel();
     setTabState("inbox");
     setMode("inbox");
@@ -448,10 +451,11 @@ export default function Home() {
     if (!text) return;
     setAdding(true);
     try {
-      const { id } = await api.inboxAdd(text);
+      const { id, duplicate } = await api.inboxAdd(text);
       setCustomText("");
       await loadInbox();
       await openInbox(id);
+      if (duplicate) setDupNotice("同じ依頼がもうあります。前に追加した依頼を開きました");
     } catch (err) {
       setLog([{ kind: "note", tone: "error", text: `受信箱に追加できませんでした（${msg(err, "不明なエラー")}）。もう一度押してください。` }]);
     } finally {
@@ -631,6 +635,11 @@ export default function Home() {
         />
       ) : (
         <>
+          {dupNotice && (
+            <p className="banner notice-warn" role="status">
+              {dupNotice}
+            </p>
+          )}
           <RequestInput
             mode={mode}
             onMode={setMode}

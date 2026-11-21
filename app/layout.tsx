@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_JP } from "next/font/google";
+// フォントは Google Fonts から取らず、手元のファイル（app/fonts.css・public/fonts/）を使う。会場でネットにつながらなくても落ちない
+import "./fonts.css";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const noto = Noto_Sans_JP({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-noto", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   title: "ネタ帳Agent",
@@ -12,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja" className={`${inter.variable} ${noto.variable}`}>
+    <html lang="ja">
       <body>{children}</body>
     </html>
   );

@@ -9,7 +9,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 async function handlePost(req: Request) {
-  const body = (await req.json()) as { request_id?: string; custom_text?: string };
+  const body = (await req.json().catch(() => null)) as { request_id?: string; custom_text?: string } | null;
+  // JSON でない本文・形の違う本文は、500 ではなく 400 と理由
+  if (!body || typeof body !== "object" || (body.request_id !== undefined && typeof body.request_id !== "string") || (body.custom_text !== undefined && typeof body.custom_text !== "string")) {
+    return Response.json({ error: "送られた内容が読めません" }, { status: 400 });
+  }
   const request = resolveRequest(body);
   if (!request) return Response.json({ error: "依頼が見つかりません" }, { status: 400 });
 

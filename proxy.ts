@@ -52,6 +52,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // 画面と /api のすべて（Next.js の静的ファイルとアイコンは除く）
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // 画面と /api のすべて（Next.js の静的ファイル・アイコン・フォント〔public/fonts/〕は除く。合言葉の画面でもフォントが読めるように）
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|fonts/).*)"],
 };

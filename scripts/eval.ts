@@ -47,6 +47,28 @@ process.env.MORE_SOURCES = "off"; // ブログと Slack の一部も入れない
 
 const PASS_RATE = 0.9;
 
+const LATEST_FILE = () => path.join(process.cwd(), "docs", "eval_latest.json");
+/**
+ * 最新の結果（docs/eval_latest.json）に、終わった項目から順に足して保存する（API を使う実行だけ）。
+ * 途中で止まっても（金額の上限など）、そこまでの結果が残る。今回流さなかった項目（アンケート・書き戻しなど）は前の結果のまま。
+ * 依頼は request_id ごと、出し先は card_id ごとに置き換え、ほかの項目は値があるときだけ置き換える。
+ */
+function mergeLatest(patch: Record<string, unknown>) {
+  const file = LATEST_FILE();
+  const prev = fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as Record<string, unknown>) : {};
+  const next: Record<string, unknown> = { ...prev };
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === null || v === undefined) continue;
+    if (k === "rows" || k === "venue_cases") {
+      const key = k === "rows" ? "request_id" : "card_id";
+      const old = ((prev[k] as Array<Record<string, unknown>>) ?? []).filter((x) => !(v as Array<Record<string, unknown>>).some((n) => n[key] === x[key]));
+      next[k] = [...old, ...(v as unknown[])];
+    } else next[k] = v;
+  }
+  next.at = new Date().toISOString();
+  fs.writeFileSync(file, JSON.stringify(next, null, 2));
+}
+
 /** 候補の人数（0〜5人、0人なら見つからない理由）・並び（自信のある候補が先）・登壇経験の印 */
 function countCheck(label: string, result: ProposalResult | null): Check {
   if (!result) return { name: `${label} 候補は5人まで・自信のある候補が先・印あり`, pass: false, detail: "結果なし" };
@@ -465,6 +487,7 @@ async function main() {
     for (const c of conds) console.log(`    条件付き ${c.name}：${c.caveat}`);
     console.log(`  想定のいずれか=${anyHit ? "○" : "×"} 主候補=${primaryHit ? "○" : "×"}${altOk === null ? "" : ` 代わりの提案=${altOk ? "○" : "×"}`}  $${usd.toFixed(3)}（${steps}回）`);
     rows.push({ request_id: r.id, pattern: r.pattern, top3, expected: exp.ids, primary: exp.primary, any_hit: anyHit, primary_hit: primaryHit, alternatives: alts, alternative_ok: altOk, run_usd: usd, steps, result });
+    if (!offline) mergeLatest({ rows: [rows.at(-1)] }); // 終わった依頼から保存する
   }
 
   // ---- 受信箱経由の指名あり依頼（依頼文から指名を読み取り、社員データで確かめ、既存の流れで候補を出す）
@@ -533,6 +556,7 @@ async function main() {
       checks.push({ name: "受信箱：送信なし", pass: sendHits.length === 0, detail: sendHits.join(" / ") || "送信の処理・ルートなし" });
       console.log(`  受信箱（${source}）：指名 ${item.nominee?.employee_id ?? "なし"}／top3 ${top3.map((id) => `${id} ${names.get(id)}`).join(" / ")}`);
       inboxCaseOut = { source: source || "不明", item };
+      if (!offline && !fromInbox) mergeLatest({ inbox_case: inboxCaseOut });
     }
   }
 
@@ -593,6 +617,7 @@ async function main() {
       checks.push({ name: `${tag} 内部の言葉がない`, pass: plain.length === 0, detail: plain.join(" / ") || "なし" });
       console.log(`  ${vs.map((v) => `${v.rank}. ${v.name}[${v.confidence}]`).join(" / ") || "（出し先なし）"}${result?.blog ? `／ブログ案「${result.blog.title}」` : ""}  $${usd.toFixed(3)}`);
       venueCases.push({ card_id: vc.card_id, result, events, run_usd: usd });
+      if (!offline) mergeLatest({ venue_cases: [venueCases.at(-1)] });
     }
   }
 
@@ -626,6 +651,7 @@ async function main() {
         const changed = afterTop[0] !== top.employee_id && (newRank === -1 || newRank > oldRank);
         const mentioned = (again.result?.learnings_applied ?? []).some((t) => t.includes(top.name.split(" ")[0]) || t.includes("辞退"));
         writeback = { declined: top.employee_id, before: beforeTop, after: afterTop, learnings_applied: again.result?.learnings_applied ?? [], run_usd: again.usd };
+        if (!offline) mergeLatest({ writeback });
         checks.push({ name: "書き戻し後に提案が変わる", pass: changed, detail: `前 ${beforeTop.join(",")} → 後 ${afterTop.join(",")}${mentioned ? "（打診履歴の反映を明記）" : ""}` });
         console.log(`  前: ${beforeTop.join(", ")} → 後: ${afterTop.join(", ")}  $${again.usd.toFixed(3)}`);
       } finally {
@@ -646,6 +672,7 @@ async function main() {
       const s = await surveyLiveCheck(req, results.get(SURVEY_REQUEST) ?? null, (r) => propose(r, false));
       checks.push(...s.checks);
       surveyCase = s.record;
+      if (!offline) mergeLatest({ survey_case: surveyCase });
     }
   }
 
@@ -701,14 +728,6 @@ async function main() {
     fs.writeFileSync(latestFile, JSON.stringify({ ...latest, inbox_case: inboxCaseOut }, null, 2));
     console.log("受信箱の結果を docs/eval_latest.json に足しました");
   }
-  // 出し先だけを実際に流したときも、最新の結果に足しておく（--offline と ?mock の元データ）
-  if (wantVenues && !offline && !full && venueCases.length) {
-    const latestFile = path.join(process.cwd(), "docs", "eval_latest.json");
-    const latest = JSON.parse(fs.readFileSync(latestFile, "utf-8"));
-    const merged = [...((latest.venue_cases ?? []) as Array<{ card_id: string }>).filter((x) => !venueCases.some((v) => v.card_id === x.card_id)), ...venueCases];
-    fs.writeFileSync(latestFile, JSON.stringify({ ...latest, venue_cases: merged }, null, 2));
-    console.log("出し先の結果を docs/eval_latest.json に足しました（scripts/update_mock.ts で ?mock に反映）");
-  }
   if (offline && reportPath) {
     console.error("--offline では --report を使えません（保存結果を上書きしないため）");
     process.exitCode = 1;
@@ -719,10 +738,10 @@ async function main() {
   const file = path.join(dir, `eval-v02-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
   fs.writeFileSync(file, JSON.stringify(out, null, 2));
   console.log(`結果: ${path.relative(process.cwd(), file)}`);
-  // 依頼5件そろった実際の実行は、最新の結果として残す（--offline と ?mock の元データ）
-  if (!offline && rows.length === all.length) {
-    fs.writeFileSync(path.join(process.cwd(), "docs", "eval_latest.json"), JSON.stringify(out, null, 2));
-    console.log("最新の結果: docs/eval_latest.json（--offline と scripts/update_mock.ts が読む）");
+  // API を使った実行は、項目ごとに docs/eval_latest.json に足してある（mergeLatest）。最後に今回の判定と金額を足す
+  if (!offline && !fromInbox) {
+    mergeLatest({ version: out.version, mode: out.mode, spent_usd: spent, pass_rate: rate, checks, coverage, quality });
+    console.log("最新の結果: docs/eval_latest.json に今回の項目を足しました（--offline と scripts/update_mock.ts が読む）");
   }
   if (reportPath) {
     fs.writeFileSync(path.join(process.cwd(), reportPath.replace(/\.md$/, ".json")), JSON.stringify(out, null, 2));

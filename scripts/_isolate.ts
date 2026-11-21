@@ -10,7 +10,9 @@ if (!process.env.FIXED_TODAY) process.env.FIXED_TODAY = "2026-11-21";
 if (!process.env.DATA_RUNTIME_DIR) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "techevent-runtime-"));
   process.env.DATA_RUNTIME_DIR = dir;
-  // 金額の記録も一時ファイルに（テストで本物の data/usage.json を汚さない）
-  if (!process.env.USAGE_FILE) process.env.USAGE_FILE = path.join(dir, "usage.json");
+  // 金額の記録も一時ファイルに（テストで本物の data/usage.json を汚さない）。
+  // ただし API を使う評価（scripts/eval.ts を --offline なしで流すとき）は本物の記録に残す（累計と上限の判定に使うため）
+  const realApiEval = /eval\.ts$/.test(process.argv[1] ?? "") && !process.argv.includes("--offline");
+  if (!process.env.USAGE_FILE && !realApiEval) process.env.USAGE_FILE = path.join(dir, "usage.json");
   process.on("exit", () => fs.rmSync(dir, { recursive: true, force: true }));
 }

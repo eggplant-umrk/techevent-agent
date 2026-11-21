@@ -1,0 +1,46 @@
+[
+  {
+    "id": "e013",
+    "name": "早乙女 蓮",
+    "business_unit": "Ai Workforce",
+    "role": "MLエンジニア",
+    "expertise_tags": [
+      "LLM評価",
+      "AIエージェント",
+      "MLOps",
+      "Python"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 4
+  },
+  {
+    "id": "e015",
+    "name": "芹沢 葵",
+    "business_unit": "Fintech",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "障害対応",
+      "バッチ処理",
+      "Go",
+      "PostgreSQL"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 5
+  },
+  {
+    "id": "e024",
+    "name": "織部 隼人",
+    "business_unit": "セキュリティ",
+    "role": "セキュリティエンジニア",
+    "expertise_tags": [
+      "サプライチェーンセキュリティ",
+      "SBOM",
+      "自動化"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  }
+]

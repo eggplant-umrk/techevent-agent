@@ -831,6 +831,193 @@ for e in EMP:
         d += timedelta(days=1)
 dump("calendar.json", calendar)
 
+# ---------------------------------------------------------------------------
+# stress — dirty, 10x data for 3 of the fictional employees (data/sources/stress/).
+# Real company Slack: thousands of posts a month, mostly chat, duplicates, stories that
+# stop halfway and unrelated posts. 70% noise, 30% posts about the real initiative.
+# The answer key goes only to data/sources/stress/README.md (never to the agent).
+# Own RNG and written last, so every earlier file stays byte-identical.
+# ---------------------------------------------------------------------------
+st_rng = random.Random(20261123)
+STRESS = {
+    # employee: (times, the real initiative, its original activity ids, progress posts, truncated stories)
+    "e013": dict(
+        topic="LLM-as-a-judge でAIエージェントの回帰テストをCIに入れた評価基盤（モデル切り替えの判断が1週間→1日、人手評価との一致率87%）",
+        orig=["act019", "act050", "act073"],
+        progress=[
+            ("github_pr", "ai-workforce/agent-eval", "評価ケースを{n}件追加", "失敗ログから拾ったケースを{n}件、正解ケースに足しました。判定LLMの3回多数決で、ブレが出たケースは人が見直しています。"),
+            ("github_pr", "ai-workforce/agent-eval", "判定プロンプトの改善", "判定LLMの採点基準を見直しました。人手評価との一致率が{p}%になりました。"),
+            ("slack_post", "#ai-workforce-dev", "評価基盤の結果を共有します", "今週のモデル更新も評価基盤で確認しました。回帰は{n}件で、すべて既知のケースでした。判断は1日で終わっています。"),
+            ("weekly_report", "#weekly-ai-workforce", "週報 早乙女", "評価基盤の正解ケースを{n}件追加しました。人手評価との一致率は{p}%です。CIでの実行時間は{m}分です。"),
+            ("design_doc", "ai-workforce/design-docs", "評価コストの見積もり", "判定LLMの呼び出し回数から、評価コストを月額で見積もりました。ケースを{n}件に増やしても予算内に収まります。"),
+        ],
+        truncated=[
+            ["エージェントのログをベクトル検索できるようにしたい", "ログ検索の PoC を始めました。まずは1週間分で試します", "ログ検索、優先度が下がったので一旦止めます"],
+            ["社内向けにプロンプトの書き方ガイドを作ろうと思っています", "プロンプトのガイド、目次だけ作りました。続きはまた"],
+        ],
+    ),
+    "e015": dict(
+        topic="月末決済バッチ4時間遅延のポストモーテムと、冪等化・分割による再発防止（月末の処理時間を平均40%短縮）",
+        orig=["act032", "act057"],
+        progress=[
+            ("design_doc", "fintech/postmortems", "ポストモーテム 追記", "決済バッチの遅延について、再発防止策の進み具合を追記しました。分割後の処理時間は平均で{p}%短くなっています。"),
+            ("github_pr", "fintech/settlement-batch", "決済バッチの冪等化 その{n}", "リトライしても二重に処理されないよう、処理単位にキーを付けました。ロック競合の待ちが減っています。"),
+            ("weekly_report", "#weekly-fintech", "週報 芹沢", "決済バッチの分割を本番に入れました。月末の処理時間は平均で{p}%短くなりました。"),
+            ("slack_post", "#fintech-dev", "月末バッチ、今月も問題なし", "今月の月末バッチも遅延なしで終わりました。分割と冪等化の効果が続いています（処理時間は平均{p}%短縮）。"),
+        ],
+        truncated=[
+            ["決済バッチを Rust で書き直すか検討しています", "Rust の書き直し、見積もりが大きすぎたので見送りになりました"],
+            ["監視ダッシュボードを作り直したい", "ダッシュボード、デザインだけ相談中です"],
+        ],
+    ),
+    "e024": dict(
+        topic="SBOMと到達可能性解析で依存ライブラリの脆弱性アラートを自動トリアージ（月400件→対応要50件、対応が必要なのは12%）",
+        orig=["act037", "act100"],
+        progress=[
+            ("github_pr", "security/vuln-triage", "到達可能性の判定を{n}言語目に対応", "到達可能性の判定を{n}つ目の言語に広げました。対応が必要なアラートは全体の{p}%に絞れています。"),
+            ("slack_post", "#security", "自動トリアージの週次レポート", "今週のアラートは{n}件で、対応が必要なのは{m}件でした。自動トリアージで開発チームの負担が減っています。"),
+            ("weekly_report", "#weekly-security", "週報 織部", "自動トリアージを{n}リポジトリに広げました。開発チームに届くアラートは月{m}件程度です。"),
+            ("design_doc", "security/design-docs", "判定ロジックのOSS化の方針", "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。"),
+        ],
+        truncated=[
+            ["シークレットの検出を CI に入れたい", "シークレット検出、ツールを比較中です", "比較表だけ作りました。続きは来期に"],
+            ["社内向けにセキュリティの勉強会をやりたいです", "勉強会、日程が決まらず保留です"],
+        ],
+    ),
+}
+CHAT = [
+    ("#random", "今日のランチ", "駅前の新しいカレー屋、おいしかったです。"),
+    ("#random", "週末の話", "週末は子どもと公園に行きました。暑かったです。"),
+    ("#random", "おすすめの本", "最近読んだ技術書がよかったので共有します。"),
+    ("#random", "コーヒーの話", "オフィスのコーヒー豆が新しくなっていました。"),
+    ("#random", "雨がすごい", "帰りの雨がすごいので気をつけてください。"),
+    ("#random", "猫の写真", "うちの猫です。"),
+    ("#random", "おやつ", "お土産のお菓子を置いておきました。"),
+]
+UNRELATED = [
+    ("slack_post", "#general", "全社会のお知らせ", "来週の全社会は会議室Aで行います。"),
+    ("slack_post", "#engineering", "勉強会のお知らせ", "来週の社内勉強会はデータベースの入門です。"),
+    ("weekly_report", None, "週報", "採用面接が{n}件ありました。開発は小さな改修のみです。"),
+    ("github_pr", None, "依存ライブラリの更新", "依存ライブラリのマイナーバージョンを上げました。"),
+    ("github_pr", None, "typo修正", "エラーメッセージの誤字を修正しました。"),
+    ("slack_post", "#dev-help", "ステージングが重いです", "ステージングのレスポンスが遅いです。心当たりのある人はいますか。"),
+    ("slack_post", "#it-help", "PCの調子が悪い", "PCが重いので再起動します。"),
+    ("slack_post", "#general", "備品の申請", "モニターを1台申請しました。"),
+]
+
+base_acts = {a["id"]: a for a in activities}
+st_acts = []
+answer = {}
+seq = [0]
+
+
+def st_id():
+    seq[0] += 1
+    return f"st{seq[0]:04d}"
+
+
+def st_date():
+    d = date(2026, 6, 1) + timedelta(days=st_rng.randrange(0, 172))
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d.isoformat()
+
+
+def add(author, typ, where, title, body, d=None):
+    i = st_id()
+    is_repo = typ in ("github_pr", "design_doc")
+    st_acts.append({"id": i, "type": typ, "author_id": author, "date": d or st_date(), "title": title, "body": body,
+                    "channel": None if is_repo else where, "repo": where if is_repo else None})
+    return i
+
+
+for eid, spec in STRESS.items():
+    name = emp_by_id[eid]["name"]
+    family = name.split()[0]
+    unit_ch = {"e013": "#weekly-ai-workforce", "e015": "#weekly-fintech", "e024": "#weekly-security"}[eid]
+    repo = {"e013": "ai-workforce/misc", "e015": "fintech/misc", "e024": "security/iam-policies"}[eid]
+    orig_n = len([a for a in activities if a["author_id"] == eid])
+    total = orig_n * 10
+    n_signal = round(total * 0.3)
+    signal, dup, trunc, chat, unrel = [], [], [], [], []
+    # the real initiative: the original posts (copied with new ids) plus progress posts
+    for aid in spec["orig"]:
+        a = base_acts[aid]
+        signal.append(add(eid, a["type"], a["channel"] or a["repo"], a["title"], a["body"], a["date"]))
+    k = 0
+    while len(signal) < n_signal:
+        typ, where, title, body = spec["progress"][k % len(spec["progress"])]
+        k += 1
+        pools = {"e013": ([80, 83, 85, 87], [12, 15]), "e015": ([35, 38, 40, 41], [0]), "e024": ([12, 13, 15], [50, 55, 60])}[eid]
+        fill = dict(n=st_rng.randint(2, 40) if eid != "e024" else st_rng.randint(2, 6), p=st_rng.choice(pools[0]), m=st_rng.choice(pools[1]))
+        first = min(base_acts[x]["date"] for x in spec["orig"])
+        d = date.fromisoformat(first) + timedelta(days=st_rng.randrange(1, max(2, (date(2026, 11, 20) - date.fromisoformat(first)).days)))
+        while d.weekday() >= 5:
+            d += timedelta(days=1)
+        t = title.format(**fill)
+        if t == "週報 " + family or t.startswith("週報"):
+            t = f"週報 {family}"
+        signal.append(add(eid, typ, where, t, body.format(**fill), d.isoformat()))
+    n_noise = total - n_signal
+    # duplicates: the same story posted again (cross-posts, copied into weekly reports)
+    for sid in st_rng.sample(signal, k=min(len(signal), max(3, n_noise // 5))):
+        src = next(x for x in st_acts if x["id"] == sid)
+        dup.append(add(eid, "slack_post" if src["type"] != "slack_post" else "weekly_report",
+                       "#general" if src["type"] != "slack_post" else unit_ch, src["title"], src["body"]))
+    # stories that stop halfway
+    for story in spec["truncated"]:
+        d0 = date(2026, 6, 1) + timedelta(days=st_rng.randrange(0, 120))
+        for j, text in enumerate(story):
+            head = text.split("。")[0]
+            trunc.append(add(eid, "slack_post", "#" + {"e013": "ai-workforce-dev", "e015": "fintech-dev", "e024": "security"}[eid],
+                             head if len(head) <= 30 else head[:29] + "…", text, (d0 + timedelta(days=7 * j)).isoformat()))
+    # chat and unrelated posts fill the rest
+    while len(dup) + len(trunc) + len(chat) + len(unrel) < n_noise:
+        if st_rng.random() < 0.5:
+            ch, title, body = st_rng.choice(CHAT)
+            chat.append(add(eid, "slack_post", ch, title, body))
+        else:
+            typ, where, title, body = st_rng.choice(UNRELATED)
+            where = where or (unit_ch if typ == "weekly_report" else repo)
+            title = f"週報 {family}" if typ == "weekly_report" else title
+            unrel.append(add(eid, typ, where, title, body.format(n=st_rng.randint(1, 5))))
+    answer[eid] = {"name": name, "topic": spec["topic"], "signal": signal, "duplicate": dup, "truncated": trunc, "chat": chat, "unrelated": unrel}
+
+st_acts.sort(key=lambda a: (a["date"], a["id"]))
+STRESS_DIR = OUT / "sources" / "stress"
+STRESS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def st_dump(name, obj):
+    (STRESS_DIR / name).write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+
+st_dump("employees.json", [e for e in employees if e["id"] in STRESS])
+st_dump("activities.json", st_acts)
+if not (STRESS_DIR / "cards.json").exists():
+    st_dump("cards.json", [])
+if not (STRESS_DIR / "notebook_state.json").exists():
+    st_dump("notebook_state.json", {})
+
+lines = [
+    "# data/sources/stress/（汚れた10倍のデータ・架空）",
+    "",
+    "本物の会社の Slack に近づけた試験用のデータです。架空の30人のうち3人（e013・e015・e024）だけ、活動を10倍に増やし、雑談・同じ話の重複・途中で終わる話・無関係な投稿を7割混ぜました。`scripts/gen_data.py` で決定的に作ります。",
+    "`DATA_SOURCE=stress` で使います（`lib/dataSource.ts`）。カードは `data/sources/stress/cards.json` に保存され、架空の30人のネタ帳（`data/cards.json`）は変わりません。",
+    "",
+    "## 正解（Agent には渡さないこと）",
+    "",
+    "1人1枚：下の「取り組み」だけがカードになってほしい。途中で終わる話・雑談・無関係な投稿からはカードを作らない。同じ取り組みを2枚に分けない。重複の投稿は根拠に入っても構わない（同じ話なので）。",
+    "",
+    "| 社員 | 活動 | 取り組み（カードにしてほしい） | 取り組みの投稿 | 重複 | 途中で終わる話 | 雑談 | 無関係 |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- |",
+]
+for eid, a in answer.items():
+    tot = sum(len(a[k]) for k in ("signal", "duplicate", "truncated", "chat", "unrelated"))
+    lines.append(f"| {eid} {a['name']} | {tot}件 | {a['topic']} | {len(a['signal'])}件 | {len(a['duplicate'])}件 | {len(a['truncated'])}件 | {len(a['chat'])}件 | {len(a['unrelated'])}件 |")
+lines += ["", "判定用（`scripts/stress_run.ts` だけが読む）：", "", "```json", json.dumps(answer, ensure_ascii=False, indent=1), "```", ""]
+(STRESS_DIR / "README.md").write_text("\n".join(lines), encoding="utf-8", newline="\n")
+
 # answer key for README (printed, not written to JSON)
 print("GEMS")
 for aid, a, th in gem_answer:

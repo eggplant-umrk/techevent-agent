@@ -1,0 +1,1402 @@
+[
+  {
+    "id": "st0126",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-06-04",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0139",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-06-08",
+    "title": "コーヒーの話",
+    "body": "オフィスのコーヒー豆が新しくなっていました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0079",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-06-12",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0115",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-06-12",
+    "title": "週報 織部",
+    "body": "採用面接が1件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0118",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-06-12",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0036",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-06-16",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0131",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-06-17",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会はデータベースの入門です。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "st0103",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-06-19",
+    "title": "到達可能性の判定を4言語目に対応",
+    "body": "到達可能性の判定を4つ目の言語に広げました。対応が必要なアラートは全体の13%に絞れています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0026",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-06-22",
+    "title": "社内向けにプロンプトの書き方ガイドを作ろうと思っています",
+    "body": "社内向けにプロンプトの書き方ガイドを作ろうと思っています",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0027",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-06-29",
+    "title": "プロンプトのガイド、目次だけ作りました",
+    "body": "プロンプトのガイド、目次だけ作りました。続きはまた",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0074",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-06-29",
+    "title": "ステージングが重いです",
+    "body": "ステージングのレスポンスが遅いです。心当たりのある人はいますか。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "st0117",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-06-29",
+    "title": "コーヒーの話",
+    "body": "オフィスのコーヒー豆が新しくなっていました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0106",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-07-02",
+    "title": "到達可能性の判定を5言語目に対応",
+    "body": "到達可能性の判定を5つ目の言語に広げました。対応が必要なアラートは全体の15%に絞れています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0046",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-03",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会はデータベースの入門です。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "st0080",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-07-06",
+    "title": "PCの調子が悪い",
+    "body": "PCが重いので再起動します。",
+    "channel": "#it-help",
+    "repo": null
+  },
+  {
+    "id": "st0137",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-07-06",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0043",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-09",
+    "title": "備品の申請",
+    "body": "モニターを1台申請しました。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0124",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-07-13",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0016",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-20",
+    "title": "評価コストの見積もり",
+    "body": "判定LLMの呼び出し回数から、評価コストを月額で見積もりました。ケースを5件に増やしても予算内に収まります。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0017",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-20",
+    "title": "週報 早乙女",
+    "body": "評価基盤の正解ケースを29件追加しました。人手評価との一致率は85%です。CIでの実行時間は12分です。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0047",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-20",
+    "title": "おすすめの本",
+    "body": "最近読んだ技術書がよかったので共有します。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0064",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-07-21",
+    "title": "決済バッチを Rust で書き直すか検討しています",
+    "body": "決済バッチを Rust で書き直すか検討しています",
+    "channel": "#fintech-dev",
+    "repo": null
+  },
+  {
+    "id": "st0033",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-24",
+    "title": "猫の写真",
+    "body": "うちの猫です。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0042",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-27",
+    "title": "おすすめの本",
+    "body": "最近読んだ技術書がよかったので共有します。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0135",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-07-27",
+    "title": "週報 織部",
+    "body": "採用面接が5件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0034",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-28",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0065",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-07-28",
+    "title": "Rust の書き直し、見積もりが大きすぎたので見送りになり…",
+    "body": "Rust の書き直し、見積もりが大きすぎたので見送りになりました",
+    "channel": "#fintech-dev",
+    "repo": null
+  },
+  {
+    "id": "st0070",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-07-29",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会はデータベースの入門です。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "st0029",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-07-31",
+    "title": "PCの調子が悪い",
+    "body": "PCが重いので再起動します。",
+    "channel": "#it-help",
+    "repo": null
+  },
+  {
+    "id": "st0127",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-07-31",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0049",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-08-03",
+    "title": "ステージングが重いです",
+    "body": "ステージングのレスポンスが遅いです。心当たりのある人はいますか。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "st0061",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-03",
+    "title": "決済バッチの冪等化 その38",
+    "body": "リトライしても二重に処理されないよう、処理単位にキーを付けました。ロック競合の待ちが減っています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0068",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-03",
+    "title": "PCの調子が悪い",
+    "body": "PCが重いので再起動します。",
+    "channel": "#it-help",
+    "repo": null
+  },
+  {
+    "id": "st0099",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-08-03",
+    "title": "自動トリアージの週次レポート",
+    "body": "今週のアラートは2件で、対応が必要なのは55件でした。自動トリアージで開発チームの負担が減っています。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0028",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-08-06",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0050",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-08-13",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0060",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-17",
+    "title": "決済バッチの冪等化 その15",
+    "body": "リトライしても二重に処理されないよう、処理単位にキーを付けました。ロック競合の待ちが減っています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0077",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-17",
+    "title": "雨がすごい",
+    "body": "帰りの雨がすごいので気をつけてください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0113",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-08-17",
+    "title": "週報 織部",
+    "body": "採用面接が1件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0114",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-08-17",
+    "title": "週報 織部",
+    "body": "採用面接が5件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0066",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-18",
+    "title": "監視ダッシュボードを作り直したい",
+    "body": "監視ダッシュボードを作り直したい",
+    "channel": "#fintech-dev",
+    "repo": null
+  },
+  {
+    "id": "st0110",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-08-19",
+    "title": "社内向けにセキュリティの勉強会をやりたいです",
+    "body": "社内向けにセキュリティの勉強会をやりたいです",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0129",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-08-20",
+    "title": "ステージングが重いです",
+    "body": "ステージングのレスポンスが遅いです。心当たりのある人はいますか。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "st0041",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-08-21",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0062",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-24",
+    "title": "ポストモーテム 追記",
+    "body": "決済バッチの遅延について、再発防止策の進み具合を追記しました。分割後の処理時間は平均で35%短くなっています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0067",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-08-25",
+    "title": "ダッシュボード、デザインだけ相談中です",
+    "body": "ダッシュボード、デザインだけ相談中です",
+    "channel": "#fintech-dev",
+    "repo": null
+  },
+  {
+    "id": "st0111",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-08-26",
+    "title": "勉強会、日程が決まらず保留です",
+    "body": "勉強会、日程が決まらず保留です",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0123",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-08-31",
+    "title": "週報 織部",
+    "body": "採用面接が1件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0112",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-01",
+    "title": "雨がすごい",
+    "body": "帰りの雨がすごいので気をつけてください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0122",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-09-02",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "st0121",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-03",
+    "title": "おやつ",
+    "body": "お土産のお菓子を置いておきました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0134",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-07",
+    "title": "おやつ",
+    "body": "お土産のお菓子を置いておきました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0069",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-09-08",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0119",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-08",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0130",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-09",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0039",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-09-11",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0132",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-09-11",
+    "title": "依存ライブラリの更新",
+    "body": "依存ライブラリのマイナーバージョンを上げました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "st0001",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-09-14",
+    "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
+    "body": "プロンプトやツール定義を変えたときに、過去の正解ケース200件でエージェントの挙動を自動評価します。判定用LLMのブレを抑えるため、3回判定の多数決にしました。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0015",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-09-16",
+    "title": "判定プロンプトの改善",
+    "body": "判定LLMの採点基準を見直しました。人手評価との一致率が83%になりました。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0071",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-09-16",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0007",
+    "type": "weekly_report",
+    "author_id": "e013",
+    "date": "2026-09-21",
+    "title": "週報 早乙女",
+    "body": "評価基盤の正解ケースを29件追加しました。人手評価との一致率は85%です。CIでの実行時間は12分です。",
+    "channel": "#weekly-ai-workforce",
+    "repo": null
+  },
+  {
+    "id": "st0009",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-09-21",
+    "title": "評価ケースを4件追加",
+    "body": "失敗ログから拾ったケースを4件、正解ケースに足しました。判定LLMの3回多数決で、ブレが出たケースは人が見直しています。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0107",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-22",
+    "title": "シークレットの検出を CI に入れたい",
+    "body": "シークレットの検出を CI に入れたい",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0020",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-09-23",
+    "title": "評価ケースを4件追加",
+    "body": "失敗ログから拾ったケースを4件、正解ケースに足しました。判定LLMの3回多数決で、ブレが出たケースは人が見直しています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0023",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-09-23",
+    "title": "エージェントのログをベクトル検索できるようにしたい",
+    "body": "エージェントのログをベクトル検索できるようにしたい",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0076",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-09-23",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0051",
+    "type": "design_doc",
+    "author_id": "e015",
+    "date": "2026-09-25",
+    "title": "ポストモーテム: 月末決済バッチの4時間遅延",
+    "body": "9月末の決済バッチが4時間遅延した件の振り返りです。原因はロック競合で、リトライが雪だるま式に増えていました。検知から復旧までのタイムラインと、再発防止としてバッチの分割と冪等化を行った経緯を記録しています。",
+    "channel": null,
+    "repo": "fintech/postmortems"
+  },
+  {
+    "id": "st0006",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-09-28",
+    "title": "評価基盤の結果を共有します",
+    "body": "今週のモデル更新も評価基盤で確認しました。回帰は13件で、すべて既知のケースでした。判断は1日で終わっています。",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0037",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-09-28",
+    "title": "コーヒーの話",
+    "body": "オフィスのコーヒー豆が新しくなっていました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0019",
+    "type": "weekly_report",
+    "author_id": "e013",
+    "date": "2026-09-29",
+    "title": "評価基盤の結果を共有します",
+    "body": "今週のモデル更新も評価基盤で確認しました。回帰は39件で、すべて既知のケースでした。判断は1日で終わっています。",
+    "channel": "#weekly-ai-workforce",
+    "repo": null
+  },
+  {
+    "id": "st0081",
+    "type": "design_doc",
+    "author_id": "e024",
+    "date": "2026-09-29",
+    "title": "依存ライブラリ脆弱性の自動トリアージ",
+    "body": "SBOMを全リポジトリで生成し、脆弱性アラートを実際に到達可能なコードかどうかで自動で振り分けます。対応が必要なアラートは全体の12%に絞り込めました。誤判定の扱いを今後詰めます。",
+    "channel": null,
+    "repo": "security/design-docs"
+  },
+  {
+    "id": "st0108",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-09-29",
+    "title": "シークレット検出、ツールを比較中です",
+    "body": "シークレット検出、ツールを比較中です",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0024",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-09-30",
+    "title": "ログ検索の PoC を始めました",
+    "body": "ログ検索の PoC を始めました。まずは1週間分で試します",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0096",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-01",
+    "title": "自動トリアージの週次レポート",
+    "body": "今週のアラートは2件で、対応が必要なのは55件でした。自動トリアージで開発チームの負担が減っています。",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0120",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-10-02",
+    "title": "依存ライブラリの更新",
+    "body": "依存ライブラリのマイナーバージョンを上げました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "st0038",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-05",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0094",
+    "type": "design_doc",
+    "author_id": "e024",
+    "date": "2026-10-05",
+    "title": "判定ロジックのOSS化の方針",
+    "body": "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。",
+    "channel": null,
+    "repo": "security/design-docs"
+  },
+  {
+    "id": "st0116",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-05",
+    "title": "雨がすごい",
+    "body": "帰りの雨がすごいので気をつけてください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0133",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-05",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0002",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-06",
+    "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
+    "body": "新しいモデルへの切り替え、以前は手動確認で1週間かかっていたのが評価基盤のおかげで1日で判断できました。ツール呼び出しの誤りが増えるケースも事前に見つかっています。判定のブレをどう扱うかはまだ試行錯誤中です。",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0035",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-06",
+    "title": "おやつ",
+    "body": "お土産のお菓子を置いておきました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0075",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-10-06",
+    "title": "全社会のお知らせ",
+    "body": "来週の全社会は会議室Aで行います。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0092",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-06",
+    "title": "自動トリアージの週次レポート",
+    "body": "今週のアラートは3件で、対応が必要なのは50件でした。自動トリアージで開発チームの負担が減っています。",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0095",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-10-06",
+    "title": "到達可能性の判定を5言語目に対応",
+    "body": "到達可能性の判定を5つ目の言語に広げました。対応が必要なアラートは全体の15%に絞れています。",
+    "channel": null,
+    "repo": "security/vuln-triage"
+  },
+  {
+    "id": "st0109",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-06",
+    "title": "比較表だけ作りました",
+    "body": "比較表だけ作りました。続きは来期に",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0004",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-10-07",
+    "title": "評価ケースを38件追加",
+    "body": "失敗ログから拾ったケースを38件、正解ケースに足しました。判定LLMの3回多数決で、ブレが出たケースは人が見直しています。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0025",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-07",
+    "title": "ログ検索、優先度が下がったので一旦止めます",
+    "body": "ログ検索、優先度が下がったので一旦止めます",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0057",
+    "type": "design_doc",
+    "author_id": "e015",
+    "date": "2026-10-07",
+    "title": "ポストモーテム 追記",
+    "body": "決済バッチの遅延について、再発防止策の進み具合を追記しました。分割後の処理時間は平均で41%短くなっています。",
+    "channel": null,
+    "repo": "fintech/postmortems"
+  },
+  {
+    "id": "st0084",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-07",
+    "title": "自動トリアージの週次レポート",
+    "body": "今週のアラートは5件で、対応が必要なのは55件でした。自動トリアージで開発チームの負担が減っています。",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0048",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-08",
+    "title": "雨がすごい",
+    "body": "帰りの雨がすごいので気をつけてください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0052",
+    "type": "weekly_report",
+    "author_id": "e015",
+    "date": "2026-10-09",
+    "title": "週報 10/5-10/9 芹沢",
+    "body": "決済バッチの冪等化が本番に入りました。分割後は月末の処理時間が平均で40%短くなっています。ポストモーテムの内容は他チームからも参考にしたいと声がありました。",
+    "channel": "#weekly-fintech",
+    "repo": null
+  },
+  {
+    "id": "st0086",
+    "type": "design_doc",
+    "author_id": "e024",
+    "date": "2026-10-09",
+    "title": "判定ロジックのOSS化の方針",
+    "body": "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。",
+    "channel": null,
+    "repo": "security/design-docs"
+  },
+  {
+    "id": "st0031",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-12",
+    "title": "おやつ",
+    "body": "お土産のお菓子を置いておきました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0053",
+    "type": "design_doc",
+    "author_id": "e015",
+    "date": "2026-10-13",
+    "title": "ポストモーテム 追記",
+    "body": "決済バッチの遅延について、再発防止策の進み具合を追記しました。分割後の処理時間は平均で35%短くなっています。",
+    "channel": null,
+    "repo": "fintech/postmortems"
+  },
+  {
+    "id": "st0032",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-19",
+    "title": "週末の話",
+    "body": "週末は子どもと公園に行きました。暑かったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0059",
+    "type": "weekly_report",
+    "author_id": "e015",
+    "date": "2026-10-19",
+    "title": "週報 芹沢",
+    "body": "決済バッチの分割を本番に入れました。月末の処理時間は平均で38%短くなりました。",
+    "channel": "#weekly-fintech",
+    "repo": null
+  },
+  {
+    "id": "st0003",
+    "type": "design_doc",
+    "author_id": "e013",
+    "date": "2026-10-20",
+    "title": "AIエージェント評価基盤 設計ドキュメント v2",
+    "body": "評価ケースの管理、判定LLMの選定、人手評価との一致率の測り方をまとめました。人手評価との一致率は現在87%です。評価コストを月額で見積もる方法も載せています。",
+    "channel": null,
+    "repo": "ai-workforce/design-docs"
+  },
+  {
+    "id": "st0098",
+    "type": "design_doc",
+    "author_id": "e024",
+    "date": "2026-10-20",
+    "title": "判定ロジックのOSS化の方針",
+    "body": "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。",
+    "channel": null,
+    "repo": "security/design-docs"
+  },
+  {
+    "id": "st0088",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-21",
+    "title": "自動トリアージの週次レポート",
+    "body": "今週のアラートは3件で、対応が必要なのは60件でした。自動トリアージで開発チームの負担が減っています。",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0021",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-22",
+    "title": "週報 早乙女",
+    "body": "評価基盤の正解ケースを27件追加しました。人手評価との一致率は85%です。CIでの実行時間は15分です。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0136",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-22",
+    "title": "コーヒーの話",
+    "body": "オフィスのコーヒー豆が新しくなっていました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0013",
+    "type": "design_doc",
+    "author_id": "e013",
+    "date": "2026-10-23",
+    "title": "評価コストの見積もり",
+    "body": "判定LLMの呼び出し回数から、評価コストを月額で見積もりました。ケースを5件に増やしても予算内に収まります。",
+    "channel": null,
+    "repo": "ai-workforce/design-docs"
+  },
+  {
+    "id": "st0087",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-10-23",
+    "title": "到達可能性の判定を5言語目に対応",
+    "body": "到達可能性の判定を5つ目の言語に広げました。対応が必要なアラートは全体の15%に絞れています。",
+    "channel": null,
+    "repo": "security/vuln-triage"
+  },
+  {
+    "id": "st0008",
+    "type": "design_doc",
+    "author_id": "e013",
+    "date": "2026-10-26",
+    "title": "評価コストの見積もり",
+    "body": "判定LLMの呼び出し回数から、評価コストを月額で見積もりました。ケースを20件に増やしても予算内に収まります。",
+    "channel": null,
+    "repo": "ai-workforce/design-docs"
+  },
+  {
+    "id": "st0083",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-10-26",
+    "title": "到達可能性の判定を5言語目に対応",
+    "body": "到達可能性の判定を5つ目の言語に広げました。対応が必要なアラートは全体の13%に絞れています。",
+    "channel": null,
+    "repo": "security/vuln-triage"
+  },
+  {
+    "id": "st0100",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-26",
+    "title": "判定ロジックのOSS化の方針",
+    "body": "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0128",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-26",
+    "title": "コーヒーの話",
+    "body": "オフィスのコーヒー豆が新しくなっていました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0044",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-28",
+    "title": "PCの調子が悪い",
+    "body": "PCが重いので再起動します。",
+    "channel": "#it-help",
+    "repo": null
+  },
+  {
+    "id": "st0078",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-11-02",
+    "title": "今日のランチ",
+    "body": "駅前の新しいカレー屋、おいしかったです。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0089",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-11-02",
+    "title": "週報 織部",
+    "body": "自動トリアージを6リポジトリに広げました。開発チームに届くアラートは月55件程度です。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0104",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-02",
+    "title": "判定ロジックのOSS化の方針",
+    "body": "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0005",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-11-03",
+    "title": "判定プロンプトの改善",
+    "body": "判定LLMの採点基準を見直しました。人手評価との一致率が80%になりました。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0040",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-11-03",
+    "title": "おやつ",
+    "body": "お土産のお菓子を置いておきました。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0101",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-03",
+    "title": "週報 織部",
+    "body": "自動トリアージを6リポジトリに広げました。開発チームに届くアラートは月55件程度です。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0012",
+    "type": "weekly_report",
+    "author_id": "e013",
+    "date": "2026-11-04",
+    "title": "週報 早乙女",
+    "body": "評価基盤の正解ケースを27件追加しました。人手評価との一致率は85%です。CIでの実行時間は15分です。",
+    "channel": "#weekly-ai-workforce",
+    "repo": null
+  },
+  {
+    "id": "st0014",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-11-04",
+    "title": "評価ケースを10件追加",
+    "body": "失敗ログから拾ったケースを10件、正解ケースに足しました。判定LLMの3回多数決で、ブレが出たケースは人が見直しています。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0082",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-04",
+    "title": "脆弱性アラート、月400件→対応要50件に",
+    "body": "自動トリアージを全社展開しました。開発チームに届くアラートが月400件から50件程度になっています。判定ロジックはOSSとして切り出せそうです。",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "st0097",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-11-05",
+    "title": "週報 織部",
+    "body": "自動トリアージを5リポジトリに広げました。開発チームに届くアラートは月55件程度です。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0011",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-11-06",
+    "title": "評価基盤の結果を共有します",
+    "body": "今週のモデル更新も評価基盤で確認しました。回帰は39件で、すべて既知のケースでした。判断は1日で終わっています。",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "st0055",
+    "type": "weekly_report",
+    "author_id": "e015",
+    "date": "2026-11-06",
+    "title": "週報 芹沢",
+    "body": "決済バッチの分割を本番に入れました。月末の処理時間は平均で41%短くなりました。",
+    "channel": "#weekly-fintech",
+    "repo": null
+  },
+  {
+    "id": "st0125",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-11-06",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "st0140",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-06",
+    "title": "おすすめの本",
+    "body": "最近読んだ技術書がよかったので共有します。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0018",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-11-09",
+    "title": "評価コストの見積もり",
+    "body": "判定LLMの呼び出し回数から、評価コストを月額で見積もりました。ケースを20件に増やしても予算内に収まります。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0054",
+    "type": "github_pr",
+    "author_id": "e015",
+    "date": "2026-11-09",
+    "title": "決済バッチの冪等化 その15",
+    "body": "リトライしても二重に処理されないよう、処理単位にキーを付けました。ロック競合の待ちが減っています。",
+    "channel": null,
+    "repo": "fintech/settlement-batch"
+  },
+  {
+    "id": "st0058",
+    "type": "github_pr",
+    "author_id": "e015",
+    "date": "2026-11-09",
+    "title": "決済バッチの冪等化 その38",
+    "body": "リトライしても二重に処理されないよう、処理単位にキーを付けました。ロック競合の待ちが減っています。",
+    "channel": null,
+    "repo": "fintech/settlement-batch"
+  },
+  {
+    "id": "st0072",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-11-09",
+    "title": "PCの調子が悪い",
+    "body": "PCが重いので再起動します。",
+    "channel": "#it-help",
+    "repo": null
+  },
+  {
+    "id": "st0073",
+    "type": "github_pr",
+    "author_id": "e015",
+    "date": "2026-11-09",
+    "title": "依存ライブラリの更新",
+    "body": "依存ライブラリのマイナーバージョンを上げました。",
+    "channel": null,
+    "repo": "fintech/misc"
+  },
+  {
+    "id": "st0090",
+    "type": "design_doc",
+    "author_id": "e024",
+    "date": "2026-11-09",
+    "title": "判定ロジックのOSS化の方針",
+    "body": "自動トリアージの判定ロジックをOSSとして切り出す方針をまとめました。社内固有の設定は外に出します。",
+    "channel": null,
+    "repo": "security/design-docs"
+  },
+  {
+    "id": "st0022",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-11-10",
+    "title": "判定プロンプトの改善",
+    "body": "判定LLMの採点基準を見直しました。人手評価との一致率が80%になりました。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0030",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-11-10",
+    "title": "猫の写真",
+    "body": "うちの猫です。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0093",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-11-10",
+    "title": "週報 織部",
+    "body": "自動トリアージを5リポジトリに広げました。開発チームに届くアラートは月55件程度です。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0102",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-10",
+    "title": "週報 織部",
+    "body": "自動トリアージを5リポジトリに広げました。開発チームに届くアラートは月55件程度です。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0045",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-11-11",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会はデータベースの入門です。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "st0085",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-11-12",
+    "title": "週報 織部",
+    "body": "自動トリアージを6リポジトリに広げました。開発チームに届くアラートは月55件程度です。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "st0056",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-11-13",
+    "title": "月末バッチ、今月も問題なし",
+    "body": "今月の月末バッチも遅延なしで終わりました。分割と冪等化の効果が続いています（処理時間は平均40%短縮）。",
+    "channel": "#fintech-dev",
+    "repo": null
+  },
+  {
+    "id": "st0010",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-11-16",
+    "title": "判定プロンプトの改善",
+    "body": "判定LLMの採点基準を見直しました。人手評価との一致率が83%になりました。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "st0063",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-11-16",
+    "title": "ポストモーテム 追記",
+    "body": "決済バッチの遅延について、再発防止策の進み具合を追記しました。分割後の処理時間は平均で41%短くなっています。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "st0138",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-16",
+    "title": "おすすめの本",
+    "body": "最近読んだ技術書がよかったので共有します。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "st0091",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-11-19",
+    "title": "到達可能性の判定を4言語目に対応",
+    "body": "到達可能性の判定を4つ目の言語に広げました。対応が必要なアラートは全体の13%に絞れています。",
+    "channel": null,
+    "repo": "security/vuln-triage"
+  },
+  {
+    "id": "st0105",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-11-19",
+    "title": "脆弱性アラート、月400件→対応要50件に",
+    "body": "自動トリアージを全社展開しました。開発チームに届くアラートが月400件から50件程度になっています。判定ロジックはOSSとして切り出せそうです。",
+    "channel": "#weekly-security",
+    "repo": null
+  }
+]

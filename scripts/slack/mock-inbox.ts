@@ -16,25 +16,8 @@ function view(id: string): InboxItem | null {
   const url = `/?inbox=${id}`;
   if (it.text.includes("遅い") || Date.now() - it.at < READY_AFTER_MS) return { id, status: "processing", url };
   if (it.text.includes("エラー")) return { id, status: "error", url };
-  if (it.text.includes("見つからない"))
-    return {
-      id,
-      status: "ready",
-      url,
-      summary: {
-        candidates: [],
-        no_fit: { reasons: ["ネタ帳に、このテーマの取り組みを持つカードがありませんでした", "投稿も探しましたが、根拠になるものが見つかりませんでした"] },
-      },
-    };
-  const all = [
-    { name: "織部 隼人", confidence: "strong" as const, reason_short: "初登壇｜脆弱性アラートを月400件→50件に減らした本人" },
-    { name: "百瀬 結衣", confidence: "strong" as const, reason_short: "初登壇｜初期表示の改善を数字で話せる" },
-    { name: "早乙女 蓮", confidence: "conditional" as const, reason_short: "登壇経験あり｜テーマは合うが、今後2週間は勤務時間の5割が予定で埋まっていて準備時間の確認が必要" },
-    { name: "東雲 健吾", confidence: "conditional" as const, reason_short: "初登壇｜根拠が1件だけ" },
-    { name: "鷹野 未来", confidence: "conditional" as const, reason_short: "半年以内に登壇｜テーマが少しずれる" },
-  ];
-  const n = it.text.includes("1人") ? 1 : it.text.includes("5人") ? 5 : 3;
-  return { id, status: "ready", url, summary: { candidates: all.slice(0, n) } };
+  // 本物の窓口と同じく、候補の名前・理由は返さない（id・status・url だけ）
+  return { id, status: "ready", url };
 }
 
 const server = http.createServer((req, res) => {

@@ -1,22 +1,33 @@
 // Slack なしの動作確認（トークン不要）：npx tsx scripts/slack/dry-run.ts
-// 仮の受信箱サーバーを立て、偽の Slack にイベントを流して、拾う・無視する・スレッドへの返信内容を確かめる。
+// 仮の受信箱サーバーを立て、偽の Slack にイベントを流して、拾う・無視する投稿と、Slack に出す文を確かめる。
+// 送ってよいのは「依頼スレッドへの受付の返信」と「非公開チャンネルへの通知（決まった文＋画面へのリンク）」だけ。
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { handleRequest, makeSeen, shouldHandle, type BotConfig, type MessageEventLike, type SlackLike } from "./core";
+import { handleRequest, makeSeen, NOTIFY_TEXT, shouldHandle, THREAD_TEXT, type BotConfig, type MessageEventLike, type NotifyKind, notifyText, type SlackLike, type ThreadKind } from "./core";
 
 const PORT = 3998;
 const CH = "C0REQUESTS";
+const NOTIFY = "G0PRIVATEPR";
 const BOT = "U0BOT";
+/** 候補の情報らしい言葉。Slack に出す文に入っていないことを確かめる */
+const CANDIDATE_WORDS = ["織部", "百瀬", "早乙女", "東雲", "鷹野", "理由", "候補が出ました", "見つからない理由", "初登壇"];
 
-// 本物の slack-bot.ts と同じく、投稿先のチャンネルは依頼チャンネルに固定
-const posts: Array<{ channel: string; thread_ts: string; text: string }> = [];
-const slack: SlackLike = {
-  replyInThread: async (threadTs, text) => {
-    posts.push({ channel: CH, thread_ts: threadTs, text });
-    return { ok: true };
-  },
-  getPermalink: async (a) => `https://example.slack.com/archives/${a.channel}/p${a.message_ts.replace(".", "")}`,
-};
+// 本物の slack-bot.ts と同じく、投稿先のチャンネルは固定・文は決まった文だけ
+const posts: Array<{ channel: string; thread_ts: string | null; text: string }> = [];
+function fakeSlack(notifyChannel: string | null): SlackLike {
+  return {
+    replyInThread: async (threadTs: string, kind: ThreadKind) => {
+      posts.push({ channel: CH, thread_ts: threadTs, text: THREAD_TEXT[kind] });
+      return { ok: true };
+    },
+    notifyPrivate: async (kind: NotifyKind, link: string | null) => {
+      if (!notifyChannel) return null;
+      posts.push({ channel: notifyChannel, thread_ts: null, text: notifyText(kind, link) });
+      return { ok: true };
+    },
+    getPermalink: async (a) => `https://example.slack.com/archives/${a.channel}/p${a.message_ts.replace(".", "")}`,
+  };
+}
 const cfg: BotConfig = {
   channel: CH,
   botUserId: BOT,
@@ -63,45 +74,44 @@ async function main() {
     const first = makeSeen();
     check("同じ投稿の再送は1回だけ処理", first("C:1") === true && first("C:1") === false);
 
-    // ---- 流れ：受け付け → 受信箱 → 結果をスレッドへ
-    const run = async (text: string, ts: string) => {
+    // ---- 流れ：受付の返信 → 受信箱 → 非公開チャンネルに通知
+    const run = async (text: string, ts: string, notifyChannel: string | null = NOTIFY, c: BotConfig = cfg) => {
       posts.length = 0;
-      await handleRequest({ channel: CH, ts, user: "U0PR", text }, slack, cfg);
+      await handleRequest({ channel: CH, ts, user: "U0PR", text }, fakeSlack(notifyChannel), c);
       return posts.slice();
     };
+    const noCandidateInfo = (ps: typeof posts) => ps.every((p) => CANDIDATE_WORDS.every((w) => !p.text.includes(w)));
 
     let p = await run("12/17のLT会で話せる人を探しています", "200.1");
-    check("最初に「受け付けました」をスレッドへ", p[0]?.text === "受け付けました。候補を準備しています" && p[0]?.thread_ts === "200.1");
-    check("候補をスレッドへ返す", p.length === 2 && p[1].text.includes("候補が出ました（3人）") && p[1].text.includes("（条件付き）") && p[1].text.includes("（自信あり）"), p[1]?.text.split("\n")[0]);
-    check("画面へのリンクが絶対URL", p[1]?.text.includes(`<http://127.0.0.1:${PORT}/?inbox=`) ?? false);
-    check("投稿先はすべて依頼のチャンネルのスレッド", p.every((x) => x.channel === CH && x.thread_ts === "200.1"));
+    check("依頼スレッドには受付の文だけを返す", p.filter((x) => x.channel === CH).length === 1 && p[0].text === "受け付けました。技術広報から連絡します" && p[0].thread_ts === "200.1");
+    const n = p.find((x) => x.channel === NOTIFY);
+    check("準備ができたら非公開チャンネルに通知", !!n && n.thread_ts === null && n.text.startsWith(NOTIFY_TEXT.ready), n?.text.split("\n")[0]);
+    const id = n?.text.match(/inbox=([^|>]+)/)?.[1];
+    check("通知は決まった文と画面へのリンクだけ", !!id && n?.text === `${NOTIFY_TEXT.ready}\n<http://127.0.0.1:${PORT}/?inbox=${id}|画面で見る>`);
+    check("候補の名前・理由・件数を Slack のどこにも書かない", noCandidateInfo(p));
+    check("投稿先は依頼チャンネルのスレッドと通知チャンネルだけ", p.every((x) => (x.channel === CH && x.thread_ts === "200.1") || (x.channel === NOTIFY && x.thread_ts === null)));
 
-    p = await run("1人だけ合う依頼", "200.2");
-    check("候補1人でも返す", p[1]?.text.includes("候補が出ました（1人）") && p[1].text.includes("1. *") && !p[1].text.includes("2. *"), p[1]?.text.split("\n")[0]);
-    p = await run("5人いる依頼", "200.3");
-    check("候補5人でも番号と印を崩さず返す", p[1]?.text.includes("候補が出ました（5人）") && p[1].text.includes("5. *") && p[1].text.includes("初登壇｜") && p[1].text.includes("半年以内に登壇｜"), p[1]?.text.split("\n")[0]);
-
-    p = await run("Rustの組み込みで見つからない依頼", "201.1");
-    check("no_fit は見つからない理由を返す", p[1]?.text.startsWith("合う候補が見つかりませんでした") && p[1].text.includes("• "), p[1]?.text.split("\n")[0]);
+    p = await run("12/17のLT会で話せる人を探しています", "201.1", null);
+    check("通知先の設定がなければ通知しない（返信は受付だけ）", p.length === 1 && p[0].text === THREAD_TEXT.received);
 
     p = await run("エラーになる依頼", "202.1");
-    check("error はその旨を返す", p[1]?.text.startsWith("候補を準備できませんでした") ?? false);
+    check("候補づくりの失敗も非公開チャンネルにだけ知らせる", p.length === 2 && p[1].channel === NOTIFY && p[1].text.startsWith(NOTIFY_TEXT.error) && noCandidateInfo(p));
 
     p = await run("遅い依頼", "203.1");
-    check("時間切れはその旨を返す", p[1]?.text.startsWith("5分たっても") ?? false);
+    check("時間切れも非公開チャンネルにだけ知らせる", p.length === 2 && p[1].channel === NOTIFY && p[1].text.startsWith(NOTIFY_TEXT.timeout));
 
-    const down = { ...cfg, inboxBaseUrl: "http://127.0.0.1:3997" };
-    posts.length = 0;
-    await handleRequest({ channel: CH, ts: "204.1", user: "U0PR", text: "窓口が止まっている" }, slack, down);
-    check("窓口が止まっているときはその旨を返す", posts[1]?.text.startsWith("受信箱に入れられませんでした") ?? false);
-
-    posts.length = 0;
-    await handleRequest({ channel: CH, ts: "205.1", user: "U0PR", text: "<script> & 名前" }, slack, cfg);
-    check("返信は2件だけ（DMや別の投稿をしない）", posts.length === 2);
+    p = await run("窓口が止まっている", "204.1", NOTIFY, { ...cfg, inboxBaseUrl: "http://127.0.0.1:3997" });
+    check(
+      "窓口が止まっているときは、スレッドに受付できなかった旨、通知チャンネルに依頼の投稿へのリンク",
+      p.length === 3 && p[1].text === THREAD_TEXT.failed && p[2].channel === NOTIFY && p[2].text.startsWith(NOTIFY_TEXT.unreachable) && p[2].text.includes("example.slack.com"),
+    );
 
     let threw = false;
-    await handleRequest({ channel: "C0OTHER", ts: "206.1", user: "U0PR", text: "別のチャンネル" }, slack, cfg).catch(() => (threw = true));
-    check("依頼チャンネル以外の投稿は処理しない", threw);
+    posts.length = 0;
+    await handleRequest({ channel: "C0OTHER", ts: "206.1", user: "U0PR", text: "別のチャンネル" }, fakeSlack(NOTIFY), cfg).catch(() => (threw = true));
+    check("依頼チャンネル以外の投稿は処理しない", threw && posts.length === 0);
+
+    check("Slack に出す文は決まった文だけ", [...Object.values(THREAD_TEXT), ...Object.values(NOTIFY_TEXT)].every((t) => !/\$\{|候補：|理由：/.test(t)));
   } finally {
     server.kill();
   }

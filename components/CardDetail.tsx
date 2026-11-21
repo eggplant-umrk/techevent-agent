@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DraftResponse } from "@/app/_client/api";
 import type { CardFormat, CardPatch, NotebookCard, VenueDraftBody, VenueEvent } from "@/app/_client/types";
+import { acceptedRequestIds } from "@/lib/requestStage";
 import { VenueFinder } from "./VenueFinder";
 import { ACTIVITY_LABEL, FIELD_LABEL, FORMAT_LABEL, md, REASON_LABEL, RESULT_LABEL } from "./labels";
 import { CardMarks, ErrorLine, statusText, Tag } from "./ui";
@@ -18,8 +19,11 @@ export function CardDetail({
   onResolveReaction,
   onFindVenues,
   onVenueDraft,
+  requestTitle,
 }: {
   card: NotebookCard;
+  /** 依頼のイベント名（承諾済みの依頼を「○○で承諾済み」と出すため）。分からなければ null */
+  requestTitle?: (requestId: string) => string | null;
   focusEvidence: string | null;
   onClose: () => void;
   onSave: (patch: CardPatch) => Promise<void>;
@@ -32,6 +36,8 @@ export function CardDetail({
 }) {
   // イベント後の提案は「需要あり」（参加者が聞きたいテーマ）だけを出す。登壇者の反応（点数・不満・良い点）は画面に出さない
   const reactions = (card.reactions ?? []).filter((r) => r.kind === "demand" && r.status !== "dismissed");
+  // 承諾された依頼（依頼ごとの最後の記録が承諾・公開。判定はコード）
+  const accepted = acceptedRequestIds(card).map((id) => requestTitle?.(id) ?? null);
   const [venueDirty, setVenueDirty] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState(false);
@@ -144,6 +150,15 @@ export function CardDetail({
             <CardMarks card={card} />
             <span className="meta">{statusText(card)}</span>
           </div>
+          {accepted.length > 0 && (
+            <p className="small accepted-line">
+              {accepted.map((t, i) => (
+                <span key={i}>
+                  <Tag tone="ok">承諾済み</Tag> {t ? `${t}で承諾済み` : "依頼を承諾済み"}
+                </span>
+              ))}
+            </p>
+          )}
         </div>
         <button type="button" className="icon-btn" aria-label="カードを閉じる" onClick={() => ref.current?.close()}>
           <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

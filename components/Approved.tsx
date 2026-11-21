@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Candidate, DeclineReason, OutreachDraft, OutreachResult } from "@/app/_client/types";
+import type { BoardDetail, Candidate, DeclineReason, OutreachDraft, OutreachResult } from "@/app/_client/types";
+import { StageTag } from "./Inbox";
 import { REASON_LABEL, RESULT_LABEL } from "./labels";
 import { CopyButton, ErrorLine, Spinner } from "./ui";
 
@@ -12,6 +13,7 @@ export function Approved({
   drafting,
   draftError,
   draftNote,
+  resume = false,
   onBack,
   onRetryDraft,
   onRecord,
@@ -21,6 +23,8 @@ export function Approved({
   drafting: boolean;
   draftError: string | null;
   draftNote: string | null;
+  /** 声かけ中の人の返事を記録しに戻ってきた（声かけ文は作り直さない） */
+  resume?: boolean;
   onBack: () => void;
   onRetryDraft: () => void;
   onRecord: (r: OutreachResult, reason?: DeclineReason) => Promise<void>;
@@ -34,7 +38,7 @@ export function Approved({
           </button>
         </div>
         <div className="cand-head">
-          <span className="cand-name">{candidate.name}さんで進める</span>
+          <span className="cand-name">{resume ? `${candidate.name}さんに声かけ中` : `${candidate.name}さんで進める`}</span>
           <span className="meta">
             {candidate.business_unit}・{candidate.talk_tag ?? `登壇${candidate.past_talk_count}回`}・{candidate.busy_text}
           </span>
@@ -60,20 +64,89 @@ export function Approved({
       )}
       {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} />}
       {draft?.organizer_reply && <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} />}
-      {draft && <OutcomeRecorder name={candidate.name} onRecord={onRecord} />}
+      {resume && !draft && !drafting && (
+        <section className="surface pad-lg">
+          <p className="meta">声かけ文は前に作ったものを使ってください。作り直すこともできます。</p>
+          <button type="button" className="btn btn-sm" onClick={onRetryDraft}>
+            声かけ文をもう一度作る
+          </button>
+        </section>
+      )}
+      {(draft || resume) && <OutcomeRecorder name={candidate.name} onRecord={onRecord} />}
+    </>
+  );
+}
+
+/**
+ * 承諾済みの依頼の画面：候補の一覧は出さず、決まった人・状態・開催日・主催者への返事の下書きを出す。
+ * 候補の一覧は「ほかの候補を見る」で開ける。
+ */
+export function AcceptedView({
+  detail,
+  reply,
+  showOthers,
+  onToggleOthers,
+  onOpenCard,
+}: {
+  detail: BoardDetail;
+  reply: { name: string; text: string } | null;
+  showOthers: boolean;
+  onToggleOthers: () => void;
+  onOpenCard: (employeeId: string) => void;
+}) {
+  const st = detail.state;
+  return (
+    <>
+      <section className="surface pad-lg" aria-labelledby="acc-title">
+        <p className="meta inbox-marks">
+          <StageTag stage={st.stage} />
+          {detail.event_date ? <span>開催日 {detail.event_date}</span> : <span>開催日は未定</span>}
+        </p>
+        <h3 id="acc-title" className="h2">
+          決まった人
+        </h3>
+        <ul className="plain-list">
+          {st.accepted_by.map((p) => (
+            <li key={p.employee_id}>
+              <button type="button" className="link cand-name" onClick={() => onOpenCard(p.employee_id)}>
+                {p.name}さん
+              </button>
+              <span className="meta">　承諾済み</span>
+            </li>
+          ))}
+        </ul>
+        {st.declined_by.length > 0 && <p className="meta">辞退：{st.declined_by.map((p) => `${p.name}さん`).join("・")}</p>}
+        <div className="btn-row">
+          <button type="button" className="btn btn-sm" aria-expanded={showOthers} onClick={onToggleOthers}>
+            {showOthers ? "ほかの候補を閉じる" : "ほかの候補を見る"}
+          </button>
+        </div>
+      </section>
+      {reply ? (
+        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted />
+      ) : (
+        <section className="surface pad-lg">
+          <h3 className="h3">主催者への返事（下書き）</h3>
+          <p className="meta">保存された下書きがありません（声かけ文を作ったときに一緒に作られます）。</p>
+        </section>
+      )}
     </>
   );
 }
 
 /** 主催者への返事（X で返す短い文）。送信はしない。直してコピーするだけ */
-function OrganizerReply({ text, note }: { text: string; note: string | null }) {
+function OrganizerReply({ text, note, accepted = false }: { text: string; note: string | null; accepted?: boolean }) {
   const [value, setValue] = useState(text);
   return (
     <section className="surface pad-lg" aria-labelledby="reply-title">
       <h3 id="reply-title" className="h3">
         主催者への返事（下書き）
       </h3>
-      <p className="meta">X で返す短い文です。本人にはまだ確認していない前提の書き方です。ここからは送信しません。直してコピーし、X で返信してください。</p>
+      <p className="meta">
+        {accepted
+          ? "声をかけたときに作った下書きです（本人に確認する前の書き方）。承諾をもらえたので、言い回しを直してからコピーし、X で返信してください。ここからは送信しません。"
+          : "X で返す短い文です。本人にはまだ確認していない前提の書き方です。ここからは送信しません。直してコピーし、X で返信してください。"}
+      </p>
       {note && <p className="log-line log-warn">{note}</p>}
       <label className="field">
         <span className="field-label">本文（{value.length}字）</span>

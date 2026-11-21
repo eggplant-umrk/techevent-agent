@@ -355,3 +355,6 @@ textarea.input { resize: vertical; }
 
 /* 主催者への返事（X で返す下書き） */
 .reply-text { min-height: 96px; }
+
+/* カード詳細：承諾された依頼 */
+.accepted-line { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }

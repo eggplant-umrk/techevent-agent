@@ -85,3 +85,5 @@ data/talk_records.json
 AGENTS.md
 # Claude のセッションが置いた作業ファイル（デモ用の架空カレンダーなど）
 Claude outputs/
+data/sample_proposals.json
+data/drafts.json

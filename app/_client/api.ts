@@ -23,6 +23,8 @@ import type {
   VenueDraftBody,
   VenueEvent,
   ArchiveDetail,
+  BoardDetail,
+  BoardListItem,
   ArchiveKind,
   ArchiveRow,
   PersonDetail,
@@ -52,11 +54,11 @@ export interface Api {
   editCard(cardId: string, patch: CardPatch): Promise<void>;
   resolvePending(cardId: string, theme: string, accept: boolean): Promise<void>;
   /** 受信箱の一覧（新しい順） */
-  inbox(): Promise<InboxListItem[]>;
+  inbox(): Promise<BoardListItem[]>;
   /** 手で追加（受信箱に入る入口の1つ） */
   inboxAdd(text: string): Promise<{ id: string }>;
   /** 受信箱の1件（保存した候補と作業ログつき） */
-  inboxDetail(id: string): Promise<InboxDetail>;
+  inboxDetail(id: string): Promise<BoardDetail>;
   /** 開いた印を付ける */
   inboxOpen(id: string): Promise<void>;
   /** 過去イベントの一覧（新しい順） */
@@ -134,7 +136,7 @@ export const realApi: Api = {
   resolvePending: async (card_id, theme, accept) => {
     await json(await post("/api/cards/pending", { card_id, theme, accept }));
   },
-  inbox: async () => (await json<{ items: InboxListItem[] }>(await fetch("/api/inbox"))).items,
+  inbox: async () => (await json<{ items: BoardListItem[] }>(await fetch("/api/inbox"))).items,
   inboxAdd: async (text) => json(await post("/api/inbox", { text, source: "manual" })),
   inboxDetail: async (id) => json(await fetch(`/api/inbox/${encodeURIComponent(id)}/detail`)),
   inboxOpen: async (id) => {

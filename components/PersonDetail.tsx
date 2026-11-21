@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { NotebookCard, PersonDetail as Detail, PersonPatch, SpeakingIntent } from "@/app/_client/types";
 import { ACTIVITY_LABEL, md } from "./labels";
+import { acceptedRequestIds } from "@/lib/requestStage";
 import { CardMarks, ErrorLine, Tag } from "./ui";
 
 const INTENT: Array<[SpeakingIntent, string]> = [
@@ -197,6 +198,7 @@ export function PersonDetail({
                     <span className="grow" />
                     <span className="tags nb-marks">
                       <CardMarks card={c} />
+                      {acceptedRequestIds(c).length > 0 && <Tag tone="ok">承諾済みの依頼あり</Tag>}
                     </span>
                   </span>
                   {c.pending_themes.length > 0 && <span className="meta">新しいテーマ案（未確認）があります</span>}

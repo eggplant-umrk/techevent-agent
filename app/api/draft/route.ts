@@ -1,5 +1,6 @@
 import { draftOutreach } from "@/lib/heavy";
 import { resolveRequest } from "@/lib/requests";
+import { saveDraft } from "@/lib/board";
 import { runUsd, totalUsd } from "@/lib/usage";
 
 export const runtime = "nodejs";
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
   }
   try {
     const r = await draftOutreach(body.run_id, request, body.candidate);
+    // 承諾済みの依頼を開き直したときに主催者への返事を出せるよう、下書きを保存する（送信はしない）
+    if (body.request_id && !body.custom_text) saveDraft(body.request_id, body.candidate.employee_id, r.value);
     return Response.json({
       draft: r.value,
       model: r.model,

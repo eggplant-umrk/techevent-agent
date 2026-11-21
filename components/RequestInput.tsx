@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-
-import type { InboxDetail, IntakeField, SpeakingRequest } from "@/app/_client/types";
-import { md, PATTERN_LABEL } from "./labels";
+import type { BoardDetail, IntakeField } from "@/app/_client/types";
+import { md } from "./labels";
+import { StageTag, sourceLabel } from "./Inbox";
 import { Tag } from "./ui";
 
-/** preset：届いた依頼（サンプル）から選ぶ／custom：手で追加（受信箱に入る）／inbox：受信箱から開いた依頼 */
-export type RequestMode = "preset" | "custom" | "inbox";
+/** inbox：受信箱から開いた依頼／custom：手で追加（受信箱に入る）。サンプルの依頼も受信箱に並ぶ（入口は受信箱だけ） */
+export type RequestMode = "custom" | "inbox";
 
 const INTAKE_ROWS: Array<[IntakeField, string]> = [
   ["event_name", "イベント名"],
@@ -25,9 +24,6 @@ const when = (iso: string) => {
 };
 
 export function RequestInput({
-  presets,
-  selected,
-  onSelect,
   mode,
   onMode,
   customText,
@@ -40,9 +36,6 @@ export function RequestInput({
   compact,
   children,
 }: {
-  presets: SpeakingRequest[];
-  selected: string;
-  onSelect: (id: string) => void;
   mode: RequestMode;
   onMode: (m: RequestMode) => void;
   customText: string;
@@ -50,18 +43,17 @@ export function RequestInput({
   running: boolean;
   onRun: () => void;
   /** 受信箱から開いた依頼（mode === "inbox" のとき） */
-  inbox: InboxDetail | null;
+  inbox: BoardDetail | null;
   adding: boolean;
   /** 手で追加：受信箱に入れて、候補づくりを始める */
   onAdd: () => void;
-  /** After a run, show only the summary of the request (the picker folds away). */
+  /** 候補を出したあとは、依頼文をたたんで要約だけにする */
   compact: boolean;
   /** The agent's steps, shown under the request without another frame. */
   children?: React.ReactNode;
 }) {
-  const [picking, setPicking] = useState(false);
-  const current = presets.find((p) => p.id === selected);
   const preparing = mode === "inbox" && inbox?.status === "processing";
+  const st = inbox?.state;
 
   return (
     <section className="surface pad-lg req" aria-labelledby="req-title">
@@ -69,24 +61,20 @@ export function RequestInput({
         <h2 id="req-title" className="h2">
           依頼
         </h2>
-        <div role="group" aria-label="依頼の入れ方" className="seg">
-          <button type="button" className="chip" aria-pressed={mode === "preset"} onClick={() => onMode("preset")}>
-            届いた依頼から選ぶ
-          </button>
-          <button type="button" className="chip" aria-pressed={mode === "custom"} onClick={() => onMode("custom")}>
-            手で追加
-          </button>
-        </div>
+        <button type="button" className="chip" aria-pressed={mode === "custom"} onClick={() => onMode(mode === "custom" ? "inbox" : "custom")}>
+          手で追加
+        </button>
       </div>
+
+      {mode === "inbox" && !inbox && <p className="meta">左の受信箱から依頼を選んでください。新しい依頼は「手で追加」からも入れられます。</p>}
 
       {mode === "inbox" && inbox && (
         <div className="req-summary">
           <p className="meta inbox-marks">
-            <Tag tone={inbox.status === "ready" ? "ok" : inbox.status === "error" ? "warn" : "neutral"}>
-              {inbox.status === "ready" ? "候補準備済み" : inbox.status === "error" ? "エラー" : "候補を準備中"}
-            </Tag>
+            {st && <StageTag stage={st.stage} />}
             <span>
-              受信箱・{inbox.source === "slack" ? "Slackから" : "手で追加"}・{when(inbox.received_at)}
+              受信箱・{sourceLabel(inbox.source)}・{when(inbox.received_at)}
+              {inbox.event_date ? `・開催 ${md(inbox.event_date)}` : ""}
             </span>
             {inbox.permalink && (
               <a href={inbox.permalink} target="_blank" rel="noreferrer">
@@ -95,6 +83,9 @@ export function RequestInput({
             )}
           </p>
           <h3 className="req-title">{inbox.title}</h3>
+          {st && st.accepted_by.length > 0 && <p className="small strong">{st.accepted_by.map((p) => `${p.name}さん`).join("・")}が承諾</p>}
+          {st && st.stage === "outreach" && <p className="small muted-strong">{st.outreach_to.map((p) => `${p.name}さん`).join("・")}に声かけ中（返事待ち）</p>}
+          {st && st.stage === "declined" && <p className="small muted-strong">{st.declined_by.map((p) => `${p.name}さん`).join("・")}が辞退。次の人を選べます</p>}
           {inbox.nominee_name && <p className="small muted-strong">指名：{inbox.nominee_name}さん（依頼文から読み取り）</p>}
           {inbox.intake && (
             <dl className="person-facts intake" aria-label="会話から読み取った項目">
@@ -112,52 +103,6 @@ export function RequestInput({
           </details>
           {inbox.status === "error" && <p className="error-line" role="alert">{inbox.error ?? "候補を出せませんでした"}。「もう一度探す」を押してください。</p>}
         </div>
-      )}
-
-      {mode === "preset" && (
-        <>
-          {(!compact || picking) && (
-            <div role="group" aria-label="届いた依頼" className="req-list">
-              {presets.map((p) => (
-                <button key={p.id} type="button" className="req-item" aria-pressed={p.id === selected} onClick={() => {
-                    onSelect(p.id);
-                    setPicking(false);
-                  }}>
-                  <span className="meta">
-                    {PATTERN_LABEL[p.pattern ?? ""] ?? p.pattern}・{md(p.event?.date)}
-                  </span>
-                  <span className="strong">{p.event?.title}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {current && (
-            <div className="req-summary">
-              <p className="meta">
-                {PATTERN_LABEL[current.pattern ?? ""] ?? current.pattern}
-                {current.reply_deadline ? `・返事の期限 ${md(current.reply_deadline)}` : ""}
-                {compact && !picking && (
-                  <>
-                    {"　"}
-                    <button type="button" className="link" onClick={() => setPicking(true)}>
-                      依頼を選び直す
-                    </button>
-                  </>
-                )}
-              </p>
-              <h3 className="req-title">{current.event?.title}</h3>
-              <p className="small muted-strong">
-                {current.event?.date}・{current.event?.venue}
-                {current.event?.online ? "（オンラインあり）" : ""}／{current.event?.format} {current.event?.duration_min}分・
-                {current.theme ? `テーマ「${current.theme}」` : "テーマおまかせ"}／{current.event?.audience}
-              </p>
-              <details className="req-message">
-                <summary>依頼文を読む（{current.requester?.organization}）</summary>
-                <p className="pre small">{current.message}</p>
-              </details>
-            </div>
-          )}
-        </>
       )}
 
       {mode === "custom" && (
@@ -187,9 +132,11 @@ export function RequestInput({
             {adding ? "受信箱に追加しています…" : "受信箱に追加"}
           </button>
         ) : (
-          <button type="button" className="btn btn-primary" disabled={running || preparing || (mode === "inbox" && !inbox)} onClick={onRun}>
-            {preparing ? "候補を準備しています…" : running ? "ネタ帳を探しています…" : compact || mode === "inbox" ? "もう一度探す" : "ネタ帳から候補を出す"}
-          </button>
+          inbox && (
+            <button type="button" className={`btn ${st?.stage === "new" ? "btn-primary" : ""}`} disabled={running || preparing} onClick={onRun}>
+              {preparing ? "候補を準備しています…" : running ? "ネタ帳を探しています…" : st?.stage === "new" ? "ネタ帳から候補を出す" : "もう一度探す"}
+            </button>
+          )
         )}
       </div>
       {children}

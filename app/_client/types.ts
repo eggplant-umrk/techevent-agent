@@ -8,6 +8,7 @@ export type { SpeakingRequest } from "@/lib/data";
 export type { OutreachDraft } from "@/lib/heavy";
 export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
+export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
 
 /** One card as GET /api/cards returns it (card + joined employee, evidence, publication records). */
 export type NotebookCard = Card & {

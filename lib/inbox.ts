@@ -49,12 +49,12 @@ export type Runner = (request: SpeakingRequest, emit: (e: AgentEvent) => void) =
 // ---------------------------------------------------------------------------
 function load(): InboxItem[] {
   const f = FILE();
-  if (!fs.existsSync(f)) return [];
-  return JSON.parse(fs.readFileSync(f, "utf-8")) as InboxItem[];
+  if (!fs.existsSync(/*turbopackIgnore: true*/ f)) return [];
+  return JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ f, "utf-8")) as InboxItem[];
 }
 
 function save(items: InboxItem[]) {
-  fs.writeFileSync(FILE(), JSON.stringify(items, null, 2) + "\n", "utf-8");
+  fs.writeFileSync(/*turbopackIgnore: true*/ FILE(), JSON.stringify(items, null, 2) + "\n", "utf-8");
 }
 
 /** 1件を書き換える。読み込みから書き込みまで同期なので、同じプロセス内で割り込まれない */

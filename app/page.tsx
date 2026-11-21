@@ -7,6 +7,8 @@ import type {
   BlogIdea,
   Candidate,
   DeclineReason,
+  InboxDetail,
+  InboxListItem,
   ModelChoice,
   NotebookCard,
   OutreachDraft,
@@ -18,6 +20,7 @@ import { AgentSteps, type LogItem } from "@/components/AgentSteps";
 import { Approved } from "@/components/Approved";
 import { CardDetail } from "@/components/CardDetail";
 import { Header } from "@/components/Header";
+import { Inbox } from "@/components/Inbox";
 import { usd } from "@/components/labels";
 import { Notebook, type NbLogLine } from "@/components/Notebook";
 import { AlternativePitch, Candidates } from "@/components/Proposal";
@@ -53,6 +56,13 @@ export default function Home() {
   const [log, setLog] = useState<LogItem[]>([]);
   const [result, setResult] = useState<Proposal | null>(null);
   const [pitch, setPitch] = useState<string | null>(null);
+
+  // inbox
+  const [inboxItems, setInboxItems] = useState<InboxListItem[]>([]);
+  const [inboxLoaded, setInboxLoaded] = useState(false);
+  const [inboxId, setInboxId] = useState<string | null>(null);
+  const [inbox, setInbox] = useState<InboxDetail | null>(null);
+  const [adding, setAdding] = useState(false);
 
   // after approval
   const [approved, setApproved] = useState<Candidate | null>(null);
@@ -96,11 +106,44 @@ export default function Home() {
     }
   }, [api]);
 
+  const loadInbox = useCallback(async () => {
+    try {
+      setInboxItems(await api.inbox());
+    } catch {
+      /* 一覧は前の内容のまま */
+    } finally {
+      setInboxLoaded(true);
+    }
+  }, [api]);
+
   useEffect(() => {
     api.requests().then(setPresets).catch(() => setPresets([]));
     loadCards();
     loadState();
-  }, [api, loadCards, loadState]);
+    loadInbox();
+  }, [api, loadCards, loadState, loadInbox]);
+
+  // 受信箱は数秒ごとに見直す（Slackから届いた依頼や、準備が終わった依頼をすぐ出すため。サーバー内の読み込みだけでAPI代はかからない）
+  useEffect(() => {
+    const t = setInterval(loadInbox, 4000);
+    return () => clearInterval(t);
+  }, [loadInbox]);
+
+  // ?inbox={id} で開いたら、その依頼の候補画面を開く
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("inbox");
+    if (id) openInbox(id);
+    // api が決まったときに1回だけ
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [api]);
+
+  // 開いている依頼が準備中なら、一覧で準備が終わったのを見て中身を読み直す
+  useEffect(() => {
+    if (mode !== "inbox" || !inboxId || inbox?.status !== "processing") return;
+    const now = inboxItems.find((x) => x.id === inboxId);
+    if (now && now.status !== "processing") void showInbox(inboxId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inboxItems]);
 
   useEffect(() => {
     if (!running) return;
@@ -155,7 +198,75 @@ export default function Home() {
   }
 
   // ---- request
-  const requestRef = () => (mode === "preset" ? { request_id: selected } : { request_id: customId, custom_text: customText });
+  const requestRef = () =>
+    mode === "inbox" && inboxId
+      ? { request_id: inboxId }
+      : mode === "preset"
+        ? { request_id: selected }
+        : { request_id: customId, custom_text: customText };
+
+  function resetPanel() {
+    setLog([]);
+    setResult(null);
+    setPitch(null);
+    setApproved(null);
+    setApprovedCardId(null);
+    setDraft(null);
+    setDraftError(null);
+    setDraftNote(null);
+    setRunUsd(0);
+  }
+
+  /** 受信箱の1件を読み、保存してある候補と作業ログをそのまま出す（もう一度は実行しない） */
+  async function showInbox(id: string) {
+    try {
+      const d = await api.inboxDetail(id);
+      setInbox(d);
+      resetPanel();
+      if (d.status === "ready" && d.result) {
+        for (const e of d.events) handle(e);
+        setResult(d.result);
+        setPitch(d.result.alternative_pitch ?? null);
+      } else if (d.status === "error") {
+        for (const e of d.events) if (e.type !== "error") handle(e);
+      }
+    } catch (err) {
+      setLog([{ kind: "note", tone: "error", text: `受信箱の依頼を開けませんでした（${msg(err, "不明なエラー")}）。` }]);
+    }
+  }
+
+  async function openInbox(id: string) {
+    setMode("inbox");
+    setInboxId(id);
+    setInbox(null);
+    const url = new URL(window.location.href);
+    url.searchParams.set("inbox", id);
+    window.history.replaceState(null, "", url);
+    await showInbox(id);
+    try {
+      await api.inboxOpen(id);
+    } catch {
+      /* 印が付かなくても表示は続ける */
+    }
+    loadInbox();
+  }
+
+  /** 手で追加：受信箱に入れ、そのまま開いて準備の様子を見せる */
+  async function addManual() {
+    const text = customText.trim();
+    if (!text) return;
+    setAdding(true);
+    try {
+      const { id } = await api.inboxAdd(text);
+      setCustomText("");
+      await loadInbox();
+      await openInbox(id);
+    } catch (err) {
+      setLog([{ kind: "note", tone: "error", text: `受信箱に追加できませんでした（${msg(err, "不明なエラー")}）。もう一度押してください。` }]);
+    } finally {
+      setAdding(false);
+    }
+  }
 
   function handle(e: AgentEvent) {
     switch (e.type) {
@@ -196,22 +307,14 @@ export default function Home() {
   }
 
   async function run() {
-    const id = mode === "custom" ? `custom-${Date.now().toString(36)}` : selected;
+    const id = mode === "inbox" && inboxId ? inboxId : mode === "custom" ? `custom-${Date.now().toString(36)}` : selected;
     if (mode === "custom") setCustomId(id);
     started.current = Date.now();
     setSeconds(0);
     setRunning(true);
-    setLog([]);
-    setResult(null);
-    setPitch(null);
-    setApproved(null);
-    setApprovedCardId(null);
-    setDraft(null);
-    setDraftError(null);
-    setDraftNote(null);
-    setRunUsd(0);
+    resetPanel();
     try {
-      await api.runAgent(mode === "preset" ? { request_id: id } : { request_id: id, custom_text: customText }, handle);
+      await api.runAgent(mode === "custom" ? { request_id: id, custom_text: customText } : { request_id: id }, handle);
     } catch (err) {
       setLog((l) => [...l, { kind: "note", tone: "error", text: `候補を出せませんでした（${msg(err, "不明なエラー")}）。もう一度押してください。` }]);
     }
@@ -286,6 +389,8 @@ export default function Home() {
         </p>
       )}
 
+      <Inbox items={inboxItems} loaded={inboxLoaded} openId={mode === "inbox" ? inboxId : null} onOpen={(id) => void openInbox(id)} />
+
       <main className="main">
         <Notebook
           cards={cards}
@@ -330,6 +435,9 @@ export default function Home() {
                 onCustomText={setCustomText}
                 running={running}
                 onRun={run}
+                inbox={inbox}
+                adding={adding}
+                onAdd={addManual}
                 compact={running || !!result}
               >
                 {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}

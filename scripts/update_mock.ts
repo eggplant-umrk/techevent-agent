@@ -1,11 +1,11 @@
-// Refresh the screen's mock fixtures (app/_client/proposals.json) from docs/eval_after.json.
+// Refresh the screen's mock fixtures (app/_client/proposals.json) from docs/eval_latest.json（最新の評価結果）.
 //   npx tsx scripts/update_mock.ts
 // No API calls.
 import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const after = JSON.parse(fs.readFileSync(path.join(root, "docs", "eval_after.json"), "utf-8")) as {
+const after = JSON.parse(fs.readFileSync(path.join(root, "docs", "eval_latest.json"), "utf-8")) as {
   rows: Array<{ request_id: string; result: unknown; steps: number; run_usd: number }>;
 };
 const out: Record<string, { result: unknown; steps: number; run_usd: number }> = {};

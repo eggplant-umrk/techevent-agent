@@ -2,6 +2,7 @@
 // - Reads (cards, requests, state) still come from data/ through the GET routes.
 // - The agent run replays a real proposal saved by the evaluation (docs/eval_after.json → proposals.json).
 // - Pasted request text always comes back as "no fit", to show that screen.
+// - 受信箱：保存済みの結果がある5件が「準備済み」で並ぶ。手で追加した依頼は手元だけで準備中→準備済み（合う候補なし）。
 // - Edits, adopt/drop, and outcomes are kept in memory only.
 import type { Api, DraftResponse } from "./api";
 import proposals from "./proposals.json";
@@ -10,6 +11,7 @@ import type {
   BlogIdea,
   Candidate,
   Card,
+  InboxListItem,
   NotebookCard,
   NotebookEvent,
   OutreachDraft,
@@ -126,6 +128,65 @@ export function mockApi(real: Api): Api {
   /** Cards created in memory when a candidate without a card is approved (same rule as /api/outcome). */
   const created: NotebookCard[] = [];
 
+  // 受信箱（手元だけ）
+  const inboxItems: InboxListItem[] = [];
+  const inboxTexts = new Map<string, string>();
+  async function ensureInbox() {
+    if (inboxItems.length) return;
+    if (!requests.length) requests = await real.requests();
+    // 保存済みの結果がある依頼を、Slackから届いて準備済みになったものとして並べる（新しい順）
+    const ids = Object.keys(FIXTURES).sort().reverse();
+    for (const [i, id] of ids.entries()) {
+      const r = requests.find((x) => x.id === id);
+      const f = FIXTURES[id];
+      inboxItems.push({
+        id,
+        source: "slack",
+        status: "ready",
+        received_at: `2026-11-21T0${9 - i}:30:00+09:00`,
+        is_new: i < 2, // 上の2件は「新しい」
+        title: r?.event?.title ?? id,
+        candidate_names: f.result.candidates.map((c) => c.name),
+        no_fit: f.result.candidates.length === 0,
+        error: null,
+        permalink: null,
+      });
+    }
+  }
+
+  /** 作業ログ（実行の再現にも、受信箱を開いたときの表示にも使う）。[イベント, 待ち時間ms] */
+  function eventsFor(result: Proposal, requestId: string, runUsd: number): Array<[AgentEvent, number]> {
+    const ev: Array<[AgentEvent, number]> = [];
+    const push = (e: AgentEvent, ms = 450) => ev.push([e, ms]);
+    push({ type: "start", run_id: result.run_id, loop_model: "claude-opus-5-5", heavy_model: "claude-fable-5-2", switched: false, total_usd: total, switch_usd: 150 }, 100);
+    push({ type: "step", n: 1, max: 15 });
+    push({ type: "thinking", text: "まずネタ帳から、依頼のテーマに近いカードと未発信のカードを探します。" });
+    push({ type: "tool_call", id: "t1", name: "search_cards", input: { query: result.candidates[0]?.theme.slice(0, 16) ?? "Rust 組み込み" } });
+    push({ type: "tool_result", id: "t1", name: "search_cards", ok: true, summary: result.candidates.length ? `${result.candidates.length + 4}枚が見つかりました` : "0枚" });
+    if (!result.candidates.length) {
+      push({ type: "tool_call", id: "t1b", name: "search_activities", input: { query: "Rust 組み込み" } });
+      push({ type: "tool_result", id: "t1b", name: "search_activities", ok: true, summary: "0件" });
+    }
+    push({ type: "step", n: 2, max: 15 });
+    for (const c of result.candidates) {
+      if (c.card_id) {
+        push({ type: "tool_call", id: `g-${c.employee_id}`, name: "get_card", input: { card_id: c.card_id } });
+        push({ type: "tool_result", id: `g-${c.employee_id}`, name: "get_card", ok: true, summary: `${c.name}：打診履歴 ${c.card?.outreach_history.length ?? 0}件` }, 250);
+      }
+      const date = requests.find((r) => r.id === requestId)?.event?.date ?? "";
+      push({ type: "tool_call", id: `s-${c.employee_id}`, name: "check_schedule", input: { id: c.employee_id, date } }, 250);
+      push({ type: "tool_result", id: `s-${c.employee_id}`, name: "check_schedule", ok: true, summary: "前後3日に予定なし" }, 250);
+    }
+    push({ type: "step", n: 3, max: 15 });
+    push({ type: "tool_call", id: "t9", name: "submit_candidates", input: {} });
+    push({ type: "tool_result", id: "t9", name: "submit_candidates", ok: true, summary: result.candidates.length ? `候補${result.candidates.length}人を提出` : "合う候補なしで提出" });
+    push({ type: "usage", run_usd: runUsd, total_usd: total, cache_read: 0, input: 0, output: 0 }, 50);
+    if (result.alternative_pitch) push({ type: "alternative_pitch", text: result.alternative_pitch, model: "claude-fable-5-2", fell_back: false });
+    push({ type: "final", result });
+    push({ type: "done", run_usd: runUsd, total_usd: total, steps: 3 }, 50);
+    return ev;
+  }
+
   const apply = (c: NotebookCard): NotebookCard => {
     const o = overlay.get(c.card_id);
     return o ? { ...c, ...o } : c;
@@ -153,41 +214,54 @@ export function mockApi(real: Api): Api {
     },
     async runAgent(body, onEvent) {
       const fixture = FIXTURES[body.request_id];
-      const result: Proposal = body.custom_text || !fixture
+      const inboxText = inboxItems.find((x) => x.id === body.request_id && !FIXTURES[x.id]);
+      const result: Proposal = body.custom_text || inboxText || !fixture
         ? { ...NO_FIT, run_id: `mock-${Date.now()}`, request_id: body.request_id }
         : { ...fixture.result, run_id: `mock-${Date.now()}` };
       const runUsd = fixture && !body.custom_text ? fixture.run_usd : 0.061;
-      const emit = async (e: AgentEvent, ms = 450) => {
+      total += runUsd;
+      for (const [e, ms] of eventsFor(result, body.request_id, runUsd)) {
         await wait(ms);
         onEvent(e);
+      }
+    },
+    // ---- 受信箱：保存済みの結果（proposals.json）を「準備済み」として並べる。追加は手元だけで準備中→準備済み
+    async inbox() {
+      await ensureInbox();
+      return inboxItems.map((x) => ({ ...x }));
+    },
+    async inboxAdd(text) {
+      await wait(200);
+      const id = `inb-mock-${inboxItems.length + 1}`;
+      const now = new Date().toISOString();
+      const title = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
+      inboxItems.unshift({ id, source: "manual", status: "processing", received_at: now, is_new: true, title: title.slice(0, 70), candidate_names: [], no_fit: false, error: null, permalink: null });
+      inboxTexts.set(id, text);
+      setTimeout(() => {
+        const it = inboxItems.find((x) => x.id === id);
+        if (it) Object.assign(it, { status: "ready", no_fit: true });
+      }, 2500);
+      return { id };
+    },
+    async inboxDetail(id) {
+      await ensureInbox();
+      const it = inboxItems.find((x) => x.id === id);
+      if (!it) throw new Error("その依頼は受信箱にありません");
+      const fixture = FIXTURES[id];
+      const result: Proposal | null =
+        it.status !== "ready" ? null : fixture ? { ...fixture.result, run_id: `mock-${id}` } : { ...NO_FIT, run_id: `mock-${id}`, request_id: id };
+      const runUsd = fixture?.run_usd ?? 0.061;
+      return {
+        ...it,
+        text: inboxTexts.get(id) ?? requests.find((r) => r.id === id)?.message ?? it.title,
+        result,
+        events: result ? eventsFor(result, id, runUsd).map(([e]) => e) : [],
+        run_usd: result ? runUsd : 0,
       };
-      await emit({ type: "start", run_id: result.run_id, loop_model: "claude-opus-5-5", heavy_model: "claude-fable-5-2", switched: false, total_usd: total, switch_usd: 150 }, 100);
-      await emit({ type: "step", n: 1, max: 15 });
-      await emit({ type: "thinking", text: "まずネタ帳から、依頼のテーマに近いカードと未発信のカードを探します。" });
-      await emit({ type: "tool_call", id: "t1", name: "search_cards", input: { query: result.candidates[0]?.theme.slice(0, 16) ?? "Rust 組み込み" } });
-      await emit({ type: "tool_result", id: "t1", name: "search_cards", ok: true, summary: result.candidates.length ? `${result.candidates.length + 4}枚が見つかりました` : "0枚" });
-      if (!result.candidates.length) {
-        await emit({ type: "tool_call", id: "t1b", name: "search_activities", input: { query: "Rust 組み込み" } });
-        await emit({ type: "tool_result", id: "t1b", name: "search_activities", ok: true, summary: "0件" });
-      }
-      await emit({ type: "step", n: 2, max: 15 });
-      for (const c of result.candidates) {
-        if (c.card_id) {
-          await emit({ type: "tool_call", id: `g-${c.employee_id}`, name: "get_card", input: { card_id: c.card_id } });
-          await emit({ type: "tool_result", id: `g-${c.employee_id}`, name: "get_card", ok: true, summary: `${c.name}：打診履歴 ${c.card?.outreach_history.length ?? 0}件` }, 250);
-        }
-        const date = requests.find((r) => r.id === body.request_id)?.event?.date ?? "";
-        await emit({ type: "tool_call", id: `s-${c.employee_id}`, name: "check_schedule", input: { id: c.employee_id, date } }, 250);
-        await emit({ type: "tool_result", id: `s-${c.employee_id}`, name: "check_schedule", ok: true, summary: "前後3日に予定なし" }, 250);
-      }
-      await emit({ type: "step", n: 3, max: 15 });
-      await emit({ type: "tool_call", id: "t9", name: "submit_candidates", input: {} });
-      await emit({ type: "tool_result", id: "t9", name: "submit_candidates", ok: true, summary: result.candidates.length ? `候補${result.candidates.length}人を提出` : "合う候補なしで提出" });
-      total += runUsd;
-      await emit({ type: "usage", run_usd: runUsd, total_usd: total, cache_read: 0, input: 0, output: 0 }, 50);
-      if (result.alternative_pitch) await emit({ type: "alternative_pitch", text: result.alternative_pitch, model: "claude-fable-5-2", fell_back: false });
-      await emit({ type: "final", result });
-      await emit({ type: "done", run_usd: runUsd, total_usd: total, steps: 3 }, 50);
+    },
+    async inboxOpen(id) {
+      const it = inboxItems.find((x) => x.id === id);
+      if (it) it.is_new = false;
     },
     async updateNotebook(onEvent) {
       const emit = async (e: NotebookEvent) => {

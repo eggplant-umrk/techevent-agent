@@ -205,13 +205,13 @@ async function main() {
   const target = args.find((a) => !a.startsWith("--")) ?? "";
   const reportIdx = args.indexOf("--report");
   const reportPath = reportIdx >= 0 ? args[reportIdx + 1] : undefined;
-  // --offline: no API calls. Re-check the saved results (docs/eval_after.json) with the current
+  // --offline: no API calls. Re-check the saved results (docs/eval_latest.json＝最新の実行結果) with the current
   //            validators, data and code (send scan). The write-back test and stage 2 are skipped.
   // --no-quality: run stage 1 for real but skip the LLM scoring (stage 2).
   const offline = args.includes("--offline");
   const noQuality = offline || args.includes("--no-quality");
   const saved = offline
-    ? (JSON.parse(fs.readFileSync(path.join(process.cwd(), "docs", "eval_after.json"), "utf-8")) as {
+    ? (JSON.parse(fs.readFileSync(path.join(process.cwd(), "docs", "eval_latest.json"), "utf-8")) as {
         at: string;
         rows: Array<{ request_id: string; result: ProposalResult | null; run_usd: number; steps: number }>;
       })
@@ -379,6 +379,11 @@ async function main() {
   const file = path.join(dir, `eval-v02-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
   fs.writeFileSync(file, JSON.stringify(out, null, 2));
   console.log(`結果: ${path.relative(process.cwd(), file)}`);
+  // 依頼5件そろった実際の実行は、最新の結果として残す（--offline と ?mock の元データ）
+  if (!offline && rows.length === all.length) {
+    fs.writeFileSync(path.join(process.cwd(), "docs", "eval_latest.json"), JSON.stringify(out, null, 2));
+    console.log("最新の結果: docs/eval_latest.json（--offline と scripts/update_mock.ts が読む）");
+  }
   if (reportPath) {
     fs.writeFileSync(path.join(process.cwd(), reportPath.replace(/\.md$/, ".json")), JSON.stringify(out, null, 2));
     console.log(`生データ: ${reportPath.replace(/\.md$/, ".json")}（レポートは scripts/eval_report.ts で作成）`);

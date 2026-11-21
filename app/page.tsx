@@ -631,6 +631,7 @@ export default function Home() {
             onAdd={addManual}
             compact={running || !!result}
             mock={api.mock}
+            loading={mode === "inbox" && !!inboxId && !inbox}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
           </RequestInput>
@@ -757,6 +758,13 @@ export default function Home() {
                 loadPeople();
               }}
             />
+          ) : personId ? (
+            // 選んだ人を読み込んでいる間（2〜3秒）。前の人のままだと押せていないように見えるので、読み込み中を出す
+            <div className="panel" aria-busy="true">
+              <section className="surface pad-lg">
+                <Spinner label={`${people.find((x) => x.id === personId)?.name ?? ""}さんを読み込んでいます…`} />
+              </section>
+            </div>
           ) : (
             <div className="panel">
               <section className="surface pad-lg">
@@ -771,7 +779,8 @@ export default function Home() {
         <main className="main">
           <ArchiveList rows={archiveRows} loaded={archiveLoaded} openKey={archiveKey} onOpen={(k, id) => void openArchive(k, id)} />
           <ArchiveView
-            detail={archiveDetail}
+            detail={archiveDetail && archiveKey === `${archiveDetail.kind}:${archiveDetail.id}` ? archiveDetail : null}
+            loading={!!archiveKey && (!archiveDetail || archiveKey !== `${archiveDetail.kind}:${archiveDetail.id}`)}
             api={api}
             onChanged={() => {
               void loadCards();

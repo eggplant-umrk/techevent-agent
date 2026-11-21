@@ -4,7 +4,7 @@ import type { Api } from "@/app/_client/api";
 import type { ArchiveDetail, ArchiveKind, ArchiveRow } from "@/app/_client/types";
 import { EventPanel } from "./Events";
 import { md, REASON_LABEL, RESULT_LABEL } from "./labels";
-import { Tag } from "./ui";
+import { Spinner, Tag } from "./ui";
 
 const KIND_LABEL: Record<ArchiveKind, string> = { inbox: "届いた依頼", request: "サンプルの依頼", event: "イベント" };
 
@@ -64,12 +64,23 @@ export function ArchiveView({
   detail,
   api,
   onChanged,
+  loading = false,
 }: {
   detail: ArchiveDetail | null;
+  /** 選んだ依頼・イベントを読み込んでいる間 */
+  loading?: boolean;
   api: Api;
   /** アンケートを取り込んだ・分析した（カードと一覧を読み直す） */
   onChanged: () => void;
 }) {
+  if (!detail && loading)
+    return (
+      <div className="panel" aria-busy="true">
+        <section className="surface pad-lg">
+          <Spinner label="読み込んでいます…" />
+        </section>
+      </div>
+    );
   if (!detail)
     return (
       <div className="panel">

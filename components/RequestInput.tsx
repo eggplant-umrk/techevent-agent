@@ -3,7 +3,7 @@
 import type { BoardDetail, IntakeField } from "@/app/_client/types";
 import { md } from "./labels";
 import { StageTag, sourceLabel } from "./Inbox";
-import { Tag } from "./ui";
+import { Spinner, Tag } from "./ui";
 
 /** inbox：受信箱から開いた依頼／custom：手で追加（受信箱に入る）。サンプルの依頼も受信箱に並ぶ（入口は受信箱だけ） */
 export type RequestMode = "custom" | "inbox";
@@ -35,6 +35,7 @@ export function RequestInput({
   onAdd,
   compact,
   mock = false,
+  loading = false,
   children,
 }: {
   mode: RequestMode;
@@ -52,6 +53,8 @@ export function RequestInput({
   compact: boolean;
   /** ?mock のとき：保存済みの結果を出していることを明記する */
   mock?: boolean;
+  /** 受信箱の依頼を読み込んでいる間 */
+  loading?: boolean;
   /** The agent's steps, shown under the request without another frame. */
   children?: React.ReactNode;
 }) {
@@ -71,7 +74,8 @@ export function RequestInput({
         )}
       </div>
 
-      {mode === "inbox" && !inbox && (
+      {mode === "inbox" && !inbox && loading && <Spinner label="依頼を読み込んでいます…" />}
+      {mode === "inbox" && !inbox && !loading && (
         <p className="meta">左の受信箱から依頼を選んでください。X の DM・リプライなどで届いた依頼は、右上の「会話を貼って追加」から会話をそのまま貼って入れられます。</p>
       )}
       {mock && (

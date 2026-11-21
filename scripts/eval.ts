@@ -38,6 +38,9 @@ if (!process.argv.includes("--offline")) {
   }
 }
 
+// 評価は常に架空データで行う（.env に DATA_SOURCE があっても切り替えない）
+delete process.env.DATA_SOURCE;
+
 const PASS_RATE = 0.9;
 const WRITEBACK_REQUEST = "req003";
 
@@ -310,6 +313,9 @@ async function main() {
   const wantInbox = full || target.split(",").includes("inbox") || !!fromInbox;
   const wantSurvey = full || target.split(",").includes("survey");
   const wantVenues = !fromInbox && (full || target.split(",").includes("venues"));
+  // --venue <card_id>: カード → 出し先の1件だけ流す（結果は card_id ごとに最新の結果へ合わせる）
+  const venueIdx = args.indexOf("--venue");
+  const onlyVenue = venueIdx >= 0 ? args[venueIdx + 1] : undefined;
   const targets = full ? all : all.filter((r) => target.split(",").includes(r.id));
   if (targets.length === 0 && !wantInbox && !wantVenues && !wantSurvey) {
     console.error(
@@ -465,7 +471,7 @@ async function main() {
   if (wantVenues) {
     const savedVenues = (saved as unknown as { venue_cases?: Array<{ card_id: string; result: VenueResult | null; events: VenueEvent[]; run_usd: number }> } | null)
       ?.venue_cases;
-    for (const vc of VENUE_CASES) {
+    for (const vc of VENUE_CASES.filter((v) => !onlyVenue || v.card_id === onlyVenue)) {
       console.log(`\n=== カード → 出し先：${vc.label}（${vc.card_id}）`);
       let result: VenueResult | null = null;
       let events: VenueEvent[] = [];
@@ -629,7 +635,8 @@ async function main() {
   if (wantVenues && !offline && !full && venueCases.length) {
     const latestFile = path.join(process.cwd(), "docs", "eval_latest.json");
     const latest = JSON.parse(fs.readFileSync(latestFile, "utf-8"));
-    fs.writeFileSync(latestFile, JSON.stringify({ ...latest, venue_cases: venueCases }, null, 2));
+    const merged = [...((latest.venue_cases ?? []) as Array<{ card_id: string }>).filter((x) => !venueCases.some((v) => v.card_id === x.card_id)), ...venueCases];
+    fs.writeFileSync(latestFile, JSON.stringify({ ...latest, venue_cases: merged }, null, 2));
     console.log("出し先の結果を docs/eval_latest.json に足しました（scripts/update_mock.ts で ?mock に反映）");
   }
   if (offline && reportPath) {

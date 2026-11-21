@@ -77,6 +77,7 @@ http://localhost:3000 を開く。APIキーはサーバー側だけで使い、�
 - 画面の一番上は受信箱です。Slack（`POST /api/inbox`、形は [docs/inbox-api.md](docs/inbox-api.md)）や「手で追加」で届いた依頼に、Agentが候補を準備しておきます
 - APIを使わずに画面を見るときは http://localhost:3000/?mock（保存済みの結果で受信箱に「準備済み」の依頼が並びます）
 - 受信箱のテスト（APIなし）：`npm run test:inbox`
+- カード詳細の「出し先を探す」で、そのネタを出せそうな社外イベント（data/external_events.json、2026-11-21時点）とブログ案を探します。テスト（APIなし）：`npm run test:venues`
 
 #### Slackから依頼を受け付ける（練習用ワークスペース専用）
 
@@ -130,6 +131,22 @@ npx tsx scripts/analyze_surveys.ts all
 ```
 
 （本番で分析して `docs/survey_latest.json` に残す。`data/cards.json` は元に戻す。続けて `npx tsx scripts/update_postevent_mock.ts` で `?mock` の再生データを作る）
+
+#### 本物のデータ（GitHub）から作る
+
+架空データの代わりに、開発者本人の公開リポジトリ（fork・アーカイブを除く）の説明・README・PR・コミット・Issue からネタ帳を作れます。メールアドレス・非公開リポジトリ・ほかの人のコメントは取り込みません。
+
+1. 取り込み（APIクレジットは使いません。GitHub のトークンも不要）：
+
+   ```bash
+   npm run import:github -- --user eggplant-umrk
+   ```
+
+   `data/sources/github/` に `activities.json` と本人1人分の `employees.json` ができます（取り込み済みのものをコミットしてあります）。GitHub のレート制限にかかったときだけ、`.env` の `GITHUB_TOKEN`（読み取り専用、任意）を使います。
+
+2. 切り替え：`.env` に `DATA_SOURCE=github` を書いて `npm run dev`（コマンドなら `DATA_SOURCE=github npm run notebook -- pending`）。カードは `data/sources/github/cards.json` に保存され、架空データのネタ帳は変わりません。1人分の更新で約$0.3。
+
+`DATA_SOURCE` を消すと架空データに戻ります。評価（`npm run eval`）は常に架空データで動きます。
 
 ### 評価
 

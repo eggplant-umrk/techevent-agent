@@ -2,11 +2,12 @@
 // Every write goes through validation: evidence must be real activity ids by the card's
 // owner, and published ids must be real items by the same person. Nothing invalid is saved.
 import fs from "node:fs";
-import path from "node:path";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
+import { dataFile } from "./dataSource";
 
-const FILE = path.join(process.cwd(), "data", "cards.json");
+// Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
+const FILE = () => dataFile("cards.json");
 
 export type CardFormat = "talk" | "lt" | "blog";
 export type PublicationStatus = "unpublished" | "blogged" | "talked";
@@ -74,8 +75,8 @@ export interface Reaction {
 }
 
 export function loadCards(): Card[] {
-  if (!fs.existsSync(FILE)) return [];
-  const raw = JSON.parse(fs.readFileSync(FILE, "utf-8")) as Card[];
+  if (!fs.existsSync(FILE())) return [];
+  const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Card[];
   // Cards written before these fields existed.
   return raw.map((c) => ({
     ...c,
@@ -88,7 +89,7 @@ export function loadCards(): Card[] {
 }
 
 function saveCards(cards: Card[]) {
-  fs.writeFileSync(FILE, JSON.stringify(cards, null, 2) + "\n", "utf-8");
+  fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");
 }
 
 /** カード1枚をまとめて書き換える（lib/surveys.ts の書き戻し用）。見つからなければ null */

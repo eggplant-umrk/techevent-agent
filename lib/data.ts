@@ -2,6 +2,7 @@
 // data/README.md holds the evaluation answer key and is never read here.
 import fs from "node:fs";
 import path from "node:path";
+import { dataFile } from "./dataSource";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -20,7 +21,7 @@ const ALLOWED = new Set([
 
 function readJson<T>(name: string, fallback?: T): T {
   if (!ALLOWED.has(name)) throw new Error(`not an agent data file: ${name}`);
-  const file = path.join(DATA_DIR, name);
+  const file = dataFile(name);
   if (!fs.existsSync(file) && fallback !== undefined) return fallback;
   return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
 }
@@ -50,6 +51,8 @@ export interface Activity {
   body: string;
   channel: string | null;
   repo: string | null;
+  /** Link to the original page (GitHub source only). */
+  url?: string;
 }
 
 export interface EventRecord {

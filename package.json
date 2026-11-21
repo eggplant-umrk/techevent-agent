@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "eval": "tsx scripts/eval.ts",
     "notebook": "tsx scripts/notebook.ts",
+    "import:github": "tsx scripts/import_github.ts",
     "test:inbox": "tsx scripts/test_inbox.ts",
     "test:surveys": "tsx scripts/test_surveys.ts",
     "slack": "tsx scripts/slack-bot.ts",

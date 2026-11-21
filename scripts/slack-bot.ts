@@ -73,7 +73,7 @@ async function main() {
   });
 
   await app.start();
-  log(`起動しました。ワークスペース：${auth.team}（練習用か確認してください）／チャンネル：${requestChannel}／窓口：${inboxBaseUrl}`);
+  log(`起動しました。ワークスペース：${auth.team}（${auth.team_id}、練習用か確認してください）／チャンネル：${requestChannel}／窓口：${inboxBaseUrl}`);
 }
 
 process.on("SIGINT", async () => {

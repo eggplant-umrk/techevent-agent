@@ -197,6 +197,16 @@ npm run release:cards
 - **本番はカレンダーの iCal URL を設定します**：`.env` に `CALENDAR_ICS_URL=`（Google カレンダーなら「iCal 形式の非公開 URL」）を書きます。**この URL は秘密です**（知っている人は誰でも予定を読めます）。表示・ログ・コミット・チャットへの貼り付けをしないでください。読むのは開始・終了・終日かどうかだけで、予定のタイトル・場所・参加者は読みません。今は本人（`DATA_SOURCE=github` または `DEMO_PERSON=on` の31人目）にだけ使います
 - テスト（APIなし）：`npm run test:busyness`
 
+#### デモの前に初期状態に戻す
+
+画面で打診を記録したり、カードを直したり、ネタ帳を更新したりした結果は `data/runtime/`（git の対象外）に入り、元のデータ（git に入っている `data/` のファイル）は変わりません。デモの前に次で初期状態に戻せます（片付けたものは `data/runtime-backup/` に移ります）：
+
+```bash
+npm run reset:demo
+```
+
+本物の Slack から読んだ投稿（`data/sources/slack_posts.json`）はコミットしません。
+
 ### 評価
 
 2段で評価します（APIクレジットを使います。全件で約$0.75）。

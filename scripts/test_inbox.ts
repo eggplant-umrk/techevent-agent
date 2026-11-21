@@ -2,6 +2,7 @@
 //   npm run test:inbox
 // 本物の Agent の代わりに、保存済みの結果（docs/eval_after.json）を返す偽の runner を使う。
 // data/inbox.json には触らない（一時ファイルに書く）。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

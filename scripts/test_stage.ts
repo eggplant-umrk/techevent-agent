@@ -2,6 +2,7 @@
 //   npm run test:stage
 // 状態：準備中 → 候補準備済み → 声かけ中 → 承諾済み／辞退 → 開催後。判定はコード（lib/requestStage.ts）。
 // data/inbox.json・サンプルの候補・下書きは一時ファイルに書く。カード（data/cards.json）は最後に元に戻す。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

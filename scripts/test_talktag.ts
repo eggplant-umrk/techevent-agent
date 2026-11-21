@@ -1,5 +1,6 @@
 // 登壇経験の印と、印と重なる注意点の取り除きのテスト（APIは使わない）。
 //   npm run test:talktag
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import { repeatsTalkTag, talkTag, withoutTalkTagRepeats } from "../lib/talkTag";

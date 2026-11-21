@@ -34,8 +34,20 @@ async function main() {
   const ids = new Set((await import("../lib/data")).activities().map((a) => a.id));
   const offAll = [...reqs.values()].map((r) => p.prefetchForAgent(r));
   check("材料にない活動（rel・blg など）は、根拠として見せない", offAll.every((x) => x.seen.every((id) => ids.has(id)) && !/\b(rel|blg)\d{3}\b/.test(x.text)));
+  // 検索ツールとカードを開くツールも同じ扱い
+  const { executeTool } = await import("../lib/tools");
+  const { loadCards } = await import("../lib/cards");
+  const mixed = loadCards().filter((c) => c.evidence_activity_ids.some((id) => /^(rel|blg)\d{3}$/.test(id)));
+  check("前提：リリースノートやブログを根拠にしたカードがある", mixed.length > 0, mixed.map((c) => c.card_id).join(","));
+  const searchAll = JSON.stringify(executeTool("search_cards", { query: "" }).result) + JSON.stringify(executeTool("search_cards", { query: "LLM 評価 アーキテクチャ 開発プロセス リリース" }).result);
+  check("search_cards：材料にない活動を根拠として見せない", !/\b(rel|blg)\d{3}\b/.test(searchAll));
+  const opened = mixed.map((c) => JSON.stringify(executeTool("get_card", { card_id: c.card_id }).result));
+  check("get_card：材料にない活動を根拠として見せない", opened.every((t) => !/"(rel|blg)\d{3}/.test(t) && !/\b(rel|blg)\d{3} /.test(t)));
   delete process.env.RELEASE_NOTES;
   delete process.env.MORE_SOURCES;
+  // アプリの動き（材料にあるとき）は変わらない
+  const onCard = executeTool("get_card", { card_id: mixed[0].card_id }).result as { evidence_activity_ids: string[] };
+  check("材料にあるときは、今までどおり根拠に出る", JSON.stringify(onCard.evidence_activity_ids) === JSON.stringify(mixed[0].evidence_activity_ids));
 
   // ---- コードで出す注意点
   const r4 = reqs.get("req004")!; // 開催 2027-01-28、e002 はオフサイトと重なる

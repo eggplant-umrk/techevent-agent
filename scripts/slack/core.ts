@@ -1,5 +1,7 @@
 // Slack ボットの中身（Bolt に依存しない部分）。scripts/slack-bot.ts と scripts/slack/dry-run.ts から使う。
-// 投稿してよいのは「依頼が来たチャンネルのスレッドへの返信」だけ。replyInThread 以外から投稿しない。
+// 投稿してよいのは「依頼が来たチャンネルのスレッドへの返信」だけ。投稿の API を呼ぶのは
+// scripts/slack-bot.ts の replyInThread の1か所だけで、ここからは SlackLike.replyInThread を通す。
+// （結合テストの「送信なし」がこの形を判定する）
 
 /** 窓口（①が作る app/api/inbox）の返り値。形は勝手に変えない。 */
 export interface InboxItem {
@@ -12,9 +14,10 @@ export interface InboxItem {
   url: string;
 }
 
-/** ボットが使う Slack の操作（Bolt の client のうち、この3つだけ）。 */
+/** ボットが使う Slack の操作は2つだけ。投稿は「依頼チャンネルの、このスレッドへの返信」しかできない形にしてある。 */
 export interface SlackLike {
-  postMessage(args: { channel: string; thread_ts: string; text: string; unfurl_links: boolean; unfurl_media: boolean }): Promise<unknown>;
+  /** 依頼チャンネルの threadTs のスレッドに返信する（チャンネルは slack-bot.ts 側で固定） */
+  replyInThread(threadTs: string, text: string): Promise<unknown>;
   getPermalink(args: { channel: string; message_ts: string }): Promise<string | null>;
 }
 
@@ -100,11 +103,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** 1件の依頼を処理する：受け付け → 受信箱へ → 準備ができるまで確認 → 結果をスレッドへ。 */
 export async function handleRequest(e: Required<Pick<MessageEventLike, "channel" | "ts" | "user" | "text">>, slack: SlackLike, cfg: BotConfig) {
-  // 投稿先は常に「依頼が来たチャンネルの、その投稿のスレッド」に固定する
-  const replyInThread = (text: string) => {
-    if (e.channel !== cfg.channel) throw new Error("依頼のチャンネル以外には投稿しません");
-    return slack.postMessage({ channel: e.channel, thread_ts: e.ts, text, unfurl_links: false, unfurl_media: false });
-  };
+  // 投稿先は常に「依頼が来たチャンネルの、その投稿のスレッド」
+  if (e.channel !== cfg.channel) throw new Error("依頼のチャンネル以外の投稿は扱いません");
+  const replyInThread = (text: string) => slack.replyInThread(e.ts, text);
 
   await replyInThread("受け付けました。候補を準備しています");
 

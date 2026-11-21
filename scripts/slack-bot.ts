@@ -27,7 +27,7 @@ function fail(message: string): never {
 
 const botToken = required("SLACK_BOT_TOKEN", (v) => v.startsWith("xoxb-"), "xoxb- で始まる Bot User OAuth Token");
 const appToken = required("SLACK_APP_TOKEN", (v) => v.startsWith("xapp-"), "xapp- で始まる App-Level Token（connections:write）");
-const channel = required("SLACK_REQUEST_CHANNEL", (v) => /^[CG][A-Z0-9]+$/.test(v), "依頼を拾うチャンネルの id。C で始まる英数字");
+const requestChannel = required("SLACK_REQUEST_CHANNEL", (v) => /^[CG][A-Z0-9]+$/.test(v), "依頼を拾うチャンネルの id。C で始まる英数字");
 const allowedTeam = process.env.SLACK_ALLOWED_TEAM_ID?.trim() || null;
 const inboxBaseUrl = process.env.INBOX_BASE_URL?.trim() || "http://localhost:3000";
 
@@ -41,7 +41,7 @@ async function main() {
     fail(`接続先のワークスペース（${auth.team}）が SLACK_ALLOWED_TEAM_ID と違うため止めました。練習用ワークスペースのトークンか確認してください。`);
   }
   const cfg: BotConfig = {
-    channel,
+    channel: requestChannel,
     botUserId: String(auth.user_id),
     inboxBaseUrl,
     pollIntervalMs: 5_000,
@@ -49,8 +49,13 @@ async function main() {
     log,
   };
 
+  /** 唯一の投稿：依頼チャンネル（固定）の、threadTs のスレッドへの返信。DM・別チャンネル・新しい投稿はしない。 */
+  async function replyInThread(threadTs: string, text: string) {
+    if (!threadTs) throw new Error("スレッドの指定がない投稿はしません");
+    return app.client.chat.postMessage({ channel: requestChannel, thread_ts: threadTs, text, unfurl_links: false, unfurl_media: false });
+  }
   const slack: SlackLike = {
-    postMessage: (args) => app.client.chat.postMessage(args),
+    replyInThread,
     getPermalink: async (args) => (await app.client.chat.getPermalink(args)).permalink ?? null,
   };
   const firstTime = makeSeen();
@@ -68,7 +73,7 @@ async function main() {
   });
 
   await app.start();
-  log(`起動しました。ワークスペース：${auth.team}（練習用か確認してください）／チャンネル：${channel}／窓口：${inboxBaseUrl}`);
+  log(`起動しました。ワークスペース：${auth.team}（練習用か確認してください）／チャンネル：${requestChannel}／窓口：${inboxBaseUrl}`);
 }
 
 process.on("SIGINT", async () => {

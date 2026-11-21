@@ -8,10 +8,11 @@ const PORT = 3998;
 const CH = "C0REQUESTS";
 const BOT = "U0BOT";
 
+// 本物の slack-bot.ts と同じく、投稿先のチャンネルは依頼チャンネルに固定
 const posts: Array<{ channel: string; thread_ts: string; text: string }> = [];
 const slack: SlackLike = {
-  postMessage: async (a) => {
-    posts.push({ channel: a.channel, thread_ts: a.thread_ts, text: a.text });
+  replyInThread: async (threadTs, text) => {
+    posts.push({ channel: CH, thread_ts: threadTs, text });
     return { ok: true };
   },
   getPermalink: async (a) => `https://example.slack.com/archives/${a.channel}/p${a.message_ts.replace(".", "")}`,
@@ -92,6 +93,10 @@ async function main() {
     posts.length = 0;
     await handleRequest({ channel: CH, ts: "205.1", user: "U0PR", text: "<script> & 名前" }, slack, cfg);
     check("返信は2件だけ（DMや別の投稿をしない）", posts.length === 2);
+
+    let threw = false;
+    await handleRequest({ channel: "C0OTHER", ts: "206.1", user: "U0PR", text: "別のチャンネル" }, slack, cfg).catch(() => (threw = true));
+    check("依頼チャンネル以外の投稿は処理しない", threw);
   } finally {
     server.kill();
   }

@@ -14,7 +14,6 @@ const ALLOWED = new Set([
   "published.json",
   "schedules.json",
   "cards.json",
-  "surveys.json",
   "external_events.json",
   "usage.json",
 ]);
@@ -126,17 +125,17 @@ export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");
 export const usage = () => readJson<UsageEntry[]>("usage.json", []);
 
-/** イベント後のアンケート。1行＝1つの登壇への1回答（匿名）。 */
+/** イベント後のアンケートの1回答（1行＝1つの登壇への回答）。Googleフォームの CSV から lib/surveyCsv.ts が作る。個人情報の列は入らない */
 export interface SurveyAnswer {
   id: string;
   event_id: string;
   talk_speaker_id: string;
-  rating: number;
+  /** 満足度1〜5。読み取れなければ null */
+  rating: number | null;
   comment: string;
   want_next: string | null;
   role: string | null;
 }
-export const surveys = () => readJson<SurveyAnswer[]>("surveys.json", []);
 
 /** Requests with demo-only fields (note_for_demo) removed. This is the only way requests reach the agent or the browser. */
 export function requests(): SpeakingRequest[] {

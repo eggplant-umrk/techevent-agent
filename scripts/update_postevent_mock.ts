@@ -16,7 +16,7 @@ async function main() {
     const cards: Record<string, { reactions: unknown[]; pending_themes_added: string[] }> = {};
     await withCardsRestored(() => {
       const before = new Map(loadCards().map((c) => [c.card_id, c]));
-      const writebacks = writeBack(events().find((e) => e.id === eventId)!, analysis.talks);
+      const writebacks = writeBack(events().find((e) => e.id === eventId)!, analysis);
       for (const c of loadCards()) {
         const b = before.get(c.card_id)!;
         const reactions = (c.reactions ?? []).filter((r) => r.event_id === eventId);

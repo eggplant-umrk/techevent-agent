@@ -607,137 +607,183 @@ schedules = [
 dump("schedules.json", schedules)
 
 # ---------------------------------------------------------------------------
-# surveys — post-event questionnaires (v0.4). Anonymous: no names, companies or emails.
+# surveys — post-event questionnaires (v0.4), exported from Google Forms as CSV.
+# data/surveys/{event_id}.csv : first row = the question texts, first column = タイムスタンプ.
+# Fictional. The forms collect an optional e-mail and name (example.com / made-up names that are
+# not employees) so the import can show that personal columns are dropped.
 # Own RNG and written last, so every earlier file stays byte-identical.
-# One row = one answer about one talk: {id, event_id, talk_speaker_id, rating, comment, want_next, role}
 # ---------------------------------------------------------------------------
-srng = random.Random(20261201)
-ROLES = ["バックエンドエンジニア", "フロントエンドエンジニア", "SRE", "QAエンジニア", "EM", "PdM", "MLエンジニア", "学生", None, None]
-NOISE_COMMENTS = ["", "", "", "特になし", "会場が少し寒かったです", "ピザがおいしかったです", "懇親会も楽しかったです",
-                  "受付がスムーズでした", "次回も参加したいです", "配信の音声が途中で聞きづらかった"]
+import csv
+import io
 
-# (event_id, speaker_id, n_answers, rating weights 1..5, comments, want_next)
-# comments / want_next: list of (text, weight). "" in want_next = left blank.
+srng = random.Random(20261201)
+Q_TS = "タイムスタンプ"
+Q_MAIL = "メールアドレス"
+Q_TALK = "どの登壇についての回答ですか？"
+Q_RATE = "満足度を教えてください（5：とても満足 〜 1：不満）"
+Q_COMMENT = "感想・ご意見があれば自由にお書きください"
+Q_NEXT = "次に聞きたいテーマがあれば教えてください"
+Q_ROLE = "お仕事の職種を教えてください"
+Q_NAME = "お名前（任意）"
+Q_HOW = "このイベントを何で知りましたか？"  # no keyword the import knows: shown as an unread column
+
+ROLES = ["バックエンドエンジニア", "フロントエンドエンジニア", "SRE", "QAエンジニア", "EM", "PdM", "MLエンジニア", "学生", "", ""]
+ATTENDEE_NAMES = ["山田 花子", "佐藤 健", "高橋 美咲", "伊藤 大輔", "渡辺 さくら", "中村 翔", "小林 結衣", "加藤 直樹"]
+HOW = ["connpass", "X（旧Twitter）", "社内の知人", "前回の参加", "ブログ", ""]
+NOISE = ["", "", "", "特になし", "なし", "ピザがおいしかったです。", "懇親会も楽しかったです。", "受付がスムーズでした。", "次回も参加したいです。"]
+OPS_NEG = [  # complaints about the running of the event
+    "会場が寒かったです。",
+    "後ろの席だとマイクの音が聞き取りにくかったです。",
+    "開始が15分ほど遅れたのが残念でした。",
+    "配信の音声が途中で途切れました。",
+    "質疑の時間がもっとほしかったです。",
+]
+
+# (event_id, speaker_id, talk title, n, rating weights 1..5, positives, content negatives, p_content_neg, wants)
 SURVEY_SPEC = [
-    ("ev019", "e003", 22, [0, 0, 1, 5, 16], [
-        ("ガードレールの具体例が多く、すぐ自分のチームで試せそうでした", 5),
-        ("本番で起きた失敗の話がリアルで一番参考になりました", 4),
-        ("続編があればぜひ聞きたいです", 5),
-        ("人の確認をどこに入れるかの判断基準が分かりやすかった", 3),
-        ("ツール呼び出しの制限のかけ方をもう少し詳しく知りたい", 2),
+    ("ev019", "e003", "AIエージェントの本番運用で効くガードレール設計", 22, [0, 0, 1, 5, 16], [
+        "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした。",
+        "本番で起きた失敗の話がリアルで一番参考になりました。",
+        "続編があればぜひ聞きたいです。",
+        "人の確認をどこに入れるかの判断基準が分かりやすかったです。",
     ], [
-        ("ガードレールの続編：本番で起きた失敗と直し方", 6),
-        ("エージェントの回帰テストをCIで回す方法", 4),
-        ("LLMの出力を自動で評価する仕組み", 2),
-        ("", 6),
-    ]),
-    ("ev019", "e001", 14, [0, 1, 4, 7, 2], [
-        ("アーキテクチャ選定の判断軸が整理されていて参考になった", 4),
-        ("少し抽象的で、具体的な構成図があるとよかった", 3),
-        ("社内でどう合意を取ったかの話が面白かった", 2),
+        "後半は駆け足で、メモが追いつきませんでした。",
+        "ツール呼び出しの制限のかけ方をもう少し詳しく知りたかったです。",
+    ], 0.3, [("ガードレールの続編：本番で起きた失敗と直し方", 6), ("エージェントの回帰テストをCIで回す方法", 4), ("LLMの出力を自動で評価する仕組み", 2), ("", 6)]),
+    ("ev019", "e001", "LLMプロダクトのアーキテクチャ選定基準", 14, [0, 1, 4, 7, 2], [
+        "アーキテクチャ選定の判断軸が整理されていて参考になりました。",
+        "社内でどう合意を取ったかの話が面白かったです。",
     ], [
-        ("実際の構成図とコストの内訳", 2),
-        ("", 8),
-    ]),
-    ("ev020", "e004", 19, [1, 5, 8, 4, 1], [
-        ("前提知識が多くて、途中からついていけませんでした", 6),
-        ("金融の用語が分からず難しかったです", 4),
-        ("整合性をどう守るかの考え方は参考になりました", 4),
-        ("入門編から聞きたいです", 2),
-        ("二重記帳の図が分かりやすかった", 1),
+        "少し抽象的で、具体的な構成図があるとよかったです。",
+    ], 0.35, [("実際の構成図とコストの内訳", 2), ("", 8)]),
+    ("ev020", "e004", "金融とSaaSでデータ整合性をどう守るか", 19, [1, 5, 8, 4, 1], [
+        "整合性をどう守るかの考え方は参考になりました。",
+        "二重記帳の図が分かりやすかったです。",
     ], [
-        ("改ざんを検知できる監査ログの作り方", 5),
-        ("金融システムの整合性の入門編", 4),
-        ("", 6),
-    ]),
-    ("ev020", "e001", 13, [0, 0, 3, 7, 3], [
-        ("SaaSと金融の違いの整理が分かりやすかった", 4),
-        ("規制対応の話をもっと聞きたい", 2),
+        "前提知識が多くて、途中からついていけませんでした。",
+        "前提知識が多くて、途中からついていけませんでした。",
+        "金融の用語が分からず難しかったです。",
+        "スライドの文字が小さくて読めませんでした。",
+        "話すのが速くて追いつけませんでした。",
+    ], 0.6, [("改ざんを検知できる監査ログの作り方", 5), ("金融システムの整合性の入門編", 4), ("", 6)]),
+    ("ev020", "e001", "SaaSと金融のあいだのアーキテクチャ", 13, [0, 0, 3, 7, 3], [
+        "SaaSと金融の違いの整理が分かりやすかったです。",
+        "規制対応の話をもっと聞きたいと思いました。",
+    ], [], 0.0, [("金融規制に合わせた設計の実例", 2), ("", 7)]),
+    ("ev017", "e005", "テスト自動化の投資対効果", 15, [0, 0, 2, 9, 4], [
+        "テスト自動化の効果を数字で出していて説得力がありました。",
+        "自分の会社でも費用対効果の説明に使えそうです。",
     ], [
-        ("金融規制に合わせた設計の実例", 2),
-        ("", 7),
-    ]),
-    ("ev017", "e005", 15, [0, 0, 2, 9, 4], [
-        ("テスト自動化の効果を数字で出していて説得力があった", 5),
-        ("自分の会社でも費用対効果の説明に使えそうです", 3),
-        ("E2Eテストが不安定な問題にはどう向き合っているのか気になった", 3),
+        "E2Eテストが不安定な問題にどう向き合っているのかが分からなかったです。",
+    ], 0.25, [("flakyなE2Eテストの原因の切り分け方", 5), ("テストの費用対効果の測り方", 2), ("", 5)]),
+    ("ev017", "e002", "型を入れる順番とチームへの広め方", 12, [0, 1, 3, 6, 2], [
+        "型を入れる順番の話が実践的でした。",
+        "チームへの広め方が参考になりました。",
     ], [
-        ("flakyなE2Eテストの原因の切り分け方", 5),
-        ("テストの費用対効果の測り方", 2),
-        ("", 5),
-    ]),
-    ("ev017", "e002", 12, [0, 1, 3, 6, 2], [
-        ("型を入れる順番の話が実践的でした", 3),
-        ("チームへの広め方が参考になった", 3),
+        "資料が事前に共有されていなかったので、手元で追えませんでした。",
+    ], 0.2, [("型の導入をチームに広めた進め方", 2), ("", 7)]),
+    ("ev018", "e002", "開発プロセスを週次で見直す振り返りの仕組み", 14, [0, 0, 3, 8, 3], [
+        "振り返りの回し方をそのまま真似したいです。",
+        "EMの悩みがリアルで共感しました。",
     ], [
-        ("型の導入をチームに広めた進め方", 2),
-        ("", 7),
-    ]),
-    ("ev018", "e002", 14, [0, 0, 3, 8, 3], [
-        ("振り返りの回し方をそのまま真似したいです", 4),
-        ("EMの悩みがリアルで共感しました", 3),
-        ("夜間対応の負担をどう減らしているのかも知りたかった", 3),
+        "夜間対応の負担をどう減らしているのかも知りたかったです。",
+    ], 0.25, [("夜間のオンコール呼び出しを減らした話", 5), ("振り返りの続編", 2), ("", 5)]),
+    ("ev018", "e001", "開発組織とLLM活用", 10, [0, 1, 4, 4, 1], [
+        "全体像はつかめました。",
     ], [
-        ("夜間のオンコール呼び出しを減らした話", 5),
-        ("振り返りの続編", 2),
-        ("", 5),
-    ]),
-    ("ev018", "e001", 10, [0, 1, 4, 4, 1], [
-        ("全体像はつかめた", 2),
-        ("もう少し具体的な事例がほしかった", 3),
+        "もう少し具体的な事例がほしかったです。",
+    ], 0.4, [("", 8)]),
+    ("ev015", "e003", "マルチエージェントの役割分担", 18, [0, 0, 1, 5, 12], [
+        "エージェント同士の役割分担の話が具体的で分かりやすかったです。",
+        "失敗談が多くて参考になりました、続きが聞きたいです。",
+        "続編を希望します。",
     ], [
-        ("", 8),
-    ]),
-    ("ev015", "e003", 18, [0, 0, 1, 5, 12], [
-        ("エージェント同士の役割分担の話が具体的で分かりやすかった", 5),
-        ("失敗談が多くて参考になった、続きが聞きたい", 4),
-        ("続編を希望します", 3),
+        "前提が少し難しく、最初の10分は理解が追いつきませんでした。",
+    ], 0.2, [("マルチエージェントの続編：本番での失敗と対策", 5), ("", 6)]),
+    ("ev015", "e001", "マルチエージェントの設計の選択肢", 12, [0, 1, 3, 6, 2], [
+        "設計の選択肢が整理されていました。",
     ], [
-        ("マルチエージェントの続編：本番での失敗と対策", 5),
-        ("", 6),
-    ]),
-    ("ev015", "e001", 12, [0, 1, 3, 6, 2], [
-        ("設計の選択肢が整理されていた", 3),
-        ("時間が足りなさそうだった", 2),
+        "時間が足りなさそうで、最後が駆け足でした。",
+    ], 0.3, [("", 8)]),
+    ("ev016", "e001", "生成AIを社内に入れるまで", 24, [0, 2, 6, 12, 4], [
+        "生成AIの導入の進め方が参考になりました。",
     ], [
-        ("", 8),
-    ]),
-    ("ev016", "e001", 24, [0, 2, 6, 12, 4], [
-        ("生成AIの導入の進め方が参考になった", 4),
-        ("スライドを共有してほしいです", 3),
-    ], [
-        ("生成AIの社内導入の失敗談", 2),
-        ("", 12),
-    ]),
+        "スライドを共有してほしいです。",
+        "話が広く浅くて、持ち帰れるものが少なかったです。",
+    ], 0.3, [("生成AIの社内導入の失敗談", 2), ("", 12)]),
+]
+# Attacks on a person: shown on the event page, never written to a card. (event, speaker, text, rating)
+ATTACKS = [
+    ("ev020", "e004", "説明が下手すぎて、聞く価値がありませんでした。", 1),
+    ("ev016", "e001", "登壇者にやる気が感じられず、不快でした。", 2),
+]
+# High score but with a complaint mixed in (always included). (event, speaker, text, rating)
+HIGH_BUT = [
+    ("ev019", "e003", "内容はとても良かったです。ただ後半は駆け足で、メモが追いつきませんでした。", 5),
+    ("ev017", "e005", "数字の出し方は参考になりました。ただ会場が寒くて集中しにくかったです。", 5),
+]
+# The trend the analysis should find for e004 at ev020 (always included).
+TREND = [
+    ("ev020", "e004", "前提知識が多くて、途中からついていけませんでした。", 2),
+    ("ev020", "e004", "前提知識が多く、金融の用語も分からず難しかったです。", 3),
+    ("ev020", "e004", "整合性の考え方は参考になりましたが、前提知識が多くて難しかったです。", 3),
+    # complaints about the running of the event (always included)
+    ("ev020", "e001", "話は分かりやすかったです。開始が15分ほど遅れたのが残念でした。", 4),
+    ("ev019", "e001", "配信の音声が途中で途切れました。", 3),
 ]
 
 
 def weighted(pairs):
-    texts = [t for t, _ in pairs]
-    weights = [w for _, w in pairs]
-    return srng.choices(texts, weights=weights, k=1)[0]
+    return srng.choices([t for t, _ in pairs], weights=[w for _, w in pairs], k=1)[0]
 
 
-surveys = []
-for ev_id, speaker, n, rw, comments, wants in SURVEY_SPEC:
-    for _ in range(n):
-        rating = srng.choices([1, 2, 3, 4, 5], weights=rw, k=1)[0]
-        # about a third of free comments are noise or blank
-        comment = srng.choice(NOISE_COMMENTS) if srng.random() < 0.33 else weighted(comments)
-        want = weighted(wants)
-        role = srng.choice(ROLES)
-        surveys.append({
-            "event_id": ev_id,
-            "talk_speaker_id": speaker,
-            "rating": rating,
-            "comment": comment,
-            "want_next": want or None,
-            "role": role,
-        })
-srng.shuffle(surveys)
-surveys.sort(key=lambda s: s["event_id"])  # answers of one event stay together; order inside is shuffled
-surveys = [{"id": f"s{i:04d}", **s} for i, s in enumerate(surveys, 1)]
-dump("surveys.json", surveys)
+def comment_for(pos, neg, p_neg):
+    if srng.random() < 0.3:
+        return srng.choice(NOISE)
+    if neg and srng.random() < p_neg:
+        # complaint only, or a positive sentence followed by a complaint
+        parts = [srng.choice(neg)] if srng.random() < 0.5 else [srng.choice(pos), srng.choice(neg)]
+    else:
+        parts = [srng.choice(pos)]
+    if srng.random() < 0.12:
+        parts.append(srng.choice(OPS_NEG))
+    return "".join(parts)
+
+
+SURVEY_DIR = OUT / "surveys"
+SURVEY_DIR.mkdir(exist_ok=True)
+ev_by_id = {e["id"]: e for e in events}
+for ev_id in sorted({s[0] for s in SURVEY_SPEC}):
+    specs = [s for s in SURVEY_SPEC if s[0] == ev_id]
+    multi = len(specs) > 1
+    rows = []
+    for _, sp, title, n, rw, pos, neg, p_neg, wants in specs:
+        talk_label = f"{emp_by_id[sp]['name']}「{title}」"
+        own = []
+        for _ in range(n):
+            rating = srng.choices([1, 2, 3, 4, 5], weights=rw, k=1)[0]
+            own.append({"talk": talk_label, "rating": rating, "comment": comment_for(pos, neg, p_neg), "want": weighted(wants)})
+        fixed = [(t, r) for (e, s, t, r) in HIGH_BUT + ATTACKS + TREND if e == ev_id and s == sp]
+        for i, (t, r) in enumerate(fixed):
+            own[i * 3 + 1].update(comment=t, rating=r)
+        rows += own
+    srng.shuffle(rows)
+    y, m, dd = ev_by_id[ev_id]["date"].split("-")
+    header = [Q_TS, Q_MAIL] + ([Q_TALK] if multi else []) + [Q_RATE, Q_COMMENT, Q_NEXT, Q_ROLE, Q_NAME] + ([Q_HOW] if ev_id == "ev020" else [])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(header)
+    minute = 0
+    for r in rows:
+        minute += srng.randint(1, 9)
+        stamp = f"{y}/{m}/{dd} {21 + minute // 60}:{minute % 60:02d}:{srng.randint(0, 59):02d}"
+        mail = f"attendee{srng.randint(100, 999)}@example.com" if srng.random() < 0.25 else ""
+        name = srng.choice(ATTENDEE_NAMES) if srng.random() < 0.15 else ""
+        line = [stamp, mail] + ([r["talk"]] if multi else []) + [str(r["rating"]), r["comment"], r["want"], srng.choice(ROLES), name]
+        if ev_id == "ev020":
+            line.append(srng.choice(HOW))
+        w.writerow(line)
+    (SURVEY_DIR / f"{ev_id}.csv").write_text(buf.getvalue(), encoding="utf-8", newline="\n")
 
 # answer key for README (printed, not written to JSON)
 print("GEMS")

@@ -200,9 +200,9 @@ export function CardDetail({
                     {r.kind === "reception" && (r.hits.length > 0 || r.stumbles.length > 0) && (
                       <span className="meta">
                         <br />
-                        {r.hits.length > 0 && `刺さった点：${r.hits.join("、")}`}
+                        {r.hits.length > 0 && `良かった点：${r.hits.join("、")}`}
                         {r.hits.length > 0 && r.stumbles.length > 0 && "／"}
-                        {r.stumbles.length > 0 && `つまずき：${r.stumbles.join("、")}`}
+                        {r.stumbles.length > 0 && r.stumbles.join("、")}
                       </span>
                     )}
                   </span>

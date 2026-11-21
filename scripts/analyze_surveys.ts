@@ -14,7 +14,8 @@ try {
   process.exit(1);
 }
 
-import { events, surveys } from "../lib/data";
+import { events } from "../lib/data";
+import { surveys } from "../lib/surveyCsv";
 import { analyzeEvent, type EventAnalysis } from "../lib/surveys";
 import { runUsd, totalUsd } from "../lib/usage";
 import { loadSavedAnalyses, withCardsRestored } from "./eval_survey";

@@ -75,5 +75,6 @@ eval-results/
 .claude/
 data/inbox.json
 
-# アンケート分析の結果（実行のたびに変わる。?mock は app/_client/postevent.json を使う）
+# アンケート分析の結果と、画面から取り込んだアンケート（個人情報の列は捨てたあと）。?mock は app/_client/postevent.json を使う
 data/survey_analysis.json
+data/survey_imports/

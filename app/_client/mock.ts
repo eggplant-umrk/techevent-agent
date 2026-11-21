@@ -480,7 +480,7 @@ export function mockApi(real: Api): Api {
         return;
       }
       const answers = f.analysis.talks.reduce((a, t) => a + t.stats.count, 0);
-      await emit({ type: "start", run_id: "mock-survey", model: f.analysis.model, event_id: id, talks: f.analysis.talks.length, answers }, 100);
+      await emit({ type: "start", run_id: "mock-survey", model: f.analysis.model, event_id: id, talks: f.analysis.talks.length, answers, sentences: f.analysis.labels.length, excluded: f.analysis.talks.reduce((a, t) => a + t.stats.excluded, 0) }, 100);
       await emit({ type: "step", n: 1, max: 3 }, 1500);
       total += f.analysis.run_usd;
       await emit({ type: "usage", run_usd: f.analysis.run_usd, total_usd: total }, 100);
@@ -499,6 +499,17 @@ export function mockApi(real: Api): Api {
       for (const w of f.analysis.writebacks) await emit({ type: "writeback", message: w }, 250);
       analyzed.set(id, f.analysis);
       await emit({ type: "done", analysis: f.analysis, run_usd: f.analysis.run_usd, total_usd: total }, 100);
+    },
+    async importSurvey(id, csv) {
+      // モックでは Agent に聞かず、保存もしない（列の読み取り結果を見せるだけ）
+      const res = await fetch(`/api/events/${encodeURIComponent(id)}/import`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csv, save: false, ask: false }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error ?? "取り込めませんでした");
+      return j;
     },
     async resolveReaction(cardId, reactionId, accept) {
       await wait(200);

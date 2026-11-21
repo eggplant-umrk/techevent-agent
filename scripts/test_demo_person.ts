@@ -37,7 +37,8 @@ async function main() {
   check("決め打ちの忙しさ（workload）は持たない", !!me && !("workload" in me));
 
   const acts = activities();
-  const mine = acts.filter((a) => a.author_id === DEMO_ID);
+  // GitHub から取り込んだ本人の活動（Slack の #share から読んだ本人の投稿は種類 slack なので除く）
+  const mine = acts.filter((a) => a.author_id === DEMO_ID && a.type !== "slack" && a.type !== "blog");
   check("本人の活動は GitHub の本物の活動そのまま（件数・タイトル・URL）", mine.length === github.length && mine.every((a, i) => a.title === github[i].title && a.url === github[i].url), `${mine.length}件`);
   check("活動の id は架空の活動とぶつからない（act201〜）", new Set(acts.map((a) => a.id)).size === acts.length && mine.every((a) => Number(a.id.slice(3)) > 200), `${mine[0]?.id}〜${mine.at(-1)?.id}`);
   check("架空の30人の活動は変わらない", JSON.stringify(acts.filter((a) => a.author_id !== DEMO_ID)) === JSON.stringify(baseActs));

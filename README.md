@@ -40,7 +40,43 @@ LayerX 自律型 AI Agent ハッカソン 2026/11 テーマ3「Techイベント�
 
 ## ディレクトリ構成・技術スタック
 
-TBD（あとで決める）
+MVPの仕様は [docs/spec.md](docs/spec.md)。
+
+- Next.js（App Router）＋TypeScript、Claude API の tool use（`@anthropic-ai/sdk`）
+- Agentのループは `AGENT_MODEL`（既定 claude-opus-5-5）、声かけ文や代わりの人を推す理由づけは `HEAVY_MODEL`（既定 claude-fable-5-2、失敗したら Opus で作り直す）
+- 累計の使用額が `USAGE_SWITCH_USD`（既定 $150）を超えると、ループを Sonnet 5.5、重い仕事を Opus 5.5 に自動で切り替える
+
+```
+app/            画面（page.tsx）とAPI（api/agent はNDJSONで作業ログを流す）
+lib/agent.ts    Agentのループ（上限15ステップ）
+lib/tools.ts    ツール（data/*.json を読む）
+lib/prompt.ts   指示文と社員一覧（プロンプトキャッシュの対象）
+lib/heavy.ts    声かけ文・LT構成案、代わりの人を推す理由
+lib/pricing.ts  料金表（ここだけ直せばよい）
+lib/usage.ts    使用量の記録（data/usage.json）とモデルの自動切り替え
+data/           ダミーデータ（説明は data/README.md）
+scripts/        データ生成・検証、評価スクリプト
+```
+
+### 起動
+
+`.env` に `ANTHROPIC_API_KEY`・`AGENT_MODEL`・`HEAVY_MODEL`・`USAGE_SWITCH_USD` を書いてから：
+
+```bash
+npm install
+npm run dev
+```
+
+http://localhost:3000 を開く。APIキーはサーバー側だけで使い、ブラウザには出しません。
+
+### 評価
+
+`data/README.md` の想定候補と、Agentの上位3人を照らし合わせます（APIクレジットを使います。1件 $0.1〜0.2 程度）。
+
+```bash
+npm run eval -- req004
+npm run eval -- all
+```
 
 ## ライセンス
 

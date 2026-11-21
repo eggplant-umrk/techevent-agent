@@ -72,3 +72,4 @@ data/usage.json
 # ===== Next.js =====
 next-env.d.ts
 eval-results/
+.claude/

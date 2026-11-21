@@ -198,6 +198,50 @@ async function main() {
     check(`予定の中身や埋まり具合は検査で止まる（「${leak}」）`, ps.length > 0, ps[0] ?? "通ってしまった");
   }
 
+  // ---- 会話の中の日付を読む（docs/edge_cases.md の日付の行）----
+  const { datesInText, decideDate, otherDatesInConversation } = await import("../lib/dateHint");
+  const R = "2026-11-21T10:00:00+09:00";
+  const dec = (q: string) => decideDate(q, R).date;
+  for (const q of ["12/15", "12月15日", "2026-12-15", "2026/12/15", "2026年12月15日", "１２月１５日", "１２／１５", "2026.12.15(火)", "開催は 2026.12.15(火) です。"]) {
+    check(`同じ日に読む（${q}）`, dec(q) === "2026-12-15", String(dec(q)));
+  }
+  for (const [q, want] of [
+    ["The meetup is on February 18, 2027.", "2027-02-18"],
+    ["Date: Feb. 18, 2027 (Thu)", "2027-02-18"],
+    ["We'd love you to speak on 18 February 2027.", "2027-02-18"],
+    ["Our event is on December 15th.", "2026-12-15"],
+    ["2027年1月27日に変更になりました", "2027-01-27"],
+    ["1月27日に変更になりました", "2027-01-27"],
+  ] as const) {
+    check(`英語の月名・年の補い（${q}）`, dec(q) === want, String(dec(q)));
+  }
+  for (const q of ["12月15日、16日", "12月15日と16日", "12/15・16", "12/15, 16", "12/15〜16", "12月15日〜17日", "12/15か12/16", "12月15日または16日", "December 15 or 16"]) {
+    const n = datesInText(q).length;
+    check(`1日に決めない（${q}）`, dec(q) === null && n >= 2, `読めた日付 ${n}件／${decideDate(q, R).reason}`);
+  }
+  check("「12月15日、16日」は2つの日付として数える", datesInText("12月15日、16日").map((d) => `${d.month}/${d.day}`).join(",") === "12/15,12/16");
+  for (const q of ["2月30日", "2027年2月29日", "4月31日", "2026.2.30", "February 30, 2027"]) {
+    const r = decideDate(q, R);
+    check(`暦にない日付は決めない（${q}）`, r.date === null && /暦にない/.test(r.reason ?? ""), String(r.reason));
+  }
+  check("うるう年の2月29日は決める", dec("2028年2月29日") === "2028-02-29", String(dec("2028年2月29日")));
+  for (const q of ["12月15日、19時から", "12/15、19:00開始", "12/15と16時", "12/15、20名", "12/15-21時", "12月15日（火）19時〜21時"]) {
+    check(`時刻・人数を2つ目の日付と読まない（${q}）`, dec(q) === "2026-12-15", `${decideDate(q, R).reason}`);
+  }
+  for (const q of ["参加者は1-2人","倍率は1.5倍", "v2.3 のリリース", "日程は調整中です", "登壇は20分です"]) {
+    check(`日付でないものを読まない（${q}）`, datesInText(q).length === 0, datesInText(q).map((d) => d.text).join("・"));
+  }
+  // 会話全体の別の日付
+  const f4 = "開催は 2026.12.15(火) です。※チラシには12/16（水）と書いてしまいました";
+  const o4 = otherDatesInConversation(f4, "開催は 2026.12.15(火) です。", "2026-12-15", R);
+  check("F4：引用の外の 12/16 を返す", o4.length === 1 && o4[0].date === "2026-12-16" && o4[0].before_quote === false, JSON.stringify(o4));
+  const n2 = "日程は1月20日を候補にしていましたが、会場の都合で 1月27日 に変更になりました。";
+  const o2 = otherDatesInConversation(n2, "1月27日 に変更になりました", "2027-01-27", R);
+  check("N2：引用より前の候補日 1月20日 を返す（前か後かが分かる）", o2.length === 1 && o2[0].date === "2027-01-20" && o2[0].before_quote === true, JSON.stringify(o2));
+  const one = "開催は12月15日（火）です。当日は12/15の19時からです。";
+  check("同じ日を言い直しただけなら別の日付はない", otherDatesInConversation(one, "開催は12月15日（火）です。", "2026-12-15", R).length === 0);
+  check("暦にない日付は別の日付に数えない", otherDatesInConversation("開催は12月15日です。2月30日は休み", "開催は12月15日です。", "2026-12-15", R).length === 0);
+
   fs.rmSync(tmp, { force: true });
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
   process.exit(failed ? 1 : 0);

@@ -1,7 +1,8 @@
 // 結合テストのうち、イベント後のアンケートの判定（v0.4）。scripts/eval.ts から呼ぶ。
 // - APIを使わない判定（--offline でも流す）：保存済みの分析結果（docs/survey_latest.json）を今の検証で判定し直す
 //     根拠の回答id・文idが実在／内部の言葉・数字がない／画面の数字がコードの計算と一致／
-//     AI が不満に分けた文が画面に原文のまま全部出ている／確認済みカードを上書きしない・カードに不満の原文と攻撃の言葉を入れない
+//     AI が不満に分けた文が画面に原文のまま全部出ている／確認済みカードを上書きしない・カードに登壇者の評価と不満の原文と攻撃の言葉を入れない／
+//     登壇者の記録（内部）に運営・会場・設備のことと全体の満足度を入れない／画面用の窓口（イベント単位の集計）に登壇者ごとの評価が出ない
 // - APIを使う判定：本番のアンケート分析の結果 → 書き戻し（提案は採用した状態にする）→ 次の提案が変わる（APIは書き戻し後の提案1回だけ）
 // data/cards.json は判定のたびにバイトごと元に戻す。
 import fs from "node:fs";
@@ -15,6 +16,11 @@ import {
   buildAnalysis,
   cardLeakProblems,
   eventDetail,
+  eventStats,
+  loadTalkRecords,
+  overviewProblems,
+  talkRecordFile,
+  talkRecordProblems,
   inputOf,
   sentencesOf,
   talkStats,
@@ -40,13 +46,17 @@ export function loadSavedAnalyses(): { at: string; analyses: Record<string, Even
 
 /** cards.json を元に戻す約束つきで fn を実行する */
 export async function withCardsRestored<T>(fn: () => Promise<T> | T): Promise<T> {
-  // ネタ帳の保存先は DATA_SOURCE で変わるので、そのときの保存先を元に戻す
+  // ネタ帳の保存先は DATA_SOURCE で変わるので、そのときの保存先を元に戻す。登壇者の記録（内部）も元に戻す
   const CARDS = dataFile("cards.json");
   const original = fs.readFileSync(CARDS);
+  const RECORDS = talkRecordFile();
+  const records = fs.existsSync(RECORDS) ? fs.readFileSync(RECORDS) : null;
   try {
     return await fn();
   } finally {
     fs.writeFileSync(CARDS, original);
+    if (records) fs.writeFileSync(RECORDS, records);
+    else fs.rmSync(RECORDS, { force: true });
   }
 }
 
@@ -101,7 +111,23 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
       if (!screen.some((s) => JSON.stringify(s) === JSON.stringify(want))) mismatch.push(`${a.event_id} ${t.speaker_id} 画面`);
     }
   }
-  checks.push({ name: "アンケート：画面の数字がコードの計算と一致", pass: mismatch.length === 0, detail: mismatch.join(" / ") || `${list.reduce((n, a) => n + a.talks.length, 0)}登壇の件数・平均・分布が一致` });
+  // イベント単位の集計（画面用の窓口）も、CSV から数え直した値と一致すること
+  for (const a of list) {
+    const o = eventDetail(a.event_id)?.overview;
+    const rows = all.filter((s) => s.event_id === a.event_id);
+    const rated = rows.flatMap((r) => (r.rating ? [r.rating] : []));
+    const avg = rated.length ? Math.round((rated.reduce((x, r) => x + r, 0) / rated.length) * 10) / 10 : null;
+    if (!o || o.stats.answers !== rows.length || (o.stats.overall_rating?.average ?? null) !== avg || JSON.stringify(o.stats) !== JSON.stringify(eventStats(a.event_id, all)))
+      mismatch.push(`${a.event_id} イベント単位の集計`);
+  }
+  checks.push({ name: "アンケート：画面の数字がコードの計算と一致", pass: mismatch.length === 0, detail: mismatch.join(" / ") || `${list.length}イベントの集計・${list.reduce((n, a) => n + a.talks.length, 0)}登壇の件数が一致` });
+
+  // 画面用の窓口（イベント単位の集計）に、登壇者ごとの評価が入っていない（古い項目は移行中のため対象外）
+  const leaks = list.flatMap((a) => {
+    const o = eventDetail(a.event_id)?.overview;
+    return o ? overviewProblems(o).map((e) => `${a.event_id} ${e}`) : [`${a.event_id} イベント単位の集計がない`];
+  });
+  checks.push({ name: "アンケート：画面用の窓口（イベント単位の集計）に登壇者ごとの評価が出ない", pass: leaks.length === 0, detail: leaks.slice(0, 5).join(" / ") || "点数・不満・良い点はイベント単位だけ。だれの登壇かは出さない" });
 
   // AI が不満に分けた文が、画面に原文のまま全部出ている
   const shown = list.flatMap(negativesShownProblems);
@@ -110,6 +136,8 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
 
   // 確認済みカードを上書きしない／カードに不満の原文・運営への不満・攻撃の言葉を入れない（書き戻しはコードなので保存結果で確かめられる）
   const problemsCard: string[] = [];
+  const recordProblems: string[] = [];
+  let nRecords = 0;
   await withCardsRestored(() => {
     const speakers = [...new Set(list.flatMap((a) => a.talks.map((t) => t.speaker_id)))];
     const targets = loadCards().filter((c) => speakers.includes(c.employee_id) || list.some((a) => a.talks.some((t) => t.next_themes.some((n) => n.overlaps_card_id === c.card_id))));
@@ -124,11 +152,18 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
       if ((c.reactions ?? []).some((r) => r.status === "adopted" && !(b.reactions ?? []).some((x) => x.id === r.id))) problemsCard.push(`${c.card_id} に提案なしで反応が入った`);
     }
     for (const a of list) problemsCard.push(...cardLeakProblems(a));
+    for (const a of list) recordProblems.push(...talkRecordProblems(a).map((e) => `${a.event_id} ${e}`));
+    nRecords = loadTalkRecords().length;
   });
   checks.push({
-    name: "アンケート：確認済みカードを上書きせず、カードに不満の原文・攻撃の言葉を入れない",
+    name: "アンケート：確認済みカードを上書きせず、カードに登壇者の評価・不満の原文・攻撃の言葉を入れない",
     pass: problemsCard.length === 0,
-    detail: problemsCard.slice(0, 5).join(" / ") || "要約・テーマ案・おすすめの形は変わらず反応は提案。カードには内容への不満の事実だけ",
+    detail: problemsCard.slice(0, 5).join(" / ") || "要約・テーマ案・おすすめの形は変わらず、登壇者の反応はカードに入れない（需要ありとテーマ案だけ提案）",
+  });
+  checks.push({
+    name: "アンケート：登壇者の記録（内部）に運営・会場・設備のことと全体の満足度を入れない",
+    pass: recordProblems.length === 0 && nRecords > 0,
+    detail: recordProblems.slice(0, 5).join(" / ") || `${nRecords}登壇の記録：登壇の中身の良い点と内容への不満の事実だけ。点数は登壇ごとの点数の列があるときだけ`,
   });
   return checks;
 }

@@ -7,8 +7,10 @@
 //               次に聞きたいテーマのまとめ、別の社員のカードとの重なりの判断
 // AI に渡すのは集計結果と自由記述だけ（CSV全体・満足度の1件ずつ・職種・個人情報は渡さない）。
 //
-// カードへの書き戻し：運営への不満は入れない（イベントのページだけ）。内容への不満は原文をカードに入れず
-// 「前回は〇〇を指摘する声が N件」という事実だけ。人を攻撃する言葉はカードに一切残さない。
+// 登壇者ごとの反応は内部だけ（v0.4.1）：候補を出すときの参考として Agent に渡すだけで、画面用の窓口・Slack・下書きには出さない。
+//   登壇者の記録（data/talk_records.json）に入れるのは「内容（登壇）」の良い点のテーマと、内容への不満の事実（「前回は〇〇を指摘する声が N件」）だけ。
+//   運営・会場・設備の不満と良い点、人を攻撃する言葉、不満の原文は入れない。カードには書かない。
+// 全体の満足度の点数は登壇者に結びつけない（イベント単位の集計にだけ使う）。登壇ごとの点数の列があるときだけ、その点数を登壇者の参考にする。
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
 import path from "node:path";
@@ -34,6 +36,8 @@ const FILE = () => process.env.SURVEY_ANALYSIS_FILE || path.join(process.cwd(), 
 const EMPTY = /^(特になし|特にない|とくになし|なし|ない|無し|なし。|特になし。|-|ー|—|n\/?a)$/i;
 export const isEmpty = (t: string | null | undefined) => !t || !t.trim() || EMPTY.test(t.trim());
 
+/** @deprecated 画面の切り替え後に削除する。全体の満足度を登壇ごとに分けて出していた古い集計で、「全体の点数を登壇者に結びつけない」に合わない。
+ *  今の画面（イベント画面）が読んでいるので、切り替えまで残す。内部では talkFeedback、画面では eventOverview を使う */
 export interface TalkStats {
   event_id: string;
   speaker_id: string;
@@ -56,6 +60,7 @@ const round1 = (x: number) => Math.round(x * 10) / 10;
 export const HIGH_AVG = 4.5;
 export const LOW_AVG = 3.3;
 
+/** @deprecated 画面の切り替え後に削除する（TalkStats を見る） */
 export function talkStats(eventId: string, all: SurveyAnswer[] = surveys()): TalkStats[] {
   const ev = events().find((e) => e.id === eventId);
   if (!ev) return [];
@@ -79,6 +84,73 @@ export function talkStats(eventId: string, all: SurveyAnswer[] = surveys()): Tal
       } satisfies TalkStats;
     })
     .filter((t) => t.count > 0);
+}
+
+type Dist = [number, number, number, number, number];
+function ratingSummary(values: number[]): { average: number; distribution: Dist; rated: number; highlight: "high" | "low" | null } | null {
+  if (!values.length) return null;
+  const distribution: Dist = [0, 0, 0, 0, 0];
+  for (const v of values) distribution[v - 1]++;
+  const average = round1(values.reduce((a, v) => a + v, 0) / values.length);
+  return { average, distribution, rated: values.length, highlight: average >= HIGH_AVG ? "high" : average <= LOW_AVG ? "low" : null };
+}
+
+/** 登壇者ごとの集計（内部用。画面用の窓口には出さない）。点数は「登壇ごとの点数」の列があるときだけで、全体の満足度は使わない */
+export interface TalkFeedback {
+  event_id: string;
+  speaker_id: string;
+  /** その登壇への回答の数 */
+  count: number;
+  with_comment: number;
+  excluded: number;
+  with_want_next: number;
+  /** 登壇ごとの点数（列があるときだけ）。全体の満足度からは作らない */
+  talk_rating: { average: number; distribution: Dist; rated: number; highlight: "high" | "low" | null } | null;
+}
+
+export function talkFeedback(eventId: string, all: SurveyAnswer[] = surveys()): TalkFeedback[] {
+  const ev = events().find((e) => e.id === eventId);
+  if (!ev) return [];
+  return ev.speaker_ids
+    .map((sp) => {
+      const rows = all.filter((s) => s.event_id === eventId && s.talk_speaker_id === sp);
+      return {
+        event_id: eventId,
+        speaker_id: sp,
+        count: rows.length,
+        with_comment: rows.filter((r) => !isEmpty(r.comment)).length,
+        excluded: rows.filter((r) => isEmpty(r.comment) && isEmpty(r.want_next)).length,
+        with_want_next: rows.filter((r) => !isEmpty(r.want_next)).length,
+        talk_rating: ratingSummary(rows.flatMap((r) => (r.talk_rating ? [r.talk_rating] : []))),
+      };
+    })
+    .filter((t) => t.count > 0);
+}
+
+/** イベント単位の集計（画面用）。全体の満足度はここでだけ使う */
+export interface EventStats {
+  event_id: string;
+  answers: number;
+  with_comment: number;
+  excluded: number;
+  with_want_next: number;
+  /** アンケートの対象になった登壇の数（だれかは出さない） */
+  talks: number;
+  /** 全体の満足度（列があるときだけ）。登壇者には結びつけない */
+  overall_rating: { average: number; distribution: Dist; rated: number; highlight: "high" | "low" | null } | null;
+}
+
+export function eventStats(eventId: string, all: SurveyAnswer[] = surveys()): EventStats {
+  const rows = all.filter((s) => s.event_id === eventId);
+  return {
+    event_id: eventId,
+    answers: rows.length,
+    with_comment: rows.filter((r) => !isEmpty(r.comment)).length,
+    excluded: rows.filter((r) => isEmpty(r.comment) && isEmpty(r.want_next)).length,
+    with_want_next: rows.filter((r) => !isEmpty(r.want_next)).length,
+    talks: new Set(rows.map((r) => r.talk_speaker_id)).size,
+    overall_rating: ratingSummary(rows.flatMap((r) => (r.rating ? [r.rating] : []))),
+  };
 }
 
 export interface Sentence {
@@ -153,6 +225,7 @@ export interface TalkAnalysis {
   /** 内容への不満（攻撃を除く）の文の数。カードに残す事実の数 */
   content_complaints: number;
   next_themes: AnalysisInput["talks"][number]["next_themes"];
+  /** @deprecated 画面の切り替え後に削除する（TalkStats を見る）。登壇者の記録には使わない */
   stats: TalkStats;
 }
 export interface EventAnalysis {
@@ -193,13 +266,27 @@ function quotesAny(text: string, sources: string[]): boolean {
   });
 }
 
+/** 運営・会場・設備の言葉。登壇者の記録（まとめ・内容への不満の一言・登壇の良い点のテーマ）に入れない */
+export const OPERATION_WORDS = /会場|寒|暑|空調|冷房|暖房|マイク|音響|音声|配信|受付|懇親会|食事|ピザ|軽食|飲み物|開始が遅|開始時刻|遅れて始|Wi-?Fi|椅子|座席|スクリーン|プロジェクター|運営|質疑の時間/;
+
+/** 登壇者の記録に入る、AI が書いた文 */
+function speakerTexts(input: AnalysisInput): Array<{ where: string; text: string }> {
+  return [
+    ...(input.talks ?? []).flatMap((t) => [
+      { where: `${t.speaker_id} の反応のまとめ`, text: t.summary ?? "" },
+      { where: `${t.speaker_id} の内容への不満の一言`, text: t.content_issue ?? "" },
+    ]),
+    ...(input.positive_themes ?? []).filter((p) => p.speaker_id !== null).map((p) => ({ where: `${p.speaker_id} の良い点のテーマ「${p.theme}」`, text: p.theme })),
+  ].filter((x) => x.text);
+}
+
 /** 問題を文で返す。空なら保存してよい */
 export function validateAnalysis(eventId: string, input: AnalysisInput, all: SurveyAnswer[] = surveys(), cards: Card[] = loadCards()): string[] {
   const errs: string[] = [];
   const sents = sentencesOf(eventId, all);
   const byId = new Map(sents.map((s) => [s.id, s]));
   const answers = new Map(all.filter((s) => s.event_id === eventId).map((s) => [s.id, s]));
-  const speakers = talkStats(eventId, all).map((t) => t.speaker_id);
+  const speakers = talkFeedback(eventId, all).map((t) => t.speaker_id);
 
   // 文の分類：渡した文すべてに1回ずつ
   const seen = new Map<string, SentenceLabel>();
@@ -276,6 +363,8 @@ export function validateAnalysis(eventId: string, input: AnalysisInput, all: Sur
   errs.push(...internalTermProblems(texts));
   for (const x of texts) if (x.text && NUMBER_CLAIM.test(x.text)) errs.push(`${x.where}に件数・平均などの数字が入っています（数字は画面がコードで出すので書かない）`);
   for (const p of input.positive_themes ?? []) if (quotesAny(p.theme, attacks)) errs.push(`良い点のテーマ「${p.theme}」に人を攻撃する言葉が入っています`);
+  // 登壇者の記録に入る文：運営・会場・設備のことを書かない（登壇者のせいにしない）
+  for (const x of speakerTexts(input)) if (OPERATION_WORDS.test(x.text)) errs.push(`${x.where}に運営・会場・設備のこと（${x.text.match(OPERATION_WORDS)![0]}）が入っています。登壇者の記録には登壇の中身のことだけを書いてください`);
   return errs;
 }
 
@@ -366,7 +455,7 @@ export function eventMessage(ev: EventRecord, all: SurveyAnswer[] = surveys()): 
   const cards = loadCards();
   const sents = sentencesOf(ev.id, all);
   const parts = [`# イベント\n${ev.title}（${ev.date}・${ev.series}）`];
-  for (const st of talkStats(ev.id, all)) {
+  for (const st of talkFeedback(ev.id, all)) {
     const e = employeeById(st.speaker_id);
     const own = cards.filter((c) => c.employee_id === st.speaker_id);
     const wants = all.filter((s) => s.event_id === ev.id && s.talk_speaker_id === st.speaker_id && !isEmpty(s.want_next));
@@ -374,7 +463,8 @@ export function eventMessage(ev: EventRecord, all: SurveyAnswer[] = surveys()): 
       [
         `## 登壇：${st.speaker_id} ${e?.name ?? ""}（${e?.role ?? ""}）`,
         `本人のカード：${own.length ? own.map((c) => c.themes[0]).join("／") : "なし"}`,
-        `集計（コード）：回答${st.count}件・満足度の平均${st.average}・感想あり${st.with_comment}件${st.highlight === "high" ? "・満足度が高い登壇" : st.highlight === "low" ? "・満足度が低い登壇" : ""}`,
+        // 全体の満足度は登壇者に結びつけない。登壇ごとの点数の列があるときだけ添える
+        `集計（コード）：回答${st.count}件・感想あり${st.with_comment}件${st.talk_rating ? `・この登壇の点数の平均${st.talk_rating.average}${st.talk_rating.highlight === "high" ? "（高い）" : st.talk_rating.highlight === "low" ? "（低い）" : ""}` : ""}`,
         `感想の文（文のid｜文）：`,
         ...sents.filter((s) => s.speaker_id === st.speaker_id).map((s) => `${s.id}｜${s.text}`),
         `次に聞きたいテーマ（回答id｜テーマ）：`,
@@ -474,39 +564,73 @@ export function contentFact(t: Pick<TalkAnalysis, "content_issue" | "content_com
   return `前回は${t.content_issue}を指摘する声が${t.content_complaints}件`;
 }
 
+/** 登壇者の記録（内部）。候補を出すときの参考として Agent に渡すだけで、画面・Slack・下書きには出さない */
+export interface TalkRecord {
+  id: string;
+  card_id: string;
+  speaker_id: string;
+  event_id: string;
+  event_title: string;
+  event_date: string;
+  /** その登壇への回答の数 */
+  answers: number;
+  /** 登壇ごとの点数の平均（列があるときだけ）。全体の満足度は入れない */
+  talk_average: number | null;
+  /** 反応のまとめ1行（登壇の中身のことだけ） */
+  summary: string;
+  /** 登壇の中身の良い点のテーマと件数（運営・会場の良い点は入れない） */
+  good_themes: string[];
+  /** 内容への不満の事実（「前回は〇〇を指摘する声が N件」）。原文・運営・攻撃は入れない */
+  content_fact: string | null;
+  recorded_at: string;
+}
+
+/** 登壇者の記録の保存先（内部）。テストでは TALK_RECORD_FILE で別のファイルに向ける */
+const RECORD_FILE = () => process.env.TALK_RECORD_FILE || path.join(process.cwd(), "data", "talk_records.json");
+export const talkRecordFile = RECORD_FILE;
+
+export function loadTalkRecords(): TalkRecord[] {
+  const f = RECORD_FILE();
+  if (!fs.existsSync(f)) return [];
+  return JSON.parse(fs.readFileSync(f, "utf-8")) as TalkRecord[];
+}
+function saveTalkRecord(r: TalkRecord) {
+  const all = loadTalkRecords().filter((x) => x.id !== r.id);
+  fs.writeFileSync(RECORD_FILE(), JSON.stringify([...all, r], null, 2) + "\n", "utf-8");
+}
+
 export function writeBack(ev: EventRecord, a: Pick<EventAnalysis, "talks" | "positives">): string[] {
   const lines: string[] = [];
+  const feedback = talkFeedback(ev.id);
   for (const t of a.talks) {
     const name = employeeById(t.speaker_id)?.name ?? t.speaker_id;
     const card = speakerCard(t.speaker_id, loadCards());
-    if (!card) lines.push(`${name}さんはカードがないため、反応を書き戻せませんでした`);
+    const fb = feedback.find((f) => f.speaker_id === t.speaker_id);
+    if (!card) lines.push(`${name}さんはカードがないため、反応を記録できませんでした`);
     else {
-      const fact = contentFact(t);
-      const reception: Reaction = {
-        id: `rx-${ev.id}-${t.speaker_id}`,
-        kind: "reception",
-        status: card.reviewed ? "pending" : "adopted",
+      // 登壇者の記録は内部だけ（カードには書かない）。登壇の中身の良い点と、内容への不満の事実だけ
+      saveTalkRecord({
+        id: `tr-${ev.id}-${t.speaker_id}`,
+        card_id: card.card_id,
+        speaker_id: t.speaker_id,
         event_id: ev.id,
         event_title: ev.title,
         event_date: ev.date,
-        text: t.summary,
-        // 良い点はテーマ名と件数だけ（代表的な声の原文は入れない）。運営への不満・攻撃の言葉は入れない
-        hits: a.positives.filter((p) => p.speaker_id === t.speaker_id).map((p) => `${p.theme}（${p.count}件）`),
-        stumbles: fact ? [fact] : [],
-        count: t.stats.count,
-        average: t.stats.average,
-        response_ids: [...new Set(a.positives.filter((p) => p.speaker_id === t.speaker_id).flatMap((p) => p.sentence_ids.map((id) => id.split("#")[0])))],
-        from_speaker_id: null,
-        added_at: nowIso(),
-      };
+        answers: fb?.count ?? 0,
+        talk_average: fb?.talk_rating?.average ?? null,
+        summary: t.summary,
+        good_themes: a.positives.filter((p) => p.speaker_id === t.speaker_id).map((p) => `${p.theme}（${p.count}件）`),
+        content_fact: contentFact(t),
+        recorded_at: nowIso(),
+      });
       const ownThemes = t.next_themes.filter((n) => !n.overlaps_card_id).map((n) => n.text);
       let added: string[] = [];
       patchCard(card.card_id, (c) => {
         const known = new Set([...c.themes, ...c.pending_themes]);
         added = ownThemes.filter((x) => x && !known.has(x));
-        return { ...c, reactions: upsertReaction(c.reactions ?? [], reception), pending_themes: [...c.pending_themes, ...added] };
+        return { ...c, pending_themes: [...c.pending_themes, ...added] };
       });
-      lines.push(card.reviewed ? `${name}さんのカード（確認済み）：内容は変えず、反応のまとめを提案` : `${name}さんのカードに反応のまとめを追記`);
+      lines.push(`${name}さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）`);
       if (added.length) lines.push(`${name}さんのカードにテーマ案（未確認）を提案「${added.join("」「")}」`);
     }
     t.next_themes.forEach((n, i) => {
@@ -536,6 +660,26 @@ export function writeBack(ev: EventRecord, a: Pick<EventAnalysis, "talks" | "pos
   return lines;
 }
 
+/** 登壇者の記録（内部）に入ってはいけないもの：運営・会場・設備のこと、不満の原文、攻撃の言葉、イベント全体の良い点、全体の満足度。問題を文で返す */
+export function talkRecordProblems(a: Pick<EventAnalysis, "negatives" | "event_id" | "positives">, records: TalkRecord[] = loadTalkRecords(), all: SurveyAnswer[] = surveys()): string[] {
+  const bad = [...a.negatives.operation, ...a.negatives.content].map((n) => n.text);
+  const eventWide = (a.positives ?? []).filter((p) => p.speaker_id === null);
+  const eventTexts = eventWide.flatMap((p) => p.representatives.map((r) => r.text));
+  const eventThemes = new Set(eventWide.map((p) => p.theme));
+  const fb = talkFeedback(a.event_id, all);
+  const out: string[] = [];
+  for (const r of records.filter((x) => x.event_id === a.event_id)) {
+    const texts = [r.summary, ...r.good_themes, r.content_fact ?? ""].filter(Boolean);
+    if (texts.some((t) => quotesAny(t, bad))) out.push(`${r.speaker_id} の記録に不満の原文（運営・内容・攻撃）が入っています`);
+    if (texts.some((t) => OPERATION_WORDS.test(t))) out.push(`${r.speaker_id} の記録に運営・会場・設備のことが入っています`);
+    if (texts.some((t) => quotesAny(t, eventTexts)) || r.good_themes.some((h) => eventThemes.has(h.replace(/（\d+件）$/, ""))))
+      out.push(`${r.speaker_id} の記録にイベント全体の良い点が入っています`);
+    const want = fb.find((f) => f.speaker_id === r.speaker_id)?.talk_rating?.average ?? null;
+    if (r.talk_average !== want) out.push(`${r.speaker_id} の記録の点数（${r.talk_average}）が登壇ごとの点数（${want}）と違います（全体の満足度を結びつけていないか）`);
+  }
+  return out;
+}
+
 /** カードに入ってはいけないもの（運営への不満・不満の原文・攻撃の言葉・イベント全体の良い点）が入っていないか。問題を文で返す */
 export function cardLeakProblems(a: Pick<EventAnalysis, "negatives" | "event_id" | "positives">, cards: Card[] = loadCards()): string[] {
   const bad = [...a.negatives.operation, ...a.negatives.content].map((n) => n.text);
@@ -545,6 +689,7 @@ export function cardLeakProblems(a: Pick<EventAnalysis, "negatives" | "event_id"
   const out: string[] = [];
   for (const c of cards)
     for (const r of (c.reactions ?? []).filter((x) => x.event_id === a.event_id)) {
+      if (r.kind === "reception") out.push(`${c.card_id} に登壇者の評価（反応のまとめ）が入っています。登壇者の反応は内部の記録だけに置く`);
       const texts = [r.text, ...r.hits, ...r.stumbles];
       if (texts.some((t) => quotesAny(t, bad))) out.push(`${c.card_id} の反応に不満の原文（運営・内容・攻撃）が入っています`);
       if (texts.some((t) => quotesAny(t, eventTexts)) || r.hits.some((h) => eventThemes.has(h.replace(/（\d+件）$/, ""))))
@@ -566,15 +711,19 @@ export function resolveReaction(cardId: string, reactionId: string, accept: bool
   return { ok: true, card: card ?? undefined };
 }
 
-/** 提案（get_card・search_cards）に渡す、採用済みの反応の文 */
+/** 提案（get_card・search_cards）に渡す文：カードの採用済みの「需要あり」と、登壇者の記録（内部・判断の参考だけ）。
+ *  画面用の窓口・Slack・下書きには出さない（Agent への受け渡し専用） */
 export function reactionLines(c: Card): string[] {
-  return (c.reactions ?? [])
-    .filter((r) => r.status === "adopted")
-    .map((r) =>
-      r.kind === "reception"
-        ? `${r.event_date}「${r.event_title}」での反応（回答${r.count}件・満足度の平均${r.average}）：${r.text}${r.hits.length ? `／良かった点：${r.hits.join("、")}` : ""}${r.stumbles.length ? `／${r.stumbles.join("、")}` : ""}`
-        : `需要あり：${r.event_date}「${r.event_title}」の参加者が「${r.text}」を聞きたいと答えた`,
+  const demand = (c.reactions ?? [])
+    .filter((r) => r.status === "adopted" && r.kind === "demand")
+    .map((r) => `需要あり：${r.event_date}「${r.event_title}」の参加者が「${r.text}」を聞きたいと答えた`);
+  const records = loadTalkRecords()
+    .filter((r) => r.card_id === c.card_id)
+    .map(
+      (r) =>
+        `登壇の反応（内部の参考。理由・注意点・声かけ文には書かない）：${r.event_date}「${r.event_title}」回答${r.answers}件${r.talk_average !== null ? `・この登壇の点数の平均${r.talk_average}` : ""}。${r.summary}${r.good_themes.length ? `／良かった点：${r.good_themes.join("、")}` : ""}${r.content_fact ? `／${r.content_fact}` : ""}`,
     );
+  return [...demand, ...records];
 }
 
 // ---------------------------------------------------------------------------
@@ -716,6 +865,54 @@ export function listEvents(): EventListItem[] {
     }));
 }
 
+/** 画面用の窓口に出す、イベント単位の集計。登壇者ごとの点数・不満・良い点は入れない（だれの登壇かも出さない） */
+export interface EventOverview {
+  stats: EventStats;
+  analysis: {
+    analyzed_at: string;
+    /** 不満：原文のまま全部。運営・会場・設備／内容に分けるだけ（だれの登壇への声かは出さない） */
+    negatives: { operation: Array<{ text: string; count: number; attack: boolean }>; content: Array<{ text: string; count: number; attack: boolean }> };
+    /** 良い点：テーマごと。scope は event（運営・会場など）か talk（登壇の中身） */
+    positives: Array<{ theme: string; count: number; scope: "event" | "talk"; representatives: string[] }>;
+    /** 参加者が次に聞きたいテーマ（同じテーマはまとめる）。demand＝別の社員のカードに「需要あり」を提案した */
+    next_themes: Array<{ text: string; count: number; demand: boolean }>;
+  } | null;
+}
+
+export function eventOverview(eventId: string): EventOverview | null {
+  if (!events().some((e) => e.id === eventId)) return null;
+  const a = (loadAnalyses()[eventId] as EventAnalysis | undefined) ?? null;
+  const next = new Map<string, { text: string; count: number; demand: boolean }>();
+  for (const n of a?.talks.flatMap((t) => t.next_themes) ?? []) {
+    const x = next.get(n.text) ?? { text: n.text, count: 0, demand: false };
+    x.count += n.response_ids.length;
+    x.demand ||= !!n.overlaps_card_id;
+    next.set(n.text, x);
+  }
+  const neg = (items: NegativeItem[]) => items.map((n) => ({ text: n.text, count: n.count, attack: n.attack }));
+  return {
+    stats: eventStats(eventId),
+    analysis: a
+      ? {
+          analyzed_at: a.analyzed_at,
+          negatives: { operation: neg(a.negatives.operation), content: neg(a.negatives.content) },
+          positives: a.positives.map((p) => ({ theme: p.theme, count: p.count, scope: p.speaker_id === null ? ("event" as const) : ("talk" as const), representatives: p.representatives.map((r) => r.text) })),
+          next_themes: [...next.values()].sort((x, y) => y.count - x.count),
+        }
+      : null,
+  };
+}
+
+/** 画面用の窓口（イベント単位の集計）に、登壇者ごとの評価が入っていないか。問題を文で返す */
+export function overviewProblems(o: EventOverview): string[] {
+  const out: string[] = [];
+  const json = JSON.stringify(o);
+  for (const key of ["speaker_id", "speaker_ids", "talk_speaker_id", "card_id", "talk_rating", "talk_average", "summary", "content_issue", "content_complaints", "good_themes", "content_fact"])
+    if (json.includes(`"${key}"`)) out.push(`イベント単位の集計に登壇者ごとの項目（${key}）が入っています`);
+  for (const e of employees()) if (json.includes(e.name) || json.includes(e.id + '"')) out.push(`イベント単位の集計に社員（${e.name}）が出ています`);
+  return out;
+}
+
 export function eventDetail(eventId: string) {
   const ev = events().find((e) => e.id === eventId);
   if (!ev) return null;
@@ -725,6 +922,9 @@ export function eventDetail(eventId: string) {
   const imp = loadImport(eventId);
   return {
     event: ev,
+    /** イベント単位の集計（画面はこれを使う）。登壇者ごとの点数・不満・良い点は入っていない */
+    overview: eventOverview(eventId)!,
+    /** @deprecated 画面の切り替え後に削除する。登壇者ごとの点数（全体の満足度を登壇ごとに分けたもの）を含む */
     talks: ev.speaker_ids.map((id) => {
       const emp = employees().find((x) => x.id === id);
       return {
@@ -737,9 +937,11 @@ export function eventDetail(eventId: string) {
     }),
     /** 取り込みの結果：列の意味（個人情報の列は捨てた・読み取れない列は無視した）と、どの登壇か分からなかった行 */
     source: imp ? { source: imp.source, imported_at: imp.imported_at, rows: imp.rows, columns: imp.columns as ColumnInfo[], unmatched_rows: imp.unmatched_rows } : null,
-    /** 回答（個人情報の列は入っていない）。根拠の回答を開くのに使う */
+    /** @deprecated 画面の切り替え後に削除する。回答ごとにだれの登壇への回答かを含む */
     answers: all.filter((s) => s.event_id === eventId),
+    /** @deprecated 画面の切り替え後に削除する。文ごとにだれの登壇への声かを含む */
     sentences: sentencesOf(eventId, all),
+    /** @deprecated 画面の切り替え後に削除する。登壇ごとのまとめ・不満の登壇者・良い点の登壇者を含む（画面は overview を使う） */
     analysis: (loadAnalyses()[eventId] as EventAnalysis | undefined) ?? null,
   };
 }

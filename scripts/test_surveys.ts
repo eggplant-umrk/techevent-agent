@@ -8,6 +8,7 @@ import path from "node:path";
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "survey-test-"));
 process.env.SURVEY_ANALYSIS_FILE = path.join(TMP, "analysis.json");
 process.env.SURVEY_IMPORT_DIR = path.join(TMP, "imports");
+process.env.TALK_RECORD_FILE = path.join(TMP, "talk_records.json");
 
 import { loadCards, patchCard } from "../lib/cards";
 import { events } from "../lib/data";
@@ -15,6 +16,12 @@ import { internalTerms } from "../lib/plainText";
 import { detectColumns, importSurveyCsv, loadImport, parseCsv, saveImport, surveys, type ColumnAsker } from "../lib/surveyCsv";
 import {
   analyzeEvent,
+  eventOverview,
+  eventStats,
+  loadTalkRecords,
+  overviewProblems,
+  talkFeedback,
+  talkRecordProblems,
   cardLeakProblems,
   contentFact,
   eventMessage,
@@ -142,7 +149,25 @@ async function main() {
     // ---------------------------------------------------------------- AI に渡すもの
     const msg = eventMessage(events().find((e) => e.id === "ev019")!);
     check("AI に CSV 全体・個人情報を渡さない", !msg.includes("@") && !/2026\/09\/11 \d/.test(msg) && !/山田 花子|佐藤 健/.test(msg) && !msg.includes("どの登壇についての回答ですか"));
-    check("AI に集計結果と自由記述を渡す", msg.includes(`回答${st.count}件・満足度の平均${st.average}`) && mixed.every((m) => msg.includes(`${m.id}｜${m.text}`)));
+    check("AI に集計結果と自由記述を渡す", msg.includes(`回答${st.count}件・感想あり`) && mixed.every((m) => msg.includes(`${m.id}｜${m.text}`)));
+    check("AI に渡す登壇ごとの集計に全体の満足度を入れない", !/満足度の平均|この登壇の点数/.test(msg), "全体の満足度しかないアンケートなので、登壇ごとの点数はなし");
+
+    // ---- 全体の満足度は登壇者に結びつけない。登壇ごとの点数の列があるときだけ使う
+    check("全体の満足度の列は「全体」、登壇の点数の列は「登壇ごと」と見分ける",
+      detectColumns(["タイムスタンプ", "満足度を教えてください", "この登壇の満足度", "感想"]).map((c) => c.scope ?? "-").join(",") === "-,overall,talk,-");
+    const fb = talkFeedback("ev019").find((t) => t.speaker_id === "e003")!;
+    check("全体の満足度しかないとき、登壇者ごとの点数は作らない", fb.talk_rating === null && fb.count === st.count);
+    const es = eventStats("ev019");
+    check("全体の満足度はイベント単位の集計にだけ使う", es.overall_rating?.rated === all.filter((s) => s.event_id === "ev019" && s.rating).length && es.answers === all.filter((s) => s.event_id === "ev019").length);
+    const twoCols = await importSurveyCsv(
+      "ev019",
+      "タイムスタンプ,どの登壇についての回答ですか？,満足度を教えてください,この登壇の満足度を教えてください,感想\n" +
+        "2026/09/11 21:00:00,久住 拓真「ガードレール」,2,5,とても良かった\n2026/09/11 21:01:00,久住 拓真「ガードレール」,1,4,参考になった\n",
+      { source: "upload", asker: null },
+    );
+    check("登壇ごとの点数の列があるときは、その点数だけを登壇者の参考に使う",
+      twoCols.ok && twoCols.data.answers.every((x) => x.rating! <= 2 && x.talk_rating! >= 4) &&
+      talkFeedback("ev019", twoCols.ok ? twoCols.data.answers : []).find((t) => t.speaker_id === "e003")?.talk_rating?.average === 4.5);
 
     // ---------------------------------------------------------------- 検証
     const good = fakeInput("ev020");
@@ -189,23 +214,42 @@ async function main() {
     const evWide = a.positives.filter((p) => p.speaker_id === null);
     check("懇親会・受付などはイベント全体の良い点として分ける", evWide.length === 1 && evWide[0].representatives.every((r) => OTHER.test(r.text)));
 
-    const c4 = loadCards().find((c) => c.card_id === "card-e004-01")!;
-    const rx = c4.reactions?.find((r) => r.kind === "reception");
+    // ---- 登壇者の記録は内部だけ（カードには書かない）。内容のことだけで、運営・会場・設備は入れない
+    const rec = loadTalkRecords().find((r) => r.speaker_id === "e004" && r.event_id === "ev020");
     const t4 = a.talks.find((x) => x.speaker_id === "e004")!;
-    check("カードには内容への不満の事実だけ", rx?.stumbles.length === 1 && rx.stumbles[0] === contentFact(t4) && /^前回は.+を指摘する声が\d+件$/.test(rx.stumbles[0]), rx?.stumbles[0]);
-    check("カードに不満の原文・運営への不満・攻撃の言葉が入らない", cardLeakProblems(a).length === 0 && !JSON.stringify(loadCards().flatMap((c) => c.reactions ?? [])).includes(attackText));
-    check("良かった点はテーマと件数だけ", (rx?.hits ?? []).every((h) => /（\d+件）$/.test(h)));
-    check("イベント全体の良い点はカードに入れない", !JSON.stringify(loadCards().flatMap((c) => c.reactions ?? [])).includes(evWide[0].theme));
+    check("登壇者の反応はカードに書かない", loadCards().every((c) => !(c.reactions ?? []).some((r) => r.kind === "reception")));
+    check("登壇者の記録（内部）には内容への不満の事実だけ", rec?.content_fact === contentFact(t4) && /^前回は.+を指摘する声が\d+件$/.test(rec?.content_fact ?? ""), rec?.content_fact ?? "");
+    check("登壇者の記録に全体の満足度を入れない", rec?.talk_average === null && !JSON.stringify(rec).includes("満足度"));
+    const opsTexts = a.negatives.operation.map((n) => n.text);
+    check("会場・運営への不満は登壇者の記録に入らない", opsTexts.length > 0 && talkRecordProblems(a).length === 0 && !opsTexts.some((t) => JSON.stringify(loadTalkRecords()).includes(t.slice(0, 8))));
+    check("イベント全体の良い点は登壇者の記録とカードに入れない", !JSON.stringify(loadTalkRecords()).includes(evWide[0].theme) && !JSON.stringify(loadCards().flatMap((c) => c.reactions ?? [])).includes(evWide[0].theme));
+    check("カードに不満の原文・攻撃の言葉が入らない", cardLeakProblems(a).length === 0 && !JSON.stringify(loadCards().flatMap((c) => c.reactions ?? [])).includes(attackText));
+    const leaky = fakeInput("ev020");
+    leaky.talks.find((t) => t.speaker_id === "e004")!.summary = "会場が寒くて集中しにくかった";
+    check("登壇者のまとめに運営・会場のことを書くと弾く", validateAnalysis("ev020", leaky).some((e) => e.includes("運営・会場・設備")));
+    const forged = { ...rec!, id: "tr-x", talk_average: 2.8, summary: "会場が寒かった" };
+    const flagged = talkRecordProblems(a, [forged]);
+    check("記録に全体の満足度や会場の不満が入れば検査で落ちる", flagged.some((e) => e.includes("点数")) && flagged.some((e) => e.includes("運営・会場・設備")));
+
+    // ---- 画面用の窓口（イベント単位の集計）に登壇者ごとの評価が出ない
+    const ov = eventOverview("ev020")!;
+    check("画面用の窓口はイベント単位の集計だけ", overviewProblems(ov).length === 0 && !!ov.analysis && ov.stats.talks === 2, overviewProblems(ov).join(" / "));
+    check("画面用の窓口に登壇者の名前・点数・まとめが出ない", !/相良|青柳|talk_rating|content_fact|summary/.test(JSON.stringify(ov)));
+    check("窓口の検査は、登壇者ごとの項目が入ると落ちる", overviewProblems({ ...ov, stats: { ...ov.stats, ...({ speaker_id: "e004" } as object) } } as typeof ov).length > 0);
+
+    // ---- 需要あり（別の社員のカード）は今までどおり提案
     const dm = loadCards().find((c) => c.card_id === "card-e023-01")!.reactions?.find((r) => r.kind === "demand");
     check("重なるテーマは別の社員のカードに「需要あり」の提案", dm?.status === "pending" && dm.from_speaker_id === "e004");
     check("提案中の需要は提案のツールに渡らない", JSON.stringify(getCard({ card_id: "card-e023-01" })).indexOf("需要あり") < 0);
     resolveReaction("card-e023-01", dm!.id, true);
     const lines = reactionLines(loadCards().find((c) => c.card_id === "card-e023-01")!);
     check("採用すると提案のツールに渡る", JSON.stringify(getCard({ card_id: "card-e023-01" })).includes("需要あり"), lines[0]);
-    check("提案に渡す文に内部の言葉がない", [...lines, ...reactionLines(loadCards().find((c) => c.card_id === "card-e004-01")!)].every((l) => internalTerms(l).length === 0));
+    const recLines = reactionLines(loadCards().find((c) => c.card_id === "card-e004-01")!);
+    check("登壇者の記録は Agent にだけ渡す（判断の参考・文には書かない）", recLines.some((l) => l.startsWith("登壇の反応（内部の参考。理由・注意点・声かけ文には書かない）")));
+    check("提案に渡す文に内部の言葉がない", [...lines, ...recLines].every((l) => internalTerms(l).length === 0));
 
-    // ---- 確認済みのカードは上書きしない・見送りは戻らない
-    patchCard("card-e004-01", (c) => ({ ...c, reviewed: true, reviewed_at: "2026-11-20T00:00:00Z", reactions: [], pending_themes: [] }));
+    // ---- 確認済みのカードは上書きしない
+    patchCard("card-e004-01", (c) => ({ ...c, reviewed: true, reviewed_at: "2026-11-20T00:00:00Z", pending_themes: [] }));
     const before = loadCards().find((c) => c.card_id === "card-e004-01")!;
     await analyzeEvent("ev020", () => undefined, { analyzer: fake([fakeInput("ev020")]) });
     const after = loadCards().find((c) => c.card_id === "card-e004-01")!;
@@ -213,11 +257,8 @@ async function main() {
       "確認済みカードの要約・テーマ案・おすすめの形は変えない",
       after.summary === before.summary && JSON.stringify(after.themes) === JSON.stringify(before.themes) && after.format === before.format && after.format_reason === before.format_reason,
     );
-    const pend = after.reactions!.find((r) => r.kind === "reception")!;
-    check("確認済みカードへの反応のまとめは提案（未採用）", pend.status === "pending" && reactionLines(after).length === 0);
-    resolveReaction("card-e004-01", pend.id, false);
-    await analyzeEvent("ev020", () => undefined, { analyzer: fake([fakeInput("ev020")]) });
-    check("見送った提案は再分析で復活しない", loadCards().find((c) => c.card_id === "card-e004-01")!.reactions!.find((r) => r.id === pend.id)?.status === "dismissed");
+    const dm2 = loadCards().find((c) => c.card_id === "card-e023-01")!.reactions!.find((r) => r.id === dm!.id);
+    check("採用済みの需要ありは再分析で戻さない", dm2?.status === "adopted");
   } finally {
     fs.writeFileSync(CARDS, original);
     fs.rmSync(TMP, { recursive: true, force: true });

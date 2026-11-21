@@ -18,7 +18,14 @@ export interface ColumnInfo {
   role: ColumnRole;
   /** keyword＝質問文のキーワードでコードが決めた／agent＝Agent に聞いた／none＝決まらなかった */
   by: "keyword" | "agent" | "none";
+  /** 満足度の列（role=rating）のとき：overall＝イベント全体の満足度（登壇者に結びつけない）／talk＝登壇ごとの点数（その登壇の参考にだけ使う）。
+   *  アンケートの形はまだ分からないので、「登壇・発表・セッション」を指す質問文でなければ全体の満足度として扱う */
+  scope?: "overall" | "talk";
 }
+
+/** 登壇ごとの点数を聞いている質問文（例：「この登壇の満足度」「発表の評価」） */
+const TALK_RATING = /(登壇|発表|セッション|講演|トーク|この話).{0,12}(満足|評価|点数|点)|(満足|評価|点数).{0,12}(登壇|発表|セッション|講演|トーク)/;
+export const ratingScope = (header: string): "overall" | "talk" => (TALK_RATING.test(header) ? "talk" : "overall");
 
 export interface SurveyImport {
   event_id: string;
@@ -81,14 +88,17 @@ const KEYWORDS: Array<[ColumnRole, RegExp]> = [
 ];
 
 export function detectColumns(headers: string[]): ColumnInfo[] {
-  const taken = new Set<ColumnRole>();
+  // 満足度は「全体」と「登壇ごと」を1列ずつまで持てる
+  const taken = new Set<string>();
   return headers.map((h, index) => {
     const hit = KEYWORDS.find(([, re]) => re.test(h));
     if (!hit) return { index, header: h, role: "unread" as const, by: "none" as const };
     const [role] = hit;
-    if (role !== "personal" && taken.has(role)) return { index, header: h, role: "unread" as const, by: "none" as const };
-    taken.add(role);
-    return { index, header: h, role, by: "keyword" as const };
+    const scope = role === "rating" ? ratingScope(h) : undefined;
+    const key = scope ? `rating:${scope}` : role;
+    if (role !== "personal" && taken.has(key)) return { index, header: h, role: "unread" as const, by: "none" as const };
+    taken.add(key);
+    return scope ? { index, header: h, role, by: "keyword" as const, scope } : { index, header: h, role, by: "keyword" as const };
   });
 }
 
@@ -191,7 +201,12 @@ export async function importSurveyCsv(
       if (c.role !== "unread") return c;
       const a = answers.find((x) => x.index === c.index);
       if (!a || a.role === "unread") return c;
-      if (a.role !== "personal" && taken.has(a.role)) return c;
+      if (a.role !== "personal" && taken.has(a.role) && a.role !== "rating") return c;
+      if (a.role === "rating") {
+        const scope = ratingScope(c.header);
+        if (columns.some((x) => x.role === "rating" && (x.scope ?? "overall") === scope)) return c;
+        return { ...c, role: a.role, by: "agent" as const, scope };
+      }
       taken.add(a.role);
       return { ...c, role: a.role, by: "agent" as const };
     });
@@ -205,7 +220,10 @@ export async function importSurveyCsv(
 /** 列の意味が決まった表を回答に変換する（同期）。個人情報の列はここで読まない（コピーもしない） */
 function convert(eventId: string, speakerIds: string[], _width: number, body: string[][], columns: ColumnInfo[], source: SurveyImport["source"]): SurveyImport {
   const col = (role: ColumnRole) => columns.find((c) => c.role === role)?.index;
-  const [iRating, iComment, iTalk, iWant, iRole] = [col("rating"), col("comment"), col("talk"), col("want_next"), col("role")];
+  // 満足度：scope のない古い取り込みは全体の満足度として扱う
+  const iRating = columns.find((c) => c.role === "rating" && (c.scope ?? "overall") === "overall")?.index;
+  const iTalkRating = columns.find((c) => c.role === "rating" && c.scope === "talk")?.index;
+  const [iComment, iTalk, iWant, iRole] = [col("comment"), col("talk"), col("want_next"), col("role")];
   const answers: SurveyAnswer[] = [];
   const unmatched: number[] = [];
   body.forEach((r, i) => {
@@ -218,6 +236,7 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
       event_id: eventId,
       talk_speaker_id: speaker,
       rating: iRating !== undefined ? ratingOf(r[iRating] ?? "") : null,
+      talk_rating: iTalkRating !== undefined ? ratingOf(r[iTalkRating] ?? "") : null,
       comment: iComment !== undefined ? scrubPersonal((r[iComment] ?? "").trim()) : "",
       want_next: iWant !== undefined && (r[iWant] ?? "").trim() ? scrubPersonal(r[iWant].trim()) : null,
       role: iRole !== undefined && (r[iRole] ?? "").trim() ? r[iRole].trim() : null,

@@ -142,8 +142,10 @@ export interface SurveyAnswer {
   id: string;
   event_id: string;
   talk_speaker_id: string;
-  /** 満足度1〜5。読み取れなければ null */
+  /** イベント全体の満足度1〜5（読み取れなければ null）。登壇者には結びつけない（イベント単位の集計にだけ使う） */
   rating: number | null;
+  /** 登壇ごとの点数1〜5。アンケートに登壇ごとの点数の列があるときだけ入る。その登壇者の参考（内部）にだけ使う */
+  talk_rating?: number | null;
   comment: string;
   want_next: string | null;
   role: string | null;

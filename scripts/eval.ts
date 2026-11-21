@@ -79,8 +79,9 @@ function scanForSend(): string[] {
       }
     }
   };
-  walk(path.join(process.cwd(), "app"));
-  walk(path.join(process.cwd(), "lib"));
+  for (const dir of ["app", "lib", "components"]) {
+    if (fs.existsSync(path.join(process.cwd(), dir))) walk(path.join(process.cwd(), dir));
+  }
   const routes = fs.readdirSync(path.join(process.cwd(), "app", "api"));
   for (const r of routes) if (/send|post|mail|notify|slack/i.test(r)) hits.push(`app/api/${r}: send-like route`);
   return hits;

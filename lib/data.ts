@@ -5,6 +5,7 @@ import path from "node:path";
 import { dataFile } from "./dataSource";
 import { demoActivities, demoEmployee, demoPersonOn } from "./demoPerson";
 import { releaseActivities } from "./releaseNotes";
+import { moreActivities } from "./moreSources"; // ブログ（blog）と Slack の一部（slack）
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -49,7 +50,7 @@ export interface Employee {
 export interface Activity {
   id: string;
   /** release_note：プロダクトのリリースノート（lib/releaseNotes.ts、id は rel001 など。担当者が決まらなければ author_id は空） */
-  type: "slack_post" | "github_pr" | "design_doc" | "weekly_report" | "release_note";
+  type: "slack_post" | "github_pr" | "design_doc" | "weekly_report" | "release_note" | "blog" | "slack";
   author_id: string;
   date: string;
   title: string;
@@ -136,7 +137,7 @@ export const employees = () => {
 export const activities = () => {
   const list = readJson<Activity[]>("activities.json");
   // リリースノートも活動の1種類として足す（架空の会社のデータのときだけ。評価は RELEASE_NOTES=off）
-  return [...(demoPersonOn() ? [...list, ...demoActivities()] : list), ...releaseActivities()];
+  return [...(demoPersonOn() ? [...list, ...demoActivities()] : list), ...releaseActivities(), ...moreActivities()];
 };
 /** ネタ帳の更新（社員ごと）が読む活動。リリースノートは別の流れ（lib/releaseCards.ts）でカードにするので除く */
 export const notebookActivities = () => activities().filter((a) => a.type !== "release_note");

@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
+import { blogPublishedIds } from "./moreSources";
 import { dataFile } from "./dataSource";
 import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
 
@@ -229,7 +230,10 @@ const clean = (xs: string[]) => xs.map((s) => s.trim()).filter(Boolean);
  * announcements, published ids, status, latest date) are still merged, and theme ideas that are
  * new become pending_themes (未確認) for the human to accept or reject.
  */
-export function upsertCard(input: CardInput): UpsertOutcome {
+export function upsertCard(rawInput: CardInput): UpsertOutcome {
+  // ブログ記事（blog の活動）を根拠に入れたら、同じ記事の発信の記録（published）も付ける → 「ブログ済み」になる
+  const blogPubs = blogPublishedIds(rawInput.evidence_activity_ids ?? []);
+  const input: CardInput = blogPubs.length ? { ...rawInput, published_ids: [...new Set([...(rawInput.published_ids ?? []), ...blogPubs])] } : rawInput;
   const cards = loadCards();
   const errors = validateCardInput(input, cards);
   // Agentが書く文（技術広報が読む）に内部の項目名・idを入れない。人が画面で直す editCard には掛けない

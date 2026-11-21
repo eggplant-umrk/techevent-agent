@@ -156,11 +156,15 @@ function readProgress(file: string): ProgressFile {
   return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as ProgressFile) : {};
 }
 
+const LEGACY_TYPES = new Set<string>(["slack_post", "github_pr", "design_doc", "weekly_report"]);
+
 /** 読んだ活動の id。記録がなければ、今までの notebook_state（日付）までを読んだものとして引き継ぐ */
 export function processedIds(employeeId: string, acts: Activity[], legacyDate: string | undefined): Set<string> {
   const p = readProgress(progressFile(employeeId))[employeeId];
   if (p) return new Set(p.processed);
-  return new Set(legacyDate ? acts.filter((a) => a.date <= legacyDate).map((a) => a.id) : []);
+  // 引き継ぐのは、日付の記録をつけていたころからある種類の活動だけ。あとから足した材料（ブログなど）は、
+  // 日付が古くても読んでいないので新しい活動として扱う
+  return new Set(legacyDate ? acts.filter((a) => LEGACY_TYPES.has(a.type) && a.date <= legacyDate).map((a) => a.id) : []);
 }
 
 export function saveProgress(employeeId: string, processed: Set<string>, last: Progress["last"]) {

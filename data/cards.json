@@ -25,7 +25,9 @@
     "updated_at": "2026-11-21T05:11:53.281Z",
     "announcement_activity_ids": [],
     "pending_themes": [],
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e013-01",
@@ -53,7 +55,9 @@
     "updated_at": "2026-11-21T05:12:03.817Z",
     "announcement_activity_ids": [],
     "pending_themes": [],
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e015-01",
@@ -80,19 +84,24 @@
     "updated_at": "2026-11-21T05:12:09.564Z",
     "announcement_activity_ids": [],
     "pending_themes": [],
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e001-01",
     "employee_id": "e001",
-    "summary": "LLMプロダクトのアーキテクチャをどう選ぶかについて、社内で議論した選定基準をテックブログ「LLMプロダクトのアーキテクチャ選定」にまとめて公開した（2026-09-30）。過去の登壇「LLMをプロダクトに入れるときの設計判断」から続く、LLMとアーキテクチャをテーマにした発信。",
+    "summary": "LLMを使うプロダクトの設計で、数える・絞る・照らし合わせるといった決まった処理はコードに任せ、読む・判断する・書くはモデルに任せる方針で分担を決めた。評価の仕組みを先に作り、モデルを替えても品質を比べられるようにした。選ばなかった構成とその理由も含めて、テックブログ「LLMプロダクトのアーキテクチャ選定」（2026-09-30）で公開済み。",
     "themes": [
-      "LLMプロダクトのアーキテクチャ選定基準 ─ 社内議論から作った判断軸",
-      "AIエージェントを本番運用する前提で考えるLLMプロダクトのアーキテクチャ"
+      "モデルに任せること・コードで決めること ─ LLMプロダクトの役割分担の決め方",
+      "評価の仕組みを先に作る：モデルを替えても品質を比べられるLLMアーキテクチャ",
+      "選ばなかった構成から考えるLLMプロダクト設計 ─ AIエージェントの本番運用に向けて"
     ],
-    "evidence_activity_ids": [],
+    "evidence_activity_ids": [
+      "blg007"
+    ],
     "format": "talk",
-    "format_reason": "登壇18回の経験があり、ブログにまとめた選定基準は20分以上の登壇で事例と一緒に深く話せる厚さがあるため。",
+    "format_reason": "ブログで判断の経緯がまとまっていて、登壇経験も多い本人なら、選ばなかった構成や評価の作り方まで掘り下げる20分以上の登壇で話せる厚みがあるため。",
     "publication_status": "blogged",
     "published_ids": [
       "pub036"
@@ -106,20 +115,25 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:29.533Z",
-    "updated_at": "2026-11-21T05:25:29.533Z",
-    "edited_fields": []
+    "updated_at": "2026-11-21T10:19:56.296Z",
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e002-01",
     "employee_id": "e002",
-    "summary": "バクラクのチームで、開発プロセスを週次で振り返って見直す仕組みを運用している。その仕組みをテックブログ「開発プロセスを週次で見直す」にまとめて公開し、採用広報にも使える発信になった。",
+    "summary": "開発プロセスの見直しを四半期ごとから毎週に変えた。週次の振り返りで変えることを1つだけ決めて翌週に効果を確かめ、変えたことと結果を表に残し、元に戻した変更も消さずに記録している。改善が続かないチームでも始めやすい小さな進め方として、テックブログ「開発プロセスを週次で見直す」で公開済み。",
     "themes": [
-      "開発プロセスを週次で見直す：EMが回すチームの振り返りの仕組み",
-      "SaaS開発チームが振り返りを形だけにしないための工夫"
+      "週に1つだけ変える：四半期の振り返りをやめて小さく回す開発プロセス改善",
+      "元に戻した変更も残す：プロセス改善の記録表の作り方",
+      "改善が続かないチームのための週次振り返りの始め方"
     ],
-    "evidence_activity_ids": [],
+    "evidence_activity_ids": [
+      "blg008"
+    ],
     "format": "lt",
-    "format_reason": "ブログで内容がまとまっていて、本人は登壇12回の経験があるので、記事をもとにした5〜10分のLTにすぐ組み直せるため。",
+    "format_reason": "ブログで発信済みで、手法がシンプルで明快なため、登壇経験が豊富な本人なら記録表の実例を見せる5〜10分のLTで社外に届けやすい。",
     "publication_status": "blogged",
     "published_ids": [
       "pub038"
@@ -133,8 +147,10 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:39.523Z",
-    "updated_at": "2026-11-21T05:25:39.523Z",
-    "edited_fields": []
+    "updated_at": "2026-11-21T10:20:09.273Z",
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e003-01",
@@ -161,7 +177,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:46.582Z",
     "updated_at": "2026-11-21T05:25:46.582Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e004-01",
@@ -189,7 +207,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:55.503Z",
     "updated_at": "2026-11-21T05:46:21.622Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e005-01",
@@ -216,7 +236,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:06.001Z",
     "updated_at": "2026-11-21T05:26:06.001Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e012-01",
@@ -241,7 +263,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:23.278Z",
     "updated_at": "2026-11-21T05:26:23.278Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e014-01",
@@ -267,7 +291,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:28.116Z",
     "updated_at": "2026-11-21T05:26:28.116Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e016-01",
@@ -292,7 +318,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:32.694Z",
     "updated_at": "2026-11-21T05:26:32.694Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e017-01",
@@ -318,7 +346,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:41.933Z",
     "updated_at": "2026-11-21T05:26:41.933Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e018-01",
@@ -343,7 +373,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:46.685Z",
     "updated_at": "2026-11-21T05:26:46.685Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e020-01",
@@ -370,7 +402,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:54.244Z",
     "updated_at": "2026-11-21T05:26:54.244Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e022-01",
@@ -395,7 +429,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:04.454Z",
     "updated_at": "2026-11-21T05:27:04.454Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e023-01",
@@ -421,7 +457,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:10.106Z",
     "updated_at": "2026-11-21T05:27:10.106Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e024-01",
@@ -448,7 +486,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:20.794Z",
     "updated_at": "2026-11-21T05:27:20.794Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e026-01",
@@ -473,7 +513,9 @@
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:32.778Z",
     "updated_at": "2026-11-21T05:27:32.778Z",
-    "edited_fields": []
+    "edited_fields": [],
+    "evidence_request_ids": [],
+    "reactions": []
   },
   {
     "card_id": "card-e010-01",
@@ -668,6 +710,186 @@
     "reviewed_at": null,
     "edited_fields": [],
     "created_at": "2026-11-21T10:02:54.934Z",
-    "updated_at": "2026-11-21T10:02:54.934Z"
+    "updated_at": "2026-11-21T10:02:54.934Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e001-02",
+    "employee_id": "e001",
+    "summary": "技術選定の理由を、決めたときに短い判断記録（ADR）として残す運用を社内に広げた。最初は書く人が限られたので、テンプレートを「背景・選んだもの・選ばなかったものと理由」の3項目に減らし、半年後には前任者がいなくなった領域でも判断の経緯をたどれるようになった。テックブログ「技術選定の判断記録を残す文化」（2025-04-21）で公開済み。",
+    "themes": [
+      "テンプレートを3項目に減らしたら判断記録が書かれ始めた話",
+      "前任者がいなくても経緯をたどれる ─ 技術選定の判断記録を半年続けた結果",
+      "判断記録を書く手間と、あとで読まれる価値のつり合い"
+    ],
+    "evidence_activity_ids": [
+      "blg002"
+    ],
+    "format": "lt",
+    "format_reason": "ブログ公開済みで、テンプレートを絞る工夫と半年後の効果という1本の筋がはっきりしているため、5〜10分のLTでまとめやすい。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub005"
+    ],
+    "latest_activity_date": "2025-04-21",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:19:56.310Z",
+    "updated_at": "2026-11-21T10:19:56.310Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e002-03",
+    "employee_id": "e002",
+    "summary": "エンジニアからEMになって最初の1年で、チームの進め方を変えた取り組み。週1回の1on1を「困りごとの棚卸し」と「キャリアの話」に分けて話す内容が流されないようにし、見積もりのずれを責めずに振り返る会を月1回開いてずれの理由をチームの知識として残した。新任EMが最初の3か月で迷いやすいことを自分の失敗とあわせて整理し、ブログ「EMになって1年で変えたこと」で公開済み。",
+    "themes": [
+      "1on1を「困りごとの棚卸し」と「キャリアの話」に分ける理由",
+      "見積もりのずれを責めずに振り返る：月1回の会でずれをチームの知識にする",
+      "新任EMが最初の3か月で迷うこと：自分の失敗から"
+    ],
+    "evidence_activity_ids": [
+      "blg001"
+    ],
+    "format": "talk",
+    "format_reason": "1on1、見積もりの振り返り、新任EMの迷いどころと話せることが多く、登壇12回の本人ならその後の運用も足して20分以上の登壇にできる。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub002"
+    ],
+    "latest_activity_date": "2025-02-10",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:20:09.289Z",
+    "updated_at": "2026-11-21T10:20:09.289Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e003-02",
+    "employee_id": "e003",
+    "summary": "社内の各チームが使うLLM呼び出し基盤を1年運用し、学びを社内技術ブログにまとめた。モデルの切り替えを基盤側で吸収できるようにしたことで、各チームの改修はほぼ要らなくなった。一方、プロンプトの版の管理と利用量の見える化を後回しにして苦労した経験や、運用当番の決め方、障害のときに基盤がどこまで責任を持つかの線引きも整理している。",
+    "themes": [
+      "モデルの切り替えを基盤で吸収する：社内LLM基盤1年運用の振り返り",
+      "後回しにして苦労したこと：プロンプトの版の管理と利用量の見える化",
+      "LLM基盤の運用当番と、障害のときの責任の線引き"
+    ],
+    "evidence_activity_ids": [
+      "blg003"
+    ],
+    "format": "talk",
+    "format_reason": "ブログ公開済みで、うまくいったこと・苦労したこと・運用体制と論点がそろっており、登壇10回の本人ならAIの本番運用という時流に合わせた20分以上の登壇に広げやすいため。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub021"
+    ],
+    "latest_activity_date": "2026-01-27",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:20:17.901Z",
+    "updated_at": "2026-11-21T10:20:17.901Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e004-02",
+    "employee_id": "e004",
+    "summary": "口座の残高を直接書き換えず、取引を追記するだけの形に設計し、取引の記録からいつでも同じ残高を計算し直して検算できるようにした。夜間に全口座を検算するバッチを用意し、ずれが見つかったときにどの取引から確かめるかの手順も決めた。金融系のバックエンドで、速さよりも正しさを優先した判断の背景を社内技術ブログにまとめている。",
+    "themes": [
+      "残高は書き換えない：取引を追記するだけの設計で、残高をいつでも検算できるようにする",
+      "夜間に全口座を検算するバッチと、ずれが見つかったときの調べ方の手順",
+      "金融バックエンドで速さより正しさを選んだ理由"
+    ],
+    "evidence_activity_ids": [
+      "blg006"
+    ],
+    "format": "talk",
+    "format_reason": "ブログで公開済みの設計判断に、検算バッチやずれへの対応手順という運用の話を足せば20分の厚みが出るうえ、本人は登壇経験が8回あるので、登壇で話を広げてもらうのが向いている。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub033"
+    ],
+    "latest_activity_date": "2026-08-10",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:20:30.984Z",
+    "updated_at": "2026-11-21T10:20:30.984Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e025-01",
+    "employee_id": "e025",
+    "summary": "社内のアカウントとアクセス管理を、ネットワークの内側かどうかではなく人と端末の状態で判断するゼロトラストの形に寄せた。入社・異動・退職のときの権限の付け外しを人事の情報から自動で反映する仕組みを作り、移行の途中で古い社内ツールが新しい認証に対応していなかった問題も回避した。情シスとセキュリティの役割分担の決め方もまとめている。",
+    "themes": [
+      "入社・異動・退職の権限付け外しを人事データから自動化した社内ID基盤",
+      "新しい認証に対応していない古い社内ツールを抱えたままゼロトラストへ移行するには",
+      "ゼロトラスト移行で情シスとセキュリティの役割分担をどう決めたか"
+    ],
+    "evidence_activity_ids": [
+      "blg005"
+    ],
+    "format": "lt",
+    "format_reason": "ブログで中身はまとまっているが数字がなく登壇経験もないため、移行でつまずいた点と回避策に絞った短い登壇が最初の一歩に向いている。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub031"
+    ],
+    "latest_activity_date": "2026-07-14",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:20:38.673Z",
+    "updated_at": "2026-11-21T10:20:38.673Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e030-01",
+    "employee_id": "e030",
+    "summary": "散らばっていた社内ドキュメントを、コードと同じリポジトリでレビューして管理する形に移した。書く場所を1つに決めて変更はプルリクエストで受け付け、リンク切れや古い記述を見つける検査をCIに入れて、更新されていない文書を一覧で見られるようにした。エンジニア以外の人も書けるように、書き方のテンプレートと編集画面も用意した。",
+    "themes": [
+      "散らばった社内ドキュメントを1か所に集めるDocs as Code移行の進め方",
+      "リンク切れと古い記述をCIで見つける：ドキュメントを腐らせない仕組み",
+      "エンジニア以外も書けるDocs as Code：テンプレートと編集画面の工夫"
+    ],
+    "evidence_activity_ids": [
+      "blg004"
+    ],
+    "format": "lt",
+    "format_reason": "ブログで内容は公開済み、数字はなく登壇経験もないため、初登壇としてブログの要点を5〜10分のLTにまとめるのが始めやすい。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub024"
+    ],
+    "latest_activity_date": "2026-03-09",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:20:45.556Z",
+    "updated_at": "2026-11-21T10:20:45.556Z"
   }
 ]

@@ -2,6 +2,7 @@
 // 新しい仕組みは作らず、Agentのループ（runToolLoop）・候補の出し方（自信のある／条件付き）・
 // 内部の言葉の判定・日付の判定・ブログ提案・声かけ文の仕組みを使い回す。
 import type Anthropic from "@anthropic-ai/sdk";
+import { BLOG_TO_LT_NOTE, blogToLt } from "./talkTag";
 import { randomUUID } from "node:crypto";
 import { runToolLoop, type AgentEvent } from "./agent";
 import { suggestBlogIdeas, type BlogIdea } from "./blog";
@@ -126,6 +127,7 @@ const SYSTEM = `あなたはLayerXの技術広報を支えるAgentです。ネ�
 - テーマ・聴衆・形式が取り組みの中身と合うかで選ぶ。合うものがなければ無理に出さず、no_fit に見つからない理由と次に確かめることを書く
 - 自信のある出し先は confidence=strong、テーマが少しずれる・締切がすぐ・予定が重なるなど引っかかる点があれば confidence=conditional にして caveat に1文で書く。strong を先に並べる
 - 根拠は、カードのもとになった活動の id だけ（カードの根拠から選ぶ）
+- カードに「ブログをLTにできる」の印（blog_to_lt）があれば、LT枠のある出し先では「ブログ記事をもとにLTにできる」と理由に書いてよい（記事の内容に合うときだけ）
 - cfp_status が unknown のものは締切が公式で未確認、event_date が null のものは開催日が未定。どちらも出してよいが、そのことを踏まえて書く（注意点はシステムが必ず足す）
 - 応募するのは本人。あなたは出し先を提案するところまで
 - カードの person（技術広報が確認済みの人の情報）に従う。登壇の意向が「今は控えたい」なら出し先は conditional にして caveat にそのことを書く。NGのテーマに当たるタイトル案にしない
@@ -309,6 +311,7 @@ export async function findVenues(cardId: string, emit: (e: VenueEvent) => void):
     themes: card.themes,
     format: card.format,
     publication_status: card.publication_status,
+    ...(blogToLt(card) ? { blog_to_lt: BLOG_TO_LT_NOTE } : {}),
     person: (() => {
       const p = getPerson(card.employee_id);
       return p ? { speaking_intent: INTENT_LABEL[p.speaking_intent], ng_themes: p.ng_themes } : null;

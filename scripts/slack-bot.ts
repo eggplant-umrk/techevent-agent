@@ -5,7 +5,8 @@
 // - 候補の名前・理由・件数・見つからない理由は Slack のどこにも書かない（人選の検討は技術広報が画面で見る）
 // - 練習用ワークスペース専用。本物の会社の Slack では動かさない
 // トークンは .env からこのプロセスにだけ読み込む。値は表示・ログ出力しない。
-import { App, LogLevel } from "@slack/bolt";
+import { App, LogLevel, webApi } from "@slack/bolt";
+import { readSlackSources, reportLines, sourceChannels } from "./slack/sources";
 import { type BotConfig, handleRequest, makeSeen, type MessageEventLike, type NotifyKind, notifyText, shouldHandle, type SlackLike, THREAD_TEXT, type ThreadKind } from "./slack/core";
 
 try {
@@ -27,6 +28,33 @@ function fail(message: string): never {
 }
 
 const botToken = required("SLACK_BOT_TOKEN", (v) => v.startsWith("xoxb-"), "xoxb- で始まる Bot User OAuth Token");
+
+// ---------------------------------------------------------------------------
+// npm run slack:sources（= slack-bot.ts --read-sources）：ネタ帳の材料として、指定チャンネルの投稿を読むだけ（送信しない）。
+// トークンはこのファイルだけで使う（CLAUDE.md）。読む・落とす・保存するの中身は scripts/slack/sources.ts
+// ---------------------------------------------------------------------------
+const READ_SOURCES = process.argv.includes("--read-sources");
+async function readSourcesMain() {
+  const { channels, invalid } = sourceChannels();
+  if (invalid.length) console.error(`SLACK_SOURCE_CHANNELS の形が違うものは使いません：${invalid.join(", ")}（C で始まるチャンネル id）`);
+  if (!channels.length) {
+    console.log("SLACK_SOURCE_CHANNELS が設定されていないので、Slack は読みません");
+    return;
+  }
+  const client = new webApi.WebClient(botToken);
+  const auth = await client.auth.test();
+  const allowed = process.env.SLACK_ALLOWED_TEAM_ID?.trim();
+  if (allowed && auth.team_id !== allowed) fail(`接続先のワークスペース（${auth.team}）が SLACK_ALLOWED_TEAM_ID と違うため止めました`);
+  console.log(`ワークスペース：${auth.team}（${auth.team_id}）／読むチャンネル ${channels.length}件`);
+  const r = await readSlackSources(client as never, { channels, botUserId: String(auth.user_id) });
+  for (const l of reportLines(r)) console.log(l);
+}
+if (READ_SOURCES) {
+  readSourcesMain().then(
+    () => process.exit(0),
+    (err) => fail(`Slack を読めませんでした：${err instanceof Error ? err.message : "不明なエラー"}`),
+  );
+}
 const appToken = required("SLACK_APP_TOKEN", (v) => v.startsWith("xapp-"), "xapp- で始まる App-Level Token（connections:write）");
 const requestChannel = required("SLACK_REQUEST_CHANNEL", (v) => /^[CG][A-Z0-9]+$/.test(v), "依頼を拾うチャンネルの id。C で始まる英数字");
 /** 技術広報だけが入る非公開チャンネル。設定がなければ通知しない */
@@ -92,7 +120,7 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
-main().catch((err) => {
+if (!READ_SOURCES) main().catch((err) => {
   // Slack のエラー本文にトークンは含まれないが、念のため message だけ出す
   fail(`起動できませんでした：${err instanceof Error ? err.message : "不明なエラー"}`);
 });

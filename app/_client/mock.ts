@@ -605,8 +605,11 @@ export function mockApi(real: Api): Api {
     async voices() {
       await ensureCards();
       const evs = await real.events();
-      const cards = lastCards.map((c) => ({ card_id: c.card_id, employee_id: c.employee_id, name: c.employee?.name ?? c.employee_id }));
-      return surveyVoices(Object.values(POSTEVENT).map((f) => f.analysis), evs, cards);
+      const cards = lastCards
+        .map(apply)
+        .sort((a, b) => (a.latest_activity_date < b.latest_activity_date ? 1 : -1))
+        .map((c) => ({ card_id: c.card_id, employee_id: c.employee_id, name: c.employee?.name ?? c.employee_id, themes: [...c.themes, ...c.pending_themes] }));
+      return surveyVoices(Object.values(POSTEVENT).map((f) => ({ ...f.analysis, sample: true })), evs, cards);
     },
     async archiveDetail(kind, id) {
       return real.archiveDetail(kind, id);
@@ -627,7 +630,7 @@ export function mockApi(real: Api): Api {
       const d = await real.eventDetail(id);
       // 再生した分析は手元だけ：イベント単位の集計（overview）の形にして見せる
       const a = analyzed.get(id);
-      return { ...d, overview: { ...d.overview, analysis: a ? overviewOf(a) : null } };
+      return { ...d, overview: { ...d.overview, analysis: a ? overviewOf({ ...a, sample: true }) : null } };
     },
     async analyzeEvent(id, onEvent) {
       const f = POSTEVENT[id];

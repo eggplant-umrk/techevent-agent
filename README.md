@@ -153,6 +153,19 @@ npx tsx scripts/analyze_surveys.ts all
 
 `DATA_SOURCE` を消すと架空データに戻ります。評価（`npm run eval`）は常に架空データで動きます。
 
+#### ブログと Slack の一部
+
+人を選ぶ材料に、社内技術ブログ（架空、`data/sources/blog_posts.json`）と Slack の一部を足しています。どちらもネタ帳の更新（`npm run notebook -- pending`）でそのまま読みます。
+
+Slack から読むとき（練習用ワークスペースだけ）：
+
+1. 読みたいチャンネル（`#share` など）にボットを招待する（チャンネルで `/invite @ボット名`）。公開チャンネルだけ読みます。ボットに `channels:history` と `channels:read` の権限が要ります
+2. チャンネルの id（C で始まる。チャンネル名を右クリック →「リンクをコピー」の末尾）を `.env` の `SLACK_SOURCE_CHANNELS` に書く（複数ならカンマ区切り）
+3. `data/sources/slack_users.json` に「Slack のユーザー id → 社員 id」を書く（例：`{ "U0123ABC": "e012" }`）。対応がない人の投稿は読みません。読んだときに、対応表にいない人の id と件数を出します
+4. 読む：`npm run slack:sources`（前回以降の投稿だけ。ボット・通知・30字未満は落とし、本文の先頭400字・リンク・日時だけを保存）。そのあと `npm run notebook -- pending`
+
+Slack に接続せずに確かめる：`npm run slack:sources:dry-run`。テスト（APIなし）：`npm run test:sources`
+
 #### リリースノート（チームのネタ）
 
 バクラクの公開リリース10件（`data/sources/release_notes.json`、要約は自分の言葉、担当の割り当ては架空）を材料に足しています。ネタ帳の更新とは別に、次でカードにします（カードになっていないものだけ）：

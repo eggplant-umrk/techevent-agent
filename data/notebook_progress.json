@@ -1,0 +1,96 @@
+{
+  "e001": {
+    "processed": [
+      "act021",
+      "act038",
+      "act070",
+      "act105",
+      "act111",
+      "blg002",
+      "blg007"
+    ],
+    "updated_at": "2026-11-21T10:19:56.316Z",
+    "last": {
+      "sent": 2,
+      "dropped": {},
+      "deferred": 0
+    }
+  },
+  "e002": {
+    "processed": [
+      "act029",
+      "act059",
+      "act067",
+      "act071",
+      "act086",
+      "blg001",
+      "blg008"
+    ],
+    "updated_at": "2026-11-21T10:20:09.293Z",
+    "last": {
+      "sent": 2,
+      "dropped": {},
+      "deferred": 0
+    }
+  },
+  "e003": {
+    "processed": [
+      "act017",
+      "act020",
+      "act090",
+      "act091",
+      "blg003"
+    ],
+    "updated_at": "2026-11-21T10:20:17.914Z",
+    "last": {
+      "sent": 1,
+      "dropped": {},
+      "deferred": 0
+    }
+  },
+  "e004": {
+    "processed": [
+      "act004",
+      "act060",
+      "act075",
+      "act076",
+      "act097",
+      "act108",
+      "blg006"
+    ],
+    "updated_at": "2026-11-21T10:20:30.993Z",
+    "last": {
+      "sent": 1,
+      "dropped": {},
+      "deferred": 0
+    }
+  },
+  "e025": {
+    "processed": [
+      "act030",
+      "act063",
+      "act083",
+      "act104",
+      "blg005"
+    ],
+    "updated_at": "2026-11-21T10:20:38.680Z",
+    "last": {
+      "sent": 1,
+      "dropped": {},
+      "deferred": 0
+    }
+  },
+  "e030": {
+    "processed": [
+      "act013",
+      "act114",
+      "blg004"
+    ],
+    "updated_at": "2026-11-21T10:20:45.561Z",
+    "last": {
+      "sent": 1,
+      "dropped": {},
+      "deferred": 0
+    }
+  }
+}

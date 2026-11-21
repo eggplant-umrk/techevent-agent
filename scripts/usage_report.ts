@@ -1,9 +1,20 @@
 // 使った API 代を見る（API は使わない）。見せる前後の確認用。
 //   npm run usage              累計・今日（日本時間）・用途ごと（今日）
 //   npm run usage -- 3         直近3時間（見せていた間など）
+//   npm run usage -- --share   見せる用（npm run start:share）の金額の記録（SHARE_DATA_DIR/usage.json）
+import path from "node:path";
 import { usage } from "../lib/data";
 
-const hours = Number(process.argv[2]);
+if (process.argv.includes("--share")) {
+  try {
+    process.loadEnvFile(".env");
+  } catch {
+    // .env がなければ既定の置き場
+  }
+  process.env.USAGE_FILE = path.join(path.resolve((process.env.SHARE_DATA_DIR ?? "").trim() || path.join("data", "runtime-share")), "usage.json");
+}
+
+const hours = Number(process.argv.slice(2).find((a) => /^\d+(\.\d+)?$/.test(a)));
 const all = usage();
 const jstDate = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
 const today = jstDate(new Date().toISOString());

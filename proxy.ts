@@ -4,7 +4,7 @@
 // - SHARE_BUDGET_USD：見せている間の API 代の上限。超えたら API を使う操作を止める（429、理由つき）
 import { NextResponse, type NextRequest } from "next/server";
 import { usage } from "@/lib/data";
-import { ACCESS_COOKIE, ACCESS_HEADER, checkBudget, checkRequest, shareBudgetUsd, spendsApi, spentSince } from "@/lib/share";
+import { ACCESS_COOKIE, ACCESS_HEADER, checkBudget, checkRequest, shareBudgetUsd, shareMode, spendsApi, spentSince, withoutDebug } from "@/lib/share";
 
 /** 見せている間の始まり：scripts/serve.mjs が起動時に入れる。直接 next を起動したときは、この入口を最初に読んだとき */
 const STARTED_AT = process.env.SHARE_STARTED_AT || new Date().toISOString();
@@ -23,6 +23,11 @@ export function proxy(req: NextRequest) {
   if (!gate.ok) {
     if (gate.redirectTo) return NextResponse.redirect(new URL(gate.redirectTo, req.url), 303);
     return NextResponse.json({ error: gate.error }, { status: gate.status });
+  }
+  // 見せる用では ?debug（API 代の表示）を出さない：外した URL に移す
+  if (shareMode() === "lan" && !pathname.startsWith("/api")) {
+    const clean = withoutDebug(req.nextUrl);
+    if (clean) return NextResponse.redirect(clean, 307);
   }
   if (shareBudgetUsd() !== null && spendsApi(req.method, pathname)) {
     const budget = checkBudget(req.method, pathname, spentSince(usage(), STARTED_AT));

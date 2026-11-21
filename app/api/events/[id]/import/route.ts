@@ -3,12 +3,13 @@
 // 個人情報の列は捨ててから保存する（data/survey_imports/{id}.json）。?mock の画面は save=false・ask=false で使う
 import { randomUUID } from "node:crypto";
 import { claudeColumnAsker, importSurveyCsv, saveImport } from "@/lib/surveyCsv";
+import { slotted } from "@/lib/apiSlots";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function handlePost(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = (await req.json().catch(() => null)) as { csv?: string; save?: boolean; ask?: boolean } | null;
   if (!body?.csv?.trim()) return Response.json({ error: "CSVが空です" }, { status: 400 });
@@ -22,3 +23,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { answers, ...rest } = out.data;
   return Response.json({ ...rest, answers: answers.length, saved: save });
 }
+
+// API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
+export const POST = slotted(handlePost);

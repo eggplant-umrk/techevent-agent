@@ -429,13 +429,15 @@ export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) =>
     const results: Anthropic.ToolResultBlockParam[] = [];
     let submitted: T | null = null;
     for (const t of toolUses) {
-      emit({ type: "tool_call", id: t.id, name: t.name, input: t.input });
+      // 提出のツールの入力（候補・理由・注意点の下書き）は作業ログに流さない。差し戻された提出の中身が画面・保存に残らないように
+      emit({ type: "tool_call", id: t.id, name: t.name, input: t.name === spec.submitTool ? null : t.input });
       if (t.name === spec.submitTool) {
         const input = t.input as T;
         const errs = spec.validate(input, seen);
         if (errs.length) {
-          emit({ type: "retry", message: errs.join("／") });
-          emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: "差し戻し：" + errs.join("／") });
+          // 差し戻しの理由（提出の文の一部を含むことがある）は Agent にだけ返し、作業ログには件数だけ
+          emit({ type: "retry", message: `提出を差し戻して、直してもらっています（${errs.length}件）` });
+          emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: `差し戻し（${errs.length}件）` });
           results.push({ type: "tool_result", tool_use_id: t.id, is_error: true, content: errs.join("\n") });
         } else {
           submitted = input;

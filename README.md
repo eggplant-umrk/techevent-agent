@@ -89,7 +89,7 @@ http://localhost:3000 を開く。APIキーはサーバー側だけで使い、�
    npm run build
    ```
 
-3. 起動する（`next start -H 127.0.0.1 -p 3000`）：
+3. 起動する（`scripts/serve.mjs` を通して `next start`。待ち受けは `.env` の `BIND_HOST`、既定 127.0.0.1）：
 
    ```bash
    npm run start

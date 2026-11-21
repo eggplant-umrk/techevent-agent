@@ -123,6 +123,8 @@ export function mockApi(real: Api): Api {
   let total = 2.24;
   let requests: SpeakingRequest[] = [];
   let lastCards: NotebookCard[] = [];
+  /** Cards created in memory when a candidate without a card is approved (same rule as /api/outcome). */
+  const created: NotebookCard[] = [];
 
   const apply = (c: NotebookCard): NotebookCard => {
     const o = overlay.get(c.card_id);
@@ -138,7 +140,7 @@ export function mockApi(real: Api): Api {
     mock: true,
     async cards() {
       const r = await real.cards();
-      lastCards = r.cards.map(apply).sort((a, b) => Number(b.reviewed) - Number(a.reviewed));
+      lastCards = [...r.cards, ...created].map(apply).sort((a, b) => Number(b.reviewed) - Number(a.reviewed));
       return { ...r, cards: lastCards };
     },
     async state() {
@@ -227,9 +229,52 @@ export function mockApi(real: Api): Api {
     },
     async outcome(body) {
       await wait(200);
-      const cardId = body.card_id;
-      if (!cardId) throw new Error("モックではカードのない候補を記録できません");
       const req = requests.find((r) => r.id === body.request_id);
+      let cardId = body.card_id;
+      if (!cardId) {
+        // Mirror /api/outcome: make a card from the proposal; a nominee's evidence is the request itself.
+        const c = body.candidate;
+        const isNominee = req?.nominated_employee_id === c.employee_id;
+        if (!c.evidence_activity_ids.length && !isNominee) throw new Error("根拠のない候補はカードにできません");
+        const existing = created.find((x) => x.employee_id === c.employee_id && x.themes[0] === c.theme);
+        if (existing) cardId = existing.card_id;
+        else {
+          const cand = Object.values(FIXTURES)
+            .flatMap((f) => f.result.candidates)
+            .find((x) => x.employee_id === c.employee_id);
+          const now = new Date().toISOString();
+          const card: NotebookCard = {
+            card_id: `card-${c.employee_id}-mock${created.length + 1}`,
+            employee_id: c.employee_id,
+            summary: c.reason,
+            themes: [c.theme],
+            evidence_activity_ids: c.evidence_activity_ids,
+            format: "lt",
+            format_reason: isNominee && !c.evidence_activity_ids.length ? "指名の依頼から作成したカード（根拠は依頼そのもの）" : "依頼への提案から作成したカード",
+            publication_status: "unpublished",
+            published_ids: [],
+            latest_activity_date: req?.received_at ?? today,
+            announcement_activity_ids: [],
+            evidence_request_ids: isNominee && req ? [req.id] : [],
+            pending_themes: [],
+            outreach_history: [],
+            reviewed: false,
+            reviewed_at: null,
+            edited_fields: [],
+            created_at: now,
+            updated_at: now,
+            employee: cand
+              ? { id: c.employee_id, name: cand.name, business_unit: cand.business_unit, role: cand.role, past_talk_count: cand.past_talk_count, last_talk_date: cand.last_talk_date, workload: cand.workload }
+              : null,
+            evidence: [],
+            announcements: [],
+            published: [],
+          };
+          created.push(card);
+          lastCards = [...lastCards, card];
+          cardId = card.card_id;
+        }
+      }
       patch(cardId, (c) => ({
         outreach_history: [
           ...c.outreach_history,

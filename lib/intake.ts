@@ -6,7 +6,7 @@
 // - 確かめられなかった項目は「未定」にして、注意点に書く。推測で埋めない
 // X には手を出さない（読みにいかない・返信しない）。ここで扱うのは人が貼った文だけ。
 import { getClient } from "./anthropic";
-import { decideDate, otherDatesInConversation } from "./dateHint";
+import { datesInText, decideDate, otherDatesInConversation } from "./dateHint";
 import { resolveNominee, type NomineeReading } from "./nominee";
 import { chooseModels, recordUsage } from "./usage";
 
@@ -67,7 +67,11 @@ const norm = (s: string) => s.normalize("NFKC").replace(/\s+/g, "");
 const inText = (text: string, quote: string | null) => !!quote && norm(quote).length >= 2 && norm(text).includes(norm(quote));
 
 /** 日程が決まっていないことを表す言葉（引用にこれがあれば日付があっても未定） */
-const NOT_FIXED = /調整中|未定|候補|どちらか|いずれか|か[、,]?\s*\d|あたり|ごろ|頃|予定です?か|仮/;
+const NOT_FIXED = /調整中|未定|候補|どちらか|いずれか|か[、,]?\s*\d|あたり|ごろ|頃|予定です?か|仮|書いてしまい|書き間違|誤り|誤記|誤植|間違い|間違え|訂正/;
+
+/** 別の日付でも、すぐ近く（前後15字）にこの言葉があれば開催日の食い違いとして数えない（予備日・締切・応募・公開など） */
+const OTHER_DATE_EXEMPT = /予備日|締切|締め切り|〆切|〆切り|応募|申込|申し込み|公開|募集/;
+const EXEMPT_WINDOW = 15;
 
 /**
  * 日程の確かめ（コード）。引用が会話にあり、日付がちょうど1つで、期間でも候補でもないときだけ決まったとみなす。
@@ -83,7 +87,14 @@ export function checkDate(text: string, quote: string | null, receivedAt: string
   const decided = decideDate(quote, receivedAt);
   if (!decided.date) return { date: null, reason: decided.reason ?? `「${quote.slice(0, 30)}」からは日付が1日に決まりません` };
   if (NOT_FIXED.test(quote)) return { date: null, reason: `日程は「${quote.slice(0, 30)}」で、まだ1日に決まっていません` };
-  const after = otherDatesInConversation(text, quote, decided.date, receivedAt).filter((o) => !o.before_quote);
+  // 引用の後ろの別の日付。ただし、すぐ近くに「予備日」「締切」「応募」などがある日付は開催日ではないので数えない
+  const norm = text.normalize("NFKC");
+  const positions = datesInText(norm);
+  const exempt = (o: { text: string }) =>
+    positions
+      .filter((d) => d.text === o.text)
+      .some((d) => OTHER_DATE_EXEMPT.test(norm.slice(Math.max(0, d.index - EXEMPT_WINDOW), d.index + d.text.length + EXEMPT_WINDOW)));
+  const after = otherDatesInConversation(text, quote, decided.date, receivedAt).filter((o) => !o.before_quote && !exempt(o));
   if (after.length)
     return { date: null, reason: `会話に別の日付（${after.map((o) => o.text).join("・")}）もあるため、日程を1日に決めていません。主催者に確認してください` };
   return { date: decided.date, reason: null };

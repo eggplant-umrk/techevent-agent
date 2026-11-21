@@ -19,6 +19,7 @@ import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 import { getCardById, type Card } from "./cards";
 import { getPerson, ngHits, peopleNotesForAgent } from "./people";
 import { speakerEvaluationProblems } from "./surveys";
+import { userErrorText } from "./userError";
 
 export type AgentEvent =
   | { type: "start"; run_id: string; loop_model: string; heavy_model: string; switched: boolean; total_usd: number; switch_usd: number }
@@ -523,7 +524,7 @@ export async function runAgent(
       result.alternative_pitch = pitch.value;
       emit({ type: "alternative_pitch", text: pitch.value, model: pitch.model, fell_back: pitch.fellBack });
     } catch (e) {
-      emit({ type: "error", message: `代わりの人を推す理由を作れませんでした：${e instanceof Error ? e.message : String(e)}` });
+      emit({ type: "error", message: `代わりの人を推す理由を作れませんでした：${userErrorText(e, { where: "代わりの人を推す文" })}` });
     }
   }
 

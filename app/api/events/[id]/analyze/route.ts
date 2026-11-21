@@ -1,6 +1,7 @@
 // POST /api/events/{id}/analyze：アンケートを分析してカードに書き戻す。作業ログを NDJSON で流す
 import { analyzeEvent, type SurveyEvent } from "@/lib/surveys";
 import { slotted } from "@/lib/apiSlots";
+import { userErrorText } from "@/lib/userError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ async function handlePost(_req: Request, { params }: { params: Promise<{ id: str
       try {
         await analyzeEvent(id, emit);
       } catch (err) {
-        emit({ type: "error", message: err instanceof Error ? err.message : "不明なエラー" });
+        emit({ type: "error", message: userErrorText(err, { where: "アンケートの分析" }) });
       } finally {
         controller.close();
       }

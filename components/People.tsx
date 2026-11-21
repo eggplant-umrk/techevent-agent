@@ -29,6 +29,9 @@ export function People({
   onBlog,
   onCloseBlog,
   onOpenCard,
+  voiceCount,
+  voicesOpen,
+  onVoices,
 }: {
   people: PersonRow[];
   units: string[];
@@ -46,6 +49,10 @@ export function People({
   onBlog: () => void;
   onCloseBlog: () => void;
   onOpenCard: (cardId: string) => void;
+  /** アンケートの声の件数（右に一覧を出すボタン） */
+  voiceCount: number;
+  voicesOpen: boolean;
+  onVoices: () => void;
 }) {
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Set<Filter>>(new Set());
@@ -88,6 +95,9 @@ export function People({
             </button>
           </div>
         </div>
+        <button type="button" className="chip voices-chip" aria-pressed={voicesOpen} onClick={onVoices}>
+          アンケートの声 {voiceCount}件（参加者が今後聞いてみたい話）
+        </button>
         <input type="search" className="input" aria-label="人を探す" placeholder="名前・所属・得意分野で検索" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="filter-row">
           <div role="group" aria-label="絞り込み" className="chips">

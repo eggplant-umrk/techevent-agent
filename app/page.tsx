@@ -19,6 +19,7 @@ import type {
   PersonDetail as PersonDetailData,
   PersonRow,
   Proposal,
+  SurveyVoice,
 } from "@/app/_client/types";
 import { AgentSteps, type LogItem } from "@/components/AgentSteps";
 import { AcceptedView, Approved } from "@/components/Approved";
@@ -29,6 +30,8 @@ import { Inbox } from "@/components/Inbox";
 import { usd } from "@/components/labels";
 import { People, type NbLogLine } from "@/components/People";
 import { PersonDetail } from "@/components/PersonDetail";
+import { SurveyVoices } from "@/components/SurveyVoices";
+import { Spinner } from "@/components/ui";
 import { AlternativePitch, Candidates } from "@/components/Proposal";
 import { RequestInput, type RequestMode } from "@/components/RequestInput";
 
@@ -50,6 +53,11 @@ export default function Home() {
   const [archiveLoaded, setArchiveLoaded] = useState(false);
   const [archiveKey, setArchiveKey] = useState<string | null>(null);
   const [archiveDetail, setArchiveDetail] = useState<ArchiveDetail | null>(null);
+
+  // アンケートの声（ネタ帳タブ）
+  const [voices, setVoices] = useState<SurveyVoice[]>([]);
+  const [voicesLoaded, setVoicesLoaded] = useState(false);
+  const [voicesOpen, setVoicesOpen] = useState(false);
 
   // notebook
   const [cards, setCards] = useState<NotebookCard[]>([]);
@@ -174,6 +182,16 @@ export default function Home() {
     }
   }, [api]);
 
+  const loadVoices = useCallback(async () => {
+    try {
+      setVoices(await api.voices());
+    } catch {
+      /* 一覧は前の内容のまま */
+    } finally {
+      setVoicesLoaded(true);
+    }
+  }, [api]);
+
   useEffect(() => {
     if (!apiReady) return;
     loadCards();
@@ -181,7 +199,26 @@ export default function Home() {
     loadInbox();
     loadPeople();
     loadArchive();
-  }, [apiReady, api, loadCards, loadState, loadInbox, loadPeople, loadArchive]);
+    loadVoices();
+  }, [apiReady, api, loadCards, loadState, loadInbox, loadPeople, loadArchive, loadVoices]);
+
+  // 代わりの人を推す文を作っているあいだ（pitch_status が pending）は、2秒ごとに詳細を読み直し、できたら出す
+  useEffect(() => {
+    if (mode !== "inbox" || !inboxId || inbox?.id !== inboxId || inbox.pitch_status !== "pending") return;
+    const id = inboxId;
+    const t = setInterval(async () => {
+      try {
+        const d = await api.inboxDetail(id);
+        if (d.pitch_status === "pending") return;
+        setInbox(d);
+        if (d.result?.alternative_pitch) setPitch(d.result.alternative_pitch);
+      } catch {
+        /* 次の回にもう一度読む */
+      }
+    }, 2000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, inboxId, inbox?.id, inbox?.pitch_status, api]);
 
   // ?person={id}・?archive={kind}:{id} で開いたら、その人・その過去の依頼を開く（共有用のリンク）
   useEffect(() => {
@@ -207,6 +244,7 @@ export default function Home() {
   const personCards = useMemo(() => (personId ? cards.filter((c) => c.employee_id === personId) : []), [cards, personId]);
 
   async function openPerson(id: string) {
+    setVoicesOpen(false);
     setPersonId(id);
     try {
       setPerson(await api.person(id));
@@ -578,6 +616,11 @@ export default function Home() {
             <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} marks={marks} />
           )}
           {result && pitch && (stage !== "accepted" || showOthers) && <AlternativePitch text={pitch} />}
+          {result && !pitch && inbox?.pitch_status === "pending" && (stage !== "accepted" || showOthers) && (
+            <section className="surface pad-lg" aria-live="polite">
+              <Spinner label="代わりの人を推す文を作成中" />
+            </section>
+          )}
         </>
       )}
     </div>
@@ -620,8 +663,19 @@ export default function Home() {
             onBlog={blogIdeas}
             onCloseBlog={() => setBlog(null)}
             onOpenCard={(id) => openCard(id)}
+            voiceCount={voices.length}
+            voicesOpen={voicesOpen}
+            onVoices={() => setVoicesOpen((x) => !x)}
           />
-          {person && person.person.id === personId ? (
+          {voicesOpen ? (
+            <SurveyVoices
+              voices={voices}
+              loaded={voicesLoaded}
+              onOpenCard={(id) => openCard(id)}
+              onOpenPerson={(id) => void openPerson(id)}
+              onClose={() => setVoicesOpen(false)}
+            />
+          ) : person && person.person.id === personId ? (
             <PersonDetail
               detail={person}
               cards={personCards}
@@ -662,6 +716,7 @@ export default function Home() {
           card={detailCard}
           focusEvidence={detail?.evidence ?? null}
           requestTitle={(id) => inboxItems.find((x) => x.id === id)?.title ?? archiveRows.find((r) => r.id === id)?.title ?? null}
+          surveyThemes={voices.map((v) => v.text)}
           onClose={() => setDetail(null)}
           onSave={async (p) => {
             await api.editCard(detailCard.card_id, p);

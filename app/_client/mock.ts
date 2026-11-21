@@ -7,7 +7,7 @@
 // - 人の情報を直すのも手元だけ（data/people.json には書かない）。アーカイブは読むだけなので GET をそのまま使う。
 import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
-import { analysisOverview as overviewOf } from "@/lib/surveyOverview";
+import { analysisOverview as overviewOf, surveyVoices } from "@/lib/surveyOverview";
 import { recordsFor, requestState } from "@/lib/requestStage";
 
 /** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
@@ -198,6 +198,8 @@ export function mockApi(real: Api): Api {
   const inboxItems: MockItem[] = [];
   /** 下書き（主催者への返事を承諾済みの依頼で出すため）。依頼id:社員id */
   const drafts = new Map<string, OutreachDraft>();
+  /** 代わりの人を推す文ができる時刻（モックの「作成中」の再現） */
+  const pitchReadyAt = new Map<string, number>();
   const inboxTexts = new Map<string, string>();
   // 一覧の読み込みと ?inbox= で開く処理が同時に来ても、並べるのは1回だけ（2回並ぶと同じ依頼が重複する）
   let inboxReady: Promise<void> | null = null;
@@ -375,14 +377,20 @@ export function mockApi(real: Api): Api {
       const result: Proposal | null =
         it.status !== "ready" ? null : fixture ? { ...fixture.result, run_id: `mock-${id}` } : { ...NO_FIT, run_id: `mock-${id}`, request_id: id };
       const runUsd = fixture?.run_usd ?? 0.061;
+      // 代わりの人を推す文は、受信箱では候補のあとで作る（pitch_status）。モックでは最初に開いてから5秒だけ「作成中」にする
+      const hasPitch = !!result?.alternative_pitch;
+      if (hasPitch && !pitchReadyAt.has(id)) pitchReadyAt.set(id, Date.now() + 5000);
+      const pending = hasPitch && Date.now() < (pitchReadyAt.get(id) ?? 0);
+      const shown = result && pending ? { ...result, alternative_pitch: undefined } : result;
       return {
         ...it,
         text: inboxTexts.get(id) ?? requests.find((r) => r.id === id)?.message ?? it.title,
         nominee_name: fixture?.result.candidates.find((c) => c.is_nominee)?.name ?? null,
         intake: null,
-        result,
-        events: result ? eventsFor(result, id, runUsd).map(([e]) => e) : [],
+        result: shown,
+        events: shown ? eventsFor(shown, id, runUsd).map(([e]) => e).filter((e) => !(pending && e.type === "alternative_pitch")) : [],
         run_usd: result ? runUsd : 0,
+        pitch_status: hasPitch ? (pending ? "pending" : "ready") : null,
         ...extra,
       };
     },
@@ -592,6 +600,13 @@ export function mockApi(real: Api): Api {
     },
     async archive() {
       return real.archive();
+    },
+    // アンケートの声：保存済みの分析結果（6イベント）から、サーバーと同じ関数で作る
+    async voices() {
+      await ensureCards();
+      const evs = await real.events();
+      const cards = lastCards.map((c) => ({ card_id: c.card_id, employee_id: c.employee_id, name: c.employee?.name ?? c.employee_id }));
+      return surveyVoices(Object.values(POSTEVENT).map((f) => f.analysis), evs, cards);
     },
     async archiveDetail(kind, id) {
       return real.archiveDetail(kind, id);

@@ -240,9 +240,20 @@ async function main() {
     checks.push({ name: `${r.id} 根拠idが実在`, pass: !!result && badEvidence.length === 0 && badCards.length === 0, detail: [...badEvidence, ...badCards].join(", ") || `${evidenceIds.length}件すべて実在` });
     checks.push({ name: `${r.id} 送信なし`, pass: sendHits.length === 0, detail: sendHits.join(" / ") || "送信の処理・ルートなし" });
     checks.push({ name: `${r.id} 想定候補が上位3人`, pass: anyHit, detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+    const conds = result?.candidates.filter((c) => c.confidence === "conditional") ?? [];
+    const noCaveat = conds.filter((c) => !c.caveat?.trim()).map((c) => c.employee_id);
+    const badConf = result?.candidates.filter((c) => c.confidence !== "strong" && c.confidence !== "conditional").map((c) => c.employee_id) ?? [];
+    checks.push({
+      name: `${r.id} 条件付きの候補に引っかかる点の文がある`,
+      pass: !!result && noCaveat.length === 0 && badConf.length === 0,
+      detail: conds.length ? `条件付き${conds.length}人${noCaveat.length ? `、文なし: ${noCaveat.join(",")}` : "すべて文あり"}` : "条件付きの候補なし",
+    });
     if (altOk !== null) checks.push({ name: `${r.id} 代わりの提案`, pass: altOk, detail: `代わり=${alts.join(",") || "なし"}` });
 
-    console.log(`  top3: ${top3.map((id) => `${id} ${names.get(id)}`).join(" / ") || "(なし)"}${result?.no_fit ? `（3人未満: ${result.no_fit.reasons[0]}）` : ""}`);
+    console.log(
+      `  top3: ${result?.candidates.map((c) => `${c.employee_id} ${c.name}[${c.confidence}]`).join(" / ") || "(なし)"}${result?.no_fit ? `（3人未満: ${result.no_fit.reasons[0]}）` : ""}`,
+    );
+    for (const c of conds) console.log(`    条件付き ${c.name}：${c.caveat}`);
     console.log(`  想定のいずれか=${anyHit ? "○" : "×"} 主候補=${primaryHit ? "○" : "×"}${altOk === null ? "" : ` 代わりの提案=${altOk ? "○" : "×"}`}  $${usd.toFixed(3)}（${steps}回）`);
     rows.push({ request_id: r.id, pattern: r.pattern, top3, expected: exp.ids, primary: exp.primary, any_hit: anyHit, primary_hit: primaryHit, alternatives: alts, alternative_ok: altOk, run_usd: usd, steps, result });
   }

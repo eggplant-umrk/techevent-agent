@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-type Cand = { employee_id: string; name: string; theme: string };
+type Cand = { employee_id: string; name: string; theme: string; confidence?: "strong" | "conditional"; caveat?: string | null };
 type Row = {
   request_id: string;
   pattern: string;
@@ -53,9 +53,11 @@ let md = `# 評価結果 v0.2（after）と v0.1（before）の比較
 | 依頼 | パターン | before 上位 | after 上位 | 想定のいずれか（前→後） | 代わりの提案（前→後） | 呼び出し（前→後） | 金額（前→後） |
 |---|---|---|---|---|---|---|---|
 `;
+const candLabel = (c: Cand) => `${nm(c.employee_id)}${c.confidence === "conditional" ? "（条件付き）" : ""}`;
 for (const a of after.rows) {
   const b = before.rows.find((x) => x.request_id === a.request_id)!;
-  md += `| ${a.request_id} | ${a.pattern} | ${b.top3.map(nm).join("<br>")} | ${a.top3.map(nm).join("<br>") || "（なし）"}${a.result?.no_fit ? "<br>※3人未満" : ""} | ${ok(b.any_hit)} → ${ok(a.any_hit)} | ${ok(b.alternative_ok)} → ${ok(a.alternative_ok)} | ${b.steps} → ${a.steps} | $${b.run_usd.toFixed(3)} → $${a.run_usd.toFixed(3)} |\n`;
+  const aTop = a.result?.candidates.map(candLabel).join("<br>") || "（なし）";
+  md += `| ${a.request_id} | ${a.pattern} | ${b.top3.map(nm).join("<br>")} | ${aTop}${a.result?.no_fit ? "<br>※3人未満" : ""} | ${ok(b.any_hit)} → ${ok(a.any_hit)} | ${ok(b.alternative_ok)} → ${ok(a.alternative_ok)} | ${b.steps} → ${a.steps} | $${b.run_usd.toFixed(3)} → $${a.run_usd.toFixed(3)} |\n`;
 }
 const bAvg = avg(before.rows.map((r) => r.run_usd));
 const aAvg = avg(after.rows.map((r) => r.run_usd));
@@ -96,9 +98,39 @@ if (after.quality) {
   }
 }
 
+const conditional = after.rows.flatMap((r) => (r.result?.candidates ?? []).filter((c) => c.confidence === "conditional").map((c) => ({ r: r.request_id, c })));
+if (conditional.length) {
+  md += `\n## 条件付きの候補と引っかかる点\n\n| 依頼 | 候補 | 引っかかる点（caveat） |\n|---|---|---|\n`;
+  for (const { r, c } of conditional) md += `| ${r} | ${nm(c.employee_id)} | ${(c.caveat ?? "（なし）").replace(/\|/g, "／")} |\n`;
+}
+
+const short = after.rows.filter((r) => r.result?.no_fit);
 md += `\n## 3人未満になった依頼\n`;
-for (const a of after.rows.filter((r) => r.result?.no_fit)) {
+if (!short.length) md += `\nなし（全件で3人そろった）\n`;
+for (const a of short) {
   md += `\n**${a.request_id}**（${a.top3.length}人）\n- 見つからない理由：${a.result!.no_fit!.reasons.join("／")}\n- 次に確認すべきこと：${a.result!.no_fit!.next_checks.join("／")}\n`;
+}
+
+// ---- vs the previous after (v0.2.0: fewer than 3 allowed, no confidence)
+const prevFile = path.join(root, "docs", "eval_after_v020.json");
+if (fs.existsSync(prevFile)) {
+  const prev = JSON.parse(fs.readFileSync(prevFile, "utf-8")) as typeof after;
+  const count = (x: typeof after) => x.rows.reduce((s, r) => s + (r.result?.candidates.length ?? 0), 0);
+  const condCount = (x: typeof after) => x.rows.reduce((s, r) => s + (r.result?.candidates ?? []).filter((c) => c.confidence === "conditional").length, 0);
+  const shortCount = (x: typeof after) => x.rows.filter((r) => r.result?.no_fit).length;
+  const qAll = (x: typeof after, k: "before_scores" | "after_scores") => avg((x.quality ?? []).flatMap((q) => q[k].map(sc)));
+  const qTop = (x: typeof after) => avg((x.quality ?? []).map((q) => (q.after_scores[0] ? sc(q.after_scores[0]) : 0)));
+  md += `\n## 前回の after（v0.2.0）との差\n\n前回は「合う人がいなければ3人そろえない」方針、今回は「自信のある候補＋条件付きの候補で3人まで」。前回の結果：[eval_after_v020.md](eval_after_v020.md)\n\n| 項目 | 前回 after | 今回 after |\n|---|---|---|\n`;
+  md += `| 結合テスト | ${prev.checks.filter((c) => c.pass).length}/${prev.checks.length}（${Math.round(prev.pass_rate * 100)}%） | ${after.checks.filter((c) => c.pass).length}/${after.checks.length}（${Math.round(after.pass_rate * 100)}%） |\n`;
+  md += `| 想定候補が上位3人 | ${prev.rows.filter((r) => r.any_hit).length}/${prev.rows.length} | ${after.rows.filter((r) => r.any_hit).length}/${after.rows.length} |\n`;
+  md += `| 候補の数（5件の合計） | ${count(prev)} | ${count(after)} |\n`;
+  md += `| うち条件付き | —（区分なし） | ${condCount(after)} |\n`;
+  md += `| 3人未満の依頼 | ${shortCount(prev)} | ${shortCount(after)} |\n`;
+  md += `| テーマ案の質：全候補の平均 | ${f2(qAll(prev, "after_scores"))} | ${f2(qAll(after, "after_scores"))} |\n`;
+  md += `| テーマ案の質：1位の平均 | ${f2(qTop(prev))} | ${f2(qTop(after))} |\n`;
+  md += `| 1件あたりの金額 | $${avg(prev.rows.map((r) => r.run_usd)).toFixed(3)} | $${avg(after.rows.map((r) => r.run_usd)).toFixed(3)} |\n`;
+  md += `| 呼び出し回数の平均 | ${f2(avg(prev.rows.map((r) => r.steps)))} | ${f2(avg(after.rows.map((r) => r.steps)))} |\n`;
+  md += `\nLLMの採点は実行ごとにぶれる（before の同じ候補でも前回 ${f2(qAll(prev, "before_scores"))}、今回 ${f2(qAll(after, "before_scores"))}）。0.2点程度の差は誤差の範囲として見てほしい。\n`;
 }
 
 md += `\n## 金額\n\n- before の評価全体：$${before.spent_usd.toFixed(3)}\n- after の評価全体（5件＋書き戻しの再実行＋採点）：$${after.spent_usd.toFixed(3)}\n`;

@@ -27,9 +27,9 @@ async function main() {
   const rows = people.peopleRows();
   check("人の一覧は社員全員（カードのない人も出す）", rows.length === employees().length, `${rows.length}人`);
   check("カードのない人もいる", rows.some((r) => r.unpublished_cards === 0));
-  check("予定の埋まり具合は予定から計算した言葉（架空データは全員分かる）", rows.every((r) => r.load !== null && r.busy_text !== "予定は不明"), rows[0].busy_text);
-  const av = people.personDetail("e013")!.availability;
-  check("今後2週間の予定は時刻だけ（タイトルを持たない）", !!av.upcoming && av.upcoming.every((u) => Object.keys(u).sort().join(",") === "all_day,end,start"));
+  // ネタ帳タブには予定を出さない（忙しさの計算は候補と出し先の注意点だけで使う）
+  check("ネタ帳の人の一覧に予定の埋まり具合を出さない", rows.every((r) => !("load" in r) && !("busy_text" in r)));
+  check("人の画面に予定欄を出さない", !("availability" in people.personDetail("e013")!));
   check("登壇経験の印は候補と同じ言い方", rows.every((r) => ["初登壇", "半年以内に登壇", "登壇経験あり"].includes(r.talk_tag)));
   const noCard = rows.find((r) => r.unpublished_cards === 0 && !people.personDetail(r.id)!.card_ids.length);
   check("カードのない人の詳細も開ける（最近の活動を出す）", !!noCard && Array.isArray(people.personDetail(noCard.id)!.recent_activities));

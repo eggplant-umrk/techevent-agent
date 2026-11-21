@@ -26,6 +26,7 @@ import type {
   BoardDetail,
   BoardListItem,
   SurveyVoice,
+  UnassignedCard,
   ArchiveKind,
   ArchiveRow,
   PersonDetail,
@@ -86,6 +87,10 @@ export interface Api {
   archive(): Promise<ArchiveRow[]>;
   /** ネタ帳タブ：アンケートの声（参加者が今後聞いてみたい話） */
   voices(): Promise<SurveyVoice[]>;
+  /** ネタ帳タブ：担当者未定のネタ（リリースノートから作ったカード） */
+  unassigned(): Promise<UnassignedCard[]>;
+  /** 担当者を割り当てる。その人のカードになり、一覧から消える */
+  assignUnassigned(cardId: string, employeeId: string): Promise<{ card_id: string }>;
   archiveDetail(kind: ArchiveKind, id: string): Promise<ArchiveDetail>;
 }
 
@@ -164,6 +169,8 @@ export const realApi: Api = {
     ).person,
   archive: async () => (await json<{ rows: ArchiveRow[] }>(await fetch("/api/archive"))).rows,
   voices: async () => (await json<{ voices: SurveyVoice[] }>(await fetch("/api/voices"))).voices,
+  unassigned: async () => (await json<{ cards: UnassignedCard[] }>(await fetch("/api/unassigned-cards"))).cards,
+  assignUnassigned: async (card_id, employee_id) => json(await post("/api/unassigned-cards/assign", { card_id, employee_id })),
   archiveDetail: async (kind, id) => json(await fetch(`/api/archive/${kind}/${encodeURIComponent(id)}`)),
 };
 

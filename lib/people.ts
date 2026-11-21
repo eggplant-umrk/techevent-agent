@@ -4,7 +4,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { activities, employeeById, employees, published, type Employee } from "./data";
 import { loadCards } from "./cards";
-import { getAvailability, type Availability } from "./availability";
 import { talkTag, type TalkTag } from "./talkTag";
 
 const FILE = () => process.env.PEOPLE_FILE || path.join(process.cwd(), "data", "people.json");
@@ -179,10 +178,6 @@ export interface PersonRow {
   unpublished_cards: number;
   speaking_intent: SpeakingIntent;
   reviewed: boolean;
-  /** 予定の埋まり具合（0〜1）。予定が分からなければ null */
-  load: number | null;
-  /** 予定の埋まり具合の言葉（lib/busyness.ts の busyText） */
-  busy_text: string;
   past_talk_count: number;
   /** 登壇経験の印（lib/talkTag.ts。候補と同じ言い方） */
   talk_tag: TalkTag;
@@ -198,10 +193,6 @@ export function peopleRows(): PersonRow[] {
     unpublished_cards: cards.filter((c) => c.employee_id === p.id && c.publication_status === "unpublished").length,
     speaking_intent: p.speaking_intent,
     reviewed: p.reviewed,
-    ...(() => {
-      const a = getAvailability(p.id);
-      return { load: a.load, busy_text: a.text };
-    })(),
     past_talk_count: p.past_talk_count,
     talk_tag: talkTag(p),
   }));
@@ -214,7 +205,6 @@ export interface PersonDetail {
   card_ids: string[];
   recent_activities: Array<{ id: string; type: string; date: string; title: string; url: string | null }>;
   published: Array<{ id: string; date: string; genre: string; title: string }>;
-  availability: Availability;
 }
 
 export function personDetail(id: string): PersonDetail | undefined {
@@ -237,7 +227,6 @@ export function personDetail(id: string): PersonDetail | undefined {
       .map((c) => c.card_id),
     recent_activities: acts,
     published: pubs,
-    availability: getAvailability(id),
     talk_tag: talkTag(person),
   };
 }

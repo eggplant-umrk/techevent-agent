@@ -198,6 +198,8 @@ export function mockApi(real: Api): Api {
   const inboxItems: MockItem[] = [];
   /** 下書き（主催者への返事を承諾済みの依頼で出すため）。依頼id:社員id */
   const drafts = new Map<string, OutreachDraft>();
+  /** 担当者を割り当てた担当者未定のネタ（手元だけ。一覧から外す） */
+  const assigned = new Set<string>();
   /** 代わりの人を推す文ができる時刻（モックの「作成中」の再現） */
   const pitchReadyAt = new Map<string, number>();
   const inboxTexts = new Map<string, string>();
@@ -600,6 +602,50 @@ export function mockApi(real: Api): Api {
     },
     async archive() {
       return real.archive();
+    },
+    // ---- 担当者未定のネタ：一覧はサーバーから読むだけ。割り当ては手元だけ（その人のカードを作って一覧から外す）
+    async unassigned() {
+      return (await real.unassigned()).filter((c) => !assigned.has(c.card_id));
+    },
+    async assignUnassigned(cardId, employeeId) {
+      await wait(200);
+      const u = (await real.unassigned()).find((c) => c.card_id === cardId);
+      if (!u || assigned.has(cardId)) throw new Error("その担当者未定のネタはありません");
+      await ensureCards();
+      const people = await real.people();
+      const p = people.find((x) => x.id === employeeId);
+      if (!p) throw new Error("その社員はいません");
+      const now = new Date().toISOString();
+      const n = lastCards.filter((c) => c.employee_id === employeeId).length + 1;
+      const card: NotebookCard = {
+        card_id: `card-${employeeId}-${String(n).padStart(2, "0")}`,
+        employee_id: employeeId,
+        summary: u.summary,
+        themes: u.themes,
+        evidence_activity_ids: [],
+        format: u.format,
+        format_reason: u.format_reason,
+        publication_status: "unpublished",
+        published_ids: [],
+        latest_activity_date: u.release_notes[0]?.date ?? today,
+        announcement_activity_ids: [],
+        evidence_request_ids: [],
+        pending_themes: [],
+        outreach_history: [],
+        reviewed: true,
+        reviewed_at: now,
+        edited_fields: [],
+        created_at: now,
+        updated_at: now,
+        employee: { id: employeeId, name: p.name, business_unit: p.business_unit, role: "", past_talk_count: p.past_talk_count, last_talk_date: null, busy_text: "予定は不明" },
+        evidence: [],
+        announcements: [],
+        published: [],
+      };
+      created.push(card);
+      lastCards = [...lastCards, card];
+      assigned.add(cardId);
+      return { card_id: card.card_id };
     },
     // アンケートの声：保存済みの分析結果（6イベント）から、サーバーと同じ関数で作る
     async voices() {

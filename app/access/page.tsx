@@ -1,6 +1,7 @@
 "use client";
 // 合言葉の入力（SHARE_MODE=lan で、別の端末から開いたとき）。合っていれば、もとの画面に戻る
 import { useState } from "react";
+import { safeNext } from "@/lib/safeNext";
 
 export default function AccessPage() {
   const [code, setCode] = useState("");
@@ -18,8 +19,7 @@ export default function AccessPage() {
       setError(j?.error ?? "確かめられませんでした。もう一度入れてください");
       return;
     }
-    const next = new URLSearchParams(window.location.search).get("next") ?? "/";
-    window.location.href = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    window.location.href = safeNext(new URLSearchParams(window.location.search).get("next"));
   }
 
   return (

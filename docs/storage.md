@@ -1,7 +1,7 @@
 # 保存の入口の一覧（2026-11-22 時点）
 
 どのファイルを、どの関数が読み書きしているかの表です。JSON の読み書きを1つにまとめるとき（docs/roadmap.md の1）と、DB に移すとき（同3）の作業表として使います。
-行番号は main（75e0de4）＋ feature/maintain の時点です。コードを動かしたら、この表も直してください（確かめ方は一番下）。
+行番号は 11/22 に feature/maintain を作った時点（main 75e0de4）のものです。そのあと main に入った変更で数行ずれていることがあります。コードを動かしたら、この表も直してください（確かめ方は一番下）。
 
 ## 1. 置き場所は3種類
 
@@ -12,6 +12,8 @@
 | 実行時のデータ（単独のファイル） | `data/inbox.json`・`data/sample_proposals.json`・`data/drafts.json`・`data/usage.json`・`data/survey_analysis.json`・`data/talk_records.json`・`data/survey_imports/` | 入らない | 受信箱・下書き・金額・アンケートの結果。元のデータがないもの |
 
 `npm run reset:demo` は、2つ目と3つ目のうち金額とアンケートの分析以外を `data/runtime-backup/<日時>/` に移します（`scripts/reset_demo.ts`）。
+
+見せる用のサーバー（`npm run start:share`）は、2つ目と3つ目をまとめて別の置き場（`data/runtime-share/`、`SHARE_DATA_DIR` で変えられる）に持ちます。片付けは `npm run reset:share`（`scripts/serve.mjs`・`scripts/reset_demo.ts`）。下の表の場所は発表用（既定）のものです。
 
 ## 2. 読み書きの関数が散らばっている場所（まとめる対象）
 

@@ -4,13 +4,14 @@
 // - それぞれに依頼の状態（lib/requestStage.ts。コードで決める）を付ける
 // - 声かけ文・主催者への返事の下書きを保存して、承諾済みの依頼を開き直したときにも出す
 // 評価用のデータ（requests.json）と結合テストの動きは変えない（ここは画面用の読み書きだけ）。
+import { originalUrl } from "./originalUrl";
 import fs from "node:fs";
 import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
 import type { AgentEvent, ProposalResult } from "./agent";
 import { inboxEventDate } from "./archive";
 import { loadCards } from "./cards";
-import { employeeById, requests } from "./data";
+import { activities, employeeById, requests } from "./data";
 import type { OutreachDraft } from "./heavy";
 import { detailView, getInboxItem, listInbox, listView, type InboxDetail, type InboxListItem } from "./inbox";
 import { recordsFor, requestState, type RequestState } from "./requestStage";
@@ -62,6 +63,27 @@ export function markSampleOpened(requestId: string) {
 
 // ---- 下書き（声かけ文と主催者への返事） ----------------------------------------------------
 const draftKey = (requestId: string, employeeId: string) => `${requestId}:${employeeId}`;
+/**
+ * 下書きに使う候補（/api/draft）。ブラウザから来た候補の文は使わず、保存済みの候補（受信箱・サンプルの依頼の結果）から employee_id で引き直す。
+ * 保存済みの結果がない依頼（その場で書いた依頼文など）は、ブラウザから来た値を長さで切り、根拠は実在する活動の id だけにする
+ */
+export function draftCandidate(
+  body: { request_id?: string; candidate?: { employee_id?: unknown; theme?: unknown; reason?: unknown; evidence_activity_ids?: unknown } },
+  activityIds: Set<string>,
+): { employee_id: string; theme: string; reason: string; evidence_activity_ids: string[]; from: "saved" | "trimmed" } | null {
+  const employeeId = typeof body.candidate?.employee_id === "string" ? body.candidate.employee_id : "";
+  if (!employeeId) return null;
+  // その場で書いた依頼文（custom…）には保存済みの結果がない
+  if (body.request_id && !body.request_id.startsWith("custom")) {
+    const saved = boardDetail(body.request_id)?.result?.candidates.find((c) => c.employee_id === employeeId);
+    if (!saved) return null; // 保存済みの候補にいない人の下書きは作らない
+    return { employee_id: saved.employee_id, theme: saved.theme, reason: saved.reason, evidence_activity_ids: saved.evidence.map((e) => e.id), from: "saved" };
+  }
+  const str = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : "");
+  const ids = Array.isArray(body.candidate?.evidence_activity_ids) ? body.candidate!.evidence_activity_ids.filter((x): x is string => typeof x === "string" && activityIds.has(x)).slice(0, 10) : [];
+  return { employee_id: employeeId, theme: str(body.candidate?.theme, 120), reason: str(body.candidate?.reason, 400), evidence_activity_ids: ids, from: "trimmed" };
+}
+
 export function saveDraft(requestId: string, employeeId: string, draft: OutreachDraft) {
   const all = readJson<Record<string, OutreachDraft & { saved_at: string }>>(DRAFT_FILE(), {});
   all[draftKey(requestId, employeeId)] = { ...draft, saved_at: nowJst() };
@@ -143,7 +165,28 @@ function replyFor(requestId: string, state: RequestState): BoardDetail["accepted
 }
 
 /** 依頼の画面：受信箱の1件（またはサンプルの依頼）を、状態つきで返す */
+/** 保存済みの候補の根拠に、元のページの URL を補う（前に保存した結果にも付くように。架空の活動は付かない） */
+function withEvidenceUrls<T extends { result: ProposalResult | null }>(d: T): T {
+  if (!d.result) return d;
+  const acts = new Map(activities().map((a) => [a.id, a]));
+  return {
+    ...d,
+    result: {
+      ...d.result,
+      candidates: d.result.candidates.map((c) => ({
+        ...c,
+        evidence: c.evidence.map((e) => ({ ...e, url: e.url ?? originalUrl(acts.get(e.id)?.url) })),
+      })),
+    },
+  };
+}
+
 export function boardDetail(id: string): BoardDetail | null {
+  const d = boardDetailRaw(id);
+  return d ? withEvidenceUrls(d) : null;
+}
+
+function boardDetailRaw(id: string): BoardDetail | null {
   const it = getInboxItem(id);
   if (it) {
     const date = inboxEventDate(it);

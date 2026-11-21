@@ -2,8 +2,9 @@
 
 import type { BoardDetail, IntakeField } from "@/app/_client/types";
 import { md } from "./labels";
-import { StageTag, sourceLabel } from "./Inbox";
-import { Tag } from "./ui";
+import { inboxTitle, StageTag, sourceLabel } from "./Inbox";
+import { progressOf, progressText, type Progress } from "@/lib/progressStage";
+import { Spinner, Tag } from "./ui";
 
 /** inbox：受信箱から開いた依頼／custom：手で追加（受信箱に入る）。サンプルの依頼も受信箱に並ぶ（入口は受信箱だけ） */
 export type RequestMode = "custom" | "inbox";
@@ -35,6 +36,8 @@ export function RequestInput({
   onAdd,
   compact,
   mock = false,
+  loading = false,
+  progress = null,
   children,
 }: {
   mode: RequestMode;
@@ -52,6 +55,10 @@ export function RequestInput({
   compact: boolean;
   /** ?mock のとき：保存済みの結果を出していることを明記する */
   mock?: boolean;
+  /** 受信箱の依頼を読み込んでいる間 */
+  loading?: boolean;
+  /** 準備中の進み具合（受信箱の一覧から。段階の言葉だけ） */
+  progress?: Progress | null;
   /** The agent's steps, shown under the request without another frame. */
   children?: React.ReactNode;
 }) {
@@ -71,7 +78,8 @@ export function RequestInput({
         )}
       </div>
 
-      {mode === "inbox" && !inbox && (
+      {mode === "inbox" && !inbox && loading && <Spinner label="依頼を読み込んでいます…" />}
+      {mode === "inbox" && !inbox && !loading && (
         <p className="meta">左の受信箱から依頼を選んでください。X の DM・リプライなどで届いた依頼は、右上の「会話を貼って追加」から会話をそのまま貼って入れられます。</p>
       )}
       {mock && (
@@ -85,7 +93,7 @@ export function RequestInput({
           <p className="meta inbox-marks">
             {st && <StageTag stage={st.stage} />}
             <span>
-              受信箱・{sourceLabel(inbox.source)}・{when(inbox.received_at)}
+              受信箱{inbox.source !== "sample" ? `・${sourceLabel(inbox.source)}` : ""}・{when(inbox.received_at)}
               {inbox.event_date ? `・開催 ${md(inbox.event_date)}` : ""}
             </span>
             {inbox.permalink && (
@@ -94,7 +102,7 @@ export function RequestInput({
               </a>
             )}
           </p>
-          <h3 className="req-title">{inbox.title}</h3>
+          <h3 className="req-title">{st ? inboxTitle({ title: inbox.title, state: st }) : inbox.title}</h3>
           {st && st.accepted_by.length > 0 && <p className="small strong">{st.accepted_by.map((p) => `${p.name}さん`).join("・")}が承諾</p>}
           {st && st.stage === "outreach" && <p className="small muted-strong">{st.outreach_to.map((p) => `${p.name}さん`).join("・")}に声かけ中（返事待ち）</p>}
           {st && st.stage === "declined" && <p className="small muted-strong">{st.declined_by.map((p) => `${p.name}さん`).join("・")}が辞退。次の人を選べます</p>}
@@ -127,6 +135,12 @@ export function RequestInput({
             <summary>依頼文を読む</summary>
             <p className="pre small">{inbox.text}</p>
           </details>
+          {preparing && (
+            <div className="progress-line" aria-live="polite">
+              <Spinner label={progressText(progress ?? progressOf("reading"))} />
+              <span className="meta">候補ができるまで30秒ほどかかります。このまま待つか、ほかの依頼を見ていても大丈夫です。</span>
+            </div>
+          )}
           {inbox.status === "error" && <p className="error-line" role="alert">{inbox.error ?? "候補を出せませんでした"}。「もう一度探す」を押してください。</p>}
         </div>
       )}

@@ -11,6 +11,7 @@ import { buildDateSuggestions, type DateSuggestions } from "./dateSuggest";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
+import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
 const FILE = () => process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json");
@@ -31,6 +32,8 @@ export interface InboxMeta {
 export interface InboxItem {
   id: string;
   source: InboxSource;
+  /** 準備中の進み具合（段階の言葉だけ。画面に1行で出す） */
+  progress?: Progress | null;
   meta: InboxMeta | null;
   text: string;
   received_at: string;
@@ -202,6 +205,20 @@ export interface InboxInput {
 }
 
 /** 窓口の入力を確かめる。問題があればエラー文、なければ整えた入力を返す */
+/** Slack の投稿へのリンクか（https:// で始まり、ホストが slack.com か *.slack.com）。そうなら URL を、違えば null */
+export function safeSlackPermalink(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.toLowerCase();
+    if (u.protocol !== "https:" || u.username || u.password) return null;
+    if (host !== "slack.com" && !host.endsWith(".slack.com")) return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } | { ok: false; error: string } {
   if (!body || typeof body !== "object") return { ok: false, error: "JSON の本文がありません" };
   const b = body as Record<string, unknown>;
@@ -219,6 +236,8 @@ export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } 
       if (typeof m[k] !== "string") return { ok: false, error: `meta.${k} は文字列です` };
       meta[k] = (m[k] as string).slice(0, 500);
     }
+    // Slack の投稿へのリンクだけを残す（https:// で始まり、ホストが slack.com で終わるもの）。それ以外は保存しない
+    if (meta.permalink !== undefined && !safeSlackPermalink(meta.permalink)) delete meta.permalink;
   }
   return { ok: true, input: { text, source: b.source, meta } };
 }
@@ -226,9 +245,10 @@ export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } 
 const newId = () => `inb-${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
 
 /** 登録して、裏で候補づくりを始める。返すのは登録した1件（まだ processing） */
-export function addToInbox(input: InboxInput, runner: Runner, extractor?: IntakeExtractor): InboxItem {
+export function addToInbox(input: InboxInput, runner: Runner, extractor?: IntakeExtractor, onSettled?: () => void): InboxItem {
   const item = registerInbox(input);
-  void prepare(item.id, runner, extractor);
+  // onSettled：裏の候補づくりが終わったら呼ぶ（API を使う操作の同時実行の数を返すため）
+  void prepare(item.id, runner, extractor).finally(() => onSettled?.());
   return item;
 }
 
@@ -267,6 +287,9 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
   const events: AgentEvent[] = [];
   let runUsd = 0;
   let pitchJob: { request: SpeakingRequest; result: ProposalResult } | null = null;
+  // 進み具合（画面に1行で出す）。作業ログの流れから段階を決め、変わったときだけ保存する
+  let stage: ProgressStage = "reading";
+  update(id, (x) => ({ ...x, progress: progressOf(stage) }));
   try {
     if (extractor && !it.nominee) {
       const { nominee, intake } = await readIntake(it.text, it.received_at, extractor, id);
@@ -281,6 +304,11 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       runner(request, (e) => {
         events.push(e);
         if (e.type === "done") runUsd = e.run_usd;
+        const next = nextStage(stage, e as { type: string; name?: string });
+        if (next !== stage) {
+          stage = next;
+          update(id, (x) => ({ ...x, progress: progressOf(stage) }));
+        }
       }),
     );
     const result = raw ? addNomineeNote(addNomineeNote(raw, note), undecided) : null;
@@ -374,6 +402,8 @@ export interface InboxListItem {
   no_fit: boolean;
   error: string | null;
   permalink: string | null;
+  /** 準備中の進み具合（段階の言葉だけ。lib/progressStage.ts） */
+  progress?: Progress | null;
 }
 
 export function listView(it: InboxItem): InboxListItem {
@@ -389,7 +419,9 @@ export function listView(it: InboxItem): InboxListItem {
     candidate_names: it.result?.candidates.map((c) => c.name) ?? [],
     no_fit: !!it.result && it.result.candidates.length === 0,
     error: it.status === "error" ? it.error : null,
-    permalink: it.meta?.permalink ?? null,
+    // 前に保存したものも、Slack の投稿へのリンクでなければ出さない
+    permalink: safeSlackPermalink(it.meta?.permalink),
+    progress: it.status === "processing" ? it.progress ?? null : null,
   };
 }
 

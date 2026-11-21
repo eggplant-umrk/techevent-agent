@@ -1,4 +1,5 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
+import { originalUrl } from "./originalUrl";
 import Anthropic from "@anthropic-ai/sdk";
 import { todayJst } from "./clock";
 import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
@@ -48,7 +49,8 @@ export interface CandidateCard {
   last_talk_date: string | null;
   theme: string;
   reason: string;
-  evidence: Array<{ id: string; type: string; date: string; title: string; where: string | null }>;
+  /** url：元のページ（PR・Slack の投稿・ブログ・リリース）。架空の活動にはない */
+  evidence: Array<{ id: string; type: string; date: string; title: string; where: string | null; url?: string | null }>;
   cautions: string[];
   is_alternative_to_nominee: boolean;
   /** "strong" = confident pick; "conditional" = usable pick with a stated catch. Strong ones come first. */
@@ -339,7 +341,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
         evidence: c.evidence_activity_ids
           .map((id) => acts.get(id))
           .filter((a): a is NonNullable<typeof a> => !!a)
-          .map((a) => ({ id: a.id, type: a.type, date: a.date, title: a.title, where: a.channel ?? a.repo })),
+          .map((a) => ({ id: a.id, type: a.type, date: a.date, title: a.title, where: a.channel ?? a.repo, url: originalUrl(a.url) })),
         cautions,
         is_alternative_to_nominee: c.is_alternative_to_nominee,
         confidence: c.confidence,
@@ -429,13 +431,15 @@ export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) =>
     const results: Anthropic.ToolResultBlockParam[] = [];
     let submitted: T | null = null;
     for (const t of toolUses) {
-      emit({ type: "tool_call", id: t.id, name: t.name, input: t.input });
+      // 提出のツールの入力（候補・理由・注意点の下書き）は作業ログに流さない。差し戻された提出の中身が画面・保存に残らないように
+      emit({ type: "tool_call", id: t.id, name: t.name, input: t.name === spec.submitTool ? null : t.input });
       if (t.name === spec.submitTool) {
         const input = t.input as T;
         const errs = spec.validate(input, seen);
         if (errs.length) {
-          emit({ type: "retry", message: errs.join("／") });
-          emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: "差し戻し：" + errs.join("／") });
+          // 差し戻しの理由（提出の文の一部を含むことがある）は Agent にだけ返し、作業ログには件数だけ
+          emit({ type: "retry", message: `提出を差し戻して、直してもらっています（${errs.length}件）` });
+          emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: `差し戻し（${errs.length}件）` });
           results.push({ type: "tool_result", tool_use_id: t.id, is_error: true, content: errs.join("\n") });
         } else {
           submitted = input;

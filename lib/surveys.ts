@@ -28,7 +28,10 @@ export { surveys } from "./surveyCsv";
 
 const MAX_CALLS = 3;
 /** 分析結果の保存先。テストでは SURVEY_ANALYSIS_FILE で別のファイルに向ける */
-const FILE = () => process.env.SURVEY_ANALYSIS_FILE || path.join(process.cwd(), "data", "survey_analysis.json");
+const FILE = () =>
+  process.env.SURVEY_ANALYSIS_FILE ||
+  // 置き場所を分けたサーバー（見せる用など）は、その中に保存する（保存済みの分析結果で補うのは今までどおり）
+  (process.env.DATA_RUNTIME_DIR ? path.join(process.env.DATA_RUNTIME_DIR, "survey_analysis.json") : path.join(process.cwd(), "data", "survey_analysis.json"));
 
 // ---------------------------------------------------------------------------
 // コード：集計・除外・洗い出し・文への分割

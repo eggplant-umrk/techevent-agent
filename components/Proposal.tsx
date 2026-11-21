@@ -104,7 +104,12 @@ function CandidateRow({
         {c.evidence.map((ev, i) => (
           <span key={ev.id}>
             {(i > 0 || c.evidence_request_id) && "、"}
-            {c.card_id ? (
+            {ev.url ? (
+              // 元のページ（PR・Slack の投稿・ブログ・リリース）があれば、カード詳細を開かずに1回で飛ぶ
+              <a href={ev.url} target="_blank" rel="noreferrer" className="link" title={`${ev.title}（元のページを新しいタブで開きます）`}>
+                {ACTIVITY_LABEL[ev.type] ?? ev.type}「{shortTitle(ev.title)}」<span aria-hidden="true">↗</span>
+              </a>
+            ) : c.card_id ? (
               <button type="button" className="link" title={ev.title} onClick={() => onOpenCard(ev.id)}>
                 {ACTIVITY_LABEL[ev.type] ?? ev.type}「{shortTitle(ev.title)}」
               </button>

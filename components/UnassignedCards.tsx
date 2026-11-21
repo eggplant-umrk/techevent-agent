@@ -49,7 +49,11 @@ export function UnassignedCards({
 function Row({ card, people, onAssign }: { card: UnassignedCard; people: PersonRow[]; onAssign: (cardId: string, employeeId: string) => Promise<void> }) {
   // 関わっていそうな人：キーワードが一致した活動（根拠）がある人だけを先に並べる。最初から誰も選ばない（推測で選んでおかない）
   const related = new Set(card.related_employees.map((p) => p.id));
-  const sorted = [...people].sort((a, b) => Number(related.has(b.id)) - Number(related.has(a.id)));
+  // 並び：根拠のある人 → リリースのプロダクトと同じ事業部の人（例：「バクラク契約管理」ならバクラク）→ ほか
+  const product = card.release_notes.map((n) => n.product).join(" ");
+  const sameUnit = (p: PersonRow) => !!p.business_unit && product.includes(p.business_unit);
+  const rank = (p: PersonRow) => (related.has(p.id) ? 0 : sameUnit(p) ? 1 : 2);
+  const sorted = [...people].sort((a, b) => rank(a) - rank(b));
   const [who, setWho] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,8 +76,9 @@ function Row({ card, people, onAssign }: { card: UnassignedCard; people: PersonR
         <p key={n.id}>
           <Tag tone="accent">リリース</Tag>{" "}
           {n.url ? (
-            <a href={n.url} target="_blank" rel="noreferrer" className="strong">
+            <a href={n.url} target="_blank" rel="noreferrer" className="strong" title="公開ページを新しいタブで開きます">
               {n.title}
+              <span aria-hidden="true"> ↗</span>
             </a>
           ) : (
             <span className="strong">{n.title}</span>
@@ -116,7 +121,7 @@ function Row({ card, people, onAssign }: { card: UnassignedCard; people: PersonR
           <option value="">担当者を選ぶ</option>
           {sorted.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name}（{p.business_unit}）{related.has(p.id) ? "・関わっていそう" : ""}
+              {p.name}（{p.business_unit}）{related.has(p.id) ? "・関わっていそう" : sameUnit(p) ? "・同じ事業部" : ""}
             </option>
           ))}
         </select>

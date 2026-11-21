@@ -9,6 +9,15 @@ import path from "node:path";
 import { resetTargets } from "../lib/runtime";
 
 const del = process.argv.includes("--delete");
+// --share：見せる用（npm run start:share）の置き場（SHARE_DATA_DIR、既定 data/runtime-share/）だけを片付ける。発表用のデータには触らない
+if (process.argv.includes("--share")) {
+  try {
+    process.loadEnvFile(".env");
+  } catch {
+    // .env がなければ既定の置き場
+  }
+  process.env.DATA_RUNTIME_DIR = path.resolve((process.env.SHARE_DATA_DIR ?? "").trim() || path.join("data", "runtime-share"));
+}
 const stamp = new Date().toISOString().replace(/[:.]/g, "-");
 const backup = path.join(process.cwd(), "data", "runtime-backup", stamp);
 const rel = (p: string) => path.relative(process.cwd(), p);

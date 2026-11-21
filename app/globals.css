@@ -277,11 +277,17 @@ textarea.input { resize: vertical; }
   .talk-table th:nth-child(4), .talk-table td:nth-child(4) { display: none; }
 }
 
+/* ---------- ノートPC（1024px くらい）：2列のまま、左の列を細くする（選んだ詳細が画面の下に出ないように） ---------- */
+@media (max-width: 1200px) {
+  .notebook, .side { flex-basis: 330px; max-width: 400px; }
+  .panel { flex-basis: 460px; }
+}
 /* ---------- narrow screens: stack ---------- */
-@media (max-width: 1040px) {
+@media (max-width: 860px) {
   .notebook { max-width: none; flex-basis: 100%; position: static; max-height: none; overflow: visible; }
   .notebook > .nb-section { max-height: 40vh; }
   .nb-list { max-height: 60vh; }
+  .side { max-width: none; flex-basis: 100%; position: static; }
 }
 @media (max-width: 640px) {
   .app-header { padding: 8px 16px; position: static; }
@@ -378,3 +384,17 @@ textarea.input { resize: vertical; }
 .cautions-full { display: flex; flex-wrap: wrap; gap: 0 4px; align-items: baseline; }
 .cautions-full ul { margin: 0; padding-left: 18px; flex: 1 1 100%; }
 .cautions-full li { white-space: normal; }
+
+/* 受信箱の左の列（.side）は上で定義しているので、幅の切り替えはここで上書きする */
+@media (max-width: 1200px) {
+  .side { flex-basis: 330px; max-width: 400px; }
+}
+@media (max-width: 860px) {
+  .side { max-width: none; flex-basis: 100%; position: static; }
+}
+
+/* 声かけ文・主催者への返事の入力欄：中身に合わせて高さを伸ばす（入れ子のスクロールでページが進まないように） */
+.draft-text, .reply-text { field-sizing: content; min-height: 6em; max-height: none; }
+
+/* 候補ができるまでの進み具合（1行） */
+.progress-line { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }

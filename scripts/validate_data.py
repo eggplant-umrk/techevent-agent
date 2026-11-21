@@ -78,7 +78,14 @@ for p in pubs:
 for s in data["schedules.json"]:
     check(s["employee_id"] in eid, f"schedule {s}")
     check(s["from"] <= s["to"], f"schedule range {s}")
-check(isinstance(data["learnings.json"], list), "learnings must be a list")
+acts_by_id = {a["id"]: a for a in acts}
+pub_by_id = {p["id"]: p for p in pubs}
+for c in data.get("cards.json", []):
+    for aid in c["evidence_activity_ids"] + c.get("announcement_activity_ids", []):
+        check(aid in acts_by_id and acts_by_id[aid]["author_id"] == c["employee_id"], f"{c['card_id']} bad activity id {aid}")
+    for pid in c["published_ids"]:
+        check(pid in pub_by_id and pub_by_id[pid]["author_id"] == c["employee_id"], f"{c['card_id']} bad published id {pid}")
+    check(1 <= len(c["themes"]) <= 3, f"{c['card_id']} themes")
 
 print(f"employees={len(emps)} activities={len(acts)} {dict(types)} events={len(evs)} requests={len(reqs)} rules={len(rules)}")
 print(f"top5 talk share={top5_share:.0%}  attendance rate range="

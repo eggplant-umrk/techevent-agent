@@ -1,37 +1,58 @@
-import type { DeclineReason, OutcomeResult } from "@/lib/data";
+// record_outcome: write the result back to the card's outreach history (called from the UI).
+// If the agent proposed someone without a card, approving creates a card from the proposal first.
+import { appendOutreach, getCardById, upsertCard, type DeclineReason, type OutreachResult } from "@/lib/cards";
 import { resolveRequest } from "@/lib/requests";
-import { recordOutcome } from "@/lib/tools";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const RESULTS: OutreachResult[] = ["approved", "accepted", "declined", "published"];
 const REASONS: DeclineReason[] = ["theme_mismatch", "busy", "schedule_conflict", "other"];
 
+interface Body {
+  request_id: string;
+  custom_text?: string;
+  card_id: string | null;
+  result: OutreachResult;
+  reason?: DeclineReason;
+  /** Needed only when card_id is null. */
+  candidate?: { employee_id: string; theme: string; reason: string; evidence_activity_ids: string[] };
+}
+
 export async function POST(req: Request) {
-  const body = (await req.json()) as {
-    request_id: string;
-    custom_text?: string;
-    employee_id: string;
-    result: OutcomeResult;
-    reason?: DeclineReason;
-    note?: string;
-    theme?: string;
-  };
-  if (body.result !== "accepted" && body.result !== "declined") {
-    return Response.json({ error: "result は accepted か declined" }, { status: 400 });
-  }
+  const body = (await req.json()) as Body;
+  if (!RESULTS.includes(body.result)) return Response.json({ error: "result が不正です" }, { status: 400 });
   if (body.result === "declined" && (!body.reason || !REASONS.includes(body.reason))) {
     return Response.json({ error: "辞退の理由を選んでください" }, { status: 400 });
   }
+
+  let cardId = body.card_id;
+  if (!cardId) {
+    const c = body.candidate;
+    if (!c) return Response.json({ error: "カードがありません" }, { status: 400 });
+    const made = upsertCard({
+      card_id: null,
+      employee_id: c.employee_id,
+      summary: c.reason,
+      themes: [c.theme],
+      evidence_activity_ids: c.evidence_activity_ids,
+      format: "lt",
+      format_reason: "依頼への提案から作成したカード",
+      published_ids: [],
+      announcement_activity_ids: [],
+    });
+    if (!made.ok) return Response.json({ error: made.errors.join(" / ") }, { status: 400 });
+    cardId = made.card!.card_id;
+  } else if (!getCardById(cardId)) {
+    return Response.json({ error: `カード ${cardId} は存在しません` }, { status: 400 });
+  }
+
   const request = resolveRequest(body);
-  const entry = recordOutcome({
+  const card = appendOutreach(cardId, {
     request_id: body.request_id,
-    employee_id: body.employee_id,
     result: body.result,
-    reason: body.reason ?? null,
-    note: (body.note ?? "").slice(0, 500),
+    reason: body.result === "declined" ? body.reason! : null,
     event_date: request?.event?.date ?? null,
-    theme: body.theme ?? null,
   });
-  return Response.json({ ok: true, entry });
+  return Response.json({ ok: true, card });
 }

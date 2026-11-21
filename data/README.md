@@ -13,7 +13,8 @@
 | [application_rules.json](application_rules.json) | 13ルール | イベント開催時に必要な申請 |
 | [published.json](published.json) | 40件 | 発信済みの記録（「直近の発信」DBのダミー） |
 | [schedules.json](schedules.json) | 14件 | 社員の既知の予定（出張・登壇・リリース対応など） |
-| [learnings.json](learnings.json) | 0件〜 | Agentの学び。画面で結果を記録すると追記される |
+| [cards.json](cards.json) | 18枚〜 | ネタ帳。Agentが活動を読んで作るカード。打診の結果もここに書き戻される |
+| [notebook_state.json](notebook_state.json) | — | ネタ帳の更新で、社員ごとにどの日付の活動まで読んだか |
 | `usage.json` | — | APIの使用量と金額の記録。アプリが作る。gitには入れない |
 
 `employees.json`〜`application_rules.json`、`published.json`、`schedules.json` は [scripts/gen_data.py](../scripts/gen_data.py) で作り直せます（`python scripts/gen_data.py`）。検証は `python scripts/validate_data.py` です。
@@ -135,9 +136,24 @@
 
 `check_schedule` が見る予定です。`employee_id`・`from`・`to`（両端を含む）・`kind`・`note`。
 
-## learnings.json
+## cards.json（ネタ帳）
 
-画面の「結果の記録」で追記されます。`request_id`・`employee_id`・`result`（`accepted` / `declined`）・`reason`（`theme_mismatch` / `busy` / `schedule_conflict` / `other`）・`note`・`event_date`・`recorded_at`。
+v0.1 の `learnings.json` はカードの `outreach_history` に統合しました（v0.1 の記録は0件だったので移行するデータはありません）。
+
+| フィールド | 説明 |
+| --- | --- |
+| `card_id` / `employee_id` | カードのID（`card-e011-01` など）と社員 |
+| `summary` | 取り組みの要約（2〜3文） |
+| `themes` | 話せるテーマ案（1〜3個） |
+| `evidence_activity_ids` | 根拠の activity id。本人の実在する活動だけ（保存前に検証） |
+| `announcement_activity_ids` | 「公開しました」などの告知の投稿。根拠ではなく発信の記録 |
+| `format` / `format_reason` | おすすめの形（`talk` / `lt` / `blog`）と理由 |
+| `publication_status` / `published_ids` | 発信状況（`unpublished` / `blogged` / `talked`）と published の id |
+| `latest_activity_date` | 最新の活動日 |
+| `outreach_history` | 打診履歴。`date`・`request_id`・`result`（`approved` / `accepted` / `declined` / `published`）・`reason`・`event_date` |
+| `reviewed` / `reviewed_at` | 技術広報が画面で直したら `true`。Agentは要約・テーマ案・おすすめの形を上書きしない |
+| `pending_themes` | 確認済みカードにAgentが提案した新しいテーマ案（未確認）。画面で採用・却下する |
+| `created_at` / `updated_at` | 作成日時・更新日時 |
 
 ---
 

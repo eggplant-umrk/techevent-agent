@@ -139,6 +139,62 @@ select.input { width: auto; margin: 0; }
 .learns { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .learns li { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
 
+/* ---- v0.2: notebook (left) + request panel (right) ---- */
+.page { max-width: 1440px; }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 16px; align-items: start; }
+.pane { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0; }
+.pane.notebook { position: sticky; top: 12px; max-height: calc(100vh - 24px); display: flex; flex-direction: column; }
+.pane-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pane-head h2 { margin: 0; }
+h3 { font-size: 15px; margin: 18px 0 8px; }
+.small { font-size: 13px; }
+.grow { flex: 1; min-width: 0; }
+.filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 10px 0; font-size: 13px; }
+.filters label { display: flex; gap: 4px; align-items: center; }
+.input.small { padding: 4px 8px; font-size: 13px; width: auto; margin: 0; }
+.nb-log { display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto; margin-bottom: 10px; font-size: 13px; }
+.nb-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.nb-card { border: 1px solid var(--line); border-radius: 10px; }
+.nb-card.open { border-color: var(--accent); }
+.nb-card.hl { box-shadow: 0 0 0 2px var(--accent-soft); border-color: var(--accent); }
+.nb-head { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; width: 100%; cursor: pointer; }
+.nb-head:focus-visible { outline: 2px solid var(--accent); border-radius: 10px; }
+.nb-who { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.nb-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.nb-theme { font-weight: 600; color: var(--accent); font-size: 14px; }
+.nb-body { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.nb-summary { margin: 0 0 4px; }
+.tight { margin: 2px 0 6px; padding-left: 18px; }
+.pending { background: var(--warn-soft); border-radius: 8px; padding: 6px 10px; }
+.pending-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+.pending-row span { flex: 1; min-width: 10em; }
+.edit { display: flex; flex-direction: column; }
+.edit .input { margin: 2px 0 8px; }
+.quote { background: var(--code); border-radius: 6px; padding: 6px 10px; margin: 4px 0; font-size: 13px; }
+.linkish { all: unset; cursor: pointer; color: var(--text); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.linkish:hover { text-decoration-color: var(--accent); }
+.linkish:focus-visible { outline: 2px solid var(--accent); }
+.btn.ghost { background: transparent; }
+.btn.primary-sm { background: var(--accent); border-color: var(--accent); color: var(--panel); font-weight: 600; }
+.row.wrap { flex-wrap: wrap; gap: 6px; }
+.row { gap: 8px; }
+.blog { border: 1px dashed var(--accent); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+.blog-item { border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.cand-list { display: flex; flex-direction: column; gap: 10px; }
+.cand { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.cand.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.cand-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cand .cautions { color: var(--warn); }
+.warnbox { background: var(--warn-soft); }
+.draft-text { font-size: 14px; line-height: 1.7; }
+.log-note.ok { background: var(--ok-soft); color: var(--ok); }
+
+@media (max-width: 960px) {
+  .split { grid-template-columns: 1fr; }
+  .pane.notebook { position: static; max-height: none; }
+  .nb-list { max-height: 70vh; }
+}
+
 @media (max-width: 600px) {
   .meter { width: 100%; justify-content: space-between; }
   .log-tool { grid-template-columns: 1fr; }

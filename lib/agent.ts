@@ -6,8 +6,9 @@ import { MAX_STEPS, TODAY } from "./config";
 import { activities, employeeById, schedules, type SpeakingRequest } from "./data";
 import { alternativePitch } from "./heavy";
 import { buildSystemPrompt } from "./prompt";
-import { executeTool, SUBMIT_TOOL, TOOL_DEFS, type SubmitInput } from "./tools";
+import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type SubmitInput } from "./tools";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
+import { getCardById, type Card } from "./cards";
 
 export type AgentEvent =
   | { type: "start"; run_id: string; loop_model: string; heavy_model: string; switched: boolean; total_usd: number; switch_usd: number }
@@ -37,6 +38,9 @@ export interface CandidateCard {
   evidence: Array<{ id: string; type: string; date: string; title: string; where: string | null }>;
   cautions: string[];
   is_alternative_to_nominee: boolean;
+  card_id: string | null;
+  /** Snapshot of the notebook card at proposal time (null if the agent proposed someone without a card). */
+  card: Card | null;
 }
 
 export interface ProposalResult {
@@ -46,6 +50,7 @@ export interface ProposalResult {
   summary: string;
   nominee_assessment: string | null;
   learnings_applied: string[];
+  no_fit: SubmitInput["no_fit"];
   candidates: CandidateCard[];
   alternative_pitch?: string;
 }
@@ -76,8 +81,20 @@ function summarize(name: string, result: unknown): string {
   const r = result as Record<string, unknown>;
   if (r && typeof r === "object" && "error" in r) return `エラー: ${String(r.error)}`;
   switch (name) {
-    case "read_learnings":
-      return `学び ${r.count}件`;
+    case "search_cards": {
+      const rs = (r.results as Array<{ card_id: string; employee: string; themes: string[]; reviewed: boolean }>) ?? [];
+      return (
+        `ネタ帳 ${r.total_hits}枚ヒット／上位: ` +
+        rs
+          .slice(0, 3)
+          .map((x) => `${x.employee.split(" ")[1] ?? x.employee}${x.reviewed ? "（確認済み）" : ""}「${x.themes[0]}」`)
+          .join("、")
+      );
+    }
+    case "get_card": {
+      const h = (r.outreach_history as unknown[]) ?? [];
+      return `${r.card_id}：根拠${(r.evidence as unknown[]).length}件／打診履歴${h.length}件${r.reviewed ? "／確認済み" : ""}`;
+    }
     case "search_activities": {
       const rs = (r.results as Array<{ id: string; author: string; title: string }>) ?? [];
       return `${r.total_hits}件ヒット／上位: ` + rs.slice(0, 3).map((x) => `${x.author.split(" ")[1] ?? x.author}「${x.title}」`).join("、");
@@ -105,19 +122,38 @@ function collectSeenIds(name: string, result: unknown, seen: Set<string>) {
   if (name === "get_employee") {
     for (const t of ((result as { recent_activity_titles?: string[] }).recent_activity_titles ?? [])) seen.add(t.split(" ")[0]);
   }
+  if (name === "search_cards") {
+    for (const x of ((result as { results?: Array<{ evidence_activity_ids: string[] }> }).results ?? [])) {
+      for (const id of x.evidence_activity_ids) seen.add(id);
+    }
+  }
+  if (name === "get_card") {
+    for (const t of ((result as { evidence?: string[] }).evidence ?? [])) seen.add(t.split(" ")[0]);
+  }
 }
 
 function validateSubmit(input: SubmitInput, seen: Set<string>): string[] {
   const errs: string[] = [];
-  if (!Array.isArray(input.candidates) || input.candidates.length !== 3) errs.push("候補はちょうど3人にしてください");
+  const n = Array.isArray(input.candidates) ? input.candidates.length : 0;
+  if (n > 3) errs.push("候補は3人までにしてください");
+  if (n < 3 && (!input.no_fit || input.no_fit.reasons.length === 0)) {
+    errs.push("候補が3人に満たないときは no_fit に「見つからない理由」と「次に確認すべきこと」を書いてください");
+  }
+  const acts = new Map(activities().map((a) => [a.id, a]));
   const ids = new Set<string>();
   for (const c of input.candidates ?? []) {
     if (!employeeById(c.employee_id)) errs.push(`${c.employee_id} は社員一覧にいません`);
     if (ids.has(c.employee_id)) errs.push(`${c.employee_id} が重複しています`);
     ids.add(c.employee_id);
-    if (!c.evidence_activity_ids?.length) errs.push(`${c.employee_id} の根拠の取り組みがありません`);
-    const unseen = (c.evidence_activity_ids ?? []).filter((id) => !seen.has(id));
-    if (unseen.length) errs.push(`${c.employee_id} の根拠 ${unseen.join(", ")} はこの調査で見ていない取り組みです。search_activities で確認したIDだけを使ってください`);
+    const card = c.card_id ? getCardById(c.card_id) : undefined;
+    if (c.card_id && !card) errs.push(`カード ${c.card_id} は存在しません`);
+    if (card && card.employee_id !== c.employee_id) errs.push(`カード ${c.card_id} は ${c.employee_id} のカードではありません`);
+    const publishedOnly = !!card && card.evidence_activity_ids.length === 0 && card.published_ids.length > 0;
+    if (!c.evidence_activity_ids?.length && !publishedOnly) errs.push(`${c.employee_id} の根拠の取り組みがありません`);
+    for (const id of c.evidence_activity_ids ?? []) {
+      if (!acts.has(id)) errs.push(`根拠 ${id} は存在しない activity id です`);
+      else if (!seen.has(id)) errs.push(`${c.employee_id} の根拠 ${id} はこの調査で見ていない取り組みです。カードか検索結果で確認したIDだけを使ってください`);
+    }
   }
   return errs;
 }
@@ -149,6 +185,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
     summary: input.summary,
     nominee_assessment: input.nominee_assessment,
     learnings_applied: input.learnings_applied,
+    no_fit: input.candidates.length < 3 ? input.no_fit : null,
     candidates: input.candidates.map((c, i) => {
       const e = employeeById(c.employee_id)!;
       const sys = systemCautions(c.employee_id, request.event?.date);
@@ -171,6 +208,8 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
           .map((a) => ({ id: a.id, type: a.type, date: a.date, title: a.title, where: a.channel ?? a.repo })),
         cautions,
         is_alternative_to_nominee: c.is_alternative_to_nominee,
+        card_id: c.card_id,
+        card: c.card_id ? getCardById(c.card_id) ?? null : null,
       };
     }),
   };
@@ -198,7 +237,7 @@ export async function runAgent(
   const messages: Anthropic.MessageParam[] = [
     {
       role: "user",
-      content: `次の登壇依頼に対して、候補を3人提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
+      content: `次の登壇依頼に対して、ネタ帳から候補を最大3人提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
     },
   ];
   const seen = new Set<string>();
@@ -211,7 +250,7 @@ export async function runAgent(
       model: models.loop,
       max_tokens: 16000,
       system,
-      tools: TOOL_DEFS,
+      tools: PROPOSAL_TOOLS,
       messages,
       cache_control: { type: "ephemeral" }, // auto-caches the growing conversation prefix
       thinking: { type: "adaptive", display: "summarized" },
@@ -262,7 +301,7 @@ export async function runAgent(
           results.push({ type: "tool_result", tool_use_id: t.id, is_error: true, content: errs.join("\n") });
         } else {
           submitted = input;
-          emit({ type: "tool_result", id: t.id, name: t.name, ok: true, summary: "候補3人を提出" });
+          emit({ type: "tool_result", id: t.id, name: t.name, ok: true, summary: `候補${input.candidates.length}人を提出` });
           results.push({ type: "tool_result", tool_use_id: t.id, content: "受け付けました" });
         }
         continue;

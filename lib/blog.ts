@@ -1,0 +1,80 @@
+// "ブログのネタを出す": pick 3 unpublished cards that would make good blog posts.
+// One call, structured output. Only unpublished cards are offered; ブログ済み/登壇済み never appear.
+import { randomUUID } from "node:crypto";
+import { getClient } from "./anthropic";
+import { loadCards, outreachSummary, type Card } from "./cards";
+import { TODAY, TRENDS } from "./config";
+import { activities, employeeById } from "./data";
+import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
+
+export interface BlogIdea {
+  card_id: string;
+  title: string;
+  why_easy_to_blog: string;
+  outline: string[];
+}
+
+const SCHEMA = {
+  type: "object",
+  properties: {
+    ideas: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          card_id: { type: "string" },
+          title: { type: "string" },
+          why_easy_to_blog: { type: "string" },
+          outline: { type: "array", items: { type: "string" } },
+        },
+        required: ["card_id", "title", "why_easy_to_blog", "outline"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["ideas"],
+  additionalProperties: false,
+};
+
+function describe(c: Card): string {
+  const e = employeeById(c.employee_id);
+  const acts = activities().filter((a) => c.evidence_activity_ids.includes(a.id));
+  return `- ${c.card_id}｜${e?.name}（${e?.business_unit}／登壇${e?.past_talk_count}回／忙しさ${e?.workload}）｜${c.reviewed ? "確認済み" : "未確認"}
+  要約: ${c.summary}
+  テーマ案: ${c.themes.join(" / ")}
+  根拠: ${acts.map((a) => `${a.type} ${a.title}`).join("／")}
+  打診履歴: ${outreachSummary(c)}`;
+}
+
+export async function suggestBlogIdeas(): Promise<{ ideas: Array<BlogIdea & { card: Card }>; run_usd: number; total_usd: number }> {
+  const pool = loadCards().filter((c) => c.publication_status === "unpublished");
+  if (pool.length === 0) return { ideas: [], run_usd: 0, total_usd: totalUsd() };
+  const runId = randomUUID();
+  const { loop: model } = chooseModels();
+  const res = await getClient().messages.create({
+    model,
+    max_tokens: 8000,
+    system: `あなたはLayerXの技術広報を手伝います。イベントがなくても発信できるように、ネタ帳の未発信カードからブログにしやすいものを3枚選びます。今日は${TODAY}。時流：${TRENDS.join("／")}
+選ぶ基準：
+- 数字や具体的な工夫があり、1本の記事として読者が持ち帰れるものがある
+- 登壇経験の少ない人を優先する（発信する人としない人の差を埋めたい）
+- 確認済みのカードを優先する
+- 最近辞退した人、忙しさ5の人は下げる
+why_easy_to_blog は1〜2文、outline は見出しを3〜4個。カードにない事実は足さない。`,
+    messages: [{ role: "user", content: `未発信のカード（${pool.length}枚）\n${pool.map(describe).join("\n")}` }],
+    output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+  });
+  recordUsage(runId, "blog_ideas", res.model, res.usage);
+  if (res.stop_reason === "refusal") throw new Error("ブログのネタを出せませんでした");
+  const text = res.content
+    .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+    .map((b) => b.text)
+    .join("");
+  const parsed = JSON.parse(text) as { ideas: BlogIdea[] };
+  const byId = new Map(pool.map((c) => [c.card_id, c]));
+  const ideas = parsed.ideas
+    .filter((i) => byId.has(i.card_id)) // drop anything not in the unpublished pool
+    .slice(0, 3)
+    .map((i) => ({ ...i, card: byId.get(i.card_id)! }));
+  return { ideas, run_usd: runUsd(runId), total_usd: totalUsd() };
+}

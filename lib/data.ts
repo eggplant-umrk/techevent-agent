@@ -13,7 +13,6 @@ const ALLOWED = new Set([
   "application_rules.json",
   "published.json",
   "schedules.json",
-  "learnings.json",
   "cards.json",
   "usage.json",
 ]);
@@ -106,20 +105,6 @@ export interface Schedule {
   note: string;
 }
 
-export type OutcomeResult = "accepted" | "declined";
-export type DeclineReason = "theme_mismatch" | "busy" | "schedule_conflict" | "other";
-
-export interface Learning {
-  request_id: string;
-  employee_id: string;
-  result: OutcomeResult;
-  reason: DeclineReason | null;
-  note: string;
-  event_date: string | null;
-  theme: string | null;
-  recorded_at: string;
-}
-
 export interface UsageEntry {
   at: string;
   run_id: string;
@@ -137,7 +122,6 @@ export const activities = () => readJson<Activity[]>("activities.json");
 export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");
-export const learnings = () => readJson<Learning[]>("learnings.json", []);
 export const usage = () => readJson<UsageEntry[]>("usage.json", []);
 
 /** Requests with demo-only fields (note_for_demo) removed. This is the only way requests reach the agent or the browser. */
@@ -147,10 +131,6 @@ export function requests(): SpeakingRequest[] {
     const { note_for_demo: _omit, ...rest } = r;
     return rest as unknown as SpeakingRequest;
   });
-}
-
-export function appendLearning(entry: Learning) {
-  writeJson("learnings.json", [...learnings(), entry]);
 }
 
 export function appendUsage(entry: UsageEntry) {

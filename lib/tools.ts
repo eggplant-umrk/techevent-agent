@@ -1,36 +1,17 @@
 // Agent tools over data/*.json. Results are kept short (top 10, 200-char bodies).
 import type Anthropic from "@anthropic-ai/sdk";
-import {
-  activities,
-  appendLearning,
-  employeeById,
-  employees,
-  events,
-  learnings,
-  published,
-  schedules,
-  type DeclineReason,
-  type Learning,
-  type OutcomeResult,
-} from "./data";
+import { activities, employeeById, employees, events, published, schedules } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
 import { filterCards, getCardById, loadCards, outreachSummary, type CardFilter } from "./cards";
 
 const clip = (s: string, n = BODY_CHARS) => (s.length > n ? s.slice(0, n) + "…" : s);
-const nameOf = (id: string) => employeeById(id)?.name ?? id;
 
 // ---------------------------------------------------------------------------
 // Tool definitions (order is fixed: part of the cached prefix)
 // ---------------------------------------------------------------------------
 export const SUBMIT_TOOL = "submit_candidates";
 
-export const TOOL_DEFS: Anthropic.Tool[] = [
-  {
-    name: "read_learnings",
-    description:
-      "過去の登壇打診の結果（承諾・辞退と理由）を読む。提案の最初に必ず1回呼ぶ。辞退理由と開催月から、今回下げるべき人を判断する。",
-    input_schema: { type: "object", properties: {}, additionalProperties: false },
-  },
+const BASE_TOOL_DEFS: Anthropic.Tool[] = [
   {
     name: "search_activities",
     description:
@@ -110,7 +91,7 @@ export const TOOL_DEFS: Anthropic.Tool[] = [
   {
     name: SUBMIT_TOOL,
     description:
-      "最終回答。候補をちょうど3人、おすすめ順に出す。これを呼んだら作業は終わり。根拠の取り組みIDは search_activities で実際に見たものだけを書く。",
+      "最終回答。合う候補を最大3人、おすすめ順に出す。これを呼んだら作業は終わり。合う人が3人いなければ無理に埋めず、no_fit に見つからない理由と次に確認すべきことを書く。根拠の取り組みIDは、この調査でカードや検索結果から実際に見たものだけを書く。",
     strict: true,
     input_schema: {
       type: "object",
@@ -124,7 +105,17 @@ export const TOOL_DEFS: Anthropic.Tool[] = [
         learnings_applied: {
           type: "array",
           items: { type: "string" },
-          description: "過去の学びを今回どう反映したか。なければ空配列",
+          description: "カードの打診履歴（過去の辞退・承諾）を今回どう反映したか。なければ空配列",
+        },
+        no_fit: {
+          type: ["object", "null"],
+          description: "候補が3人に満たないときだけ書く。3人そろえばnull",
+          properties: {
+            reasons: { type: "array", items: { type: "string" }, description: "合う候補が見つからない理由" },
+            next_checks: { type: "array", items: { type: "string" }, description: "技術広報が次に確認すべきこと" },
+          },
+          required: ["reasons", "next_checks"],
+          additionalProperties: false,
         },
         candidates: {
           type: "array",
@@ -132,9 +123,14 @@ export const TOOL_DEFS: Anthropic.Tool[] = [
             type: "object",
             properties: {
               employee_id: { type: "string" },
-              theme: { type: "string", description: "テーマ案（タイトル風に）" },
-              reason: { type: "string", description: "選んだ理由（2〜3文。本人の取り組みと時流の両方から）" },
-              evidence_activity_ids: { type: "array", items: { type: "string" } },
+              card_id: { type: ["string", "null"], description: "根拠にしたネタ帳のカード。カードがない人ならnull" },
+              theme: { type: "string", description: "テーマ案（タイトル風に）。カードのテーマ案を依頼に合わせて調整してよい" },
+              reason: { type: "string", description: "選んだ理由を1行で（本人の取り組みと時流の両方から）" },
+              evidence_activity_ids: {
+                type: "array",
+                items: { type: "string" },
+                description: "根拠の activity id。発信済みで告知しかないカードなら空配列でよい",
+              },
               cautions: {
                 type: "array",
                 items: { type: "string" },
@@ -145,12 +141,12 @@ export const TOOL_DEFS: Anthropic.Tool[] = [
                 description: "指名された人の代わり（または共同登壇）として推す人ならtrue",
               },
             },
-            required: ["employee_id", "theme", "reason", "evidence_activity_ids", "cautions", "is_alternative_to_nominee"],
+            required: ["employee_id", "card_id", "theme", "reason", "evidence_activity_ids", "cautions", "is_alternative_to_nominee"],
             additionalProperties: false,
           },
         },
       },
-      required: ["request_pattern", "summary", "nominee_assessment", "learnings_applied", "candidates"],
+      required: ["request_pattern", "summary", "nominee_assessment", "learnings_applied", "no_fit", "candidates"],
       additionalProperties: false,
     },
   },
@@ -161,8 +157,10 @@ export interface SubmitInput {
   summary: string;
   nominee_assessment: string | null;
   learnings_applied: string[];
+  no_fit: { reasons: string[]; next_checks: string[] } | null;
   candidates: Array<{
     employee_id: string;
+    card_id: string | null;
     theme: string;
     reason: string;
     evidence_activity_ids: string[];
@@ -177,23 +175,6 @@ export interface SubmitInput {
 type Input = Record<string, unknown>;
 const str = (v: unknown) => (typeof v === "string" ? v : undefined);
 const num = (v: unknown) => (typeof v === "number" ? v : undefined);
-
-export function readLearningsTool() {
-  const all = learnings();
-  if (all.length === 0) return { count: 0, learnings: [], note: "まだ記録はありません" };
-  return {
-    count: all.length,
-    learnings: all.slice(-30).map((l) => ({
-      employee: `${l.employee_id} ${nameOf(l.employee_id)}`,
-      result: l.result,
-      reason: l.reason,
-      note: l.note,
-      theme: l.theme,
-      event_date: l.event_date,
-      recorded_at: l.recorded_at.slice(0, 10),
-    })),
-  };
-}
 
 export function searchActivities(input: Input) {
   const query = str(input.query) ?? "";
@@ -330,30 +311,6 @@ export function getPublished(input: Input) {
   };
 }
 
-/** Called from the UI (a human records the outcome), not by the agent. */
-export function recordOutcome(args: {
-  request_id: string;
-  employee_id: string;
-  result: OutcomeResult;
-  reason: DeclineReason | null;
-  note?: string;
-  event_date?: string | null;
-  theme?: string | null;
-}): Learning {
-  const entry: Learning = {
-    request_id: args.request_id,
-    employee_id: args.employee_id,
-    result: args.result,
-    reason: args.result === "declined" ? args.reason ?? "other" : null,
-    note: args.note ?? "",
-    event_date: args.event_date ?? null,
-    theme: args.theme ?? null,
-    recorded_at: new Date().toISOString(),
-  };
-  appendLearning(entry);
-  return entry;
-}
-
 // ---------------------------------------------------------------------------
 // Notebook (cards) tools
 // ---------------------------------------------------------------------------
@@ -480,6 +437,8 @@ export function searchCards(input: Input) {
       workload: e?.workload,
       themes: c.themes,
       summary: clip(c.summary, 120),
+      evidence_activity_ids: c.evidence_activity_ids,
+      published_ids: c.published_ids,
       format: c.format,
       publication_status: c.publication_status,
       reviewed: c.reviewed,
@@ -511,10 +470,12 @@ export function getCard(input: Input) {
   };
 }
 
+/** Tools for proposals: notebook first, then the raw activities. upsert_card is not included. */
+export const PROPOSAL_TOOLS: Anthropic.Tool[] = [SEARCH_CARDS_DEF, GET_CARD_DEF, ...BASE_TOOL_DEFS];
+
 const IMPL: Record<string, (input: Input) => unknown> = {
   search_cards: searchCards,
   get_card: getCard,
-  read_learnings: () => readLearningsTool(),
   search_activities: searchActivities,
   list_employees: listEmployees,
   get_employee: getEmployee,

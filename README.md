@@ -74,6 +74,35 @@ npm run dev
 
 http://localhost:3000 を開く。APIキーはサーバー側だけで使い、ブラウザには出しません。
 
+#### Slackから依頼を受け付ける（練習用ワークスペース専用）
+
+依頼チャンネルへの新しい投稿を受信箱に入れ、準備ができたら同じスレッドに候補を返すボットです。Socket Mode なので外部公開URLはいりません。投稿するのは、依頼が来たチャンネルのスレッドへの返信だけです。
+
+1. 練習用ワークスペースに Slack アプリを作る
+   - Socket Mode をオンにし、App-Level Token（`connections:write`）を作る → `SLACK_APP_TOKEN`（xapp-）
+   - Bot Token Scopes：`channels:history`・`chat:write`（非公開チャンネルなら `groups:history` も）
+   - Event Subscriptions の bot events：`message.channels`（非公開チャンネルなら `message.groups`）
+   - ワークスペースにインストールし、Bot User OAuth Token → `SLACK_BOT_TOKEN`（xoxb-）
+   - 依頼チャンネルにボットを招待し、チャンネルid（C…）→ `SLACK_REQUEST_CHANNEL`
+2. `.env` に上の3つを書く（名前は `.env.example`）。トークンの値は表示・コミットしない
+3. ターミナルを2つ開いて、それぞれで起動する
+
+```bash
+npm run dev
+```
+
+```bash
+npm run slack
+```
+
+起動すると、接続先のワークスペース名を表示します。練習用であることを確かめてください。`SLACK_ALLOWED_TEAM_ID` を書いておくと、ほかのワークスペースでは起動しません。
+
+Slack なしで確かめるとき（トークン不要。仮の受信箱サーバーで、拾う・無視する投稿と返信の内容を確かめる）：
+
+```bash
+npm run slack:dry-run
+```
+
 ネタ帳（data/cards.json）はコミット済みなので、すぐに使えます。新しい活動を読ませるときは画面の「ネタ帳を更新」を押すか、コマンドで：
 
 ```bash

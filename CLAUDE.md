@@ -18,6 +18,7 @@
 
 ## 守ること
 - APIキー：.env の ANTHROPIC_API_KEY はサーバー側だけで使う。値を表示・ログ出力・コミットしない。環境変数（set / export）に入れない
+- Slackトークン：.env の SLACK_BOT_TOKEN（xoxb-）・SLACK_APP_TOKEN（xapp-）は scripts/slack-bot.ts だけで使う。値を表示・ログ出力・コミットしない。環境変数（set / export）に入れない。練習用ワークスペース専用で、投稿は依頼が来たチャンネルのスレッドへの返信だけ
 - 正解データ：data/README.md と note_for_demo はAgentの入力に絶対に含めない（評価スクリプトだけが読む）
 - 送信しない：声かけ文などを外部へ送る機能は作らない。下書きの表示とコピーだけ
 - 根拠：カードや提案の根拠には、実在するidだけを使う

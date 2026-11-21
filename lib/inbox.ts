@@ -12,6 +12,7 @@ import { KIND_LABEL, type IntakeKind } from "./intake";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
+import { writeJsonAtomic } from "./fileStore";
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 import { userErrorText } from "./userError";
 
@@ -94,7 +95,29 @@ function load(): InboxItem[] {
 }
 
 function save(items: InboxItem[]) {
-  fs.writeFileSync(/*turbopackIgnore: true*/ FILE(), JSON.stringify(items, null, 2) + "\n", "utf-8");
+  writeJsonAtomic(FILE(), items); // 一時ファイルに書いてから置き換える（書きかけを残さない）
+}
+
+/**
+ * サーバーの起動時に呼ぶ：前のサーバーで「準備中」のまま止まった依頼を「エラー」にして、押し直せるようにする
+ * （起動した直後は、このサーバーで動いている候補づくりはない）。直した件数を返す
+ */
+export function recoverInterrupted(): number {
+  const items = load();
+  let n = 0;
+  const fixed = items.map((it) => {
+    if (it.status === "processing") {
+      n++;
+      return { ...it, status: "error" as const, error: "途中で止まりました（サーバーを起動し直したため）", progress: null, finished_at: nowJst() };
+    }
+    if (it.pitch_status === "pending") {
+      n++;
+      return { ...it, pitch_status: "error" as const };
+    }
+    return it;
+  });
+  if (n) save(fixed);
+  return n;
 }
 
 /** 1件を書き換える。読み込みから書き込みまで同期なので、同じプロセス内で割り込まれない */

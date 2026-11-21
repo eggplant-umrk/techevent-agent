@@ -4,6 +4,7 @@
 // - 個人を特定できる列（メール・名前など）は取り込み時に捨てる。保存も Agent への受け渡しもしない
 // - Google への API 連携は作らない（CSV を選ぶか貼るだけ）
 import Anthropic from "@anthropic-ai/sdk";
+import { writeJsonAtomic } from "./fileStore";
 import { nowJst } from "./clock";
 import fs from "node:fs";
 import path from "node:path";
@@ -265,8 +266,7 @@ const SAMPLE_DIR = () => path.join(process.cwd(), "data", "surveys");
 const IMPORT_DIR = () => process.env.SURVEY_IMPORT_DIR || path.join(process.cwd(), "data", "survey_imports");
 
 export function saveImport(data: SurveyImport) {
-  fs.mkdirSync(IMPORT_DIR(), { recursive: true });
-  fs.writeFileSync(path.join(IMPORT_DIR(), `${data.event_id}.json`), JSON.stringify(data, null, 2) + "\n", "utf-8");
+  writeJsonAtomic(path.join(IMPORT_DIR(), `${data.event_id}.json`), data);
 }
 
 const cache = new Map<string, { mtime: number; data: SurveyImport }>();

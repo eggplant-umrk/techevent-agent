@@ -4,7 +4,7 @@
 // localhost からのリクエストだけ受け付ける。
 import { runAgent } from "@/lib/agent";
 import { addToInbox, parseInboxInput } from "@/lib/inbox";
-import { acquireApiSlot, apiBusyResponse } from "@/lib/apiSlots";
+import { acquireApiSlotWait, apiBusyResponse } from "@/lib/apiSlots";
 import { boardList, findActiveDuplicate } from "@/lib/board";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
 import { extractIntakeWithAgent } from "@/lib/intake";
@@ -21,9 +21,15 @@ export async function POST(req: Request) {
   // 同じ文の依頼が受信箱にあれば（アーカイブを除く）、新しく足さずにその依頼を返す（画面はそれを開いて「同じ依頼がもうあります」）
   const dup = findActiveDuplicate(parsed.input.text);
   if (dup) return Response.json({ id: dup, duplicate: true });
-  // API を使う操作は同時に2件まで（lib/apiSlots.ts）。候補づくりが裏で終わるまで1件分を持つ
-  const release = acquireApiSlot();
+  // API を使う操作は同時に2件まで（lib/apiSlots.ts。空いていなければ最大60秒待つ）。候補づくりが裏で終わるまで1件分を持つ
+  const release = await acquireApiSlotWait(req.signal);
   if (!release) return apiBusyResponse();
+  // 待っている間に同じ文が先に入っていたら（連打）、枠を返してそちらを開く
+  const dupAfterWait = findActiveDuplicate(parsed.input.text);
+  if (dupAfterWait) {
+    release();
+    return Response.json({ id: dupAfterWait, duplicate: true });
+  }
   // 登録してすぐ返す。指名の読み取りと候補づくり（既存の runAgent）は裏で続く
   const item = addToInbox(parsed.input, (request, emit) => runAgent(request, emit), extractIntakeWithAgent, release);
   return Response.json({ id: item.id });

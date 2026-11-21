@@ -11,6 +11,7 @@
 // - リリースノート自体は「発信済み」ではない（登壇やブログはまだ）
 // 架空の会社のデータだけで使う（DATA_SOURCE=github のときは入れない）。評価は RELEASE_NOTES=off で入れない。
 import fs from "node:fs";
+import { writeJsonAtomic } from "./fileStore";
 import { readOverlay, readReplaced, writeOverlay, writeReplaced } from "./runtime";
 import path from "node:path";
 import type { Activity } from "./data";
@@ -69,8 +70,7 @@ function readJson<T>(file: string, fallback: T): T {
   return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as T) : fallback;
 }
 function writeJson(file: string, value: unknown) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", "utf-8");
+  writeJsonAtomic(file, value);
 }
 
 export const releaseNotes = (): ReleaseNote[] => (releaseNotesOn() ? readJson<ReleaseNote[]>(NOTES_FILE(), []) : []);

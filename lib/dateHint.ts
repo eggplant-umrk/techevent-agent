@@ -400,6 +400,26 @@ export function decideDate(quote: string, receivedAt: string): { date: string | 
 }
 
 /**
+ * 会話（NFKC 済み）の中で引用の位置を探す。NFKC にそろえ、空白（改行を含む）の違いは無視する
+ * （lib/intake.ts の読み取りの照合と同じ決め方）。見つかれば会話の中の [at, end)、なければ at = -1
+ */
+export function findQuote(normText: string, quote: string): { at: number; end: number } {
+  const q = quote.normalize("NFKC").replace(/\s+/g, "");
+  if (!q) return { at: -1, end: -1 };
+  // 空白を除いた会話と、その1文字ずつが元の会話のどこにあったか
+  let compact = "";
+  const pos: number[] = [];
+  for (let i = 0; i < normText.length; i++) {
+    if (/\s/.test(normText[i])) continue;
+    compact += normText[i];
+    pos.push(i);
+  }
+  const c = compact.indexOf(q);
+  if (c < 0) return { at: -1, end: -1 };
+  return { at: pos[c], end: pos[c + q.length - 1] + 1 };
+}
+
+/**
  * 会話全体の中にある、決めた日付とは別の日付（暦にあるものだけ。年を付けた形）。
  * 引用の前にあるか後にあるか（before_quote）も返す。会話のあとのほうで日程が変わることがあるので、どう扱うかは呼ぶ側が決める。
  * 例：「開催は 2026.12.15(火) です。※チラシには12/16（水）と…」で 2026-12-15 を決めたら、12/16 を返す
@@ -411,8 +431,7 @@ export function otherDatesInConversation(
   receivedAt: string,
 ): Array<{ date: string; text: string; before_quote: boolean }> {
   const norm = text.normalize("NFKC");
-  const qAt = norm.indexOf(quote.normalize("NFKC").trim());
-  const qEnd = qAt >= 0 ? qAt + quote.normalize("NFKC").trim().length : -1;
+  const { at: qAt, end: qEnd } = findQuote(norm, quote);
   const out: Array<{ date: string; text: string; before_quote: boolean }> = [];
   const seen = new Set<string>();
   for (const d of datesInText(norm)) {

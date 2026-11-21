@@ -12,6 +12,7 @@
 //   運営・会場・設備の不満と良い点、人を攻撃する言葉、不満の原文は入れない。カードには書かない。
 // 全体の満足度の点数は登壇者に結びつけない（イベント単位の集計にだけ使う）。登壇ごとの点数の列があるときだけ、その点数を登壇者の参考にする。
 import { analysisOverview } from "./surveyOverview";
+import { writeJsonAtomic } from "./fileStore";
 import { todayJst, nowJst } from "./clock";
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
@@ -232,7 +233,7 @@ function saveAnalysis(a: EventAnalysis) {
   const f = FILE();
   const all = fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>) : {};
   all[a.event_id] = a;
-  fs.writeFileSync(FILE(), JSON.stringify(all, null, 2) + "\n", "utf-8");
+  writeJsonAtomic(FILE(), all);
 }
 
 /** 数を書いた文（件数・平均・割合）。数字は画面がコードで出すので、Agent の文には書かせない */
@@ -591,7 +592,7 @@ export function loadTalkRecords(): TalkRecord[] {
 }
 function saveTalkRecord(r: TalkRecord) {
   const all = loadTalkRecords().filter((x) => x.id !== r.id);
-  fs.writeFileSync(RECORD_FILE(), JSON.stringify([...all, r], null, 2) + "\n", "utf-8");
+  writeJsonAtomic(RECORD_FILE(), [...all, r]);
 }
 
 export function writeBack(ev: EventRecord, a: Pick<EventAnalysis, "talks" | "positives">): string[] {

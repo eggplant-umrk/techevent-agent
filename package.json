@@ -18,6 +18,8 @@
     "test:runtime": "tsx scripts/test_runtime.ts",
     "test:loop": "tsx scripts/test_notebook_loop.ts",
     "test:reviewed": "tsx scripts/test_notebook_reviewed.ts",
+    "test:edge": "tsx scripts/test_edge_cases.ts",
+    "try:edge": "tsx scripts/try_edge_cases.ts",
     "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",
     "reset:share": "tsx scripts/reset_demo.ts --share",

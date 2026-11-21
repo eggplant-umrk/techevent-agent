@@ -12,7 +12,8 @@
     "test:inbox": "tsx scripts/test_inbox.ts",
     "slack": "tsx scripts/slack-bot.ts",
     "slack:mock-inbox": "tsx scripts/slack/mock-inbox.ts",
-    "slack:dry-run": "tsx scripts/slack/dry-run.ts"
+    "slack:dry-run": "tsx scripts/slack/dry-run.ts",
+    "test:venues": "tsx scripts/test_venues.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

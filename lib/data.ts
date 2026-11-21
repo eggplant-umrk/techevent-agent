@@ -14,6 +14,7 @@ const ALLOWED = new Set([
   "published.json",
   "schedules.json",
   "cards.json",
+  "external_events.json",
   "usage.json",
 ]);
 

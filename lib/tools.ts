@@ -499,6 +499,13 @@ export function getCard(input: Input) {
 /** Tools for proposals: notebook first, then the raw activities. upsert_card is not included. */
 export const PROPOSAL_TOOLS: Anthropic.Tool[] = [SEARCH_CARDS_DEF, GET_CARD_DEF, ...BASE_TOOL_DEFS];
 
+/** 既存のツール定義を名前で取り出す（カード → 出し先を探す でも同じ定義を使う） */
+export function toolDef(name: string): Anthropic.Tool {
+  const t = [...PROPOSAL_TOOLS].find((x) => x.name === name);
+  if (!t) throw new Error(`unknown tool: ${name}`);
+  return t;
+}
+
 const IMPL: Record<string, (input: Input) => unknown> = {
   search_cards: searchCards,
   get_card: getCard,

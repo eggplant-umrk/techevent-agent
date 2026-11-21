@@ -47,15 +47,22 @@ function describe(c: Card): string {
   打診履歴: ${outreachSummary(c)}`;
 }
 
-export async function suggestBlogIdeas(): Promise<{ ideas: Array<BlogIdea & { card: Card }>; run_usd: number; total_usd: number }> {
-  const pool = loadCards().filter((c) => c.publication_status === "unpublished");
+/**
+ * 未発信のカードからブログにしやすいものを選ぶ。
+ * opts.cardIds で対象のカードを絞れる（「カード → 出し先を探す」ではこのカード1枚に絞って1件だけ出す）。
+ */
+export async function suggestBlogIdeas(
+  opts: { cardIds?: string[]; count?: number; runId?: string } = {},
+): Promise<{ ideas: Array<BlogIdea & { card: Card }>; run_usd: number; total_usd: number }> {
+  const count = opts.count ?? 3;
+  const pool = loadCards().filter((c) => c.publication_status === "unpublished" && (!opts.cardIds || opts.cardIds.includes(c.card_id)));
   if (pool.length === 0) return { ideas: [], run_usd: 0, total_usd: totalUsd() };
-  const runId = randomUUID();
+  const runId = opts.runId ?? randomUUID();
   const { loop: model } = chooseModels();
   const res = await getClient().messages.create({
     model,
     max_tokens: 8000,
-    system: `あなたはLayerXの技術広報を手伝います。イベントがなくても発信できるように、ネタ帳の未発信カードからブログにしやすいものを3枚選びます。今日は${TODAY}。時流：${TRENDS.join("／")}
+    system: `あなたはLayerXの技術広報を手伝います。イベントがなくても発信できるように、ネタ帳の未発信カードからブログにしやすいものを${count}枚選びます（渡されたカードが${count}枚以下なら、そのカードについてブログ案を書きます）。今日は${TODAY}。時流：${TRENDS.join("／")}
 選ぶ基準：
 - 数字や具体的な工夫があり、1本の記事として読者が持ち帰れるものがある
 - 登壇経験の少ない人を優先する（発信する人としない人の差を埋めたい）
@@ -78,7 +85,7 @@ card_id 以外の項目（title・why_easy_to_blog・outline）は技術広報�
     .filter((i) => byId.has(i.card_id)) // drop anything not in the unpublished pool
     // 使う人向けの文に内部の項目名・idが入ったネタは出さない
     .filter((i) => internalTerms([i.title, i.why_easy_to_blog, ...i.outline].join("\n")).length === 0)
-    .slice(0, 3)
+    .slice(0, count)
     .map((i) => ({ ...i, card: byId.get(i.card_id)! }));
   return { ideas, run_usd: runUsd(runId), total_usd: totalUsd() };
 }

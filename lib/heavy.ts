@@ -185,6 +185,77 @@ ${evidence || "（なし）"}`;
   );
 }
 
+/**
+ * カード → 出し先：本人に「このネタで出てみませんか」と声をかける下書き。
+ * 仕組みは draftOutreach と同じ（重いモデル、内部の言葉があれば1回作り直す、失敗したら Opus）。中身だけ変える。
+ */
+export async function draftVenueOutreach(
+  runId: string,
+  card: { employee_id: string; summary: string; evidence_activity_ids: string[] },
+  venue: {
+    name: string;
+    event_date: string | null;
+    cfp_status: string;
+    cfp_deadline: string | null;
+    format: string[];
+    location: string | null;
+    theme: string;
+    reason: string;
+    cautions: string[];
+  },
+): Promise<HeavyResult<OutreachDraft>> {
+  const emp = employeeById(card.employee_id);
+  if (!emp) throw new Error(`社員 ${card.employee_id} は見つかりません`);
+  const evidence = activities()
+    .filter((a) => card.evidence_activity_ids.includes(a.id))
+    .map((a) => `- ${a.date} ${a.title}：${a.body}`)
+    .join("\n");
+
+  const system = `あなたはLayerXの技術広報の文章を手伝います。社内メンバーの取り組みを見て「このネタで社外イベントに出てみませんか」と本人に声をかける文（Slack DM想定）と、発表の構成案を下書きします。送るのは技術広報本人なので、そのまま貼れる自然な文にしてください。
+- 本人の取り組みを具体的に挙げ、「なぜこのイベントに合うと思ったか」が伝わるようにする
+- 応募するのは本人。応募の締切と公式ページで確かめることを添える（締切が未確認なら、そう書く。推測で日付を書かない）
+- 断りやすさも残す（忙しければ見送ってよい、応募文や資料づくりの手伝いもできる、など）
+- 登壇経験が少ない人には、準備の負担が小さいことを伝える
+- 構成案は、そのイベントの形式（持ち時間）に収まるように分単位で割り振る。持ち時間が分からなければ20分で組む
+- tips_for_pr には、技術広報が声をかける前に確認しておくとよいことを2〜3個
+- ${PLAIN_TEXT_RULE}`;
+
+  const user = `# 出し先
+${venue.name}
+開催日：${venue.event_date ?? "未定（要確認）"}／場所：${venue.location ?? "未定"}
+形式：${venue.format.join("／")}
+応募の締切：${venue.cfp_deadline ?? (venue.cfp_status === "open" ? "公式で確認" : "未確認（公式で要確認）")}
+注意点：${venue.cautions.join("／") || "なし"}
+
+# 声をかける相手
+${emp.name}（${emp.business_unit}／${emp.role}）／登壇${emp.past_talk_count}回／忙しさ${emp.workload}
+
+# 発表タイトル案
+${venue.theme}
+
+# このイベントをすすめる理由
+${venue.reason}
+
+# 取り組み（カードの要約）
+${card.summary}
+
+# 根拠の取り組み
+${evidence || "（なし）"}`;
+
+  return generateChecked(
+    async (extra) => {
+      const r = await callHeavy(runId, "draft", system, user + extra, DRAFT_SCHEMA);
+      return { value: JSON.parse(r.text) as OutreachDraft, model: r.model, fellBack: r.fellBack, cost: r.cost };
+    },
+    (d) => [
+      { where: "件名", text: d.subject },
+      { where: "声かけ文", text: d.message },
+      ...d.lt_outline.flatMap((s) => [{ where: "構成案", text: s.heading }, ...s.points.map((p) => ({ where: "構成案", text: p }))]),
+      ...d.tips_for_pr.map((t) => ({ where: "声をかける前に", text: t })),
+    ],
+  );
+}
+
 /** For named-speaker requests: why to propose someone other than (or alongside) the nominee. */
 export async function alternativePitch(
   runId: string,

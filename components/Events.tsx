@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "@/app/_client/api";
+import { withReturn } from "@/app/_client/backLink";
 import type { ColumnInfo, EventDetail, ImportResult, SurveyEvent } from "@/app/_client/types";
 import { ErrorLine, Spinner, Tag } from "./ui";
 
@@ -79,7 +80,7 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
         <p className="btn-row">
           <a
             className="btn btn-sm"
-            href={d.event.connpass_url?.trim() || `/events/${encodeURIComponent(d.event.id)}`}
+            href={d.event.connpass_url?.trim() || withReturn(`/events/${encodeURIComponent(d.event.id)}`, { tab: "archive", archive: `event:${d.event.id}` })}
             target="_blank"
             rel="noreferrer"
           >

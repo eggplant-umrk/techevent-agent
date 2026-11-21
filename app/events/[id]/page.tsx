@@ -4,18 +4,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fictionalEventPage } from "@/lib/eventPage";
+import { backHref } from "@/lib/backHref";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EventPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
+  const back = backHref({ archive: `event:${id}`, ...(await searchParams) }, "archive");
   const ev = fictionalEventPage(id);
   if (!ev) notFound();
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: "24px 16px" }}>
       <p className="meta">
-        <Link href="/?tab=archive">← ネタ帳Agent に戻る</Link>
+        <Link href={back}>← ネタ帳Agent に戻る</Link>
       </p>
       <article className="surface pad-lg" aria-labelledby="event-title">
         <p

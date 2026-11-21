@@ -373,3 +373,8 @@ textarea.input { resize: vertical; }
 
 /* 候補の横：空いていそうな日（本人に確認する前の目安） */
 .free-dates { margin: 4px 0; padding: 4px 8px; border-left: 3px solid var(--accent-line); background: var(--accent-soft); border-radius: 4px; }
+
+/* 候補の注意点：切らずに全部読める（2つまで見せて「ほかN件を見る」） */
+.cautions-full { display: flex; flex-wrap: wrap; gap: 0 4px; align-items: baseline; }
+.cautions-full ul { margin: 0; padding-left: 18px; flex: 1 1 100%; }
+.cautions-full li { white-space: normal; }

@@ -75,7 +75,7 @@ export function PersonDetail({
           </span>
         </div>
         <p className="meta">
-          {p.business_unit}・{p.role}・{detail.talk_tag}・登壇{p.past_talk_count}回{p.last_talk_date ? `（最終 ${p.last_talk_date}）` : ""}
+          {[p.business_unit, p.role, detail.talk_tag, `登壇${p.past_talk_count}回${p.last_talk_date ? `（最終 ${p.last_talk_date}）` : ""}`].filter((x) => x && x.trim()).join("・")}
         </p>
 
         {!editing ? (
@@ -154,7 +154,7 @@ export function PersonDetail({
         </section>
       )}
 
-      <RecentBlogs blogs={detail.blogs ?? []} />
+      <RecentBlogs blogs={detail.blogs ?? []} personId={p.id} />
 
       <section className="surface pad-lg" aria-labelledby="pd-acts">
         <h3 id="pd-acts" className="h3">

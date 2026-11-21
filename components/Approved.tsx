@@ -43,7 +43,7 @@ export function Approved({
         <div className="cand-head">
           <span className="cand-name">{resume ? `${candidate.name}さんに声かけ中` : `${candidate.name}さんで進める`}</span>
           <span className="meta">
-            {candidate.business_unit}・{candidate.talk_tag ?? `登壇${candidate.past_talk_count}回`}・{candidate.busy_text}
+            {[candidate.business_unit, candidate.talk_tag ?? `登壇${candidate.past_talk_count}回`, candidate.busy_text].filter((x) => x && String(x).trim()).join("・")}
           </span>
         </div>
         <p className="cand-theme">{candidate.theme}</p>
@@ -93,6 +93,7 @@ export function AcceptedView({
   showOthers,
   onToggleOthers,
   onOpenCard,
+  onUndo,
 }: {
   detail: BoardDetail;
   reply: { name: string; text: string } | null;
@@ -101,8 +102,13 @@ export function AcceptedView({
   showOthers: boolean;
   onToggleOthers: () => void;
   onOpenCard: (employeeId: string) => void;
+  /** 承諾の取り消し（記録を1つ戻す） */
+  onUndo: (employeeId: string) => Promise<void>;
 }) {
   const st = detail.state;
+  const [undoFor, setUndoFor] = useState<string | null>(null);
+  const [undoBusy, setUndoBusy] = useState(false);
+  const [undoError, setUndoError] = useState<string | null>(null);
   return (
     <>
       <section className="surface pad-lg" aria-labelledby="acc-title">
@@ -120,10 +126,42 @@ export function AcceptedView({
                 {p.name}さん
               </button>
               <span className="meta">　承諾済み</span>
+              {"　"}
+              {undoFor === p.employee_id ? (
+                <span className="btn-row" style={{ display: "inline-flex" }}>
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    disabled={undoBusy}
+                    onClick={async () => {
+                      setUndoBusy(true);
+                      setUndoError(null);
+                      try {
+                        await onUndo(p.employee_id);
+                        setUndoFor(null);
+                      } catch (err) {
+                        setUndoError(`${err instanceof Error ? err.message : "取り消せませんでした"}。`);
+                      }
+                      setUndoBusy(false);
+                    }}
+                  >
+                    {undoBusy ? "取り消しています…" : "承諾の記録を取り消す"}
+                  </button>
+                  <button type="button" className="link" disabled={undoBusy} onClick={() => setUndoFor(null)}>
+                    やめる
+                  </button>
+                </span>
+              ) : (
+                <button type="button" className="link" onClick={() => setUndoFor(p.employee_id)}>
+                  承諾を取り消す
+                </button>
+              )}
             </li>
           ))}
         </ul>
         {st.declined_by.length > 0 && <p className="meta">辞退：{st.declined_by.map((p) => `${p.name}さん`).join("・")}</p>}
+        {undoFor && <p className="meta">取り消すと、承諾の記録を1つ戻して「声かけ中」に戻ります。</p>}
+        <ErrorLine message={undoError} />
         <div className="btn-row">
           <button type="button" className="btn btn-sm" aria-expanded={showOthers} onClick={onToggleOthers}>
             {showOthers ? "ほかの候補を閉じる" : "ほかの候補を見る"}
@@ -131,7 +169,7 @@ export function AcceptedView({
         </div>
       </section>
       {reply ? (
-        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted dateSentence={dateSentence} />
+        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted />
       ) : (
         <section className="surface pad-lg">
           <h3 className="h3">主催者への返事（下書き）</h3>

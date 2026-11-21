@@ -8,6 +8,21 @@ import { VenueFinder } from "./VenueFinder";
 import { ACTIVITY_LABEL, FIELD_LABEL, FORMAT_LABEL, md, REASON_LABEL, RESULT_LABEL } from "./labels";
 import { CardMarks, ErrorLine, statusText, Tag } from "./ui";
 
+/** 打診履歴の言い方（声かけ → 承諾 のように1依頼1行にまとめる） */
+const STEP_LABEL = { approved: "声かけ", accepted: "承諾", declined: "辞退", published: "公開" } as const;
+function historyByRequest(h: NotebookCard["outreach_history"]) {
+  const out: Array<{ request_id: string; date: string; steps: string[]; last: keyof typeof STEP_LABEL; event_date: string | null }> = [];
+  for (const x of h) {
+    let g = out.find((y) => y.request_id === x.request_id);
+    if (!g) out.push((g = { request_id: x.request_id, date: x.date, steps: [], last: x.result, event_date: x.event_date }));
+    g.steps.push(`${STEP_LABEL[x.result]}${x.reason ? `（${REASON_LABEL[x.reason]}）` : ""}`);
+    g.date = x.date;
+    g.last = x.result;
+    g.event_date = x.event_date ?? g.event_date;
+  }
+  return out;
+}
+
 /** Card detail as a side sheet (full screen on a phone). Native <dialog>: Esc closes, focus stays inside.
  *  外側（暗い部分）のクリックでも閉じる。書きかけの入力があるときは、外側クリックでも Esc でも閉じない（×は閉じる）。 */
 export function CardDetail({
@@ -286,7 +301,9 @@ export function CardDetail({
           <h3 className="h3">根拠の投稿</h3>
           {card.evidence.length === 0 &&
             (card.evidence_request_ids?.length ? (
-              <p className="meta">指名の依頼（{card.evidence_request_ids.join("、")}）がもとになっているカードです。取り組みの投稿はまだありません。</p>
+              <p className="meta">
+                指名の依頼（{card.evidence_request_ids.map((id) => requestTitle?.(id) ?? "依頼").join("、")}）がもとになっているカードです。取り組みの投稿はまだありません。
+              </p>
             ) : (
               <p className="meta">発信済みの記録がもとになっているカードです。</p>
             ))}
@@ -302,7 +319,7 @@ export function CardDetail({
                   <div className="ev-body">
                     <p>{ev.body}</p>
                     <p className="meta">
-                      {ev.id}
+                      {ev.date}
                       {ev.where && `・${ev.where}`}
                       {ev.url && (
                         <>
@@ -351,15 +368,13 @@ export function CardDetail({
             <p className="meta">まだありません。</p>
           ) : (
             <ul className="history">
-              {card.outreach_history.map((h, i) => (
-                <li key={i}>
-                  <span className="meta">{md(h.date)}</span>
-                  <span>{h.request_id}</span>
-                  <Tag tone={h.result === "declined" ? "warn" : h.result === "approved" ? "neutral" : "ok"}>
-                    {RESULT_LABEL[h.result]}
-                    {h.reason && `：${REASON_LABEL[h.reason]}`}
-                  </Tag>
-                  {h.event_date && <span className="meta">開催 {h.event_date}</span>}
+              {historyByRequest(card.outreach_history).map((g) => (
+                <li key={g.request_id}>
+                  <span className="meta">{md(g.date)}</span>
+                  <span>{requestTitle?.(g.request_id) ?? "依頼（タイトル不明）"}</span>
+                  {g.steps.length > 1 && <span className="small">{g.steps.join(" → ")}</span>}
+                  <Tag tone={g.last === "declined" ? "warn" : g.last === "approved" ? "neutral" : "ok"}>{STEP_LABEL[g.last]}</Tag>
+                  {g.event_date && <span className="meta">開催 {g.event_date}</span>}
                 </li>
               ))}
             </ul>

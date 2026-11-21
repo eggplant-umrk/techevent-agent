@@ -572,6 +572,17 @@ export function mockApi(real: Api): Api {
       }));
       return apply(lastCards.find((c) => c.card_id === cardId)!);
     },
+    async undoOutcome(requestId, cardId) {
+      await wait(200);
+      const c = lastCards.map(apply).find((x) => x.card_id === cardId);
+      const last = c?.outreach_history.filter((h) => h.request_id === requestId).pop();
+      if (!c || !last || (last.result !== "accepted" && last.result !== "published")) throw new Error("この依頼の最後の記録は承諾ではないため、取り消せません");
+      patch(cardId, (x) => {
+        const h = x.outreach_history;
+        const idx = h.map((y) => y.request_id).lastIndexOf(requestId);
+        return { outreach_history: [...h.slice(0, idx), ...h.slice(idx + 1)] };
+      });
+    },
     async editCard(cardId, p) {
       await wait(200);
       patch(cardId, (c) => ({
@@ -672,12 +683,14 @@ export function mockApi(real: Api): Api {
     // ---- イベント後のアンケート（保存済みの分析結果を再生。書き戻しはメモリの中だけ）
     async events() {
       const list = await real.events();
-      return list.map((e) => ({ ...e, analyzed: analyzed.has(e.id) }));
+      // 保存済みの分析結果があるイベントは、はじめから「分析済み」（本番の画面と同じ）
+      return list.map((e) => ({ ...e, analyzed: analyzed.has(e.id) || !!POSTEVENT[e.id] }));
     },
     async eventDetail(id) {
       const d = await real.eventDetail(id);
       // 再生した分析は手元だけ：イベント単位の集計（overview）の形にして見せる
-      const a = analyzed.get(id);
+      // 「分析済み」のイベントは、開いたときに保存済みの分析結果をそのまま出す（再生した結果があればそちら）
+      const a = analyzed.get(id) ?? POSTEVENT[id]?.analysis;
       return { ...d, overview: { ...d.overview, analysis: a ? overviewOf({ ...a, sample: true }) : null } };
     },
     async analyzeEvent(id, onEvent) {

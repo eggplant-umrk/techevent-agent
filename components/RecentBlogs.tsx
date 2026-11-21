@@ -3,11 +3,12 @@
 // 本物の URL の記事は新しいタブで開き、架空の記事はアプリの中の記事ページ（/blog/{id}）を開く。データは lib/blogView.ts
 import { useState } from "react";
 import type { BlogItem } from "@/lib/blogView";
+import { withReturn } from "@/app/_client/backLink";
 
 const SHOW = 3;
 const md = (d: string) => d.slice(5).replace("-", "/");
 
-export function RecentBlogs({ blogs }: { blogs: BlogItem[] }) {
+export function RecentBlogs({ blogs, personId }: { blogs: BlogItem[]; personId?: string }) {
   const [all, setAll] = useState(false);
   const shown = all ? blogs : blogs.slice(0, SHOW);
   return (
@@ -28,7 +29,7 @@ export function RecentBlogs({ blogs }: { blogs: BlogItem[] }) {
                   {b.title}
                 </a>
               ) : (
-                <a href={b.href}>{b.title}</a>
+                <a href={withReturn(b.href, { tab: "notebook", ...(personId ? { person: personId } : {}) })}>{b.title}</a>
               )}
               {b.fictional && <span className="meta">（架空の記事）</span>}
               {b.summary && (

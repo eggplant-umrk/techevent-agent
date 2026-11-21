@@ -123,7 +123,7 @@ export interface Learning {
 export interface UsageEntry {
   at: string;
   run_id: string;
-  purpose: "loop" | "draft" | "alternative_pitch";
+  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge";
   model: string;
   input_tokens: number;
   output_tokens: number;

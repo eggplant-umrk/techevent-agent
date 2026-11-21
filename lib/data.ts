@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { dataFile } from "./dataSource";
 import { demoActivities, demoEmployee, demoPersonOn } from "./demoPerson";
+import { releaseActivities } from "./releaseNotes";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -47,7 +48,8 @@ export interface Employee {
 
 export interface Activity {
   id: string;
-  type: "slack_post" | "github_pr" | "design_doc" | "weekly_report";
+  /** release_note：プロダクトのリリースノート（lib/releaseNotes.ts、id は rel001 など。担当者が決まらなければ author_id は空） */
+  type: "slack_post" | "github_pr" | "design_doc" | "weekly_report" | "release_note";
   author_id: string;
   date: string;
   title: string;
@@ -117,7 +119,7 @@ export interface Schedule {
 export interface UsageEntry {
   at: string;
   run_id: string;
-  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "inbox_extract" | "survey";
+  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "inbox_extract" | "survey" | "release_cards";
   model: string;
   input_tokens: number;
   output_tokens: number;
@@ -133,8 +135,11 @@ export const employees = () => {
 };
 export const activities = () => {
   const list = readJson<Activity[]>("activities.json");
-  return demoPersonOn() ? [...list, ...demoActivities()] : list;
+  // リリースノートも活動の1種類として足す（架空の会社のデータのときだけ。評価は RELEASE_NOTES=off）
+  return [...(demoPersonOn() ? [...list, ...demoActivities()] : list), ...releaseActivities()];
 };
+/** ネタ帳の更新（社員ごと）が読む活動。リリースノートは別の流れ（lib/releaseCards.ts）でカードにするので除く */
+export const notebookActivities = () => activities().filter((a) => a.type !== "release_note");
 export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");

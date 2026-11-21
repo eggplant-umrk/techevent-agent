@@ -12,6 +12,8 @@
     "import:github": "tsx scripts/import_github.ts",
     "test:inbox": "tsx scripts/test_inbox.ts",
     "test:pitch": "tsx scripts/test_pitch_later.ts",
+    "test:release": "tsx scripts/test_release_notes.ts",
+    "release:cards": "tsx scripts/release_cards.ts",
     "test:surveys": "tsx scripts/test_surveys.ts",
     "test:busyness": "tsx scripts/test_busyness.ts",
     "test:talktag": "tsx scripts/test_talktag.ts",

@@ -41,6 +41,7 @@ if (!process.argv.includes("--offline")) {
 // 評価は常に架空データで行う（.env に DATA_SOURCE があっても切り替えない）
 delete process.env.DATA_SOURCE;
 delete process.env.DEMO_PERSON; // デモ用の31人目（本人）も入れない
+process.env.RELEASE_NOTES = "off"; // リリースノートも入れない（今までどおりの材料で判定する）
 
 const PASS_RATE = 0.9;
 

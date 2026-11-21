@@ -26,7 +26,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
         since: { type: "string", description: "この日付以降（YYYY-MM-DD）。省略可" },
         type: {
           type: "string",
-          enum: ["slack_post", "github_pr", "design_doc", "weekly_report"],
+          enum: ["slack_post", "github_pr", "design_doc", "weekly_report", "release_note"],
           description: "種類で絞る。省略可",
         },
       },
@@ -235,7 +235,7 @@ export function searchActivities(input: Input) {
       id: a.id,
       type: a.type,
       date: a.date,
-      author: `${a.author_id} ${emps.get(a.author_id)?.name ?? ""}`,
+      author: a.author_id ? `${a.author_id} ${emps.get(a.author_id)?.name ?? ""}` : "担当者未定",
       title: a.title,
       body: clip(a.body),
       where: a.channel ?? a.repo,

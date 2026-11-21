@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { loadCards, upsertCard, type CardInput } from "./cards";
 import { TODAY, TRENDS } from "./config";
-import { activities, employees, published } from "./data";
+import { employees, notebookActivities as activities, published } from "./data"; // リリースノートは別の流れ（lib/releaseCards.ts）で読む
 import { UPSERT_CARD_DEF } from "./tools";
 import { dataFile } from "./dataSource";
 import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";

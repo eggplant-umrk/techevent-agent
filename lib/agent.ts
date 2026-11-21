@@ -210,7 +210,7 @@ export function personRuleProblems(candidates: Array<{ employee_id: string; them
   return errs;
 }
 
-function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null, request: SpeakingRequest): string[] {
+export function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null, request: SpeakingRequest): string[] {
   const errs: string[] = [];
   errs.push(...cautionDateProblems(request, input.candidates ?? []));
   errs.push(...personRuleProblems(input.candidates ?? []));
@@ -255,6 +255,9 @@ function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string
     if (!c.evidence_activity_ids?.length && !publishedOnly && !isNominee) errs.push(`${c.employee_id} の根拠の取り組みがありません`);
     for (const id of c.evidence_activity_ids ?? []) {
       if (!acts.has(id)) errs.push(`根拠 ${id} は存在しない activity id です`);
+      else if (acts.get(id)!.type === "release_note" && acts.get(id)!.author_id !== c.employee_id)
+        // リリースノートは担当者（データ・技術広報の割り当て・確かめた一致）の根拠にだけ使う。推測で人に付けない
+        errs.push(`${id} は ${c.employee_id} が担当したリリースではありません（担当者が決まっていないリリースは、人の根拠に使えません）`);
       else if (!seen.has(id)) errs.push(`${c.employee_id} の根拠 ${id} はこの調査で見ていない取り組みです。カードか検索結果で確認したIDだけを使ってください`);
     }
   }

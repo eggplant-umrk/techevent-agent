@@ -62,7 +62,7 @@ async function main() {
     { start: "2026-12-04T18:00:00+09:00", end: "2026-12-04T19:00:00+09:00", all_day: false }, // 19時ちょうどに終わるのは重ならない
   ];
   const s = suggestDates(slots, period, { hours: { start: 19, end: 21 } });
-  const dows = s.dates.map((d) => new Date(`${d}T00:00:00+09:00`).getDay());
+  const dows = s.dates.map((d) => new Date(`${d}T00:00:00Z`).getUTCDay());
   check("最大3日", s.known && s.dates.length === 3, s.dates.join(","));
   check("終日の予定がある日は出さない", !s.dates.some((d) => d === "2026-12-01" || d === "2026-12-02"));
   check("19〜21時に予定がある日は出さない", !s.dates.includes("2026-12-03"));
@@ -90,7 +90,7 @@ async function main() {
 
   // ---- 祝日・振替休日・年末年始（コードで持つ一覧）
   const { holidayName, dayOffReason, JP_HOLIDAYS } = await import("../lib/dateHint");
-  const wd = (d: string) => new Date(`${d}T00:00:00+09:00`).getDay();
+  const wd = (d: string) => new Date(`${d}T00:00:00Z`).getUTCDay();
   check("11/23（勤労感謝の日）は祝日", holidayName("2026-11-23") === "勤労感謝の日");
   const nov = suggestDates([], { from: "2026-11-23", to: "2026-11-27" }, { hours: { start: 19, end: 21 }, max: 5 });
   check("祝日（11/23）は空いていそうな日に出さない", !nov.dates.includes("2026-11-23") && nov.dates.length === 4, nov.dates.join(","));
@@ -160,7 +160,7 @@ async function main() {
   const okDates = (ds?.candidates ?? []).every((c) => {
     const sl = slotsFor(c.employee_id) ?? [];
     return c.dates.every((d) => {
-      const w = new Date(`${d}T00:00:00+09:00`).getDay();
+      const w = new Date(`${d}T00:00:00Z`).getUTCDay();
       const a = Date.parse(`${d}T19:00:00+09:00`);
       const b = Date.parse(`${d}T21:00:00+09:00`);
       const allDay = sl.some((x) => x.all_day && x.start <= d && d < x.end);

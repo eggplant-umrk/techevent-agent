@@ -9,7 +9,7 @@ type Filter = "unpublished" | "noTalk";
 
 /**
  * ネタ帳タブの左：人の一覧（社員全員。カードのない人も出す）。
- * 1行：名前・所属／得意分野（3つまで）／未発信のネタの数／予定の埋まり具合（計算ができるまでは「—」）。
+ * 1行：名前・所属／得意分野（3つまで）／未発信のネタの数。予定はネタ帳タブには出さない。
  * 印は「今は控えたい」「確認済み」だけ。
  */
 export function People({
@@ -32,6 +32,9 @@ export function People({
   voiceCount,
   voicesOpen,
   onVoices,
+  unassignedCount,
+  unassignedOpen,
+  onUnassigned,
 }: {
   people: PersonRow[];
   units: string[];
@@ -53,6 +56,10 @@ export function People({
   voiceCount: number;
   voicesOpen: boolean;
   onVoices: () => void;
+  /** 担当者未定のネタの件数（右に一覧を出すボタン） */
+  unassignedCount: number;
+  unassignedOpen: boolean;
+  onUnassigned: () => void;
 }) {
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Set<Filter>>(new Set());
@@ -95,9 +102,14 @@ export function People({
             </button>
           </div>
         </div>
-        <button type="button" className="chip voices-chip" aria-pressed={voicesOpen} onClick={onVoices}>
-          アンケートの声 {voiceCount}件（参加者が今後聞いてみたい話）
-        </button>
+        <div className="chips">
+          <button type="button" className="chip voices-chip" aria-pressed={voicesOpen} onClick={onVoices}>
+            アンケートの声 {voiceCount}件（参加者が今後聞いてみたい話）
+          </button>
+          <button type="button" className="chip voices-chip" aria-pressed={unassignedOpen} onClick={onUnassigned}>
+            担当者未定のネタ {unassignedCount}件（リリースから）
+          </button>
+        </div>
         <input type="search" className="input" aria-label="人を探す" placeholder="名前・所属・得意分野で検索" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="filter-row">
           <div role="group" aria-label="絞り込み" className="chips">
@@ -193,9 +205,6 @@ export function People({
                 <span className="nb-theme">{p.expertise_tags.slice(0, 3).join("・")}</span>
                 <span className="meta person-num" title="未発信のネタ">
                   未発信 {p.unpublished_cards}
-                </span>
-                <span className="meta person-num" title={p.busy_text}>
-                  予定 {p.load === null ? "不明" : `${Math.round(p.load * 10)}割`}
                 </span>
               </span>
             </button>

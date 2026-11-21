@@ -10,7 +10,7 @@ export const REASON_LABEL: Record<DeclineReason, string> = {
   schedule_conflict: "予定が重なる",
   other: "その他",
 };
-export const ACTIVITY_LABEL: Record<string, string> = { slack_post: "Slack", github_pr: "PR", design_doc: "設計", weekly_report: "週報" };
+export const ACTIVITY_LABEL: Record<string, string> = { slack_post: "Slack", github_pr: "PR", design_doc: "設計", weekly_report: "週報", release_note: "リリース", blog: "ブログ", slack: "Slack" };
 export const FIELD_LABEL: Record<string, string> = { summary: "要約", themes: "テーマ案", format: "おすすめの形", format_reason: "形の理由", evidence: "根拠" };
 export const TOOL_LABEL: Record<string, string> = {
   search_cards: "ネタ帳を検索した",

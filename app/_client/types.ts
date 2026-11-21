@@ -24,6 +24,9 @@ export type { ArchiveDetail, ArchiveKind, ArchiveRow } from "@/lib/archive";
 export type { IntakeField, IntakeReading } from "@/lib/intake";
 export type { BoardDetail, BoardListItem, BoardSource } from "@/lib/board";
 export type { SurveyVoice } from "@/lib/surveyOverview";
+import type { listUnassigned } from "@/lib/releaseCards";
+/** 担当者未定のネタ（リリースノートから作った、担当者が決まっていないカード）。GET /api/unassigned-cards の1件 */
+export type UnassignedCard = ReturnType<typeof listUnassigned>[number];
 export type { RequestStage, RequestState } from "@/lib/requestStage";
 
 /** カード → 出し先：声かけ文の下書きを頼むときの本文（イベントの情報はサーバーがデータから引き直す） */

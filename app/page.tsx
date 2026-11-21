@@ -20,6 +20,7 @@ import type {
   PersonRow,
   Proposal,
   SurveyVoice,
+  UnassignedCard,
 } from "@/app/_client/types";
 import { AgentSteps, type LogItem } from "@/components/AgentSteps";
 import { AcceptedView, Approved } from "@/components/Approved";
@@ -31,6 +32,7 @@ import { usd } from "@/components/labels";
 import { People, type NbLogLine } from "@/components/People";
 import { PersonDetail } from "@/components/PersonDetail";
 import { SurveyVoices } from "@/components/SurveyVoices";
+import { UnassignedCards } from "@/components/UnassignedCards";
 import { Spinner } from "@/components/ui";
 import { AlternativePitch, Candidates } from "@/components/Proposal";
 import { RequestInput, type RequestMode } from "@/components/RequestInput";
@@ -58,6 +60,11 @@ export default function Home() {
   const [voices, setVoices] = useState<SurveyVoice[]>([]);
   const [voicesLoaded, setVoicesLoaded] = useState(false);
   const [voicesOpen, setVoicesOpen] = useState(false);
+
+  // 担当者未定のネタ（ネタ帳タブ。リリースノートから作ったカード）
+  const [unassigned, setUnassigned] = useState<UnassignedCard[]>([]);
+  const [unassignedLoaded, setUnassignedLoaded] = useState(false);
+  const [unassignedOpen, setUnassignedOpen] = useState(false);
 
   // notebook
   const [cards, setCards] = useState<NotebookCard[]>([]);
@@ -192,15 +199,26 @@ export default function Home() {
     }
   }, [api]);
 
+  const loadUnassigned = useCallback(async () => {
+    try {
+      setUnassigned(await api.unassigned());
+    } catch {
+      /* 一覧は前の内容のまま */
+    } finally {
+      setUnassignedLoaded(true);
+    }
+  }, [api]);
+
   useEffect(() => {
     if (!apiReady) return;
+    loadUnassigned();
     loadCards();
     loadState();
     loadInbox();
     loadPeople();
     loadArchive();
     loadVoices();
-  }, [apiReady, api, loadCards, loadState, loadInbox, loadPeople, loadArchive, loadVoices]);
+  }, [apiReady, api, loadCards, loadState, loadInbox, loadPeople, loadArchive, loadVoices, loadUnassigned]);
 
   // 代わりの人を推す文を作っているあいだ（pitch_status が pending）は、2秒ごとに詳細を読み直し、できたら出す
   useEffect(() => {
@@ -245,6 +263,7 @@ export default function Home() {
 
   async function openPerson(id: string) {
     setVoicesOpen(false);
+    setUnassignedOpen(false);
     setPersonId(id);
     try {
       setPerson(await api.person(id));
@@ -665,9 +684,30 @@ export default function Home() {
             onOpenCard={(id) => openCard(id)}
             voiceCount={voices.length}
             voicesOpen={voicesOpen}
-            onVoices={() => setVoicesOpen((x) => !x)}
+            onVoices={() => {
+              setUnassignedOpen(false);
+              setVoicesOpen((x) => !x);
+            }}
+            unassignedCount={unassigned.length}
+            unassignedOpen={unassignedOpen}
+            onUnassigned={() => {
+              setVoicesOpen(false);
+              setUnassignedOpen((x) => !x);
+            }}
           />
-          {voicesOpen ? (
+          {unassignedOpen ? (
+            <UnassignedCards
+              cards={unassigned}
+              loaded={unassignedLoaded}
+              people={people}
+              onAssign={async (cardId, employeeId) => {
+                await api.assignUnassigned(cardId, employeeId);
+                // その人のカードになり、一覧から消える
+                await Promise.all([loadUnassigned(), loadCards(), loadPeople()]);
+              }}
+              onClose={() => setUnassignedOpen(false)}
+            />
+          ) : voicesOpen ? (
             <SurveyVoices
               voices={voices}
               loaded={voicesLoaded}

@@ -1,0 +1,456 @@
+[
+  {
+    "id": "ev001",
+    "title": "layerx.go #12 SaaSのマルチテナント設計",
+    "series": "layerx.go",
+    "date": "2025-01-24",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 60,
+    "applications": 59,
+    "attendees": 38,
+    "attendance_rate": 0.64,
+    "speaker_ids": [
+      "e001",
+      "e002"
+    ],
+    "catering": {
+      "food_servings_ordered": 50,
+      "food_servings_left": 11,
+      "drinks_ordered": 75
+    }
+  },
+  {
+    "id": "ev002",
+    "title": "QA Night #5 E2Eテストを育てる",
+    "series": "QA Night",
+    "date": "2025-02-19",
+    "weekday": "水",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 40,
+    "applications": 30,
+    "attendees": 19,
+    "attendance_rate": 0.63,
+    "speaker_ids": [
+      "e005"
+    ],
+    "catering": {
+      "food_servings_ordered": 28,
+      "food_servings_left": 11,
+      "drinks_ordered": 42
+    }
+  },
+  {
+    "id": "ev003",
+    "title": "AIエージェント設計勉強会 #1",
+    "series": "AIエージェント設計勉強会",
+    "date": "2025-03-13",
+    "weekday": "木",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 80,
+    "applications": 67,
+    "attendees": 44,
+    "attendance_rate": 0.66,
+    "speaker_ids": [
+      "e003",
+      "e001"
+    ],
+    "catering": {
+      "food_servings_ordered": 59,
+      "food_servings_left": 15,
+      "drinks_ordered": 88
+    }
+  },
+  {
+    "id": "ev004",
+    "title": "Fintech Engineering Meetup #3",
+    "series": "Fintech Engineering Meetup",
+    "date": "2025-04-18",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "外部：渋谷ハーバーホール",
+    "venue_type": "external",
+    "capacity": 120,
+    "applications": 100,
+    "attendees": 78,
+    "attendance_rate": 0.78,
+    "speaker_ids": [
+      "e004"
+    ],
+    "catering": {
+      "food_servings_ordered": 81,
+      "food_servings_left": 3,
+      "drinks_ordered": 121
+    }
+  },
+  {
+    "id": "ev005",
+    "title": "layerx.go #13 Goで書くバッチ処理",
+    "series": "layerx.go",
+    "date": "2025-05-22",
+    "weekday": "木",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 60,
+    "applications": 58,
+    "attendees": 43,
+    "attendance_rate": 0.74,
+    "speaker_ids": [
+      "e004",
+      "e009"
+    ],
+    "catering": {
+      "food_servings_ordered": 49,
+      "food_servings_left": 9,
+      "drinks_ordered": 73
+    }
+  },
+  {
+    "id": "ev006",
+    "title": "AIエージェント設計勉強会 #2 RAGの現場",
+    "series": "AIエージェント設計勉強会",
+    "date": "2025-06-11",
+    "weekday": "水",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 80,
+    "applications": 64,
+    "attendees": 42,
+    "attendance_rate": 0.66,
+    "speaker_ids": [
+      "e003"
+    ],
+    "catering": {
+      "food_servings_ordered": 51,
+      "food_servings_left": 10,
+      "drinks_ordered": 76
+    }
+  },
+  {
+    "id": "ev007",
+    "title": "共催 SaaS開発組織LT会（with 架空テック株式会社）",
+    "series": "共催LT会",
+    "date": "2025-07-04",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "外部：五反田テックラウンジ",
+    "venue_type": "external",
+    "capacity": 100,
+    "applications": 88,
+    "attendees": 76,
+    "attendance_rate": 0.86,
+    "speaker_ids": [
+      "e002",
+      "e008"
+    ],
+    "catering": {
+      "food_servings_ordered": 78,
+      "food_servings_left": 5,
+      "drinks_ordered": 117
+    }
+  },
+  {
+    "id": "ev008",
+    "title": "QA Night #6 テスト自動化の投資対効果",
+    "series": "QA Night",
+    "date": "2025-07-30",
+    "weekday": "水",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 40,
+    "applications": 32,
+    "attendees": 28,
+    "attendance_rate": 0.88,
+    "speaker_ids": [
+      "e005"
+    ],
+    "catering": {
+      "food_servings_ordered": 26,
+      "food_servings_left": 0,
+      "drinks_ordered": 39
+    }
+  },
+  {
+    "id": "ev009",
+    "title": "layerx.go #14 夏のアーキテクチャ祭り",
+    "series": "layerx.go",
+    "date": "2025-08-28",
+    "weekday": "木",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 60,
+    "applications": 54,
+    "attendees": 46,
+    "attendance_rate": 0.85,
+    "speaker_ids": [
+      "e001",
+      "e002"
+    ],
+    "catering": {
+      "food_servings_ordered": 46,
+      "food_servings_left": 1,
+      "drinks_ordered": 69
+    }
+  },
+  {
+    "id": "ev010",
+    "title": "AIエージェント設計勉強会 #3 評価をどうするか",
+    "series": "AIエージェント設計勉強会",
+    "date": "2025-09-19",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "外部：品川カンファレンスルームA",
+    "venue_type": "external",
+    "capacity": 150,
+    "applications": 126,
+    "attendees": 111,
+    "attendance_rate": 0.88,
+    "speaker_ids": [
+      "e003",
+      "e006"
+    ],
+    "catering": {
+      "food_servings_ordered": 113,
+      "food_servings_left": 2,
+      "drinks_ordered": 169
+    }
+  },
+  {
+    "id": "ev011",
+    "title": "バクラク Tech Talk #4 プロダクト開発の速さ",
+    "series": "バクラク Tech Talk",
+    "date": "2025-10-16",
+    "weekday": "木",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 50,
+    "applications": 42,
+    "attendees": 32,
+    "attendance_rate": 0.76,
+    "speaker_ids": [
+      "e002"
+    ],
+    "catering": {
+      "food_servings_ordered": 34,
+      "food_servings_left": 0,
+      "drinks_ordered": 51
+    }
+  },
+  {
+    "id": "ev012",
+    "title": "Fintech Engineering Meetup #4 金融×クラウド",
+    "series": "Fintech Engineering Meetup",
+    "date": "2025-11-28",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "外部：渋谷ハーバーホール",
+    "venue_type": "external",
+    "capacity": 120,
+    "applications": 119,
+    "attendees": 103,
+    "attendance_rate": 0.87,
+    "speaker_ids": [
+      "e004",
+      "e007"
+    ],
+    "catering": {
+      "food_servings_ordered": 107,
+      "food_servings_left": 4,
+      "drinks_ordered": 160
+    }
+  },
+  {
+    "id": "ev013",
+    "title": "layerx.go #15 LLMをプロダクトに入れる",
+    "series": "layerx.go",
+    "date": "2026-01-23",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 60,
+    "applications": 50,
+    "attendees": 37,
+    "attendance_rate": 0.74,
+    "speaker_ids": [
+      "e001",
+      "e003"
+    ],
+    "catering": {
+      "food_servings_ordered": 46,
+      "food_servings_left": 9,
+      "drinks_ordered": 69
+    }
+  },
+  {
+    "id": "ev014",
+    "title": "QA Night #7 AI時代のQA",
+    "series": "QA Night",
+    "date": "2026-02-25",
+    "weekday": "水",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 40,
+    "applications": 35,
+    "attendees": 25,
+    "attendance_rate": 0.71,
+    "speaker_ids": [
+      "e005",
+      "e002"
+    ],
+    "catering": {
+      "food_servings_ordered": 32,
+      "food_servings_left": 10,
+      "drinks_ordered": 48
+    }
+  },
+  {
+    "id": "ev015",
+    "title": "AIエージェント設計勉強会 #4 マルチエージェント",
+    "series": "AIエージェント設計勉強会",
+    "date": "2026-03-19",
+    "weekday": "木",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 80,
+    "applications": 67,
+    "attendees": 49,
+    "attendance_rate": 0.73,
+    "speaker_ids": [
+      "e003",
+      "e001"
+    ],
+    "catering": {
+      "food_servings_ordered": 63,
+      "food_servings_left": 11,
+      "drinks_ordered": 94
+    }
+  },
+  {
+    "id": "ev016",
+    "title": "共催 生成AIプロダクト開発LT（with 架空AIラボ株式会社）",
+    "series": "共催LT会",
+    "date": "2026-05-15",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "外部：五反田テックラウンジ",
+    "venue_type": "external",
+    "capacity": 100,
+    "applications": 77,
+    "attendees": 68,
+    "attendance_rate": 0.88,
+    "speaker_ids": [
+      "e001"
+    ],
+    "catering": {
+      "food_servings_ordered": 72,
+      "food_servings_left": 5,
+      "drinks_ordered": 108
+    }
+  },
+  {
+    "id": "ev017",
+    "title": "layerx.go #16 型とテストの話",
+    "series": "layerx.go",
+    "date": "2026-06-24",
+    "weekday": "水",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 60,
+    "applications": 45,
+    "attendees": 32,
+    "attendance_rate": 0.71,
+    "speaker_ids": [
+      "e002",
+      "e005"
+    ],
+    "catering": {
+      "food_servings_ordered": 39,
+      "food_servings_left": 5,
+      "drinks_ordered": 58
+    }
+  },
+  {
+    "id": "ev018",
+    "title": "バクラク Tech Talk #5 夏の開発組織",
+    "series": "バクラク Tech Talk",
+    "date": "2026-07-17",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 50,
+    "applications": 41,
+    "attendees": 25,
+    "attendance_rate": 0.61,
+    "speaker_ids": [
+      "e002",
+      "e001"
+    ],
+    "catering": {
+      "food_servings_ordered": 38,
+      "food_servings_left": 12,
+      "drinks_ordered": 57
+    }
+  },
+  {
+    "id": "ev019",
+    "title": "AIエージェント設計勉強会 #5 本番運用",
+    "series": "AIエージェント設計勉強会",
+    "date": "2026-09-11",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "外部：品川カンファレンスルームA",
+    "venue_type": "external",
+    "capacity": 150,
+    "applications": 117,
+    "attendees": 97,
+    "attendance_rate": 0.83,
+    "speaker_ids": [
+      "e003",
+      "e001"
+    ],
+    "catering": {
+      "food_servings_ordered": 103,
+      "food_servings_left": 5,
+      "drinks_ordered": 154
+    }
+  },
+  {
+    "id": "ev020",
+    "title": "layerx.go #17 金融とSaaSのあいだ",
+    "series": "layerx.go",
+    "date": "2026-10-30",
+    "weekday": "金",
+    "start_time": "19:00",
+    "venue": "自社イベントスペース",
+    "venue_type": "internal",
+    "capacity": 60,
+    "applications": 46,
+    "attendees": 38,
+    "attendance_rate": 0.83,
+    "speaker_ids": [
+      "e004",
+      "e001"
+    ],
+    "catering": {
+      "food_servings_ordered": 41,
+      "food_servings_left": 2,
+      "drinks_ordered": 61
+    }
+  }
+]

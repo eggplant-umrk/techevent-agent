@@ -1,0 +1,132 @@
+[
+  {
+    "id": "req001",
+    "pattern": "open_slot",
+    "received_at": "2026-11-16",
+    "requester": {
+      "organization": "架空クラウド株式会社",
+      "contact_name": "（架空）採用広報担当",
+      "channel": "email"
+    },
+    "event": {
+      "title": "SaaSエンジニア合同LTナイト Vol.8",
+      "date": "2026-12-17",
+      "format": "LT",
+      "duration_min": 10,
+      "audience": "SaaS企業のエンジニア 約80名",
+      "venue": "外部：新宿スカイホール",
+      "online": false
+    },
+    "theme": null,
+    "nominated_employee_id": null,
+    "reference": null,
+    "reply_deadline": "2026-11-27",
+    "message": "来月の合同LTナイトでLayerXさんの枠を1つ用意しています。テーマはお任せしますので、どなたかご登壇いただけないでしょうか。"
+  },
+  {
+    "id": "req002",
+    "pattern": "theme_specified",
+    "received_at": "2026-11-18",
+    "requester": {
+      "organization": "AIエージェント実践コミュニティ（架空）",
+      "contact_name": "（架空）運営スタッフ",
+      "channel": "connpass_message"
+    },
+    "event": {
+      "title": "AIエージェント実践Meetup #9",
+      "date": "2027-01-21",
+      "format": "セッション",
+      "duration_min": 25,
+      "audience": "LLMアプリ開発者 約150名",
+      "venue": "オンライン",
+      "online": true
+    },
+    "theme": "AIエージェントの品質をどう評価・担保しているか",
+    "nominated_employee_id": null,
+    "reference": null,
+    "reply_deadline": "2026-12-04",
+    "message": "AIエージェントを本番で運用している企業として、評価や品質担保の取り組みについてお話しいただけないでしょうか。具体的な数値や失敗談があると参加者に喜ばれます。"
+  },
+  {
+    "id": "req003",
+    "pattern": "theme_specified",
+    "received_at": "2026-11-19",
+    "requester": {
+      "organization": "架空ペイメンツ株式会社",
+      "contact_name": "（架空）VPoE",
+      "channel": "email"
+    },
+    "event": {
+      "title": "金融システム障害から学ぶ会（共催打診）",
+      "date": "2027-02-10",
+      "format": "パネル＋セッション",
+      "duration_min": 20,
+      "audience": "金融系エンジニア 約60名",
+      "venue": "自社イベントスペース（LayerX開催を希望）",
+      "online": false
+    },
+    "theme": "障害対応と振り返りの文化",
+    "nominated_employee_id": null,
+    "reference": null,
+    "reply_deadline": "2026-12-10",
+    "message": "障害の振り返りをテーマにした共催イベントを検討しています。LayerXさんの会場をお借りできれば嬉しいです。登壇者もお一人出していただけないでしょうか。"
+  },
+  {
+    "id": "req004",
+    "pattern": "named_speaker",
+    "received_at": "2026-11-20",
+    "requester": {
+      "organization": "フロントエンド性能研究会（架空）",
+      "contact_name": "（架空）主催者",
+      "channel": "x_dm"
+    },
+    "event": {
+      "title": "Web Performance Night 2027 Winter",
+      "date": "2027-01-28",
+      "format": "セッション",
+      "duration_min": 20,
+      "audience": "フロントエンドエンジニア 約100名",
+      "venue": "外部：渋谷ハーバーホール",
+      "online": false
+    },
+    "theme": "大規模SaaSの初期表示改善",
+    "nominated_employee_id": "e002",
+    "reference": {
+      "kind": "event_archive",
+      "title": "layerx.go #16 型とテストの話（アーカイブ動画）",
+      "url": "https://example.com/archive/layerx-go-16"
+    },
+    "reply_deadline": "2026-12-05",
+    "message": "layerx.goのアーカイブで笹倉さんのお話を拝見しました。フロントエンドの性能改善についてぜひ笹倉さんにご登壇いただきたいです。",
+    "note_for_demo": "指名先はよく登壇するEMだが、テーマに直接合うのは未発信の e012（バンドル削減でLCP 1.8秒短縮）。本人の確認を取りつつ代案を出せるかを見るケース。"
+  },
+  {
+    "id": "req005",
+    "pattern": "named_speaker",
+    "received_at": "2026-11-20",
+    "requester": {
+      "organization": "クラウドセキュリティ勉強会（架空）",
+      "contact_name": "（架空）運営",
+      "channel": "email"
+    },
+    "event": {
+      "title": "サプライチェーンセキュリティ Day",
+      "date": "2027-02-18",
+      "format": "セッション",
+      "duration_min": 30,
+      "audience": "セキュリティ/SRE 約120名",
+      "venue": "オンライン",
+      "online": true
+    },
+    "theme": "脆弱性管理の自動化",
+    "nominated_employee_id": "e007",
+    "reference": {
+      "kind": "slide",
+      "title": "Fintech Engineering Meetup #4 登壇資料",
+      "url": "https://example.com/slides/fintech-meetup-4"
+    },
+    "reply_deadline": "2026-12-12",
+    "message": "以前のMeetupでの梶さんの資料を拝見しました。脆弱性管理の自動化について30分お話しいただけないでしょうか。",
+    "note_for_demo": "指名先 e007 は同じセキュリティ事業部。実際に自動トリアージを作ったのは未発信の e024 なので、共同登壇の提案などができるかを見るケース。"
+  }
+]

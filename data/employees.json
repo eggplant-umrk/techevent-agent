@@ -1,0 +1,426 @@
+[
+  {
+    "id": "e001",
+    "name": "青柳 恭平",
+    "business_unit": "CTO室",
+    "role": "CTO室 エンジニア",
+    "expertise_tags": [
+      "アーキテクチャ",
+      "技術戦略",
+      "LLM",
+      "組織づくり"
+    ],
+    "past_talk_count": 18,
+    "last_talk_date": "2026-10-30",
+    "workload": 4
+  },
+  {
+    "id": "e002",
+    "name": "笹倉 由紀",
+    "business_unit": "バクラク",
+    "role": "エンジニアリングマネージャー",
+    "expertise_tags": [
+      "チームビルディング",
+      "TypeScript",
+      "プロダクト開発プロセス"
+    ],
+    "past_talk_count": 12,
+    "last_talk_date": "2026-10-09",
+    "workload": 5
+  },
+  {
+    "id": "e003",
+    "name": "久住 拓真",
+    "business_unit": "Ai Workforce",
+    "role": "MLエンジニア",
+    "expertise_tags": [
+      "LLM",
+      "RAG",
+      "AIエージェント",
+      "Python"
+    ],
+    "past_talk_count": 10,
+    "last_talk_date": "2026-09-11",
+    "workload": 4
+  },
+  {
+    "id": "e004",
+    "name": "相良 美帆",
+    "business_unit": "Fintech",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "Go",
+      "金融システム",
+      "分散トランザクション"
+    ],
+    "past_talk_count": 8,
+    "last_talk_date": "2026-10-30",
+    "workload": 3
+  },
+  {
+    "id": "e005",
+    "name": "千早 航",
+    "business_unit": "バクラク",
+    "role": "QAエンジニア",
+    "expertise_tags": [
+      "テスト自動化",
+      "品質保証",
+      "E2Eテスト"
+    ],
+    "past_talk_count": 7,
+    "last_talk_date": "2026-09-26",
+    "workload": 3
+  },
+  {
+    "id": "e006",
+    "name": "宇佐美 環",
+    "business_unit": "Ai Workforce",
+    "role": "プロダクトマネージャー",
+    "expertise_tags": [
+      "プロダクトマネジメント",
+      "AIエージェント",
+      "ユーザーリサーチ"
+    ],
+    "past_talk_count": 2,
+    "last_talk_date": "2025-09-19",
+    "workload": 4
+  },
+  {
+    "id": "e007",
+    "name": "梶 真之介",
+    "business_unit": "セキュリティ",
+    "role": "セキュリティエンジニア",
+    "expertise_tags": [
+      "クラウドセキュリティ",
+      "脆弱性管理",
+      "AWS"
+    ],
+    "past_talk_count": 1,
+    "last_talk_date": "2025-11-28",
+    "workload": 3
+  },
+  {
+    "id": "e008",
+    "name": "日向 さくら",
+    "business_unit": "バクラク",
+    "role": "デザイナー",
+    "expertise_tags": [
+      "UIデザイン",
+      "デザインシステム",
+      "Figma"
+    ],
+    "past_talk_count": 1,
+    "last_talk_date": "2025-07-04",
+    "workload": 2
+  },
+  {
+    "id": "e009",
+    "name": "真壁 透",
+    "business_unit": "Fintech",
+    "role": "SRE",
+    "expertise_tags": [
+      "SRE",
+      "Kubernetes",
+      "可観測性"
+    ],
+    "past_talk_count": 1,
+    "last_talk_date": "2025-05-22",
+    "workload": 4
+  },
+  {
+    "id": "e010",
+    "name": "猪瀬 りん",
+    "business_unit": "バクラク",
+    "role": "フロントエンドエンジニア",
+    "expertise_tags": [
+      "React",
+      "TypeScript",
+      "状態管理"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e011",
+    "name": "葛西 陽向",
+    "business_unit": "バクラク",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "検索",
+      "Elasticsearch",
+      "Go",
+      "ベクトル検索"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e012",
+    "name": "百瀬 結衣",
+    "business_unit": "バクラク",
+    "role": "フロントエンドエンジニア",
+    "expertise_tags": [
+      "Webパフォーマンス",
+      "React",
+      "ビルドツール"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 2
+  },
+  {
+    "id": "e013",
+    "name": "早乙女 蓮",
+    "business_unit": "Ai Workforce",
+    "role": "MLエンジニア",
+    "expertise_tags": [
+      "LLM評価",
+      "AIエージェント",
+      "MLOps",
+      "Python"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 4
+  },
+  {
+    "id": "e014",
+    "name": "東雲 健吾",
+    "business_unit": "Ai Workforce",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "LLM",
+      "プロンプトエンジニアリング",
+      "TypeScript"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e015",
+    "name": "芹沢 葵",
+    "business_unit": "Fintech",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "障害対応",
+      "バッチ処理",
+      "Go",
+      "PostgreSQL"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 5
+  },
+  {
+    "id": "e016",
+    "name": "鳴海 慎",
+    "business_unit": "バクラク",
+    "role": "SRE",
+    "expertise_tags": [
+      "SRE",
+      "オンコール",
+      "Terraform",
+      "可観測性"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 4
+  },
+  {
+    "id": "e017",
+    "name": "柚木 ほのか",
+    "business_unit": "バクラク",
+    "role": "デザイナー",
+    "expertise_tags": [
+      "アクセシビリティ",
+      "UIデザイン",
+      "UXリサーチ"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 2
+  },
+  {
+    "id": "e018",
+    "name": "久我 大地",
+    "business_unit": "バクラク",
+    "role": "MLエンジニア",
+    "expertise_tags": [
+      "OCR",
+      "画像認識",
+      "PyTorch"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e019",
+    "name": "朝比奈 光",
+    "business_unit": "Ai Workforce",
+    "role": "フロントエンドエンジニア",
+    "expertise_tags": [
+      "React",
+      "チャットUI",
+      "ストリーミング"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 2
+  },
+  {
+    "id": "e020",
+    "name": "篠宮 悠",
+    "business_unit": "バクラク",
+    "role": "QAエンジニア",
+    "expertise_tags": [
+      "E2Eテスト",
+      "Playwright",
+      "CI"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e021",
+    "name": "仁科 涼介",
+    "business_unit": "Fintech",
+    "role": "プロダクトマネージャー",
+    "expertise_tags": [
+      "金融規制",
+      "プロダクトマネジメント"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 5
+  },
+  {
+    "id": "e022",
+    "name": "皆川 七海",
+    "business_unit": "CTO室",
+    "role": "データエンジニア",
+    "expertise_tags": [
+      "データ基盤",
+      "dbt",
+      "BigQuery"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e023",
+    "name": "氷室 圭",
+    "business_unit": "Fintech",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "監査ログ",
+      "金融規制",
+      "Go",
+      "設計"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 4
+  },
+  {
+    "id": "e024",
+    "name": "織部 隼人",
+    "business_unit": "セキュリティ",
+    "role": "セキュリティエンジニア",
+    "expertise_tags": [
+      "サプライチェーンセキュリティ",
+      "SBOM",
+      "自動化"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e025",
+    "name": "白洲 楓",
+    "business_unit": "セキュリティ",
+    "role": "セキュリティエンジニア",
+    "expertise_tags": [
+      "ID管理",
+      "ゼロトラスト"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 2
+  },
+  {
+    "id": "e026",
+    "name": "鷹野 未来",
+    "business_unit": "CTO室",
+    "role": "エンジニアリングマネージャー",
+    "expertise_tags": [
+      "オンボーディング",
+      "AIエージェント",
+      "組織づくり"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 4
+  },
+  {
+    "id": "e027",
+    "name": "東條 怜",
+    "business_unit": "Ai Workforce",
+    "role": "バックエンドエンジニア",
+    "expertise_tags": [
+      "Python",
+      "ワークフローエンジン",
+      "非同期処理"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  },
+  {
+    "id": "e028",
+    "name": "小野寺 舞",
+    "business_unit": "バクラク",
+    "role": "プロダクトマネージャー",
+    "expertise_tags": [
+      "プロダクトマネジメント",
+      "SaaS",
+      "ユーザーリサーチ"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 4
+  },
+  {
+    "id": "e029",
+    "name": "蔵本 湊",
+    "business_unit": "Fintech",
+    "role": "SRE",
+    "expertise_tags": [
+      "AWS",
+      "コスト最適化",
+      "Terraform"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 2
+  },
+  {
+    "id": "e030",
+    "name": "雨宮 紬",
+    "business_unit": "CTO室",
+    "role": "テクニカルライター",
+    "expertise_tags": [
+      "技術ドキュメント",
+      "Docs as Code"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 2
+  }
+]

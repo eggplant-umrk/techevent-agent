@@ -1,0 +1,209 @@
+{
+  "description": "イベント開催時に必要な申請のルール。applies_when の条件をすべて満たすときに申請が必要。",
+  "condition_keys": {
+    "venue_type": "internal（自社イベントスペース）/ external（外部会場）のいずれかに一致",
+    "weekdays": "開催曜日（月〜日）のいずれかに一致",
+    "months": "開催月のいずれかに一致",
+    "date_range": "MM-DD形式の期間（年をまたぐ）に開催日が含まれる",
+    "min_expected_attendees": "想定参加者数がこの値以上",
+    "end_after": "終了時刻がこの時刻より後",
+    "alcohol": "アルコール提供の有無",
+    "catering": "飲食提供の有無",
+    "online": "オンライン配信の有無"
+  },
+  "internal_venue": {
+    "name": "自社イベントスペース",
+    "capacity": 120
+  },
+  "rules": [
+    {
+      "id": "rule001",
+      "name": "ゴミ回収申請",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ],
+        "weekdays": [
+          "金"
+        ]
+      },
+      "reason": "ビル管理の定期回収が金曜夜はないため、イベントのゴミは別途回収を依頼する必要がある",
+      "submit_to": "ビル管理会社",
+      "deadline_days_before": 5,
+      "approver": "総務"
+    },
+    {
+      "id": "rule002",
+      "name": "空調延長申請",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ],
+        "months": [
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      "reason": "夏季は19時以降の空調が自動停止するため延長が必要",
+      "submit_to": "ビル管理会社",
+      "deadline_days_before": 3,
+      "approver": "総務"
+    },
+    {
+      "id": "rule003",
+      "name": "暖房延長申請",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ],
+        "months": [
+          12,
+          1,
+          2
+        ]
+      },
+      "reason": "冬季は19時以降の暖房が自動停止するため延長が必要",
+      "submit_to": "ビル管理会社",
+      "deadline_days_before": 3,
+      "approver": "総務"
+    },
+    {
+      "id": "rule004",
+      "name": "警備会社への連絡",
+      "applies_when": {
+        "min_expected_attendees": 51
+      },
+      "reason": "50人を超える集まりは警備会社に事前連絡し、入館動線の確認を受ける",
+      "submit_to": "警備会社",
+      "deadline_days_before": 7,
+      "approver": "総務"
+    },
+    {
+      "id": "rule005",
+      "name": "社外者入館申請",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ]
+      },
+      "reason": "社外の参加者を入館させるには、氏名リストの事前登録が必要",
+      "submit_to": "ビル受付",
+      "deadline_days_before": 2,
+      "approver": "総務"
+    },
+    {
+      "id": "rule006",
+      "name": "時間外利用申請",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ],
+        "end_after": "21:00"
+      },
+      "reason": "21時以降のフロア利用は時間外利用として申請が必要",
+      "submit_to": "ビル管理会社",
+      "deadline_days_before": 5,
+      "approver": "総務"
+    },
+    {
+      "id": "rule007",
+      "name": "土日祝の休日入館申請",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ],
+        "weekdays": [
+          "土",
+          "日"
+        ]
+      },
+      "reason": "休日はビルが閉館しているため休日入館の申請が必要",
+      "submit_to": "ビル管理会社",
+      "deadline_days_before": 10,
+      "approver": "総務"
+    },
+    {
+      "id": "rule008",
+      "name": "飲酒を伴うイベントの届出",
+      "applies_when": {
+        "alcohol": true
+      },
+      "reason": "社内規程により、アルコールを提供するイベントは事前に届け出る",
+      "submit_to": "総務",
+      "deadline_days_before": 7,
+      "approver": "総務部長"
+    },
+    {
+      "id": "rule009",
+      "name": "外部会場の飲食持込申請",
+      "applies_when": {
+        "venue_type": [
+          "external"
+        ],
+        "catering": true
+      },
+      "reason": "外部会場は会場ごとに飲食の持込可否と申請様式が異なる",
+      "submit_to": "会場運営者",
+      "deadline_days_before": 14,
+      "approver": "技術広報"
+    },
+    {
+      "id": "rule010",
+      "name": "外部会場の利用契約稟議",
+      "applies_when": {
+        "venue_type": [
+          "external"
+        ]
+      },
+      "reason": "外部会場の利用料は稟議が必要",
+      "submit_to": "経理（稟議システム）",
+      "deadline_days_before": 21,
+      "approver": "部門長"
+    },
+    {
+      "id": "rule011",
+      "name": "配信機材の貸出申請",
+      "applies_when": {
+        "online": true,
+        "venue_type": [
+          "internal"
+        ]
+      },
+      "reason": "ハイブリッド配信を行う場合は情報システム部の配信機材を予約する",
+      "submit_to": "情報システム部",
+      "deadline_days_before": 7,
+      "approver": "情報システム部"
+    },
+    {
+      "id": "rule012",
+      "name": "年末年始の閉館期間",
+      "applies_when": {
+        "date_range": {
+          "from": "12-28",
+          "to": "01-04"
+        }
+      },
+      "reason": "年末年始はビルが閉館しており、イベント開催不可",
+      "submit_to": null,
+      "deadline_days_before": null,
+      "approver": null,
+      "blocking": true
+    },
+    {
+      "id": "rule013",
+      "name": "100人超の消防署への届出",
+      "applies_when": {
+        "venue_type": [
+          "internal"
+        ],
+        "min_expected_attendees": 101
+      },
+      "reason": "自社スペースで100人を超える場合は催物開催届が必要（収容上限の確認を含む）",
+      "submit_to": "所轄消防署（ビル管理会社経由）",
+      "deadline_days_before": 14,
+      "approver": "総務"
+    }
+  ]
+}

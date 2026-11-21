@@ -1,0 +1,1202 @@
+[
+  {
+    "id": "act001",
+    "type": "slack_post",
+    "author_id": "e007",
+    "date": "2026-09-01",
+    "title": "採用面接の調整",
+    "body": "来週のカジュアル面談の担当を探しています。バックエンドの経験がある方だと助かります。",
+    "channel": "#recruiting",
+    "repo": null
+  },
+  {
+    "id": "act002",
+    "type": "slack_post",
+    "author_id": "e008",
+    "date": "2026-09-01",
+    "title": "問い合わせ対応の共有",
+    "body": "お客様から帳票の出力が遅いと問い合わせがありました。特定の条件で全件取得になっていたので修正します。",
+    "channel": "#cs-eng",
+    "repo": null
+  },
+  {
+    "id": "act003",
+    "type": "slack_post",
+    "author_id": "e011",
+    "date": "2026-09-01",
+    "title": "ランチ会の案内",
+    "body": "金曜にチーム横断のランチ会をやります。参加希望の方はスタンプを押してください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "act004",
+    "type": "design_doc",
+    "author_id": "e004",
+    "date": "2026-09-03",
+    "title": "四半期の技術的負債リスト",
+    "body": "今四半期に返済する技術的負債の候補を優先度順に並べました。",
+    "channel": null,
+    "repo": "fintech/design-docs"
+  },
+  {
+    "id": "act005",
+    "type": "design_doc",
+    "author_id": "e010",
+    "date": "2026-09-03",
+    "title": "四半期の技術的負債リスト",
+    "body": "今四半期に返済する技術的負債の候補を優先度順に並べました。",
+    "channel": null,
+    "repo": "bakuraku/design-docs"
+  },
+  {
+    "id": "act006",
+    "type": "slack_post",
+    "author_id": "e027",
+    "date": "2026-09-03",
+    "title": "リリースしました",
+    "body": "一覧画面の並び替え機能をリリースしました。不具合を見つけたら教えてください。",
+    "channel": "#release",
+    "repo": null
+  },
+  {
+    "id": "act007",
+    "type": "weekly_report",
+    "author_id": "e008",
+    "date": "2026-09-04",
+    "title": "週報 8/31-9/4 日向",
+    "body": "オンボーディング資料の更新をしました。新メンバーのフォローも継続中です。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act008",
+    "type": "weekly_report",
+    "author_id": "e010",
+    "date": "2026-09-04",
+    "title": "週報 8/31-9/4 猪瀬",
+    "body": "リリースを1件出しました。大きな問題はありません。来週はテストの拡充をします。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act009",
+    "type": "slack_post",
+    "author_id": "e010",
+    "date": "2026-09-07",
+    "title": "ライブラリのメジャーバージョンアップ",
+    "body": "UIライブラリのメジャーアップデートが出ています。破壊的変更が多いので来月まとめて対応します。影響範囲を調べた人がいたら教えてください。",
+    "channel": "#frontend",
+    "repo": null
+  },
+  {
+    "id": "act010",
+    "type": "design_doc",
+    "author_id": "e017",
+    "date": "2026-09-07",
+    "title": "APIのバージョニング方針",
+    "body": "外部公開APIのバージョニングをURLで行うかヘッダで行うかの比較です。結論はURL方式です。",
+    "channel": null,
+    "repo": "bakuraku/design-docs"
+  },
+  {
+    "id": "act011",
+    "type": "slack_post",
+    "author_id": "e011",
+    "date": "2026-09-08",
+    "title": "取引先検索、ハイブリッド検索に切り替えた結果",
+    "body": "請求書の取引先検索をキーワード検索とベクトル検索のハイブリッドに切り替えました。表記ゆれ（株式会社の位置、全角半角）での取りこぼしが大きく減り、オフライン評価でnDCG@10が0.62から0.81になりました。リランキングの重みはまだ手で調整しています。",
+    "channel": "#bakuraku-search",
+    "repo": null
+  },
+  {
+    "id": "act012",
+    "type": "design_doc",
+    "author_id": "e016",
+    "date": "2026-09-08",
+    "title": "四半期の技術的負債リスト",
+    "body": "今四半期に返済する技術的負債の候補を優先度順に並べました。",
+    "channel": null,
+    "repo": "bakuraku/design-docs"
+  },
+  {
+    "id": "act013",
+    "type": "github_pr",
+    "author_id": "e030",
+    "date": "2026-09-10",
+    "title": "エラーハンドリングの改善",
+    "body": "外部APIのタイムアウト時に500ではなくリトライ可能なエラーを返すようにしました。",
+    "channel": null,
+    "repo": "cto-office/internal-tools"
+  },
+  {
+    "id": "act014",
+    "type": "weekly_report",
+    "author_id": "e011",
+    "date": "2026-09-11",
+    "title": "週報 9/7-9/11 葛西",
+    "body": "リリースを1件出しました。大きな問題はありません。来週はテストの拡充をします。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act015",
+    "type": "slack_post",
+    "author_id": "e022",
+    "date": "2026-09-11",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会は型システムの入門です。初心者歓迎です。資料は後で共有します。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "act016",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-09-11",
+    "title": "週報 9/7-9/11 織部",
+    "body": "採用面接が4件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "act017",
+    "type": "slack_post",
+    "author_id": "e003",
+    "date": "2026-09-12",
+    "title": "AIエージェント設計勉強会#5の資料を公開しました",
+    "body": "昨日の登壇資料をSpeaker Deckに公開しました。本番運用でのガードレール設計の話です。質問が多かったところは追ってブログにします。",
+    "channel": "#tech-pr",
+    "repo": null
+  },
+  {
+    "id": "act018",
+    "type": "design_doc",
+    "author_id": "e010",
+    "date": "2026-09-14",
+    "title": "権限モデルの整理",
+    "body": "ロールが増えすぎたので整理案を作りました。既存テナントへの影響は移行スクリプトで吸収します。",
+    "channel": null,
+    "repo": "bakuraku/design-docs"
+  },
+  {
+    "id": "act019",
+    "type": "github_pr",
+    "author_id": "e013",
+    "date": "2026-09-14",
+    "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
+    "body": "プロンプトやツール定義を変えたときに、過去の正解ケース200件でエージェントの挙動を自動評価します。判定用LLMのブレを抑えるため、3回判定の多数決にしました。",
+    "channel": null,
+    "repo": "ai-workforce/agent-eval"
+  },
+  {
+    "id": "act020",
+    "type": "github_pr",
+    "author_id": "e003",
+    "date": "2026-09-15",
+    "title": "一覧APIにページネーションを追加",
+    "body": "件数が多いテナントでタイムアウトしていたためページネーションを追加しました。既存のクライアントは影響を受けません。",
+    "channel": null,
+    "repo": "ai-workforce/web"
+  },
+  {
+    "id": "act021",
+    "type": "slack_post",
+    "author_id": "e001",
+    "date": "2026-09-16",
+    "title": "ランチ会の案内",
+    "body": "金曜にチーム横断のランチ会をやります。参加希望の方はスタンプを押してください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "act022",
+    "type": "slack_post",
+    "author_id": "e006",
+    "date": "2026-09-16",
+    "title": "採用面接の調整",
+    "body": "来週のカジュアル面談の担当を探しています。バックエンドの経験がある方だと助かります。",
+    "channel": "#recruiting",
+    "repo": null
+  },
+  {
+    "id": "act023",
+    "type": "slack_post",
+    "author_id": "e009",
+    "date": "2026-09-16",
+    "title": "監視アラートの閾値変更",
+    "body": "CPUアラートの閾値を80%から85%に変更しました。通知が多すぎたためです。様子を見て戻すかもしれません。",
+    "channel": "#sre",
+    "repo": null
+  },
+  {
+    "id": "act024",
+    "type": "github_pr",
+    "author_id": "e014",
+    "date": "2026-09-16",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "ai-workforce/web"
+  },
+  {
+    "id": "act025",
+    "type": "github_pr",
+    "author_id": "e011",
+    "date": "2026-09-17",
+    "title": "取引先検索: RRFでキーワード検索とベクトル検索の結果を統合",
+    "body": "Reciprocal Rank Fusionで2つの検索結果を統合します。評価用のクエリセット300件とスクリプトも同梱しました。p95レイテンシは+18msで許容範囲です。",
+    "channel": null,
+    "repo": "bakuraku/search-service"
+  },
+  {
+    "id": "act026",
+    "type": "weekly_report",
+    "author_id": "e020",
+    "date": "2026-09-18",
+    "title": "週報 9/14-9/18 篠宮",
+    "body": "E2Eテストのflaky率を週次で集計する仕組みを作りました。原因の6割が待ち合わせ処理の不備で、残りはテストデータの共有によるものでした。来週から順に潰していきます。",
+    "channel": "#weekly-bakuraku-qa",
+    "repo": null
+  },
+  {
+    "id": "act027",
+    "type": "slack_post",
+    "author_id": "e017",
+    "date": "2026-09-22",
+    "title": "スクリーンリーダーで経費申請を最後まで通せるようにしました",
+    "body": "スクリーンリーダー利用者の方へのインタビューをもとに、経費申請フローのフォーカス順とラベルを直しました。キーボードだけで申請が完了できるようになっています。チェックリストはデザインシステムに入れる予定です。",
+    "channel": "#bakuraku-design",
+    "repo": null
+  },
+  {
+    "id": "act028",
+    "type": "slack_post",
+    "author_id": "e026",
+    "date": "2026-09-22",
+    "title": "ステージング環境が重いです",
+    "body": "ステージングのレスポンスが遅いです。誰か心当たりありますか。ログを見た感じDBの接続数が上限に近いです。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act029",
+    "type": "github_pr",
+    "author_id": "e002",
+    "date": "2026-09-23",
+    "title": "文言の変更",
+    "body": "ビジネス側からの依頼で、確認ダイアログの文言を変更しました。",
+    "channel": null,
+    "repo": "bakuraku/web-frontend"
+  },
+  {
+    "id": "act030",
+    "type": "slack_post",
+    "author_id": "e025",
+    "date": "2026-09-23",
+    "title": "CIが落ちています",
+    "body": "mainのCIが落ちています。原因は外部APIのモックの期限切れでした。修正PRを出しました。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act031",
+    "type": "slack_post",
+    "author_id": "e028",
+    "date": "2026-09-23",
+    "title": "リリースしました",
+    "body": "一覧画面の並び替え機能をリリースしました。不具合を見つけたら教えてください。",
+    "channel": "#release",
+    "repo": null
+  },
+  {
+    "id": "act032",
+    "type": "design_doc",
+    "author_id": "e015",
+    "date": "2026-09-25",
+    "title": "ポストモーテム: 月末決済バッチの4時間遅延",
+    "body": "9月末の決済バッチが4時間遅延した件の振り返りです。原因はロック競合で、リトライが雪だるま式に増えていました。検知から復旧までのタイムラインと、再発防止としてバッチの分割と冪等化を行った経緯を記録しています。",
+    "channel": null,
+    "repo": "fintech/postmortems"
+  },
+  {
+    "id": "act033",
+    "type": "github_pr",
+    "author_id": "e018",
+    "date": "2026-09-25",
+    "title": "Terraform: ステージングのインスタンスサイズ変更",
+    "body": "負荷試験のため一時的にサイズを上げます。試験後に戻します。",
+    "channel": null,
+    "repo": "bakuraku/search-service"
+  },
+  {
+    "id": "act034",
+    "type": "weekly_report",
+    "author_id": "e021",
+    "date": "2026-09-25",
+    "title": "週報 9/21-9/25 仁科",
+    "body": "仕様調整のミーティングが多く、実装はあまり進みませんでした。来週は集中時間を確保します。",
+    "channel": "#weekly-fintech",
+    "repo": null
+  },
+  {
+    "id": "act035",
+    "type": "weekly_report",
+    "author_id": "e026",
+    "date": "2026-09-25",
+    "title": "週報 9/21-9/25 鷹野",
+    "body": "リリースを1件出しました。大きな問題はありません。来週はテストの拡充をします。",
+    "channel": "#weekly-cto-office",
+    "repo": null
+  },
+  {
+    "id": "act036",
+    "type": "slack_post",
+    "author_id": "e005",
+    "date": "2026-09-27",
+    "title": "外部カンファレンスでQAの話をしてきました",
+    "body": "テスト自動化の投資対効果について話しました。懇親会で他社のQAの方と情報交換できたのが収穫でした。",
+    "channel": "#tech-pr",
+    "repo": null
+  },
+  {
+    "id": "act037",
+    "type": "design_doc",
+    "author_id": "e024",
+    "date": "2026-09-29",
+    "title": "依存ライブラリ脆弱性の自動トリアージ",
+    "body": "SBOMを全リポジトリで生成し、脆弱性アラートを実際に到達可能なコードかどうかで自動で振り分けます。対応が必要なアラートは全体の12%に絞り込めました。誤判定の扱いを今後詰めます。",
+    "channel": null,
+    "repo": "security/design-docs"
+  },
+  {
+    "id": "act038",
+    "type": "slack_post",
+    "author_id": "e001",
+    "date": "2026-09-30",
+    "title": "テックブログ公開: LLMプロダクトのアーキテクチャ選定",
+    "body": "テックブログを公開しました。社内で議論した選定基準をまとめています。シェアお願いします。",
+    "channel": "#tech-pr",
+    "repo": null
+  },
+  {
+    "id": "act039",
+    "type": "github_pr",
+    "author_id": "e008",
+    "date": "2026-09-30",
+    "title": "エラーハンドリングの改善",
+    "body": "外部APIのタイムアウト時に500ではなくリトライ可能なエラーを返すようにしました。",
+    "channel": null,
+    "repo": "bakuraku/web-frontend"
+  },
+  {
+    "id": "act040",
+    "type": "slack_post",
+    "author_id": "e029",
+    "date": "2026-09-30",
+    "title": "デザインレビュー依頼",
+    "body": "新しい一覧画面のデザインをレビューしてほしいです。フィルタの位置で迷っています。今週中にコメントもらえると助かります。",
+    "channel": "#design",
+    "repo": null
+  },
+  {
+    "id": "act041",
+    "type": "github_pr",
+    "author_id": "e010",
+    "date": "2026-10-01",
+    "title": "環境変数の追加",
+    "body": "新しい外部連携のためのAPIキー用の環境変数を追加しました。値はシークレット管理に登録済みです。",
+    "channel": null,
+    "repo": "bakuraku/web-frontend"
+  },
+  {
+    "id": "act042",
+    "type": "github_pr",
+    "author_id": "e012",
+    "date": "2026-10-01",
+    "title": "ログ出力の整理",
+    "body": "デバッグ用のログが本番で出ていたので削除しました。構造化ログの項目も揃えています。",
+    "channel": null,
+    "repo": "bakuraku/web-frontend"
+  },
+  {
+    "id": "act043",
+    "type": "slack_post",
+    "author_id": "e014",
+    "date": "2026-10-01",
+    "title": "プロンプトをコードと同じようにレビューする運用を始めた",
+    "body": "プロンプトをリポジトリで管理し、変更はPRでレビューして評価結果を添える運用にしました。本番でのA/B比較もフラグで切り替えられます。「なんとなく変えて壊れる」がなくなりました。",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "act044",
+    "type": "github_pr",
+    "author_id": "e023",
+    "date": "2026-10-01",
+    "title": "エラーハンドリングの改善",
+    "body": "外部APIのタイムアウト時に500ではなくリトライ可能なエラーを返すようにしました。",
+    "channel": null,
+    "repo": "fintech/infra"
+  },
+  {
+    "id": "act045",
+    "type": "slack_post",
+    "author_id": "e027",
+    "date": "2026-10-01",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会は型システムの入門です。初心者歓迎です。資料は後で共有します。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "act046",
+    "type": "design_doc",
+    "author_id": "e011",
+    "date": "2026-10-02",
+    "title": "検索品質の継続評価の仕組み",
+    "body": "検索改善を感覚ではなく数字で回すため、評価クエリセットの作り方と更新ルールをまとめました。ユーザーのクリックログから正解ラベルを半自動で作る方法を採用しています。他プロダクトの検索にも転用できる構成です。",
+    "channel": null,
+    "repo": "cto-office/design-docs"
+  },
+  {
+    "id": "act047",
+    "type": "weekly_report",
+    "author_id": "e013",
+    "date": "2026-10-02",
+    "title": "週報 9/28-10/2 早乙女",
+    "body": "オンボーディング資料の更新をしました。新メンバーのフォローも継続中です。",
+    "channel": "#weekly-ai-workforce",
+    "repo": null
+  },
+  {
+    "id": "act048",
+    "type": "weekly_report",
+    "author_id": "e024",
+    "date": "2026-10-02",
+    "title": "週報 9/28-10/2 織部",
+    "body": "採用面接が4件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-security",
+    "repo": null
+  },
+  {
+    "id": "act049",
+    "type": "slack_post",
+    "author_id": "e009",
+    "date": "2026-10-05",
+    "title": "採用面接の調整",
+    "body": "来週のカジュアル面談の担当を探しています。バックエンドの経験がある方だと助かります。",
+    "channel": "#recruiting",
+    "repo": null
+  },
+  {
+    "id": "act050",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-06",
+    "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
+    "body": "新しいモデルへの切り替え、以前は手動確認で1週間かかっていたのが評価基盤のおかげで1日で判断できました。ツール呼び出しの誤りが増えるケースも事前に見つかっています。判定のブレをどう扱うかはまだ試行錯誤中です。",
+    "channel": "#ai-workforce-dev",
+    "repo": null
+  },
+  {
+    "id": "act051",
+    "type": "github_pr",
+    "author_id": "e017",
+    "date": "2026-10-07",
+    "title": "リファクタリング: 共通処理の切り出し",
+    "body": "3か所に重複していた日付変換を共通関数にまとめました。挙動は変わりません。",
+    "channel": null,
+    "repo": "bakuraku/search-service"
+  },
+  {
+    "id": "act052",
+    "type": "github_pr",
+    "author_id": "e010",
+    "date": "2026-10-08",
+    "title": "不要なフィーチャーフラグの削除",
+    "body": "全テナントで有効化済みのフラグを削除しました。",
+    "channel": null,
+    "repo": "bakuraku/infra"
+  },
+  {
+    "id": "act053",
+    "type": "slack_post",
+    "author_id": "e013",
+    "date": "2026-10-08",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会は型システムの入門です。初心者歓迎です。資料は後で共有します。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "act054",
+    "type": "github_pr",
+    "author_id": "e019",
+    "date": "2026-10-08",
+    "title": "Terraform: ステージングのインスタンスサイズ変更",
+    "body": "負荷試験のため一時的にサイズを上げます。試験後に戻します。",
+    "channel": null,
+    "repo": "ai-workforce/agent-runtime"
+  },
+  {
+    "id": "act055",
+    "type": "github_pr",
+    "author_id": "e026",
+    "date": "2026-10-08",
+    "title": "不要なフィーチャーフラグの削除",
+    "body": "全テナントで有効化済みのフラグを削除しました。",
+    "channel": null,
+    "repo": "cto-office/data-platform"
+  },
+  {
+    "id": "act056",
+    "type": "slack_post",
+    "author_id": "e015",
+    "date": "2026-10-09",
+    "title": "デザインレビュー依頼",
+    "body": "新しい一覧画面のデザインをレビューしてほしいです。フィルタの位置で迷っています。今週中にコメントもらえると助かります。",
+    "channel": "#design",
+    "repo": null
+  },
+  {
+    "id": "act057",
+    "type": "weekly_report",
+    "author_id": "e015",
+    "date": "2026-10-09",
+    "title": "週報 10/5-10/9 芹沢",
+    "body": "決済バッチの冪等化が本番に入りました。分割後は月末の処理時間が平均で40%短くなっています。ポストモーテムの内容は他チームからも参考にしたいと声がありました。",
+    "channel": "#weekly-fintech",
+    "repo": null
+  },
+  {
+    "id": "act058",
+    "type": "slack_post",
+    "author_id": "e029",
+    "date": "2026-10-09",
+    "title": "問い合わせ対応の共有",
+    "body": "お客様から帳票の出力が遅いと問い合わせがありました。特定の条件で全件取得になっていたので修正します。",
+    "channel": "#cs-eng",
+    "repo": null
+  },
+  {
+    "id": "act059",
+    "type": "slack_post",
+    "author_id": "e002",
+    "date": "2026-10-10",
+    "title": "テックブログ公開: 開発プロセスを週次で見直す",
+    "body": "チームの振り返りの仕組みを記事にしました。採用広報にも使ってもらえると嬉しいです。",
+    "channel": "#tech-pr",
+    "repo": null
+  },
+  {
+    "id": "act060",
+    "type": "slack_post",
+    "author_id": "e004",
+    "date": "2026-10-13",
+    "title": "勉強会のお知らせ",
+    "body": "来週の社内勉強会は型システムの入門です。初心者歓迎です。資料は後で共有します。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "act061",
+    "type": "github_pr",
+    "author_id": "e006",
+    "date": "2026-10-13",
+    "title": "依存ライブラリの定期アップデート",
+    "body": "マイナーバージョンのアップデートのみです。CIが通ることを確認しました。",
+    "channel": null,
+    "repo": "ai-workforce/web"
+  },
+  {
+    "id": "act062",
+    "type": "slack_post",
+    "author_id": "e023",
+    "date": "2026-10-13",
+    "title": "監視アラートの閾値変更",
+    "body": "CPUアラートの閾値を80%から85%に変更しました。通知が多すぎたためです。様子を見て戻すかもしれません。",
+    "channel": "#sre",
+    "repo": null
+  },
+  {
+    "id": "act063",
+    "type": "slack_post",
+    "author_id": "e025",
+    "date": "2026-10-13",
+    "title": "採用面接の調整",
+    "body": "来週のカジュアル面談の担当を探しています。バックエンドの経験がある方だと助かります。",
+    "channel": "#recruiting",
+    "repo": null
+  },
+  {
+    "id": "act064",
+    "type": "slack_post",
+    "author_id": "e018",
+    "date": "2026-10-14",
+    "title": "手書き領収書のOCR精度が上がりました",
+    "body": "手書き領収書の金額読み取り精度が78%から93%になりました。合成データで手書き数字を増やしたのが一番効いています。失敗パターンの分類も一通り終わりました。",
+    "channel": "#bakuraku-ml",
+    "repo": null
+  },
+  {
+    "id": "act065",
+    "type": "slack_post",
+    "author_id": "e016",
+    "date": "2026-10-15",
+    "title": "採用面接の調整",
+    "body": "来週のカジュアル面談の担当を探しています。バックエンドの経験がある方だと助かります。",
+    "channel": "#recruiting",
+    "repo": null
+  },
+  {
+    "id": "act066",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-10-15",
+    "title": "ステージング環境が重いです",
+    "body": "ステージングのレスポンスが遅いです。誰か心当たりありますか。ログを見た感じDBの接続数が上限に近いです。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act067",
+    "type": "slack_post",
+    "author_id": "e002",
+    "date": "2026-10-16",
+    "title": "ステージング環境が重いです",
+    "body": "ステージングのレスポンスが遅いです。誰か心当たりありますか。ログを見た感じDBの接続数が上限に近いです。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act068",
+    "type": "weekly_report",
+    "author_id": "e017",
+    "date": "2026-10-16",
+    "title": "週報 10/12-10/16 柚木",
+    "body": "今週は問い合わせ対応が中心でした。来週から新機能の実装に入ります。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act069",
+    "type": "weekly_report",
+    "author_id": "e022",
+    "date": "2026-10-16",
+    "title": "週報 10/12-10/16 皆川",
+    "body": "データ基盤のSQLをdbtに移行し終えました。テストとリネージが見えるようになり、指標の定義違いによる問い合わせが減っています。移行手順はドキュメント化済みです。",
+    "channel": "#weekly-cto-office",
+    "repo": null
+  },
+  {
+    "id": "act070",
+    "type": "github_pr",
+    "author_id": "e001",
+    "date": "2026-10-20",
+    "title": "リファクタリング: 共通処理の切り出し",
+    "body": "3か所に重複していた日付変換を共通関数にまとめました。挙動は変わりません。",
+    "channel": null,
+    "repo": "cto-office/internal-tools"
+  },
+  {
+    "id": "act071",
+    "type": "slack_post",
+    "author_id": "e002",
+    "date": "2026-10-20",
+    "title": "CIが落ちています",
+    "body": "mainのCIが落ちています。原因は外部APIのモックの期限切れでした。修正PRを出しました。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act072",
+    "type": "github_pr",
+    "author_id": "e006",
+    "date": "2026-10-20",
+    "title": "環境変数の追加",
+    "body": "新しい外部連携のためのAPIキー用の環境変数を追加しました。値はシークレット管理に登録済みです。",
+    "channel": null,
+    "repo": "ai-workforce/agent-runtime"
+  },
+  {
+    "id": "act073",
+    "type": "design_doc",
+    "author_id": "e013",
+    "date": "2026-10-20",
+    "title": "AIエージェント評価基盤 設計ドキュメント v2",
+    "body": "評価ケースの管理、判定LLMの選定、人手評価との一致率の測り方をまとめました。人手評価との一致率は現在87%です。評価コストを月額で見積もる方法も載せています。",
+    "channel": null,
+    "repo": "ai-workforce/design-docs"
+  },
+  {
+    "id": "act074",
+    "type": "slack_post",
+    "author_id": "e026",
+    "date": "2026-10-20",
+    "title": "ライブラリのメジャーバージョンアップ",
+    "body": "UIライブラリのメジャーアップデートが出ています。破壊的変更が多いので来月まとめて対応します。影響範囲を調べた人がいたら教えてください。",
+    "channel": "#frontend",
+    "repo": null
+  },
+  {
+    "id": "act075",
+    "type": "github_pr",
+    "author_id": "e004",
+    "date": "2026-10-21",
+    "title": "テストの追加",
+    "body": "金額計算の境界値テストを追加しました。カバレッジは2ポイント上がります。",
+    "channel": null,
+    "repo": "fintech/infra"
+  },
+  {
+    "id": "act076",
+    "type": "slack_post",
+    "author_id": "e004",
+    "date": "2026-10-21",
+    "title": "明日のリリース内容の確認",
+    "body": "明日のリリース対象を確認しました。差分は3件で、マイグレーションはありません。リリース後の確認担当は私がやります。",
+    "channel": "#release",
+    "repo": null
+  },
+  {
+    "id": "act077",
+    "type": "slack_post",
+    "author_id": "e019",
+    "date": "2026-10-21",
+    "title": "ランチ会の案内",
+    "body": "金曜にチーム横断のランチ会をやります。参加希望の方はスタンプを押してください。",
+    "channel": "#random",
+    "repo": null
+  },
+  {
+    "id": "act078",
+    "type": "design_doc",
+    "author_id": "e021",
+    "date": "2026-10-22",
+    "title": "四半期の技術的負債リスト",
+    "body": "今四半期に返済する技術的負債の候補を優先度順に並べました。",
+    "channel": null,
+    "repo": "fintech/design-docs"
+  },
+  {
+    "id": "act079",
+    "type": "weekly_report",
+    "author_id": "e008",
+    "date": "2026-10-23",
+    "title": "週報 10/19-10/23 日向",
+    "body": "スプリントの目標は8割達成でした。残りは来週に持ち越します。レビュー待ちが溜まっているので解消したいです。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act080",
+    "type": "weekly_report",
+    "author_id": "e010",
+    "date": "2026-10-23",
+    "title": "週報 10/19-10/23 猪瀬",
+    "body": "仕様調整のミーティングが多く、実装はあまり進みませんでした。来週は集中時間を確保します。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act081",
+    "type": "weekly_report",
+    "author_id": "e018",
+    "date": "2026-10-23",
+    "title": "週報 10/19-10/23 久我",
+    "body": "オンボーディング資料の更新をしました。新メンバーのフォローも継続中です。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act082",
+    "type": "github_pr",
+    "author_id": "e020",
+    "date": "2026-10-23",
+    "title": "E2E: テストごとにテナントを分離してflakyを解消",
+    "body": "テストデータの共有が原因のflakyをなくすため、テストごとに使い捨てテナントを作るようにしました。これでflaky率は月初比で70%減りました。CI時間は+2分です。",
+    "channel": null,
+    "repo": "bakuraku/e2e-tests"
+  },
+  {
+    "id": "act083",
+    "type": "github_pr",
+    "author_id": "e025",
+    "date": "2026-10-26",
+    "title": "エラーハンドリングの改善",
+    "body": "外部APIのタイムアウト時に500ではなくリトライ可能なエラーを返すようにしました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "act084",
+    "type": "slack_post",
+    "author_id": "e014",
+    "date": "2026-10-27",
+    "title": "Slackの通知整理",
+    "body": "アラート用チャンネルが増えすぎたので整理しました。統合先の一覧はチャンネルの説明欄にあります。",
+    "channel": "#engineering",
+    "repo": null
+  },
+  {
+    "id": "act085",
+    "type": "design_doc",
+    "author_id": "e023",
+    "date": "2026-10-27",
+    "title": "改ざん検知可能な監査ログ基盤の設計",
+    "body": "金融規制の要件を満たすため、ハッシュチェーンで改ざんを検知できる監査ログを設計しました。書き込み性能を落とさないための非同期化の工夫と、監査対応時の検索方法をまとめています。",
+    "channel": null,
+    "repo": "fintech/design-docs"
+  },
+  {
+    "id": "act086",
+    "type": "github_pr",
+    "author_id": "e002",
+    "date": "2026-10-28",
+    "title": "マイグレーション: インデックス追加",
+    "body": "検索が遅いクエリのためにインデックスを追加しました。ロックは発生しない方法で作成します。",
+    "channel": null,
+    "repo": "bakuraku/api"
+  },
+  {
+    "id": "act087",
+    "type": "slack_post",
+    "author_id": "e010",
+    "date": "2026-10-28",
+    "title": "デザインレビュー依頼",
+    "body": "新しい一覧画面のデザインをレビューしてほしいです。フィルタの位置で迷っています。今週中にコメントもらえると助かります。",
+    "channel": "#design",
+    "repo": null
+  },
+  {
+    "id": "act088",
+    "type": "github_pr",
+    "author_id": "e012",
+    "date": "2026-10-28",
+    "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+    "body": "使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコード分割しました。初期JSは2.1MBから900KBに、LCPは中央値で1.8秒短くなりました。",
+    "channel": null,
+    "repo": "bakuraku/web-frontend"
+  },
+  {
+    "id": "act089",
+    "type": "github_pr",
+    "author_id": "e014",
+    "date": "2026-10-28",
+    "title": "依存ライブラリの定期アップデート",
+    "body": "マイナーバージョンのアップデートのみです。CIが通ることを確認しました。",
+    "channel": null,
+    "repo": "ai-workforce/agent-runtime"
+  },
+  {
+    "id": "act090",
+    "type": "slack_post",
+    "author_id": "e003",
+    "date": "2026-10-29",
+    "title": "新メンバーの紹介",
+    "body": "今週から新しいメンバーがチームに加わりました。前職ではモバイル開発をしていたそうです。よろしくお願いします。",
+    "channel": "#general",
+    "repo": null
+  },
+  {
+    "id": "act091",
+    "type": "slack_post",
+    "author_id": "e003",
+    "date": "2026-10-30",
+    "title": "監視アラートの閾値変更",
+    "body": "CPUアラートの閾値を80%から85%に変更しました。通知が多すぎたためです。様子を見て戻すかもしれません。",
+    "channel": "#sre",
+    "repo": null
+  },
+  {
+    "id": "act092",
+    "type": "github_pr",
+    "author_id": "e005",
+    "date": "2026-10-30",
+    "title": "テストの追加",
+    "body": "金額計算の境界値テストを追加しました。カバレッジは2ポイント上がります。",
+    "channel": null,
+    "repo": "bakuraku/e2e-tests"
+  },
+  {
+    "id": "act093",
+    "type": "github_pr",
+    "author_id": "e009",
+    "date": "2026-10-30",
+    "title": "Terraform: ステージングのインスタンスサイズ変更",
+    "body": "負荷試験のため一時的にサイズを上げます。試験後に戻します。",
+    "channel": null,
+    "repo": "fintech/batch"
+  },
+  {
+    "id": "act094",
+    "type": "slack_post",
+    "author_id": "e022",
+    "date": "2026-10-30",
+    "title": "監視アラートの閾値変更",
+    "body": "CPUアラートの閾値を80%から85%に変更しました。通知が多すぎたためです。様子を見て戻すかもしれません。",
+    "channel": "#sre",
+    "repo": null
+  },
+  {
+    "id": "act095",
+    "type": "design_doc",
+    "author_id": "e022",
+    "date": "2026-10-30",
+    "title": "通知機能のリニューアル方針",
+    "body": "通知の種類ごとに配信チャネルを選べるようにする方針をまとめました。既存の設定は移行します。レビューをお願いします。",
+    "channel": null,
+    "repo": "cto-office/design-docs"
+  },
+  {
+    "id": "act096",
+    "type": "weekly_report",
+    "author_id": "e028",
+    "date": "2026-10-30",
+    "title": "週報 10/26-10/30 小野寺",
+    "body": "障害対応はありませんでした。リファクタリングを進めています。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act097",
+    "type": "slack_post",
+    "author_id": "e004",
+    "date": "2026-10-31",
+    "title": "layerx.go #17 登壇しました",
+    "body": "金融とSaaSのデータ整合性の話をしました。アーカイブは来週公開予定です。",
+    "channel": "#tech-pr",
+    "repo": null
+  },
+  {
+    "id": "act098",
+    "type": "github_pr",
+    "author_id": "e026",
+    "date": "2026-11-02",
+    "title": "リファクタリング: 共通処理の切り出し",
+    "body": "3か所に重複していた日付変換を共通関数にまとめました。挙動は変わりません。",
+    "channel": null,
+    "repo": "cto-office/data-platform"
+  },
+  {
+    "id": "act099",
+    "type": "slack_post",
+    "author_id": "e016",
+    "date": "2026-11-04",
+    "title": "リリースしました",
+    "body": "一覧画面の並び替え機能をリリースしました。不具合を見つけたら教えてください。",
+    "channel": "#release",
+    "repo": null
+  },
+  {
+    "id": "act100",
+    "type": "slack_post",
+    "author_id": "e024",
+    "date": "2026-11-04",
+    "title": "脆弱性アラート、月400件→対応要50件に",
+    "body": "自動トリアージを全社展開しました。開発チームに届くアラートが月400件から50件程度になっています。判定ロジックはOSSとして切り出せそうです。",
+    "channel": "#security",
+    "repo": null
+  },
+  {
+    "id": "act101",
+    "type": "design_doc",
+    "author_id": "e011",
+    "date": "2026-11-05",
+    "title": "APIのバージョニング方針",
+    "body": "外部公開APIのバージョニングをURLで行うかヘッダで行うかの比較です。結論はURL方式です。",
+    "channel": null,
+    "repo": "bakuraku/design-docs"
+  },
+  {
+    "id": "act102",
+    "type": "design_doc",
+    "author_id": "e016",
+    "date": "2026-11-06",
+    "title": "オンコール負荷の可視化と削減",
+    "body": "アラートを発報元と対応内容で分類し、対応不要なアラートを半分に減らしました。夜間呼び出しは月14回から5回になっています。ダッシュボードの作り方も記載しました。",
+    "channel": null,
+    "repo": "bakuraku/sre-docs"
+  },
+  {
+    "id": "act103",
+    "type": "weekly_report",
+    "author_id": "e026",
+    "date": "2026-11-06",
+    "title": "週報 11/2-11/6 鷹野",
+    "body": "採用面接が4件ありました。開発は小さな改修のみです。",
+    "channel": "#weekly-cto-office",
+    "repo": null
+  },
+  {
+    "id": "act104",
+    "type": "github_pr",
+    "author_id": "e025",
+    "date": "2026-11-09",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "act105",
+    "type": "slack_post",
+    "author_id": "e001",
+    "date": "2026-11-10",
+    "title": "明日のリリース内容の確認",
+    "body": "明日のリリース対象を確認しました。差分は3件で、マイグレーションはありません。リリース後の確認担当は私がやります。",
+    "channel": "#release",
+    "repo": null
+  },
+  {
+    "id": "act106",
+    "type": "slack_post",
+    "author_id": "e008",
+    "date": "2026-11-10",
+    "title": "デザインレビュー依頼",
+    "body": "新しい一覧画面のデザインをレビューしてほしいです。フィルタの位置で迷っています。今週中にコメントもらえると助かります。",
+    "channel": "#design",
+    "repo": null
+  },
+  {
+    "id": "act107",
+    "type": "slack_post",
+    "author_id": "e021",
+    "date": "2026-11-10",
+    "title": "AWSのコスト",
+    "body": "先月のAWSコストが少し増えていました。開発環境のインスタンスの止め忘れが原因でした。自動停止を設定済みです。",
+    "channel": "#infra",
+    "repo": null
+  },
+  {
+    "id": "act108",
+    "type": "github_pr",
+    "author_id": "e004",
+    "date": "2026-11-11",
+    "title": "マイグレーション: インデックス追加",
+    "body": "検索が遅いクエリのためにインデックスを追加しました。ロックは発生しない方法で作成します。",
+    "channel": null,
+    "repo": "fintech/batch"
+  },
+  {
+    "id": "act109",
+    "type": "github_pr",
+    "author_id": "e024",
+    "date": "2026-11-11",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "security/iam-policies"
+  },
+  {
+    "id": "act110",
+    "type": "slack_post",
+    "author_id": "e026",
+    "date": "2026-11-11",
+    "title": "新入社員オンボーディングにAIエージェントを試験導入",
+    "body": "社内ドキュメントを参照して質問に答え、初週のタスクを進めてくれるエージェントを試しています。10月入社の5名で、立ち上がりまでの期間が体感で半分になったという声がありました。",
+    "channel": "#cto-office",
+    "repo": null
+  },
+  {
+    "id": "act111",
+    "type": "weekly_report",
+    "author_id": "e001",
+    "date": "2026-11-13",
+    "title": "週報 11/9-11/13 青柳",
+    "body": "社外登壇の依頼が3件来ています。全部は受けきれないので、他の人に回せないか技術広報と相談中です。",
+    "channel": "#weekly-cto-office",
+    "repo": null
+  },
+  {
+    "id": "act112",
+    "type": "weekly_report",
+    "author_id": "e008",
+    "date": "2026-11-13",
+    "title": "週報 11/9-11/13 日向",
+    "body": "障害対応はありませんでした。リファクタリングを進めています。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act113",
+    "type": "weekly_report",
+    "author_id": "e020",
+    "date": "2026-11-13",
+    "title": "週報 11/9-11/13 篠宮",
+    "body": "障害対応はありませんでした。リファクタリングを進めています。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act114",
+    "type": "weekly_report",
+    "author_id": "e030",
+    "date": "2026-11-13",
+    "title": "週報 11/9-11/13 雨宮",
+    "body": "今週は問い合わせ対応が中心でした。来週から新機能の実装に入ります。",
+    "channel": "#weekly-cto-office",
+    "repo": null
+  },
+  {
+    "id": "act115",
+    "type": "slack_post",
+    "author_id": "e005",
+    "date": "2026-11-16",
+    "title": "権限申請のやり方",
+    "body": "本番DBの読み取り権限の申請方法がわからないという質問が多いので、手順書のリンクを貼っておきます。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act116",
+    "type": "github_pr",
+    "author_id": "e018",
+    "date": "2026-11-17",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "bakuraku/web-frontend"
+  },
+  {
+    "id": "act117",
+    "type": "slack_post",
+    "author_id": "e007",
+    "date": "2026-11-18",
+    "title": "権限申請のやり方",
+    "body": "本番DBの読み取り権限の申請方法がわからないという質問が多いので、手順書のリンクを貼っておきます。",
+    "channel": "#dev-help",
+    "repo": null
+  },
+  {
+    "id": "act118",
+    "type": "github_pr",
+    "author_id": "e011",
+    "date": "2026-11-18",
+    "title": "typo修正",
+    "body": "エラーメッセージの誤字を修正しました。",
+    "channel": null,
+    "repo": "bakuraku/api"
+  },
+  {
+    "id": "act119",
+    "type": "weekly_report",
+    "author_id": "e010",
+    "date": "2026-11-20",
+    "title": "週報 11/16-11/20 猪瀬",
+    "body": "スプリントの目標は8割達成でした。残りは来週に持ち越します。レビュー待ちが溜まっているので解消したいです。",
+    "channel": "#weekly-bakuraku",
+    "repo": null
+  },
+  {
+    "id": "act120",
+    "type": "slack_post",
+    "author_id": "e022",
+    "date": "2026-11-20",
+    "title": "権限申請のやり方",
+    "body": "本番DBの読み取り権限の申請方法がわからないという質問が多いので、手順書のリンクを貼っておきます。",
+    "channel": "#dev-help",
+    "repo": null
+  }
+]

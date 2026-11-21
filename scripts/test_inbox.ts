@@ -89,9 +89,61 @@ async function main() {
   check("失敗したらエラー（理由を残す）", err.status === "error" && err.error === "テスト用の失敗");
   check("エラーは summary を返さない", !("summary" in inbox.publicView(err, "http://localhost:3000")));
 
+  // ---- 指名の読み取り（読み取りは偽物、社員データとの照合は本物のコード）
+  const { resolveNominee } = await import("../lib/nominee");
+  check("フルネームで実在すれば指名あり", resolveNominee("笹倉 由紀").employee_id === "e002");
+  check("姓＋さんでも1人に決まれば指名あり", resolveNominee("笹倉さん").employee_id === "e002");
+  check("名前がなければ指名なし（注意点なし）", resolveNominee(null).employee_id === null && resolveNominee(null).note === null);
+  const ghost = resolveNominee("山田さん");
+  check("社員データにいなければ指名なし＋注意点", ghost.employee_id === null && !!ghost.note && ghost.note.includes("山田さん"), ghost.note ?? "");
+  check("注意点の文に内部の言葉がない", internalTerms(ghost.note).length === 0);
+
+  const seenNominee: { id: string | null | undefined } = { id: undefined };
+  const named = inbox.addToInbox({ text: "ぜひ笹倉さんにご登壇いただきたいです", source: "manual" }, async () => null);
+  await inbox.prepare(
+    named.id,
+    async (request, emit) => {
+      seenNominee.id = request.nominated_employee_id;
+      emit({ type: "done", run_usd: 0, total_usd: 0, steps: 1 });
+      return { ...req004, request_id: request.id };
+    },
+    async () => "笹倉さん",
+  );
+  check("読み取った指名が既存の依頼の形に入って Agent に渡る", seenNominee.id === "e002", String(seenNominee.id));
+  check("指名を受信箱に残す", inbox.getInboxItem(named.id)?.nominee?.employee_id === "e002");
+  check("画面用の詳細に指名の名前が出る", inbox.detailView(inbox.getInboxItem(named.id)!).nominee_name === "笹倉 由紀");
+
+  const unknown = inbox.addToInbox({ text: "ぜひ山田さんにご登壇いただきたいです", source: "manual" }, async () => null);
+  await inbox.prepare(
+    unknown.id,
+    async (request, emit) => {
+      seenNominee.id = request.nominated_employee_id;
+      emit({ type: "done", run_usd: 0, total_usd: 0, steps: 1 });
+      return { ...req004, request_id: request.id };
+    },
+    async () => "山田さん",
+  );
+  const u = inbox.getInboxItem(unknown.id)!;
+  check("実在しない指名は指名なしで Agent に渡る", seenNominee.id === null);
+  check("実在しない指名は各候補の注意点に書く", !!u.result && u.result.candidates.every((c) => c.cautions.some((t) => t.includes("山田さん"))));
+
+  const failing = inbox.addToInbox({ text: "どなたか登壇できますか", source: "manual" }, async () => null);
+  await inbox.prepare(
+    failing.id,
+    async (request, emit) => {
+      emit({ type: "done", run_usd: 0, total_usd: 0, steps: 1 });
+      return { ...req004, candidates: [], no_fit: null, request_id: request.id };
+    },
+    async () => {
+      throw new Error("読み取り失敗");
+    },
+  );
+  const f = inbox.getInboxItem(failing.id)!;
+  check("読み取りに失敗したら指名なし、候補がいなければ見つからない理由に書く", f.nominee?.employee_id === null && !!f.result?.no_fit?.reasons.some((t) => t.includes("指名を読み取れなかった")));
+
   // ---- 一覧・開いた印
   const list = inbox.listInbox().map(inbox.listView);
-  check("一覧は新しい順", list[0].id === bad.id && list[1].id === added.id);
+  check("一覧は新しい順", list[0].id === failing.id && list.findIndex((x) => x.id === bad.id) < list.findIndex((x) => x.id === added.id));
   check("開くまでは「新しい」", list.every((x) => x.is_new));
   inbox.markOpened(added.id);
   check("開いたら「新しい」が外れる", inbox.listView(inbox.getInboxItem(added.id)!).is_new === false);

@@ -6,7 +6,9 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import type { AgentEvent, ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
+import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { internalTerms } from "./plainText";
+import { runUsd as usageOfRun } from "./usage";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
 const FILE = () => process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json");
@@ -36,6 +38,8 @@ export interface InboxItem {
   error: string | null;
   /** 画面で一度でも開いたか（「新しい依頼」の印に使う） */
   opened_at: string | null;
+  /** 依頼文から読み取った指名（読み取る前は null） */
+  nominee: NomineeReading | null;
   result: ProposalResult | null;
   /** 作業ログ（画面の「Agentがやったこと」を再現するため） */
   events: AgentEvent[];
@@ -91,9 +95,41 @@ export function markOpened(id: string) {
 // ---------------------------------------------------------------------------
 // 既存の依頼の形にする
 // ---------------------------------------------------------------------------
-/** 受信箱の依頼を、既存の依頼（SpeakingRequest）と同じ形にする。開催日などは本文からAgentが読み取る */
-export function inboxRequest(it: Pick<InboxItem, "id" | "text" | "received_at" | "source">): SpeakingRequest {
-  return { id: it.id, received_at: it.received_at.slice(0, 10), message: it.text };
+/**
+ * 受信箱の依頼を、既存の依頼（SpeakingRequest）と同じ形にする。
+ * 指名は、依頼文から読み取って社員データで確かめた人だけを入れる（指名の検証・代わりの提案は既存のまま効く）。
+ * 開催日などは本文からAgentが読み取る。
+ */
+export function inboxRequest(it: Pick<InboxItem, "id" | "text" | "received_at" | "source"> & { nominee?: NomineeReading | null }): SpeakingRequest {
+  return {
+    id: it.id,
+    received_at: it.received_at.slice(0, 10),
+    message: it.text,
+    nominated_employee_id: it.nominee?.employee_id ?? null,
+  };
+}
+
+/** 依頼文から指名を読み取り、社員データで確かめる。読み取れなければ指名なし（理由を残す） */
+export async function readNominee(text: string, extractor: NomineeExtractor, runId: string): Promise<NomineeReading> {
+  try {
+    return resolveNominee(await extractor(text, runId));
+  } catch {
+    return {
+      name: null,
+      employee_id: null,
+      note: "依頼文から指名を読み取れなかったため、指名なしとして扱いました。指名があるかは依頼文で確認してください",
+    };
+  }
+}
+
+/** 指名なしとして扱った理由を、各候補の注意点に書く（候補がいなければ見つからない理由に書く） */
+export function addNomineeNote(result: ProposalResult, note: string | null): ProposalResult {
+  if (!note) return result;
+  if (result.candidates.length === 0) {
+    const nf = result.no_fit ?? { reasons: [], next_checks: [] };
+    return { ...result, no_fit: { ...nf, reasons: [...nf.reasons, note] } };
+  }
+  return { ...result, candidates: result.candidates.map((c) => ({ ...c, cautions: [...c.cautions, note] })) };
 }
 
 // ---------------------------------------------------------------------------
@@ -130,7 +166,14 @@ export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } 
 const newId = () => `inb-${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
 
 /** 登録して、裏で候補づくりを始める。返すのは登録した1件（まだ processing） */
-export function addToInbox(input: InboxInput, runner: Runner): InboxItem {
+export function addToInbox(input: InboxInput, runner: Runner, extractor?: NomineeExtractor): InboxItem {
+  const item = registerInbox(input);
+  void prepare(item.id, runner, extractor);
+  return item;
+}
+
+/** 登録だけする（候補づくりは始めない）。評価スクリプトが自分で prepare を待つときに使う */
+export function registerInbox(input: InboxInput): InboxItem {
   const now = new Date().toISOString();
   const item: InboxItem = {
     id: newId(),
@@ -143,26 +186,37 @@ export function addToInbox(input: InboxInput, runner: Runner): InboxItem {
     finished_at: null,
     error: null,
     opened_at: null,
+    nominee: null,
     result: null,
     events: [],
     run_usd: 0,
   };
   save([...load(), item]);
-  void prepare(item.id, runner);
   return item;
 }
 
-/** 候補づくり。終わったら結果と作業ログを保存する（テストから待てるように Promise を返す） */
-export async function prepare(id: string, runner: Runner): Promise<void> {
-  const it = getInboxItem(id);
+/**
+ * 候補づくり。終わったら結果と作業ログを保存する（テストから待てるように Promise を返す）。
+ * extractor があれば、先に依頼文から指名を読み取って既存の依頼の形に入れる。
+ */
+export async function prepare(id: string, runner: Runner, extractor?: NomineeExtractor): Promise<void> {
+  let it = getInboxItem(id);
   if (!it) return;
   const events: AgentEvent[] = [];
   let runUsd = 0;
   try {
-    const result = await runner(inboxRequest(it), (e) => {
+    if (extractor && !it.nominee) {
+      const nominee = await readNominee(it.text, extractor, id);
+      update(id, (x) => ({ ...x, nominee }));
+      it = { ...it, nominee };
+    }
+    const note = it.nominee?.note ?? null;
+    const raw = await runner(inboxRequest(it), (e) => {
       events.push(e);
       if (e.type === "done") runUsd = e.run_usd;
     });
+    const result = raw ? addNomineeNote(raw, note) : null;
+    runUsd += usageOfRun(id); // 指名の読み取りの分（依頼の id で記録している）
     const failed = events.find((e): e is Extract<AgentEvent, { type: "error" }> => e.type === "error");
     update(id, (x) => ({
       ...x,
@@ -186,9 +240,9 @@ export async function prepare(id: string, runner: Runner): Promise<void> {
 }
 
 /** もう一度探す（画面の「もう一度探す」とは別に、エラーの依頼を準備し直すとき用） */
-export function restart(id: string, runner: Runner) {
+export function restart(id: string, runner: Runner, extractor?: NomineeExtractor) {
   update(id, (x) => ({ ...x, status: "processing", started_at: new Date().toISOString(), finished_at: null, error: null }));
-  void prepare(id, runner);
+  void prepare(id, runner, extractor);
 }
 
 // ---------------------------------------------------------------------------
@@ -274,11 +328,16 @@ export function listView(it: InboxItem): InboxListItem {
 
 export interface InboxDetail extends InboxListItem {
   text: string;
+  /** 依頼文から読み取り、社員データで確かめた指名（社員の名前）。指名なし・確かめられなかったときは null */
+  nominee_name: string | null;
   result: ProposalResult | null;
   events: AgentEvent[];
   run_usd: number;
 }
 
 export function detailView(it: InboxItem): InboxDetail {
-  return { ...listView(it), text: it.text, result: it.result, events: it.events, run_usd: it.run_usd };
+  const nomineeName = it.nominee?.employee_id
+    ? it.result?.candidates.find((c) => c.employee_id === it.nominee!.employee_id)?.name ?? it.nominee.name
+    : null;
+  return { ...listView(it), text: it.text, nominee_name: nomineeName, result: it.result, events: it.events, run_usd: it.run_usd };
 }

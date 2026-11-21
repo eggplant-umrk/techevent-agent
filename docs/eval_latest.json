@@ -1121,5 +1121,655 @@
   ],
   "coverage": null,
   "writeback": null,
-  "quality": null
+  "quality": null,
+  "inbox_case": {
+    "source": "受信箱の実データ（inb-mwq315xj-4586a8）",
+    "item": {
+      "id": "inb-mwq315xj-4586a8",
+      "source": "manual",
+      "meta": null,
+      "text": "【登壇のご相談】Web Performance Night 2027 Winter（2027-01-28 開催、渋谷、セッション20分、聴衆はフロントエンドエンジニア約100名） layerx.go のアーカイブで笹倉さんのお話を拝見しました。大規模SaaSの初期表示改善について、ぜひ笹倉さんにご登壇いただきたいです。12/5までにお返事いただけると助かります。",
+      "received_at": "2026-11-21T07:24:18.631Z",
+      "status": "ready",
+      "started_at": "2026-11-21T07:24:18.631Z",
+      "finished_at": "2026-11-21T07:24:54.273Z",
+      "error": null,
+      "opened_at": "2026-11-21T07:24:22.065Z",
+      "nominee": {
+        "name": "笹倉さん",
+        "employee_id": "e002",
+        "note": null
+      },
+      "result": {
+        "run_id": "a615fefb-3e9f-4325-9999-57f463bb57cc",
+        "request_id": "inb-mwq315xj-4586a8",
+        "request_pattern": "named_speaker",
+        "summary": "Web Performance Night（2027年1月28日・20分・フロントエンドエンジニア約100名）から、笹倉さんを指名して「大規模SaaSの初期表示改善」で話してほしいという依頼です。笹倉さんには当日の予定重複、忙しさ、テーマのずれがあるため、条件付きとして載せました。代わりの候補として、同じバクラクで初期表示を実際に1.8秒短くした百瀬さんを一番に推します。",
+        "nominee_assessment": "笹倉さんは3点で厳しい状況です。①開催日の2027年1月27〜29日はバクラク開発組織の合宿と重なっている。②忙しさは5段階の5。③これまでの発信は開発プロセス・チームビルディング・TypeScriptが中心で、Webパフォーマンスの取り組みや発信は見当たらない。最後の登壇も2026年10月9日と最近です。依頼元が見たアーカイブの内容も、初期表示改善そのものではない可能性があります。",
+        "learnings_applied": [],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e012",
+            "name": "百瀬 結衣",
+            "business_unit": "バクラク",
+            "role": "フロントエンドエンジニア",
+            "workload": 2,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "初期JSを2.1MBから900KBへ：大規模SaaSのLCPを1.8秒縮めたバンドル改善",
+            "reason": "バクラクのWebフロントエンドで不要な依存を消し、ルート単位でコードを分けて、初期JSを2.1MBから900KB、LCPを1.8秒縮めた本人で、依頼の「大規模SaaSの初期表示改善」にそのまま合います。",
+            "evidence": [
+              {
+                "id": "act088",
+                "type": "github_pr",
+                "date": "2026-10-28",
+                "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+                "where": "bakuraku/web-frontend"
+              }
+            ],
+            "cautions": [
+              "登壇は初めてなので、資料づくりの手伝いがあると安心",
+              "ネタ帳のカードはまだ技術広報の確認前",
+              "根拠はプルリクエスト1件（数字ははっきりしている）"
+            ],
+            "is_alternative_to_nominee": true,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e012-01",
+            "card": {
+              "card_id": "card-e012-01",
+              "employee_id": "e012",
+              "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+              "themes": [
+                "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+                "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+              ],
+              "evidence_activity_ids": [
+                "act088"
+              ],
+              "format": "blog",
+              "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-28",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:23.278Z",
+              "updated_at": "2026-11-21T05:26:23.278Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e002",
+            "name": "笹倉 由紀",
+            "business_unit": "バクラク",
+            "role": "エンジニアリングマネージャー",
+            "workload": 5,
+            "past_talk_count": 12,
+            "last_talk_date": "2026-10-09",
+            "theme": "大規模SaaSの初期表示改善を進めるチームのつくり方（百瀬さんとの共同登壇の案）",
+            "reason": "依頼元からの指名です。ただ、本人の取り組みは開発プロセスとチームづくりが中心なので、もし出るならマネージャーとして改善をどう進めたかを話す形が合います。",
+            "evidence": [],
+            "cautions": [
+              "開催日（1月27〜29日）が開発組織の合宿と重なっている",
+              "忙しさが5段階の5",
+              "最後の登壇が2026年10月9日と最近",
+              "Webパフォーマンスの取り組みや発信が見当たらない",
+              "最近登壇した（2026-10-09）",
+              "忙しい（忙しさ5）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "開催日が合宿と重なり忙しさも5で、テーマも本人の取り組みとずれるので、百瀬さんに代わってもらうか、合宿を抜けられる場合だけ短い共同登壇にするのが現実的です。",
+            "is_nominee": true,
+            "evidence_request_id": "inb-mwq315xj-4586a8",
+            "card_id": null,
+            "card": null
+          },
+          {
+            "rank": 3,
+            "employee_id": "e017",
+            "name": "柚木 ほのか",
+            "business_unit": "バクラク",
+            "role": "デザイナー",
+            "workload": 2,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "業務SaaSの申請フォームをキーボードだけで完了させる：アクセシビリティ改善の勘所",
+            "reason": "スクリーンリーダーを使う方へのインタビューをもとに経費申請フローを直した本人です。Webパフォーマンスと並んで今の流れにあるアクセシビリティの話で、フロントエンドエンジニア向けの会場に合います。",
+            "evidence": [
+              {
+                "id": "act027",
+                "type": "slack_post",
+                "date": "2026-09-22",
+                "title": "スクリーンリーダーで経費申請を最後まで通せるようにしました",
+                "where": "#bakuraku-design"
+              }
+            ],
+            "cautions": [
+              "登壇は初めて",
+              "根拠は2026年9月22日のSlack投稿1件で、改善の数字はまだない",
+              "ネタ帳のカードはまだ技術広報の確認前"
+            ],
+            "is_alternative_to_nominee": true,
+            "confidence": "conditional",
+            "caveat": "依頼の「初期表示改善」ではなくアクセシビリティの話なので、主催者が別の切り口でも受けてくれるか確認が必要です。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e017-01",
+            "card": {
+              "card_id": "card-e017-01",
+              "employee_id": "e017",
+              "summary": "スクリーンリーダーを使う方へのインタビューをもとに、バクラクの経費申請フローのフォーカス順とラベルを見直しました。スクリーンリーダーで申請を最後まで通せるようになり、キーボードだけでも完了できるようになりました。直したときのチェックリストは、デザインシステムに入れる予定です。",
+              "themes": [
+                "スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善",
+                "業務SaaSの申請フォームをキーボードだけで完了させる：フォーカス順とラベル設計の勘所",
+                "アクセシビリティ対応をチェックリストにしてデザインシステムに組み込む"
+              ],
+              "evidence_activity_ids": [
+                "act027"
+              ],
+              "format": "blog",
+              "format_reason": "具体的な改善内容はありますが数字はまだなく、本人も登壇経験がないので、まずはインタビューから改善までの流れをブログにまとめるのが始めやすいです。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-09-22",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:41.933Z",
+              "updated_at": "2026-11-21T05:26:41.933Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          }
+        ],
+        "alternative_pitch": "笹倉さんご本人の登壇は難しく、テーマに最も合うのは百瀬 結衣さんです。\n\n**笹倉さんが難しい理由**\n- 開催日の1月28日が、バクラク開発組織の合宿（1月27〜29日）と重なっています。\n- 現在の業務負荷が最も高い状態で、10月9日にも登壇したばかりです。\n- これまでの発信は開発プロセス・チームビルディング・TypeScriptが中心で、初期表示改善の発信は見当たりません。\n\n**百瀬さんを推す理由**\n- 依頼元が聞きたいのは「大規模SaaSの初期表示改善」です。\n- 百瀬さんは、バクラクで不要な依存の削除とルート単位のコード分割を自ら手がけました。\n- その結果、初期JSを2.1MBから900KBに減らし、LCPを1.8秒縮めています。\n- 登壇は初めてなので、資料レビューなどの支援が前提です。\n\n**角が立たない案**\n- 合宿のため、笹倉さんの当日参加は難しい状況です。\n- 代わりに「笹倉さんの推薦」として百瀬さんを紹介してもらい、笹倉さんには資料レビューで関わってもらう形が考えられます。\n- 依頼元には、指名へのお礼とともに「ご希望のテーマを実際に担当した者です」と伝えると、期待に沿った提案になります。\n\n**次に確認すること**\n- 笹倉さんに、推薦役を引き受けてもらえるか相談します。\n- 百瀬さんの登壇意思と、合宿に参加するかどうかを確認します（同じバクラク所属のため）。\n- 百瀬さんも合宿で難しい場合は、同じ会場層に合うアクセシビリティ改善の柚木 ほのかさんが次の候補です。\n- 依頼元がどのアーカイブを見たのかを確認します。\n- 返信期限は12月5日です。"
+      },
+      "events": [
+        {
+          "type": "start",
+          "run_id": "a615fefb-3e9f-4325-9999-57f463bb57cc",
+          "loop_model": "claude-opus-5-5",
+          "heavy_model": "claude-fable-5-2",
+          "switched": false,
+          "total_usd": 5.859717800000001,
+          "switch_usd": 150
+        },
+        {
+          "type": "step",
+          "n": 1,
+          "max": 15
+        },
+        {
+          "type": "usage",
+          "run_usd": 0.044571,
+          "total_usd": 5.904288800000002,
+          "cache_read": 0,
+          "input": 7875,
+          "output": 260
+        },
+        {
+          "type": "thinking",
+          "text": "I'm looking at the named speaker pattern, and I need to check e002 along with the cards on web performance.\n\n"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_015JxxCWtoTKDrR4mJ9XCdqx",
+          "name": "search_cards",
+          "input": {
+            "query": "Webパフォーマンス 初期表示 LCP バンドル"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_015JxxCWtoTKDrR4mJ9XCdqx",
+          "name": "search_cards",
+          "ok": true,
+          "summary": "ネタ帳 1枚ヒット／上位: 百瀬「初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割」"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01LtXTLbxRbbcss4e1dqvJqg",
+          "name": "get_employee",
+          "input": {
+            "id": "e002"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01LtXTLbxRbbcss4e1dqvJqg",
+          "name": "get_employee",
+          "ok": true,
+          "summary": "笹倉 由紀／忙しさ5／登壇12回／発信7件"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01FxEdrUy67Gw8QXgTp8jx42",
+          "name": "check_schedule",
+          "input": {
+            "id": "e002",
+            "date": "2027-01-28"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01FxEdrUy67Gw8QXgTp8jx42",
+          "name": "check_schedule",
+          "ok": true,
+          "summary": "予定が重なる（オフサイト）"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01VbiSMTJRHimxLSof2VFKS1",
+          "name": "get_published",
+          "input": {
+            "author_id": "e002"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01VbiSMTJRHimxLSof2VFKS1",
+          "name": "get_published",
+          "ok": true,
+          "summary": "発信済み 7件"
+        },
+        {
+          "type": "step",
+          "n": 2,
+          "max": 15
+        },
+        {
+          "type": "usage",
+          "run_usd": 0.0611082,
+          "total_usd": 5.920826000000002,
+          "cache_read": 7871,
+          "input": 1481,
+          "output": 378
+        },
+        {
+          "type": "thinking",
+          "text": "The nominee looks workable on paper, but the workload is a 5 and the event day clashes with an offsite, and the theme doesn't fit since there's no web performance angle. So it's only a conditional yes. Next I'll check card e012 and the schedule, then look through more cards on accessibility and frontend performance.\n\n"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01TfgY4Y22aJBMJThwzA986F",
+          "name": "get_card",
+          "input": {
+            "card_id": "card-e012-01"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01TfgY4Y22aJBMJThwzA986F",
+          "name": "get_card",
+          "ok": true,
+          "summary": "card-e012-01：根拠1件／打診履歴0件"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01CY8c4MfsHMLURZZPT72khu",
+          "name": "check_schedule",
+          "input": {
+            "id": "e012",
+            "date": "2027-01-28"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01CY8c4MfsHMLURZZPT72khu",
+          "name": "check_schedule",
+          "ok": true,
+          "summary": "予定の重なりなし"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01DHHfLXUFywS8uXiVBdnByk",
+          "name": "search_cards",
+          "input": {
+            "query": "フロントエンド パフォーマンス レンダリング アクセシビリティ React 表示速度"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01DHHfLXUFywS8uXiVBdnByk",
+          "name": "search_cards",
+          "ok": true,
+          "summary": "ネタ帳 2枚ヒット／上位: 百瀬「初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割」、柚木「スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善」"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_014BX5FPMzQYekexK4sgKUhV",
+          "name": "search_activities",
+          "input": {
+            "query": "初期表示 LCP パフォーマンス Core Web Vitals バンドル 遅い 高速化",
+            "since": "2026-05-01"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_014BX5FPMzQYekexK4sgKUhV",
+          "name": "search_activities",
+          "ok": true,
+          "summary": "16件ヒット／上位: 百瀬「バンドル分割と依存整理で初期表示を1.8秒短縮」、百瀬「ログ出力の整理」、久我「typo修正」"
+        },
+        {
+          "type": "step",
+          "n": 3,
+          "max": 15
+        },
+        {
+          "type": "usage",
+          "run_usd": 0.0816162,
+          "total_usd": 5.941334000000002,
+          "cache_read": 9350,
+          "input": 2932,
+          "output": 199
+        },
+        {
+          "type": "thinking",
+          "text": "A third option is 柚木's accessibility talk at Web Performance Night. The theme is a little off, though it still sits under the same 時流 category. It's conditional, so I need to check e017's schedule.\n\n"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01RNbgGK2wMndaQqgET13F87",
+          "name": "check_schedule",
+          "input": {
+            "id": "e017",
+            "date": "2027-01-28"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01RNbgGK2wMndaQqgET13F87",
+          "name": "check_schedule",
+          "ok": true,
+          "summary": "予定の重なりなし"
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01EaBewP1PUa6TseYobuq31P",
+          "name": "get_card",
+          "input": {
+            "card_id": "card-e017-01"
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01EaBewP1PUa6TseYobuq31P",
+          "name": "get_card",
+          "ok": true,
+          "summary": "card-e017-01：根拠1件／打診履歴0件"
+        },
+        {
+          "type": "step",
+          "n": 4,
+          "max": 15
+        },
+        {
+          "type": "usage",
+          "run_usd": 0.11848020000000001,
+          "total_usd": 5.978198000000002,
+          "cache_read": 12280,
+          "input": 918,
+          "output": 1491
+        },
+        {
+          "type": "tool_call",
+          "id": "toolu_01DtnGYApP1xPcoNJtvYBy7T",
+          "name": "submit_candidates",
+          "input": {
+            "request_pattern": "named_speaker",
+            "summary": "Web Performance Night（2027年1月28日・20分・フロントエンドエンジニア約100名）から、笹倉さんを指名して「大規模SaaSの初期表示改善」で話してほしいという依頼です。笹倉さんには当日の予定重複、忙しさ、テーマのずれがあるため、条件付きとして載せました。代わりの候補として、同じバクラクで初期表示を実際に1.8秒短くした百瀬さんを一番に推します。",
+            "nominee_assessment": "笹倉さんは3点で厳しい状況です。①開催日の2027年1月27〜29日はバクラク開発組織の合宿と重なっている。②忙しさは5段階の5。③これまでの発信は開発プロセス・チームビルディング・TypeScriptが中心で、Webパフォーマンスの取り組みや発信は見当たらない。最後の登壇も2026年10月9日と最近です。依頼元が見たアーカイブの内容も、初期表示改善そのものではない可能性があります。",
+            "learnings_applied": [],
+            "no_fit": null,
+            "candidates": [
+              {
+                "employee_id": "e012",
+                "card_id": "card-e012-01",
+                "theme": "初期JSを2.1MBから900KBへ：大規模SaaSのLCPを1.8秒縮めたバンドル改善",
+                "reason": "バクラクのWebフロントエンドで不要な依存を消し、ルート単位でコードを分けて、初期JSを2.1MBから900KB、LCPを1.8秒縮めた本人で、依頼の「大規模SaaSの初期表示改善」にそのまま合います。",
+                "evidence_activity_ids": [
+                  "act088"
+                ],
+                "cautions": [
+                  "登壇は初めてなので、資料づくりの手伝いがあると安心",
+                  "ネタ帳のカードはまだ技術広報の確認前",
+                  "根拠はプルリクエスト1件（数字ははっきりしている）"
+                ],
+                "is_alternative_to_nominee": true,
+                "confidence": "strong",
+                "caveat": null
+              },
+              {
+                "employee_id": "e002",
+                "card_id": null,
+                "theme": "大規模SaaSの初期表示改善を進めるチームのつくり方（百瀬さんとの共同登壇の案）",
+                "reason": "依頼元からの指名です。ただ、本人の取り組みは開発プロセスとチームづくりが中心なので、もし出るならマネージャーとして改善をどう進めたかを話す形が合います。",
+                "evidence_activity_ids": [],
+                "cautions": [
+                  "開催日（1月27〜29日）が開発組織の合宿と重なっている",
+                  "忙しさが5段階の5",
+                  "最後の登壇が2026年10月9日と最近",
+                  "Webパフォーマンスの取り組みや発信が見当たらない"
+                ],
+                "is_alternative_to_nominee": false,
+                "confidence": "conditional",
+                "caveat": "開催日が合宿と重なり忙しさも5で、テーマも本人の取り組みとずれるので、百瀬さんに代わってもらうか、合宿を抜けられる場合だけ短い共同登壇にするのが現実的です。"
+              },
+              {
+                "employee_id": "e017",
+                "card_id": "card-e017-01",
+                "theme": "業務SaaSの申請フォームをキーボードだけで完了させる：アクセシビリティ改善の勘所",
+                "reason": "スクリーンリーダーを使う方へのインタビューをもとに経費申請フローを直した本人です。Webパフォーマンスと並んで今の流れにあるアクセシビリティの話で、フロントエンドエンジニア向けの会場に合います。",
+                "evidence_activity_ids": [
+                  "act027"
+                ],
+                "cautions": [
+                  "登壇は初めて",
+                  "根拠は2026年9月22日のSlack投稿1件で、改善の数字はまだない",
+                  "ネタ帳のカードはまだ技術広報の確認前"
+                ],
+                "is_alternative_to_nominee": true,
+                "confidence": "conditional",
+                "caveat": "依頼の「初期表示改善」ではなくアクセシビリティの話なので、主催者が別の切り口でも受けてくれるか確認が必要です。"
+              }
+            ]
+          }
+        },
+        {
+          "type": "tool_result",
+          "id": "toolu_01DtnGYApP1xPcoNJtvYBy7T",
+          "name": "submit_candidates",
+          "ok": true,
+          "summary": "候補3人を提出"
+        },
+        {
+          "type": "alternative_pitch",
+          "text": "笹倉さんご本人の登壇は難しく、テーマに最も合うのは百瀬 結衣さんです。\n\n**笹倉さんが難しい理由**\n- 開催日の1月28日が、バクラク開発組織の合宿（1月27〜29日）と重なっています。\n- 現在の業務負荷が最も高い状態で、10月9日にも登壇したばかりです。\n- これまでの発信は開発プロセス・チームビルディング・TypeScriptが中心で、初期表示改善の発信は見当たりません。\n\n**百瀬さんを推す理由**\n- 依頼元が聞きたいのは「大規模SaaSの初期表示改善」です。\n- 百瀬さんは、バクラクで不要な依存の削除とルート単位のコード分割を自ら手がけました。\n- その結果、初期JSを2.1MBから900KBに減らし、LCPを1.8秒縮めています。\n- 登壇は初めてなので、資料レビューなどの支援が前提です。\n\n**角が立たない案**\n- 合宿のため、笹倉さんの当日参加は難しい状況です。\n- 代わりに「笹倉さんの推薦」として百瀬さんを紹介してもらい、笹倉さんには資料レビューで関わってもらう形が考えられます。\n- 依頼元には、指名へのお礼とともに「ご希望のテーマを実際に担当した者です」と伝えると、期待に沿った提案になります。\n\n**次に確認すること**\n- 笹倉さんに、推薦役を引き受けてもらえるか相談します。\n- 百瀬さんの登壇意思と、合宿に参加するかどうかを確認します（同じバクラク所属のため）。\n- 百瀬さんも合宿で難しい場合は、同じ会場層に合うアクセシビリティ改善の柚木 ほのかさんが次の候補です。\n- 依頼元がどのアーカイブを見たのかを確認します。\n- 返信期限は12月5日です。",
+          "model": "claude-fable-5-2",
+          "fell_back": false
+        },
+        {
+          "type": "final",
+          "result": {
+            "run_id": "a615fefb-3e9f-4325-9999-57f463bb57cc",
+            "request_id": "inb-mwq315xj-4586a8",
+            "request_pattern": "named_speaker",
+            "summary": "Web Performance Night（2027年1月28日・20分・フロントエンドエンジニア約100名）から、笹倉さんを指名して「大規模SaaSの初期表示改善」で話してほしいという依頼です。笹倉さんには当日の予定重複、忙しさ、テーマのずれがあるため、条件付きとして載せました。代わりの候補として、同じバクラクで初期表示を実際に1.8秒短くした百瀬さんを一番に推します。",
+            "nominee_assessment": "笹倉さんは3点で厳しい状況です。①開催日の2027年1月27〜29日はバクラク開発組織の合宿と重なっている。②忙しさは5段階の5。③これまでの発信は開発プロセス・チームビルディング・TypeScriptが中心で、Webパフォーマンスの取り組みや発信は見当たらない。最後の登壇も2026年10月9日と最近です。依頼元が見たアーカイブの内容も、初期表示改善そのものではない可能性があります。",
+            "learnings_applied": [],
+            "no_fit": null,
+            "candidates": [
+              {
+                "rank": 1,
+                "employee_id": "e012",
+                "name": "百瀬 結衣",
+                "business_unit": "バクラク",
+                "role": "フロントエンドエンジニア",
+                "workload": 2,
+                "past_talk_count": 0,
+                "last_talk_date": null,
+                "theme": "初期JSを2.1MBから900KBへ：大規模SaaSのLCPを1.8秒縮めたバンドル改善",
+                "reason": "バクラクのWebフロントエンドで不要な依存を消し、ルート単位でコードを分けて、初期JSを2.1MBから900KB、LCPを1.8秒縮めた本人で、依頼の「大規模SaaSの初期表示改善」にそのまま合います。",
+                "evidence": [
+                  {
+                    "id": "act088",
+                    "type": "github_pr",
+                    "date": "2026-10-28",
+                    "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+                    "where": "bakuraku/web-frontend"
+                  }
+                ],
+                "cautions": [
+                  "登壇は初めてなので、資料づくりの手伝いがあると安心",
+                  "ネタ帳のカードはまだ技術広報の確認前",
+                  "根拠はプルリクエスト1件（数字ははっきりしている）"
+                ],
+                "is_alternative_to_nominee": true,
+                "confidence": "strong",
+                "caveat": null,
+                "is_nominee": false,
+                "evidence_request_id": null,
+                "card_id": "card-e012-01",
+                "card": {
+                  "card_id": "card-e012-01",
+                  "employee_id": "e012",
+                  "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+                  "themes": [
+                    "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+                    "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+                  ],
+                  "evidence_activity_ids": [
+                    "act088"
+                  ],
+                  "format": "blog",
+                  "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+                  "publication_status": "unpublished",
+                  "published_ids": [],
+                  "latest_activity_date": "2026-10-28",
+                  "announcement_activity_ids": [],
+                  "pending_themes": [],
+                  "outreach_history": [],
+                  "reviewed": false,
+                  "reviewed_at": null,
+                  "created_at": "2026-11-21T05:26:23.278Z",
+                  "updated_at": "2026-11-21T05:26:23.278Z",
+                  "edited_fields": [],
+                  "evidence_request_ids": []
+                }
+              },
+              {
+                "rank": 2,
+                "employee_id": "e002",
+                "name": "笹倉 由紀",
+                "business_unit": "バクラク",
+                "role": "エンジニアリングマネージャー",
+                "workload": 5,
+                "past_talk_count": 12,
+                "last_talk_date": "2026-10-09",
+                "theme": "大規模SaaSの初期表示改善を進めるチームのつくり方（百瀬さんとの共同登壇の案）",
+                "reason": "依頼元からの指名です。ただ、本人の取り組みは開発プロセスとチームづくりが中心なので、もし出るならマネージャーとして改善をどう進めたかを話す形が合います。",
+                "evidence": [],
+                "cautions": [
+                  "開催日（1月27〜29日）が開発組織の合宿と重なっている",
+                  "忙しさが5段階の5",
+                  "最後の登壇が2026年10月9日と最近",
+                  "Webパフォーマンスの取り組みや発信が見当たらない",
+                  "最近登壇した（2026-10-09）",
+                  "忙しい（忙しさ5）"
+                ],
+                "is_alternative_to_nominee": false,
+                "confidence": "conditional",
+                "caveat": "開催日が合宿と重なり忙しさも5で、テーマも本人の取り組みとずれるので、百瀬さんに代わってもらうか、合宿を抜けられる場合だけ短い共同登壇にするのが現実的です。",
+                "is_nominee": true,
+                "evidence_request_id": "inb-mwq315xj-4586a8",
+                "card_id": null,
+                "card": null
+              },
+              {
+                "rank": 3,
+                "employee_id": "e017",
+                "name": "柚木 ほのか",
+                "business_unit": "バクラク",
+                "role": "デザイナー",
+                "workload": 2,
+                "past_talk_count": 0,
+                "last_talk_date": null,
+                "theme": "業務SaaSの申請フォームをキーボードだけで完了させる：アクセシビリティ改善の勘所",
+                "reason": "スクリーンリーダーを使う方へのインタビューをもとに経費申請フローを直した本人です。Webパフォーマンスと並んで今の流れにあるアクセシビリティの話で、フロントエンドエンジニア向けの会場に合います。",
+                "evidence": [
+                  {
+                    "id": "act027",
+                    "type": "slack_post",
+                    "date": "2026-09-22",
+                    "title": "スクリーンリーダーで経費申請を最後まで通せるようにしました",
+                    "where": "#bakuraku-design"
+                  }
+                ],
+                "cautions": [
+                  "登壇は初めて",
+                  "根拠は2026年9月22日のSlack投稿1件で、改善の数字はまだない",
+                  "ネタ帳のカードはまだ技術広報の確認前"
+                ],
+                "is_alternative_to_nominee": true,
+                "confidence": "conditional",
+                "caveat": "依頼の「初期表示改善」ではなくアクセシビリティの話なので、主催者が別の切り口でも受けてくれるか確認が必要です。",
+                "is_nominee": false,
+                "evidence_request_id": null,
+                "card_id": "card-e017-01",
+                "card": {
+                  "card_id": "card-e017-01",
+                  "employee_id": "e017",
+                  "summary": "スクリーンリーダーを使う方へのインタビューをもとに、バクラクの経費申請フローのフォーカス順とラベルを見直しました。スクリーンリーダーで申請を最後まで通せるようになり、キーボードだけでも完了できるようになりました。直したときのチェックリストは、デザインシステムに入れる予定です。",
+                  "themes": [
+                    "スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善",
+                    "業務SaaSの申請フォームをキーボードだけで完了させる：フォーカス順とラベル設計の勘所",
+                    "アクセシビリティ対応をチェックリストにしてデザインシステムに組み込む"
+                  ],
+                  "evidence_activity_ids": [
+                    "act027"
+                  ],
+                  "format": "blog",
+                  "format_reason": "具体的な改善内容はありますが数字はまだなく、本人も登壇経験がないので、まずはインタビューから改善までの流れをブログにまとめるのが始めやすいです。",
+                  "publication_status": "unpublished",
+                  "published_ids": [],
+                  "latest_activity_date": "2026-09-22",
+                  "announcement_activity_ids": [],
+                  "pending_themes": [],
+                  "outreach_history": [],
+                  "reviewed": false,
+                  "reviewed_at": null,
+                  "created_at": "2026-11-21T05:26:41.933Z",
+                  "updated_at": "2026-11-21T05:26:41.933Z",
+                  "edited_fields": [],
+                  "evidence_request_ids": []
+                }
+              }
+            ],
+            "alternative_pitch": "笹倉さんご本人の登壇は難しく、テーマに最も合うのは百瀬 結衣さんです。\n\n**笹倉さんが難しい理由**\n- 開催日の1月28日が、バクラク開発組織の合宿（1月27〜29日）と重なっています。\n- 現在の業務負荷が最も高い状態で、10月9日にも登壇したばかりです。\n- これまでの発信は開発プロセス・チームビルディング・TypeScriptが中心で、初期表示改善の発信は見当たりません。\n\n**百瀬さんを推す理由**\n- 依頼元が聞きたいのは「大規模SaaSの初期表示改善」です。\n- 百瀬さんは、バクラクで不要な依存の削除とルート単位のコード分割を自ら手がけました。\n- その結果、初期JSを2.1MBから900KBに減らし、LCPを1.8秒縮めています。\n- 登壇は初めてなので、資料レビューなどの支援が前提です。\n\n**角が立たない案**\n- 合宿のため、笹倉さんの当日参加は難しい状況です。\n- 代わりに「笹倉さんの推薦」として百瀬さんを紹介してもらい、笹倉さんには資料レビューで関わってもらう形が考えられます。\n- 依頼元には、指名へのお礼とともに「ご希望のテーマを実際に担当した者です」と伝えると、期待に沿った提案になります。\n\n**次に確認すること**\n- 笹倉さんに、推薦役を引き受けてもらえるか相談します。\n- 百瀬さんの登壇意思と、合宿に参加するかどうかを確認します（同じバクラク所属のため）。\n- 百瀬さんも合宿で難しい場合は、同じ会場層に合うアクセシビリティ改善の柚木 ほのかさんが次の候補です。\n- 依頼元がどのアーカイブを見たのかを確認します。\n- 返信期限は12月5日です。"
+          }
+        },
+        {
+          "type": "done",
+          "run_usd": 0.1547762,
+          "total_usd": 6.014494000000002,
+          "steps": 4
+        }
+      ],
+      "run_usd": 0.1572202
+    }
+  }
 }

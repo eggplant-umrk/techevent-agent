@@ -109,7 +109,7 @@ export interface Schedule {
 export interface UsageEntry {
   at: string;
   run_id: string;
-  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "survey";
+  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "inbox_extract" | "survey";
   model: string;
   input_tokens: number;
   output_tokens: number;

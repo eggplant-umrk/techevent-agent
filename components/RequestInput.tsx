@@ -87,6 +87,7 @@ export function RequestInput({
             )}
           </p>
           <h3 className="req-title">{inbox.title}</h3>
+          {inbox.nominee_name && <p className="small muted-strong">指名：{inbox.nominee_name}さん（依頼文から読み取り）</p>}
           <details className="req-message" open={!compact}>
             <summary>依頼文を読む</summary>
             <p className="pre small">{inbox.text}</p>

@@ -1,6 +1,6 @@
 // 日程が決まっていない依頼の「空いていそうな日」のテスト（APIは使わない・data/ に書き込まない）。
 //   npm run test:datesuggest
-// 見るもの：日程の手がかりの確かめ／手がかり → 期間／終日の予定・夜の予定・週末を除く／週をばらす／カレンダーなし・予定が分かる範囲の外／
+// 見るもの：日程の手がかりの確かめ／手がかり → 期間／終日の予定・夜の予定・週末・祝日（振替休日）・年末年始を除く／週をばらす／カレンダーなし・予定が分かる範囲の外／
 //           受信箱に保存されて詳細に出る／主催者への返事の1文が今の検査に通り、予定の中身や埋まり具合は検査で止まる
 import fs from "node:fs";
 import os from "node:os";
@@ -86,6 +86,41 @@ async function main() {
   check("期間の途中までしか分からなければ、分かる範囲だけから選ぶ", half.dates.every((d) => d <= "2026-12-31") && !!half.note?.includes("見ていません"), half.dates.join(","));
   const busy = suggestDates([{ start: "2026-12-01", end: "2027-01-01", all_day: true }], period);
   check("空いていそうな日がなければ0日と理由", busy.known && busy.dates.length === 0 && !!busy.note?.includes("見つかりませんでした"));
+
+  // ---- 祝日・振替休日・年末年始（コードで持つ一覧）
+  const { holidayName, dayOffReason, JP_HOLIDAYS } = await import("../lib/dateHint");
+  const wd = (d: string) => new Date(`${d}T00:00:00+09:00`).getDay();
+  check("11/23（勤労感謝の日）は祝日", holidayName("2026-11-23") === "勤労感謝の日");
+  const nov = suggestDates([], { from: "2026-11-23", to: "2026-11-27" }, { hours: { start: 19, end: 21 }, max: 5 });
+  check("祝日（11/23）は空いていそうな日に出さない", !nov.dates.includes("2026-11-23") && nov.dates.length === 4, nov.dates.join(","));
+  for (const [d, name] of [["2026-05-06", "振替休日"], ["2027-03-22", "振替休日"], ["2026-09-22", "国民の休日"]] as const) {
+    check(`${d}（${name}）を除く`, holidayName(d) === name && dayOffReason(d) === name && !suggestDates([], { from: d, to: d }).dates.length);
+  }
+  // 一覧の打ち間違いを防ぐ：月曜の祝日は月曜、日曜の祝日の次の平日は振替休日、年は2026・2027
+  const mondays = ["成人の日", "海の日", "敬老の日", "スポーツの日"];
+  const all = Object.values(JP_HOLIDAYS).flatMap((y) => Object.entries(y));
+  check("成人の日・海の日・敬老の日・スポーツの日はどれも月曜", all.filter(([, n]) => mondays.includes(n)).every(([d]) => wd(d) === 1) && all.filter(([, n]) => mondays.includes(n)).length === 8);
+  const sundays = all.filter(([d, n]) => wd(d) === 0 && n !== "振替休日");
+  const nextFree = (d: string) => {
+    let x = new Date(Date.parse(`${d}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+    while (holidayName(x) && holidayName(x) !== "振替休日") x = new Date(Date.parse(`${x}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+    return x;
+  };
+  check("日曜の祝日のあとには振替休日がある", sundays.length > 0 && sundays.every(([d]) => holidayName(nextFree(d)) === "振替休日"), sundays.map(([d, n]) => `${d}${n}→${nextFree(d)}`).join("・"));
+  check("振替休日はどれも、日曜の祝日のあと", all.filter(([, n]) => n === "振替休日").every(([d]) => sundays.some(([s]) => nextFree(s) === d)));
+  check("2026年・2027年の祝日の数（18日・17日）", Object.keys(JP_HOLIDAYS[2026]).length === 18 && Object.keys(JP_HOLIDAYS[2027]).length === 17 && all.every(([d]) => JP_HOLIDAYS[Number(d.slice(0, 4))][d]));
+
+  const ye = suggestDates([], { from: "2026-12-24", to: "2027-01-08" }, { hours: { start: 19, end: 21 }, max: 10 });
+  check("年末年始（12/29〜1/3）は会社の休みとして除く", ye.dates.length > 0 && ye.dates.every((d) => d <= "2026-12-28" || d >= "2027-01-04"), ye.dates.join(","));
+  const yeOn = suggestDates([], { from: "2026-12-24", to: "2027-01-08" }, { hours: { start: 19, end: 21 }, max: 10, yearEnd: false });
+  check("設定で外せば、年末年始の平日（祝日でない日）も出す", yeOn.dates.includes("2026-12-29") && yeOn.dates.includes("2026-12-30") && !yeOn.dates.includes("2027-01-01"), yeOn.dates.join(","));
+  process.env.DATE_SUGGEST_YEAR_END_OFF = "off";
+  check(".env の DATE_SUGGEST_YEAR_END_OFF=off で年末年始を除かない", dayOffReason("2026-12-29") === null && dayOffReason("2027-01-01") === "元日");
+  delete process.env.DATE_SUGGEST_YEAR_END_OFF;
+  check("既定では年末年始を除く", dayOffReason("2026-12-29") === "年末年始の休み");
+  const y28 = suggestDates([], { from: "2027-12-20", to: "2028-01-31" }, { hours: { start: 19, end: 21 } });
+  check("一覧にない年（2028年）は、祝日を見ていないと補足する", !!y28.note?.includes("2028年の祝日は一覧にない") && !y28.note?.includes("2027年"), y28.note ?? "");
+  check("一覧のある年だけなら補足は出さない", suggestDates([], { from: "2027-02-01", to: "2027-03-31" }, { hours: { start: 19, end: 21 } }).note === null);
 
   // ---- 日程の手がかりの読み取りの確かめ（コード）
   const conv = "@layerx_dev こんにちは！社内勉強会で登壇をお願いしたくて。時期は2月か3月で考えてます。テーマは決済まわりで🙏";

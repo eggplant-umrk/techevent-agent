@@ -80,6 +80,53 @@ for s in data["schedules.json"]:
     check(s["from"] <= s["to"], f"schedule range {s}")
 acts_by_id = {a["id"]: a for a in acts}
 pub_by_id = {p["id"]: p for p in pubs}
+
+# ネタ帳の材料は activities.json だけではない（lib/data.ts の activities() と同じ）：
+#   ブログ（data/sources/blog_posts.json、id は blg…）とリリースノート（data/sources/release_notes.json、id は rel…）も活動として扱う。
+#   リリースノートの担当者は lib/releaseNotes.ts の ownerOf と同じ順：技術広報の割り当て > データの owner_id > キーワード一致＋AI の判断
+SRC = D / "sources"
+
+
+def load_source(name, default):
+    f = SRC / name
+    if not f.exists():
+        return default
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        errors.append(f"parse error sources/{name}: {e}")
+        return default
+
+
+blogs = load_source("blog_posts.json", [])
+notes = load_source("release_notes.json", [])
+owners = data.get("release_owners.json", {})
+for b in blogs:
+    check(b["id"].startswith("blg"), f"blog id {b['id']}")
+    check(b["author_id"] in eid, f"{b['id']} author")
+    check(b.get("published_id") in pub_by_id, f"{b['id']} published_id {b.get('published_id')}")
+    if b.get("published_id") in pub_by_id:
+        check(pub_by_id[b["published_id"]]["author_id"] == b["author_id"], f"{b['id']} author differs from {b['published_id']}")
+    acts_by_id.setdefault(b["id"], {"author_id": b["author_id"]})
+
+
+def note_owner(n):
+    r = owners.get(n["id"]) or {}
+    if r.get("by") == "human" and r.get("employee_id"):
+        return r["employee_id"]
+    if n.get("owner_id"):
+        return n["owner_id"]
+    if r.get("by") == "match" and r.get("employee_id"):
+        return r["employee_id"]
+    return ""
+
+
+for n in notes:
+    check(n["id"].startswith("rel"), f"release note id {n['id']}")
+    own = note_owner(n)
+    check(own == "" or own in eid, f"{n['id']} owner {own}")
+    acts_by_id.setdefault(n["id"], {"author_id": own})
+check(len(acts_by_id) == len(acts) + len(blogs) + len(notes), "activity ids collide across activities / blog_posts / release_notes")
 for c in data.get("cards.json", []):
     for aid in c["evidence_activity_ids"] + c.get("announcement_activity_ids", []):
         check(aid in acts_by_id and acts_by_id[aid]["author_id"] == c["employee_id"], f"{c['card_id']} bad activity id {aid}")

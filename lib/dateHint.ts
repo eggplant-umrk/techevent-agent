@@ -1,6 +1,7 @@
 // 日程が決まっていない依頼（「2月か3月」「春ごろ」など）で、候補の人の「空いていそうな日」を出す（AI は使わない）。
 // - 日程の手がかり（会話にある言い回しそのまま）を、決まった言い方だけ期間に直す。分からなければ今日から8週間
 // - 期間の中から、平日の夜（既定 19〜21時。設定で変えられる）に予定がなく、終日の予定もない日を最大3日。なるべく週をばらす
+// - 平日から、日本の祝日（振替休日を含む。一覧はこのファイルに持つ）と年末年始（12/29〜1/3、設定で外せる）を除く
 // - カレンダーがない人は出さない（「予定は不明」）。予定が分かる範囲より先の日も出さない（空いているとは言えないため）
 // 主催者には予定の中身や埋まり具合を伝えない。返事に入れてよいのは「この日あたりなら調整しやすそう（本人に確認する）」だけで、
 // 入れるかどうかは技術広報が選ぶ（ここでは材料を作るだけ）。画面（モック）からも使えるよう、ファイルは読まない純粋な関数にする。
@@ -150,14 +151,86 @@ function spread(days: string[], n: number): string[] {
   return [...new Set(picked)].sort();
 }
 
+// ---------------------------------------------------------------------------
+// 祝日と会社の休み（コードで持つ。外部のサイトや API には取りにいかない）
+// ---------------------------------------------------------------------------
+/**
+ * 日本の祝日（振替休日・国民の休日を含む）。内閣府の「国民の祝日」の決まりどおりに並べた。
+ * 年を足すときは、ここに1年分を足す（春分・秋分の日は前の年の2月に官報で決まる）。
+ */
+export const JP_HOLIDAYS: Record<number, Record<string, string>> = {
+  2026: {
+    "2026-01-01": "元日",
+    "2026-01-12": "成人の日",
+    "2026-02-11": "建国記念の日",
+    "2026-02-23": "天皇誕生日",
+    "2026-03-20": "春分の日",
+    "2026-04-29": "昭和の日",
+    "2026-05-03": "憲法記念日",
+    "2026-05-04": "みどりの日",
+    "2026-05-05": "こどもの日",
+    "2026-05-06": "振替休日",
+    "2026-07-20": "海の日",
+    "2026-08-11": "山の日",
+    "2026-09-21": "敬老の日",
+    "2026-09-22": "国民の休日",
+    "2026-09-23": "秋分の日",
+    "2026-10-12": "スポーツの日",
+    "2026-11-03": "文化の日",
+    "2026-11-23": "勤労感謝の日",
+  },
+  2027: {
+    "2027-01-01": "元日",
+    "2027-01-11": "成人の日",
+    "2027-02-11": "建国記念の日",
+    "2027-02-23": "天皇誕生日",
+    "2027-03-21": "春分の日",
+    "2027-03-22": "振替休日",
+    "2027-04-29": "昭和の日",
+    "2027-05-03": "憲法記念日",
+    "2027-05-04": "みどりの日",
+    "2027-05-05": "こどもの日",
+    "2027-07-19": "海の日",
+    "2027-08-11": "山の日",
+    "2027-09-20": "敬老の日",
+    "2027-09-23": "秋分の日",
+    "2027-10-11": "スポーツの日",
+    "2027-11-03": "文化の日",
+    "2027-11-23": "勤労感謝の日",
+  },
+};
+
+/** 祝日の名前（祝日でなければ null） */
+export const holidayName = (date: string): string | null => JP_HOLIDAYS[Number(date.slice(0, 4))]?.[date] ?? null;
+
+/** 年末年始（12/29〜1/3）を会社の休みとして除くか。.env の DATE_SUGGEST_YEAR_END_OFF=off で除かない（既定は除く） */
+export function yearEndOff(): boolean {
+  return (process.env.DATE_SUGGEST_YEAR_END_OFF ?? "").trim().toLowerCase() !== "off";
+}
+export const isYearEnd = (date: string) => {
+  const md = date.slice(5);
+  return md >= "12-29" || md <= "01-03";
+};
+
+/** その日を「平日」として扱わない理由（週末・祝日・年末年始）。平日なら null */
+export function dayOffReason(date: string, opts: { yearEnd?: boolean } = {}): string | null {
+  const w = dow(date);
+  if (w === 0 || w === 6) return "週末";
+  const h = holidayName(date);
+  if (h) return h;
+  if ((opts.yearEnd ?? yearEndOff()) && isYearEnd(date)) return "年末年始の休み";
+  return null;
+}
+
 /**
  * 期間の中から、平日の指定の時間帯に予定がなく、終日の予定もない日を最大3日選ぶ。
+ * 平日から、日本の祝日（振替休日を含む）と年末年始（12/29〜1/3、設定で外せる）を除く。祝日の一覧がない年は、その旨を補足に書く。
  * slots が null（カレンダーがない）なら「予定は不明」。knownUntil より先の日は、予定が分からないので選ばない。
  */
 export function suggestDates(
   slots: BusySlot[] | null,
   period: Pick<Period, "from" | "to">,
-  opts: { knownUntil?: string | null; hours?: { start: number; end: number }; max?: number } = {},
+  opts: { knownUntil?: string | null; hours?: { start: number; end: number }; max?: number; yearEnd?: boolean } = {},
 ): Suggestion {
   if (!slots) return { known: false, dates: [], note: "予定は不明（カレンダーがないため、空いていそうな日は出していません）" };
   const hours = opts.hours ?? suggestHours();
@@ -167,10 +240,12 @@ export function suggestDates(
     return { known: true, dates: [], note: `予定が分かるのは ${opts.knownUntil} までで、この時期（${period.from}〜${period.to}）の予定はまだ分かりません` };
   }
   const ranges = slots.map(slotRange).filter(([a, b]) => b > a);
+  const yearEnd = opts.yearEnd ?? yearEndOff();
   const free: string[] = [];
+  const noHolidayYears = new Set<number>();
   for (let d = period.from; d <= until; d = addDays(d, 1)) {
-    const w = dow(d);
-    if (w === 0 || w === 6) continue; // 週末は出さない
+    if (!JP_HOLIDAYS[Number(d.slice(0, 4))]) noHolidayYears.add(Number(d.slice(0, 4)));
+    if (dayOffReason(d, { yearEnd })) continue; // 週末・祝日・年末年始は出さない
     const start = dayMs(d);
     const allDay = slots.some((s) => s.all_day && dayMs(s.start) <= start && start < dayMs(s.end));
     if (allDay) continue;
@@ -180,7 +255,11 @@ export function suggestDates(
     free.push(d);
   }
   const dates = spread(free, max);
-  const cut = until < period.to ? `予定が分かるのは ${until} までなので、その先は見ていません` : "";
+  const extra = [
+    until < period.to ? `予定が分かるのは ${until} までなので、その先は見ていません` : "",
+    noHolidayYears.size ? `${[...noHolidayYears].sort().join("・")}年の祝日は一覧にないので、祝日を除いていません` : "",
+  ].filter(Boolean);
+  const cut = extra.join("。");
   if (!dates.length) return { known: true, dates: [], note: `この時期の平日${hours.start}〜${hours.end}時は、空いていそうな日が見つかりませんでした${cut ? `（${cut}）` : ""}` };
   return { known: true, dates, note: cut || null };
 }

@@ -569,6 +569,9 @@ export default function Home() {
   }
 
   const stage = mode === "inbox" ? inbox?.state.stage : undefined;
+  /** 主催者への返事に入れてよい「空いていそうな日」の1文（日程が未定の依頼で、その人の日が見つかったときだけ） */
+  const dateSentenceFor = (employeeId: string) =>
+    mode === "inbox" ? inbox?.date_suggestions?.candidates.find((c) => c.employee_id === employeeId)?.reply_sentence ?? null : null;
   const marks: Record<string, "outreach" | "declined" | "accepted"> = {};
   for (const p of inbox?.state.declined_by ?? []) marks[p.employee_id] = "declined";
   for (const p of inbox?.state.outreach_to ?? []) marks[p.employee_id] = "outreach";
@@ -592,6 +595,7 @@ export default function Home() {
           draftError={draftError}
           draftNote={draftNote}
           resume={resume}
+          dateSentence={dateSentenceFor(approved.employee_id)}
           onBack={() => {
             setApproved(null);
             setResume(false);
@@ -623,6 +627,7 @@ export default function Home() {
             <AcceptedView
               detail={inbox}
               reply={acceptedReply}
+              dateSentence={inbox.state.accepted_by.map((p) => dateSentenceFor(p.employee_id)).find(Boolean) ?? null}
               showOthers={showOthers}
               onToggleOthers={() => setShowOthers((x) => !x)}
               onOpenCard={(employeeId) => {
@@ -632,7 +637,14 @@ export default function Home() {
             />
           )}
           {result && (stage !== "accepted" || showOthers) && (
-            <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} marks={marks} />
+            <Candidates
+              result={result}
+              disabled={drafting}
+              onApprove={approve}
+              onOpenCard={(id, ev) => openCard(id, ev ?? null)}
+              marks={marks}
+              dates={mode === "inbox" ? inbox?.date_suggestions ?? null : null}
+            />
           )}
           {result && pitch && (stage !== "accepted" || showOthers) && <AlternativePitch text={pitch} />}
           {result && !pitch && inbox?.pitch_status === "pending" && (stage !== "accepted" || showOthers) && (

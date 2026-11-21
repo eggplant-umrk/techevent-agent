@@ -12,7 +12,7 @@ import { UPSERT_CARD_DEF } from "./tools";
 import { dataFile } from "./dataSource";
 import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
 import { PLAIN_TEXT_RULE } from "./plainText";
-import { countReasons, DROP_LABEL, duplicateCardProblem, estimateUsd, prepareEmployee, prepConfig, saveProgress, type DropReason } from "./notebookPrep";
+import { countReasons, DROP_LABEL, duplicateCardProblem, estimateUsd, prepareEmployee, prepConfig, saveProgress, sentChars, type DropReason } from "./notebookPrep";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 
 // Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
@@ -119,14 +119,17 @@ function buildSystem(): string {
 }
 
 let SYSTEM: string | undefined;
+/** 指示文（社員一覧つき）の文字数（見積もり用） */
+export const notebookSystemChars = () => (SYSTEM ??= buildSystem()).length;
 
 type Prepared = ReturnType<typeof prepareEmployee>;
 
-function employeeMessage(employeeId: string, prep: Prepared): { text: string; count: number } {
+/** 1人分の依頼文。cardsAtRun を渡すとそのカードで作る（見積もりの確かめで、記録した回の状態を再現するため） */
+export function employeeMessage(employeeId: string, prep: Prepared, cardsAtRun?: ReturnType<typeof loadCards>): { text: string; count: number } {
   const e = employees().find((x) => x.id === employeeId)!;
   const acts = prep.send;
   const pubs = published().filter((p) => p.author_id === employeeId);
-  const cards = loadCards().filter((c) => c.employee_id === employeeId);
+  const cards = (cardsAtRun ?? loadCards()).filter((c) => c.employee_id === employeeId);
   const text = `# 社員
 ${e.id} ${e.name}｜${e.business_unit}｜${e.role}｜得意: ${e.expertise_tags.join("、")}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}
 
@@ -170,7 +173,7 @@ export async function updateNotebook(
   for (const id of ids) {
     const p = preps.get(id)!;
     if (!p.send.length || !employees().some((x) => x.id === id)) continue;
-    estimate += estimateUsd(model, employeeMessage(id, p).text.length, p.send.length, systemText.length, first);
+    estimate += estimateUsd(model, employeeMessage(id, p).text.length, sentChars(p.send), systemText.length, first);
     first = false;
   }
   const overBudget = estimate > cfg.budgetUsd;

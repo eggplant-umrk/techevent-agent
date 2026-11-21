@@ -2,12 +2,20 @@
 
 import { useState } from "react";
 
-import type { InboxDetail, SpeakingRequest } from "@/app/_client/types";
+import type { InboxDetail, IntakeField, SpeakingRequest } from "@/app/_client/types";
 import { md, PATTERN_LABEL } from "./labels";
 import { Tag } from "./ui";
 
 /** preset：届いた依頼（サンプル）から選ぶ／custom：手で追加（受信箱に入る）／inbox：受信箱から開いた依頼 */
 export type RequestMode = "preset" | "custom" | "inbox";
+
+const INTAKE_ROWS: Array<[IntakeField, string]> = [
+  ["event_name", "イベント名"],
+  ["date", "日程"],
+  ["format", "形式"],
+  ["theme", "テーマ"],
+  ["organizer", "主催者"],
+];
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -88,6 +96,16 @@ export function RequestInput({
           </p>
           <h3 className="req-title">{inbox.title}</h3>
           {inbox.nominee_name && <p className="small muted-strong">指名：{inbox.nominee_name}さん（依頼文から読み取り）</p>}
+          {inbox.intake && (
+            <dl className="person-facts intake" aria-label="会話から読み取った項目">
+              {INTAKE_ROWS.map(([f, label]) => (
+                <div key={f} className="intake-row">
+                  <dt>{label}</dt>
+                  <dd>{inbox.intake![f] ?? <Tag tone="warn">未定</Tag>}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           <details className="req-message" open={!compact}>
             <summary>依頼文を読む</summary>
             <p className="pre small">{inbox.text}</p>
@@ -144,11 +162,19 @@ export function RequestInput({
 
       {mode === "custom" && (
         <label className="field">
-          <span className="field-label">依頼文（追加すると受信箱に入り、Agentが候補を準備します）</span>
+          <span className="field-label">依頼文（X の DM・リプライの会話をそのまま貼れます。追加すると受信箱に入り、Agentが候補を準備します）</span>
           <textarea
             className="input"
-            rows={5}
-            placeholder="例：来月のLT会でLayerXさんの枠を1つ用意しています。テーマはお任せします。"
+            rows={8}
+            placeholder={[
+              "例：",
+              "@organizer",
+              "来月のLT会でLayerXさんの枠を1つ用意しています！",
+              "@layerx_techpr",
+              "ありがとうございます、日程は決まっていますか？",
+              "@organizer",
+              "1/29（金）19時〜です。テーマはお任せします",
+            ].join("\n")}
             value={customText}
             onChange={(e) => onCustomText(e.target.value)}
           />

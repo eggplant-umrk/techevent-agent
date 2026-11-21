@@ -317,3 +317,41 @@ textarea.input { resize: vertical; }
 .venue-nofit, .venue-blog, .venue-draft { display: flex; flex-direction: column; gap: 6px; padding: 12px; background: var(--bg); border-radius: var(--radius-sm); }
 .venue-nofit ul, .venue-blog ol, .venue-draft ol, .venue-draft ul { margin: 0; padding-left: 18px; }
 .warn-text { color: var(--warn); }
+
+/* ---------- tabs（ヘッダーのタブは3つだけ。今いるタブはアクセントの下線） ---------- */
+.tabs { display: flex; gap: 4px; margin-left: 16px; }
+.tab {
+  min-height: 40px; padding: 0 16px; border: 0; background: none; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--muted);
+  border-bottom: 2px solid transparent; border-radius: 0;
+}
+.tab:hover { color: var(--text); }
+.tab[aria-current="page"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* 受信箱タブ：受信箱の一覧を左の列に */
+.side { flex: 1 1 400px; max-width: 520px; min-width: 0; position: sticky; top: 72px; }
+.side .inbox { margin: 0; }
+.side .inbox-list { grid-template-columns: 1fr; max-height: calc(100vh - 200px); }
+
+/* ネタ帳タブ：人の一覧と人の詳細 */
+.person-line { display: flex; gap: 12px; align-items: baseline; min-width: 0; }
+.person-line .nb-theme { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person-num { flex: none; font-variant-numeric: tabular-nums; }
+.strong-theme { font-weight: 600; color: var(--text); }
+.pad-head { padding: 16px 16px 8px; }
+.person-facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 12px 0; font-size: 13px; }
+.person-facts dt { color: var(--muted); }
+.person-facts dd { margin: 0; }
+.person-edit { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
+.person-edit fieldset { border: 0; padding: 0; margin: 0; }
+
+/* アーカイブタブ */
+.archive-date { font-variant-numeric: tabular-nums; }
+.placeholder { border-style: dashed; background: transparent; }
+
+/* 受信箱：会話から読み取った項目（未定は印で出す） */
+.intake { margin: 8px 0; }
+.intake-row { display: contents; }
+
+/* 主催者への返事（X で返す下書き） */
+.reply-text { min-height: 96px; }

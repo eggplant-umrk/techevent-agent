@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { pickApi, realApi, type Api } from "@/app/_client/api";
 import type {
   AgentEvent,
+  ArchiveDetail,
+  ArchiveKind,
+  ArchiveRow,
   BlogIdea,
   Candidate,
   DeclineReason,
@@ -13,17 +16,20 @@ import type {
   NotebookCard,
   OutreachDraft,
   OutreachResult,
+  PersonDetail as PersonDetailData,
+  PersonRow,
   Proposal,
   SpeakingRequest,
 } from "@/app/_client/types";
 import { AgentSteps, type LogItem } from "@/components/AgentSteps";
 import { Approved } from "@/components/Approved";
+import { ArchiveList, ArchiveView } from "@/components/Archive";
 import { CardDetail } from "@/components/CardDetail";
-import { Header, type View } from "@/components/Header";
-import { EventsView } from "@/components/Events";
+import { Header, type Tab } from "@/components/Header";
 import { Inbox } from "@/components/Inbox";
 import { usd } from "@/components/labels";
-import { Notebook, type NbLogLine } from "@/components/Notebook";
+import { People, type NbLogLine } from "@/components/People";
+import { PersonDetail } from "@/components/PersonDetail";
 import { AlternativePitch, Candidates } from "@/components/Proposal";
 import { RequestInput, type RequestMode } from "@/components/RequestInput";
 
@@ -32,11 +38,22 @@ const msg = (err: unknown, fallback: string) => (err instanceof Error && err.mes
 export default function Home() {
   const [api, setApi] = useState<Api>(realApi);
   const [debug, setDebug] = useState(false);
-  const [view, setView] = useState<View>("requests");
+  const [tab, setTabState] = useState<Tab>("inbox");
+
+  // people（ネタ帳タブ）
+  const [people, setPeople] = useState<PersonRow[]>([]);
+  const [peopleLoaded, setPeopleLoaded] = useState(false);
+  const [personId, setPersonId] = useState<string | null>(null);
+  const [person, setPerson] = useState<PersonDetailData | null>(null);
+
+  // archive
+  const [archiveRows, setArchiveRows] = useState<ArchiveRow[]>([]);
+  const [archiveLoaded, setArchiveLoaded] = useState(false);
+  const [archiveKey, setArchiveKey] = useState<string | null>(null);
+  const [archiveDetail, setArchiveDetail] = useState<ArchiveDetail | null>(null);
 
   // notebook
   const [cards, setCards] = useState<NotebookCard[]>([]);
-  const [units, setUnits] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
@@ -79,17 +96,33 @@ export default function Home() {
   const [totalUsd, setTotalUsd] = useState(0);
   const [models, setModels] = useState<ModelChoice | null>(null);
   const started = useRef(0);
+  // ?mock かどうかが決まるまでは何も読まない（決まる前に本物の API を1回叩かないように）
+  const [apiReady, setApiReady] = useState(false);
 
   useEffect(() => {
     setApi(pickApi());
-    setDebug(new URLSearchParams(window.location.search).has("debug"));
+    setApiReady(true);
+    const q = new URLSearchParams(window.location.search);
+    setDebug(q.has("debug"));
+    const t = q.get("tab");
+    // ?inbox={id} は受信箱の1件を開くリンクなので、受信箱タブにする
+    if (!q.has("inbox") && (t === "notebook" || t === "archive")) setTabState(t);
   }, []);
+
+  /** タブを切り替える（URL の ?tab= にも残す。受信箱は既定なので付けない） */
+  function setTab(t: Tab) {
+    setTabState(t);
+    const url = new URL(window.location.href);
+    if (t === "inbox") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", t);
+    if (t !== "inbox") url.searchParams.delete("inbox");
+    window.history.replaceState(null, "", url);
+  }
 
   const loadCards = useCallback(async () => {
     try {
       const j = await api.cards();
       setCards(j.cards);
-      setUnits(j.units);
       setLoadError(null);
     } catch (err) {
       setLoadError(`ネタ帳を読み込めませんでした（${msg(err, "不明なエラー")}）。ページを再読み込みしてください。`);
@@ -118,26 +151,93 @@ export default function Home() {
     }
   }, [api]);
 
+  const loadPeople = useCallback(async () => {
+    try {
+      setPeople(await api.people());
+    } catch (err) {
+      setLoadError(`人の一覧を読み込めませんでした（${msg(err, "不明なエラー")}）。ページを再読み込みしてください。`);
+    } finally {
+      setPeopleLoaded(true);
+    }
+  }, [api]);
+
+  const loadArchive = useCallback(async () => {
+    try {
+      setArchiveRows(await api.archive());
+    } catch {
+      /* 一覧は前の内容のまま */
+    } finally {
+      setArchiveLoaded(true);
+    }
+  }, [api]);
+
   useEffect(() => {
+    if (!apiReady) return;
     api.requests().then(setPresets).catch(() => setPresets([]));
     loadCards();
     loadState();
     loadInbox();
-  }, [api, loadCards, loadState, loadInbox]);
+    loadPeople();
+    loadArchive();
+  }, [apiReady, api, loadCards, loadState, loadInbox, loadPeople, loadArchive]);
+
+  // ?person={id}・?archive={kind}:{id} で開いたら、その人・その過去の依頼を開く（共有用のリンク）
+  useEffect(() => {
+    if (!apiReady) return;
+    const q = new URLSearchParams(window.location.search);
+    const pid = q.get("person");
+    if (pid) void openPerson(pid);
+    const [kind, aid] = (q.get("archive") ?? "").split(":");
+    if ((kind === "inbox" || kind === "request" || kind === "event") && aid) void openArchive(kind, aid);
+    // api が決まったときに1回だけ
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiReady, api]);
+
+  // アーカイブを開いたとき、何も選んでいなければアンケートのある一番新しいイベントを開く
+  useEffect(() => {
+    if (tab !== "archive" || archiveKey || !archiveLoaded) return;
+    const first = archiveRows.find((r) => r.kind === "event" && (r.answers ?? 0) > 0) ?? archiveRows[0];
+    if (first) void openArchive(first.kind, first.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, archiveLoaded, archiveRows]);
+
+  const units = useMemo(() => [...new Set(people.map((p) => p.business_unit))].sort(), [people]);
+  const personCards = useMemo(() => (personId ? cards.filter((c) => c.employee_id === personId) : []), [cards, personId]);
+
+  async function openPerson(id: string) {
+    setPersonId(id);
+    try {
+      setPerson(await api.person(id));
+    } catch (err) {
+      setPerson(null);
+      setLoadError(`人の詳細を開けませんでした（${msg(err, "不明なエラー")}）。`);
+    }
+  }
+
+  async function openArchive(kind: ArchiveKind, id: string) {
+    setArchiveKey(`${kind}:${id}`);
+    try {
+      setArchiveDetail(await api.archiveDetail(kind, id));
+    } catch {
+      setArchiveDetail(null);
+    }
+  }
 
   // 受信箱は数秒ごとに見直す（Slackから届いた依頼や、準備が終わった依頼をすぐ出すため。サーバー内の読み込みだけでAPI代はかからない）
   useEffect(() => {
+    if (!apiReady) return;
     const t = setInterval(loadInbox, 4000);
     return () => clearInterval(t);
-  }, [loadInbox]);
+  }, [apiReady, loadInbox]);
 
   // ?inbox={id} で開いたら、その依頼の候補画面を開く
   useEffect(() => {
+    if (!apiReady) return;
     const id = new URLSearchParams(window.location.search).get("inbox");
     if (id) openInbox(id);
     // api が決まったときに1回だけ
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [api]);
+  }, [apiReady, api]);
 
   // 開いている依頼が準備中なら、一覧で準備が終わったのを見て中身を読み直す
   useEffect(() => {
@@ -153,7 +253,6 @@ export default function Home() {
     return () => clearInterval(t);
   }, [running]);
 
-  const candidateIds = useMemo(() => new Set((result?.candidates ?? []).flatMap((c) => (c.card_id ? [c.card_id] : []))), [result]);
   const detailCard = detail ? cards.find((c) => c.card_id === detail.id) ?? null : null;
   const openCard = (id: string, evidence: string | null = null) => setDetail({ id, evidence });
 
@@ -182,6 +281,7 @@ export default function Home() {
     setNbRunning(false);
     loadCards();
     loadState();
+    loadPeople();
   }
 
   async function blogIdeas() {
@@ -238,6 +338,7 @@ export default function Home() {
   }
 
   async function openInbox(id: string) {
+    setTabState("inbox");
     setMode("inbox");
     setInboxId(id);
     setInbox(null);
@@ -354,6 +455,7 @@ export default function Home() {
       const card = await api.outcome({ ...requestRef(), request_id: result.request_id, card_id: c.card_id, result: "approved", candidate: candBody(c) });
       setApprovedCardId(card.card_id);
       loadCards();
+      loadPeople();
     } catch (err) {
       setDraftError(`承認を記録できませんでした（${msg(err, "不明なエラー")}）。`);
     }
@@ -373,91 +475,122 @@ export default function Home() {
     loadCards();
   }
 
+  const requestPanel = (
+    <div className="panel" aria-label="依頼パネル">
+      {approved ? (
+        <Approved
+          candidate={approved}
+          draft={draft}
+          drafting={drafting}
+          draftError={draftError}
+          draftNote={draftNote}
+          onBack={() => {
+            setApproved(null);
+            setDraft(null);
+            setDraftError(null);
+          }}
+          onRetryDraft={() => makeDraft(approved)}
+          onRecord={record}
+        />
+      ) : (
+        <>
+          <RequestInput
+            presets={presets}
+            selected={selected}
+            onSelect={setSelected}
+            mode={mode}
+            onMode={setMode}
+            customText={customText}
+            onCustomText={setCustomText}
+            running={running}
+            onRun={run}
+            inbox={inbox}
+            adding={adding}
+            onAdd={addManual}
+            compact={running || !!result}
+          >
+            {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
+          </RequestInput>
+          {result && <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} />}
+          {result && pitch && <AlternativePitch text={pitch} />}
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="app">
-      <Header
-        view={view}
-        onView={setView}
-        debug={debug}
-        runUsd={runUsd}
-        totalUsd={totalUsd}
-        models={models}
-        pending={pending}
-        updating={nbRunning}
-        onUpdate={updateNotebook}
-        mock={api.mock}
-      />
+      <Header tab={tab} onTab={setTab} debug={debug} runUsd={runUsd} totalUsd={totalUsd} models={models} mock={api.mock} />
       {loadError && (
         <p className="banner banner-error" role="alert">
           {loadError}
         </p>
       )}
 
-      {view === "requests" && <Inbox items={inboxItems} loaded={inboxLoaded} openId={mode === "inbox" ? inboxId : null} onOpen={(id) => void openInbox(id)} />}
+      {tab === "inbox" && (
+        <main className="main">
+          <div className="side">
+            <Inbox items={inboxItems} loaded={inboxLoaded} openId={mode === "inbox" ? inboxId : null} onOpen={(id) => void openInbox(id)} />
+          </div>
+          {requestPanel}
+        </main>
+      )}
 
-      <main className="main">
-        {view === "events" ? (
-          <EventsView api={api} onOpenCard={(id) => openCard(id)} onCardsChanged={() => void loadCards()} />
-        ) : (
-          <>
-        <Notebook
-          cards={cards}
-          units={units}
-          loaded={loaded}
-          candidateIds={candidateIds}
-          log={nbLog}
-          updating={nbRunning}
-          blog={blog}
-          blogBusy={blogBusy}
-          blogError={blogError}
-          onBlog={blogIdeas}
-          onCloseBlog={() => setBlog(null)}
-          onOpen={(id) => openCard(id)}
-        />
-
-        <div className="panel" aria-label="依頼パネル">
-          {approved ? (
-            <Approved
-              candidate={approved}
-              draft={draft}
-              drafting={drafting}
-              draftError={draftError}
-              draftNote={draftNote}
-              onBack={() => {
-                setApproved(null);
-                setDraft(null);
-                setDraftError(null);
+      {tab === "notebook" && (
+        <main className="main">
+          <People
+            people={people}
+            units={units}
+            loaded={peopleLoaded}
+            openId={personId}
+            onOpen={(id) => void openPerson(id)}
+            cards={cards}
+            pending={pending}
+            updating={nbRunning}
+            log={nbLog}
+            onUpdate={updateNotebook}
+            blog={blog}
+            blogBusy={blogBusy}
+            blogError={blogError}
+            onBlog={blogIdeas}
+            onCloseBlog={() => setBlog(null)}
+            onOpenCard={(id) => openCard(id)}
+          />
+          {person && person.person.id === personId ? (
+            <PersonDetail
+              detail={person}
+              cards={personCards}
+              onOpenCard={(id) => openCard(id)}
+              onSave={async (patch) => {
+                await api.editPerson(person.person.id, patch);
+                setPerson(await api.person(person.person.id));
+                loadPeople();
               }}
-              onRetryDraft={() => makeDraft(approved)}
-              onRecord={record}
             />
           ) : (
-            <>
-              <RequestInput
-                presets={presets}
-                selected={selected}
-                onSelect={setSelected}
-                mode={mode}
-                onMode={setMode}
-                customText={customText}
-                onCustomText={setCustomText}
-                running={running}
-                onRun={run}
-                inbox={inbox}
-                adding={adding}
-                onAdd={addManual}
-                compact={running || !!result}
-              >
-                {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
-              </RequestInput>
-              {result && <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} />}
-              {result && pitch && <AlternativePitch text={pitch} />}
-            </>
+            <div className="panel">
+              <section className="surface pad-lg">
+                <p className="meta">左から人を選ぶと、その人のネタ・予定・最近の活動が出ます。</p>
+              </section>
+            </div>
           )}
-        </div>
-          </>
-        )}
-      </main>
+        </main>
+      )}
+
+      {tab === "archive" && (
+        <main className="main">
+          <ArchiveList rows={archiveRows} loaded={archiveLoaded} openKey={archiveKey} onOpen={(k, id) => void openArchive(k, id)} />
+          <ArchiveView
+            detail={archiveDetail}
+            api={api}
+            onOpenCard={(id) => openCard(id)}
+            onChanged={() => {
+              void loadCards();
+              void loadArchive();
+            }}
+          />
+        </main>
+      )}
 
       {detailCard && (
         <CardDetail

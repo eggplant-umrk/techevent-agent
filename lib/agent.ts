@@ -13,6 +13,7 @@ import { buildSystemPrompt } from "./prompt";
 import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type Confidence, type SubmitInput } from "./tools";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 import { getCardById, type Card } from "./cards";
+import { getPerson, ngHits, peopleNotesForAgent } from "./people";
 
 export type AgentEvent =
   | { type: "start"; run_id: string; loop_model: string; heavy_model: string; switched: boolean; total_usd: number; switch_usd: number }
@@ -189,9 +190,29 @@ export function userFacingTextProblems(p: {
   ]);
 }
 
+/**
+ * 人の情報（技術広報が確認済み）に合っているか（コードで判定）。
+ * - 登壇の意向が「今は控えたい」の人は、出すなら条件付き（confidence=conditional）にする
+ * - NGのテーマに当たるテーマ案では推さない
+ */
+export function personRuleProblems(candidates: Array<{ employee_id: string; theme: string; confidence: string }>): string[] {
+  const errs: string[] = [];
+  for (const c of candidates ?? []) {
+    const p = getPerson(c.employee_id);
+    if (!p) continue;
+    if (p.speaking_intent === "hold" && c.confidence !== "conditional") {
+      errs.push(`${p.name}さんは登壇の意向が「今は控えたい」なので、候補にするなら条件付きにして、引っかかる点にそのことを書いてください`);
+    }
+    const hits = ngHits(c.theme, p.ng_themes);
+    if (hits.length) errs.push(`${p.name}さんのテーマ案が、本人のNGのテーマ「${hits.join("」「")}」に当たります。別のテーマにするか、候補から外してください`);
+  }
+  return errs;
+}
+
 function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null, request: SpeakingRequest): string[] {
   const errs: string[] = [];
   errs.push(...cautionDateProblems(request, input.candidates ?? []));
+  errs.push(...personRuleProblems(input.candidates ?? []));
   const plain = userFacingTextProblems(input);
   if (plain.length) {
     errs.push(
@@ -428,7 +449,7 @@ export async function runAgent(
       model: models.loop,
       system: systemPrompt(),
       tools: PROPOSAL_TOOLS,
-      firstMessage: `次の登壇依頼に対して、ネタ帳から、合う候補を${MAX_CANDIDATES}人まで提案してください（合う人がいるだけ）。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
+      firstMessage: `次の登壇依頼に対して、ネタ帳から、合う候補を${MAX_CANDIDATES}人まで提案してください（合う人がいるだけ）。\n\n${JSON.stringify(requestForAgent(request), null, 2)}${peopleNotesForAgent()}`,
       submitTool: SUBMIT_TOOL,
       validate: (input, seen) => validateSubmit(input, seen, request.nominated_employee_id ?? null, request),
       submittedSummary: (input) => `候補${input.candidates.length}人を提出`,

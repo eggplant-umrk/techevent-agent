@@ -4,10 +4,16 @@
 // - Pasted request text always comes back as "no fit", to show that screen.
 // - 受信箱：保存済みの結果がある5件が「準備済み」で並ぶ。手で追加した依頼は手元だけで準備中→準備済み（合う候補なし）。
 // - Edits, adopt/drop, and outcomes are kept in memory only.
+// - 人の情報を直すのも手元だけ（data/people.json には書かない）。アーカイブは読むだけなので GET をそのまま使う。
 import type { Api, DraftResponse } from "./api";
+import { fallbackOrganizerReply } from "@/lib/organizerReply";
+
+/** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
+const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
 import proposals from "./proposals.json";
 import postevent from "./postevent.json";
 import venueFixtures from "./venues.json";
+import xconvFixture from "./xconv.json";
 import type {
   AgentEvent,
   EventAnalysis,
@@ -16,10 +22,13 @@ import type {
   BlogIdea,
   Candidate,
   Card,
+  InboxDetail,
   InboxListItem,
   NotebookCard,
   NotebookEvent,
   OutreachDraft,
+  Person,
+  PersonPatch,
   Proposal,
   SpeakingRequest,
   VenueEvent,
@@ -55,6 +64,16 @@ const FIXTURES: Record<string, Fixture> = Object.fromEntries(
 /** カード → 出し先の保存済みの結果（scripts/update_mock.ts が docs/eval_latest.json から作る）。card_id ごと */
 type VenueFixture = { result: VenueResult; events: VenueEvent[]; run_usd: number };
 const VENUE_FIXTURES = venueFixtures as unknown as Record<string, VenueFixture>;
+
+/**
+ * X の会話を貼った依頼の保存済みの結果（scripts/try_xconv.ts が本物の API で1回作ったもの）。
+ * 会話から読み取った項目（未定つき）・候補・主催者への返事を ?mock で見せる
+ */
+type XFixture = { run_usd: number; detail: InboxDetail; draft: OutreachDraft | null };
+const X_FIXTURE = xconvFixture as unknown as XFixture;
+const X_ID = X_FIXTURE.detail.id;
+const xResult = (): Proposal | null => (X_FIXTURE.detail.result ? { ...X_FIXTURE.detail.result, request_id: X_ID, run_id: `mock-${X_ID}` } : null);
+const xRequest = (): SpeakingRequest => ({ id: X_ID, message: X_FIXTURE.detail.text, intake: X_FIXTURE.detail.intake ?? undefined });
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const today = "2026-11-21";
@@ -133,11 +152,36 @@ ${c.name.split(" ")[0]}さんの取り組みを拝見して、
       `${c.busy_text ?? "予定は不明"}。準備にかかる時間の目安を最初に伝えると返事がもらいやすくなります。`,
       ...c.cautions.map((x) => `注意点：${x}`),
     ],
+    // 主催者への返事：モックでは本物の検査に通る決まった形の文（lib/organizerReply.ts）を使う
+    organizer_reply: fallbackOrganizerReply({
+      name: c.name,
+      theme: c.theme,
+      organizer: req?.requester?.contact_name ?? req?.intake?.organizer ?? null,
+      eventName: ev?.title ?? req?.intake?.event_name ?? null,
+      undecided: (req?.intake?.undecided ?? []).map((f) => INTAKE_LABEL_MOCK[f]),
+    }),
+    organizer_reply_note: null,
   };
 }
 
+type PersonOverlay = PersonPatch & { edited_fields: Person["edited_fields"] };
+
 export function mockApi(real: Api): Api {
   const overlay = initialOverlay();
+  // 人の情報（手元だけ）。最初から1人「確認済み」にしておく
+  const personOverlay = new Map<string, PersonOverlay>([["e013", { speaking_intent: "available", edited_fields: ["speaking_intent"] }]]);
+  const applyPerson = (p: Person): Person => {
+    const o = personOverlay.get(p.id);
+    if (!o) return p;
+    return {
+      ...p,
+      expertise_tags: o.expertise_tags ?? p.expertise_tags,
+      speaking_intent: o.speaking_intent ?? p.speaking_intent,
+      ng_themes: o.ng_themes ?? p.ng_themes,
+      reviewed: true,
+      edited_fields: [...new Set([...p.edited_fields, ...o.edited_fields])],
+    };
+  };
   let total = 2.24;
   let requests: SpeakingRequest[] = [];
   let lastCards: NotebookCard[] = [];
@@ -149,8 +193,10 @@ export function mockApi(real: Api): Api {
   // 受信箱（手元だけ）
   const inboxItems: InboxListItem[] = [];
   const inboxTexts = new Map<string, string>();
-  async function ensureInbox() {
-    if (inboxItems.length) return;
+  // 一覧の読み込みと ?inbox= で開く処理が同時に来ても、並べるのは1回だけ（2回並ぶと同じ依頼が重複する）
+  let inboxReady: Promise<void> | null = null;
+  const ensureInbox = () => (inboxReady ??= fillInbox());
+  async function fillInbox() {
     if (!requests.length) requests = await real.requests();
     // 保存済みの結果がある依頼を、Slackから届いて準備済みになったものとして並べる（新しい順）
     const ids = Object.keys(FIXTURES).sort().reverse();
@@ -170,6 +216,20 @@ export function mockApi(real: Api): Api {
         permalink: null,
       });
     }
+    // X の会話を手で貼った依頼（いちばん新しい）
+    const d = X_FIXTURE.detail;
+    inboxItems.unshift({
+      id: X_ID,
+      source: "manual",
+      status: "ready",
+      received_at: d.received_at,
+      is_new: true,
+      title: d.title,
+      candidate_names: d.candidate_names,
+      no_fit: d.no_fit,
+      error: null,
+      permalink: null,
+    });
   }
 
   /** 作業ログ（実行の再現にも、受信箱を開いたときの表示にも使う）。[イベント, 待ち時間ms] */
@@ -232,6 +292,15 @@ export function mockApi(real: Api): Api {
     },
     async runAgent(body, onEvent) {
       const fixture = FIXTURES[body.request_id];
+      const x = body.request_id === X_ID ? xResult() : null;
+      if (x) {
+        total += X_FIXTURE.run_usd;
+        for (const [e, ms] of eventsFor(x, body.request_id, X_FIXTURE.run_usd)) {
+          await wait(ms);
+          onEvent(e);
+        }
+        return;
+      }
       const inboxText = inboxItems.find((x) => x.id === body.request_id && !FIXTURES[x.id]);
       const result: Proposal = body.custom_text || inboxText || !fixture
         ? { ...NO_FIT, run_id: `mock-${Date.now()}`, request_id: body.request_id }
@@ -265,6 +334,10 @@ export function mockApi(real: Api): Api {
       await ensureInbox();
       const it = inboxItems.find((x) => x.id === id);
       if (!it) throw new Error("その依頼は受信箱にありません");
+      if (id === X_ID) {
+        const result = xResult();
+        return { ...X_FIXTURE.detail, is_new: it.is_new, result, events: result ? eventsFor(result, id, X_FIXTURE.run_usd).map(([e]) => e) : [] };
+      }
       const fixture = FIXTURES[id];
       const result: Proposal | null =
         it.status !== "ready" ? null : fixture ? { ...fixture.result, run_id: `mock-${id}` } : { ...NO_FIT, run_id: `mock-${id}`, request_id: id };
@@ -273,6 +346,7 @@ export function mockApi(real: Api): Api {
         ...it,
         text: inboxTexts.get(id) ?? requests.find((r) => r.id === id)?.message ?? it.title,
         nominee_name: fixture?.result.candidates.find((c) => c.is_nominee)?.name ?? null,
+        intake: null,
         result,
         events: result ? eventsFor(result, id, runUsd).map(([e]) => e) : [],
         run_usd: result ? runUsd : 0,
@@ -384,8 +458,15 @@ export function mockApi(real: Api): Api {
         (anyProfile
           ? ({ ...anyProfile, cautions: [], caveat: null } as Candidate) // profile only; cautions belong to another request
           : ({ name: "候補", busy_text: "予定は不明", cautions: [], ...body.candidate } as unknown as Candidate));
-      const req = requests.find((r) => r.id === body.request_id);
+      // X の会話の依頼：保存済みの下書き（本物の API で作った主催者への返事つき）。ほかの人を選んだら決まった形の文
+      if (body.request_id === X_ID && X_FIXTURE.draft && X_FIXTURE.detail.result?.candidates[0]?.employee_id === body.candidate.employee_id) {
+        total += 0.1;
+        return { draft: X_FIXTURE.draft, model: "claude-fable-5-2", fell_back: false, run_usd: 0.1, total_usd: total };
+      }
+      const xCand = body.request_id === X_ID ? X_FIXTURE.detail.result?.candidates.find((c) => c.employee_id === body.candidate.employee_id) : undefined;
+      const req = body.request_id === X_ID ? xRequest() : requests.find((r) => r.id === body.request_id);
       total += 0.04;
+      if (xCand) return { draft: draftFor({ ...xCand, theme: body.candidate.theme, reason: body.candidate.reason }, req), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
       return { draft: draftFor({ ...cand, theme: body.candidate.theme, reason: body.candidate.reason }, req), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
     },
     async outcome(body) {
@@ -452,6 +533,33 @@ export function mockApi(real: Api): Api {
         reviewed_at: new Date().toISOString(),
         edited_fields: [...new Set([...c.edited_fields, ...Object.keys(p).filter((k) => JSON.stringify(p[k as keyof typeof p]) !== JSON.stringify(c[k as keyof Card]))])],
       }));
+    },
+    async people() {
+      const rows = await real.people();
+      return rows.map((r) => {
+        const o = personOverlay.get(r.id);
+        return o ? { ...r, expertise_tags: o.expertise_tags ?? r.expertise_tags, speaking_intent: o.speaking_intent ?? r.speaking_intent, reviewed: true } : r;
+      });
+    },
+    async person(id) {
+      const d = await real.person(id);
+      return { ...d, person: applyPerson(d.person) };
+    },
+    async editPerson(id, p) {
+      await wait(200);
+      const d = await real.person(id);
+      const cur = applyPerson(d.person);
+      if (p.expertise_tags && p.expertise_tags.length === 0) throw new Error("得意分野を1つ以上入れてください");
+      const changed = (Object.keys(p) as Array<keyof PersonPatch>).filter((k) => JSON.stringify(p[k]) !== JSON.stringify(cur[k]));
+      const prev = personOverlay.get(id);
+      personOverlay.set(id, { ...prev, ...p, edited_fields: [...new Set([...(prev?.edited_fields ?? []), ...changed])] });
+      return applyPerson(d.person);
+    },
+    async archive() {
+      return real.archive();
+    },
+    async archiveDetail(kind, id) {
+      return real.archiveDetail(kind, id);
     },
     async resolvePending(cardId, theme, accept) {
       await wait(200);

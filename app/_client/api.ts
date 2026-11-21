@@ -22,6 +22,13 @@ import type {
   SurveyEvent,
   VenueDraftBody,
   VenueEvent,
+  ArchiveDetail,
+  ArchiveKind,
+  ArchiveRow,
+  PersonDetail,
+  PersonPatch,
+  PersonRow,
+  Person,
 } from "./types";
 
 export interface DraftResponse {
@@ -66,6 +73,15 @@ export interface Api {
   venues(cardId: string, onEvent: (e: VenueEvent) => void): Promise<void>;
   /** カード → 出し先：本人への声かけ文の下書き（送らない） */
   venueDraft(body: VenueDraftBody): Promise<DraftResponse>;
+  /** ネタ帳タブ：人の一覧（社員全員） */
+  people(): Promise<PersonRow[]>;
+  /** ネタ帳タブ：人の詳細 */
+  person(id: string): Promise<PersonDetail>;
+  /** 人の情報を直す（直した項目は確認済みになり、Agent は上書きしない） */
+  editPerson(id: string, patch: PersonPatch): Promise<Person>;
+  /** アーカイブタブ：開催日が過ぎた依頼とイベント */
+  archive(): Promise<ArchiveRow[]>;
+  archiveDetail(kind: ArchiveKind, id: string): Promise<ArchiveDetail>;
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -133,6 +149,16 @@ export const realApi: Api = {
   importSurvey: async (id, csv) => json(await post(`/api/events/${encodeURIComponent(id)}/import`, { csv })),
   venues: async (cardId, onEvent) => readNdjson(await post("/api/venues", { card_id: cardId }), onEvent),
   venueDraft: async (body) => json(await post("/api/venues/draft", body)),
+  people: async () => (await json<{ people: PersonRow[] }>(await fetch("/api/people"))).people,
+  person: async (id) => json(await fetch(`/api/people/${encodeURIComponent(id)}`)),
+  editPerson: async (id, patch) =>
+    (
+      await json<{ person: Person }>(
+        await fetch(`/api/people/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),
+      )
+    ).person,
+  archive: async () => (await json<{ rows: ArchiveRow[] }>(await fetch("/api/archive"))).rows,
+  archiveDetail: async (kind, id) => json(await fetch(`/api/archive/${kind}/${encodeURIComponent(id)}`)),
 };
 
 export function pickApi(): Api {

@@ -3,30 +3,30 @@
 import type { ModelChoice } from "@/app/_client/types";
 import { usd } from "./labels";
 
-export type View = "requests" | "events";
+/** 画面のタブ（いつ使うか で分ける）。ヘッダーのタブはこの3つだけ */
+export type Tab = "inbox" | "notebook" | "archive";
+export const TABS: Array<{ id: Tab; label: string }> = [
+  { id: "inbox", label: "受信箱" },
+  { id: "notebook", label: "ネタ帳" },
+  { id: "archive", label: "アーカイブ" },
+];
 
 export function Header({
-  view,
-  onView,
+  tab,
+  onTab,
   debug,
   runUsd,
   totalUsd,
   models,
-  pending,
-  updating,
-  onUpdate,
   mock,
 }: {
-  view: View;
-  onView: (v: View) => void;
+  tab: Tab;
+  onTab: (t: Tab) => void;
   /** ?debug in the URL: show cost and models (not for everyday use). */
   debug: boolean;
   runUsd: number;
   totalUsd: number;
   models: ModelChoice | null;
-  pending: number;
-  updating: boolean;
-  onUpdate: () => void;
   mock: boolean;
 }) {
   return (
@@ -42,13 +42,12 @@ export function Header({
         <span className="brand-name">ネタ帳Agent</span>
         {mock && <span className="meta">（モック）</span>}
       </div>
-      <nav aria-label="画面の切り替え" className="nav">
-        <button type="button" className="nav-item" aria-current={view === "requests" ? "page" : undefined} onClick={() => onView("requests")}>
-          依頼
-        </button>
-        <button type="button" className="nav-item" aria-current={view === "events" ? "page" : undefined} onClick={() => onView("events")}>
-          イベント
-        </button>
+      <nav className="tabs" aria-label="画面の切り替え">
+        {TABS.map((t) => (
+          <button key={t.id} type="button" className="tab" aria-current={tab === t.id ? "page" : undefined} onClick={() => onTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
       </nav>
       <div className="header-right">
         {debug && (
@@ -57,13 +56,6 @@ export function Header({
             {models && `・${models.loop} / ${models.heavy}${models.switched ? "（切替中）" : ""}`}
           </span>
         )}
-        <button type="button" className="btn btn-sm" onClick={onUpdate} disabled={updating}>
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
-            <path d="M21 3v5h-5" />
-          </svg>
-          {updating ? "更新しています…" : `ネタ帳を更新${pending ? `（${pending}人分）` : ""}`}
-        </button>
       </div>
     </header>
   );

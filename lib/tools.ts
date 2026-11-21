@@ -4,6 +4,7 @@ import { busyForAgent, busynessFor, slotsFor, usesIcs } from "./busyness";
 import { activities, employeeById, employees, events, published, schedules } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
 import { filterCards, getCardById, loadCards, outreachSummary, type CardFilter } from "./cards";
+import { allPeople, getPerson, INTENT_LABEL } from "./people";
 import { reactionLines } from "./surveys";
 
 const clip = (s: string, n = BODY_CHARS) => (s.length > n ? s.slice(0, n) + "…" : s);
@@ -254,7 +255,8 @@ export function listEmployees(input: Input) {
   const tag = str(input.tag)?.toLowerCase();
   const maxB = num(input.max_busy_percent);
   const maxT = num(input.max_talk_count);
-  return employees()
+  // 得意分野・登壇の意向・NGのテーマは、技術広報が画面で直した内容（確認済み）を優先する
+  return allPeople()
     .filter(
       (e) =>
         (!unit || e.business_unit === unit) &&
@@ -271,13 +273,16 @@ export function listEmployees(input: Input) {
       talks: e.past_talk_count,
       last_talk: e.last_talk_date,
       busy: busyForAgent(busynessFor(e.id)),
+      speaking_intent: INTENT_LABEL[e.speaking_intent],
+      ng_themes: e.ng_themes,
     }));
 }
 
 export function getEmployee(input: Input) {
   const id = str(input.id) ?? "";
   const e = employeeById(id);
-  if (!e) return { error: `社員 ${id} は見つかりません` };
+  const p = getPerson(id);
+  if (!e || !p) return { error: `社員 ${id} は見つかりません` };
   const acts = activities().filter((a) => a.author_id === id);
   const { workload: _fixed, ...rest } = e; // 決め打ちの忙しさは使わない（予定から計算した値を渡す）
   const busy = busynessFor(id);
@@ -285,6 +290,11 @@ export function getEmployee(input: Input) {
     ...rest,
     busy: busyForAgent(busy),
     busy_slots_in_2_weeks: busy.slots.length,
+    // 人の情報（技術広報が直した項目は確認済み。Agent は上書きしない）
+    expertise_tags: p.expertise_tags,
+    speaking_intent: INTENT_LABEL[p.speaking_intent],
+    ng_themes: p.ng_themes,
+    person_reviewed: p.reviewed,
     recent_activity_count: acts.length,
     recent_activity_titles: acts.slice(-5).map((a) => `${a.id} ${a.date} ${a.title}`),
     published_count: published().filter((p) => p.author_id === id).length,
@@ -452,7 +462,7 @@ export function searchCards(input: Input) {
     .split(/[\s　、,]+/)
     .map((t) => t.trim().toLowerCase())
     .filter(Boolean);
-  const emps = new Map(employees().map((e) => [e.id, e]));
+  const emps = new Map(allPeople().map((e) => [e.id, e])); // 人が直した得意分野・意向・NGのテーマを含む
   const acts = new Map(activities().map((a) => [a.id, a]));
   const cards = filterCards(loadCards(), filter);
   const scored = cards
@@ -482,6 +492,8 @@ export function searchCards(input: Input) {
       unit: e?.business_unit,
       talks: e?.past_talk_count,
       busy: e ? busyForAgent(busynessFor(e.id)) : "予定は不明",
+      ...(e && e.speaking_intent !== "unknown" ? { speaking_intent: INTENT_LABEL[e.speaking_intent] } : {}),
+      ...(e && e.ng_themes.length ? { ng_themes: e.ng_themes } : {}),
       themes: c.themes,
       summary: clip(c.summary, 120),
       evidence_activity_ids: c.evidence_activity_ids,

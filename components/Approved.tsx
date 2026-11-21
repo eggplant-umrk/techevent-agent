@@ -59,8 +59,33 @@ export function Approved({
         </section>
       )}
       {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} />}
+      {draft?.organizer_reply && <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} />}
       {draft && <OutcomeRecorder name={candidate.name} onRecord={onRecord} />}
     </>
+  );
+}
+
+/** 主催者への返事（X で返す短い文）。送信はしない。直してコピーするだけ */
+function OrganizerReply({ text, note }: { text: string; note: string | null }) {
+  const [value, setValue] = useState(text);
+  return (
+    <section className="surface pad-lg" aria-labelledby="reply-title">
+      <h3 id="reply-title" className="h3">
+        主催者への返事（下書き）
+      </h3>
+      <p className="meta">X で返す短い文です。本人にはまだ確認していない前提の書き方です。ここからは送信しません。直してコピーし、X で返信してください。</p>
+      {note && <p className="log-line log-warn">{note}</p>}
+      <label className="field">
+        <span className="field-label">本文（{value.length}字）</span>
+        <textarea className="input reply-text" rows={4} value={value} onChange={(e) => setValue(e.target.value)} />
+      </label>
+      <div className="btn-row">
+        <CopyButton text={value} label="返事をコピー" primary />
+        <button type="button" className="btn" disabled={value === text} onClick={() => setValue(text)}>
+          下書きに戻す
+        </button>
+      </div>
+    </section>
   );
 }
 

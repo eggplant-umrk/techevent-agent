@@ -17,64 +17,11 @@ const ROLE_LABEL: Record<ColumnInfo["role"], string> = {
   unread: "読み取れない列（無視）",
 };
 
-/** イベント：過去イベントの一覧 → 詳細（アンケートの取り込み・集計・分析・書き戻し） */
-export function EventsView({ api, onOpenCard, onCardsChanged }: { api: Api; onOpenCard: (cardId: string) => void; onCardsChanged: () => void }) {
-  const [list, setList] = useState<EventListItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  const loadList = useCallback(async () => {
-    try {
-      const l = await api.events();
-      setList(l);
-      setOpenId((cur) => cur ?? l.find((e) => e.answers > 0)?.id ?? null);
-    } finally {
-      setLoaded(true);
-    }
-  }, [api]);
-  useEffect(() => {
-    void loadList();
-  }, [loadList]);
-
-  return (
-    <>
-      <section aria-labelledby="ev-title" className="surface notebook">
-        <div className="nb-top">
-          <h2 id="ev-title" className="h2">
-            イベント <span className="meta">{list.length}件</span>
-          </h2>
-        </div>
-        <ul className="nb-list">
-          {!loaded && <li className="meta pad">読み込んでいます…</li>}
-          {list.map((e) => (
-            <li key={e.id}>
-              <button type="button" className={`nb-row${openId === e.id ? " is-candidate" : ""}`} aria-current={openId === e.id ? "true" : undefined} onClick={() => setOpenId(e.id)}>
-                <span className="nb-who">
-                  <span className="strong ev-name">{e.title}</span>
-                  <span className="grow" />
-                  {e.analyzed && <Tag tone="ok">分析済み</Tag>}
-                  <span className="meta">{md(e.date)}</span>
-                </span>
-                <span className="nb-theme">
-                  {e.speakers.map((s) => s.name).join("・")}　{e.answers ? `アンケート${e.answers}件` : "アンケートなし"}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <div className="panel" aria-label="イベントの詳細">
-        {openId ? (
-          <EventPanel key={openId} api={api} id={openId} onOpenCard={onOpenCard} onChanged={() => (onCardsChanged(), void loadList())} />
-        ) : (
-          <p className="hint">イベントを選んでください。</p>
-        )}
-      </div>
-    </>
-  );
-}
-
-function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: string; onOpenCard: (cardId: string) => void; onChanged: () => void }) {
+/**
+ * イベントの詳細（アンケートの取り込み・集計・分析・カードへの書き戻し）。
+ * 一覧はアーカイブタブ（components/Archive.tsx）にあり、過去のイベントを開くとここが右に出る。
+ */
+export function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: string; onOpenCard: (cardId: string) => void; onChanged: () => void }) {
   const [d, setD] = useState<EventDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);

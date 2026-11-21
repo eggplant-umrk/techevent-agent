@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getClient } from "./anthropic";
 import { MAX_CANDIDATES, MAX_STEPS } from "./config";
-import { activities, employeeById, requests, schedules, type SpeakingRequest } from "./data";
+import { activities, employeeById, eventDateOf, requests, schedules, type SpeakingRequest } from "./data";
 import { dateProblems } from "./dates";
 import { internalTermProblems } from "./plainText";
 import { alternativePitch } from "./heavy";
@@ -161,11 +161,11 @@ export function cautionDateProblems(
 ): string[] {
   const others = requests()
     .filter((r) => r.id !== request.id)
-    .map((r) => r.event?.date ?? "");
+    .map((r) => eventDateOf(r) ?? "");
   const errs: string[] = [];
   for (const c of candidates) {
     for (const t of [...(c.cautions ?? []), c.caveat ?? ""]) {
-      for (const p of dateProblems(t, request.event?.date, others)) errs.push(`${c.employee_id} の注意点：${p}`);
+      for (const p of dateProblems(t, eventDateOf(request) ?? undefined, others)) errs.push(`${c.employee_id} の注意点：${p}`);
     }
   }
   return errs;
@@ -260,10 +260,15 @@ export function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId:
     if (!c.evidence_activity_ids?.length && !publishedOnly && !isNominee) errs.push(`${c.employee_id} の根拠の取り組みがありません`);
     for (const id of c.evidence_activity_ids ?? []) {
       if (!acts.has(id)) errs.push(`根拠 ${id} は存在しない activity id です`);
-      else if (acts.get(id)!.type === "release_note" && acts.get(id)!.author_id !== c.employee_id)
-        // リリースノートは担当者（データ・技術広報の割り当て・確かめた一致）の根拠にだけ使う。推測で人に付けない
-        errs.push(`${id} は ${c.employee_id} が担当したリリースではありません（担当者が決まっていないリリースは、人の根拠に使えません）`);
-      else if (!seen.has(id)) errs.push(`${c.employee_id} の根拠 ${id} はこの調査で見ていない取り組みです。カードか検索結果で確認したIDだけを使ってください`);
+      else if (acts.get(id)!.author_id !== c.employee_id) {
+        // 根拠は候補本人の活動だけ（コードで確かめる）。リリースノートは担当者が決まったものだけが、その人の活動になる
+        const a = acts.get(id)!;
+        errs.push(
+          a.type === "release_note" && !a.author_id
+            ? `${id} は担当者が決まっていないリリースなので、${c.employee_id} の根拠に使えません`
+            : `${id} は ${c.employee_id} の活動ではありません（${a.author_id ? `${employeeById(a.author_id)?.name ?? a.author_id}さんの活動` : "書き手のいない活動"}）。根拠には候補本人の活動だけを入れてください`,
+        );
+      } else if (!seen.has(id)) errs.push(`${c.employee_id} の根拠 ${id} はこの調査で見ていない取り組みです。カードか検索結果で確認したIDだけを使ってください`);
     }
   }
   return errs;
@@ -296,7 +301,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
     no_fit: input.candidates.length === 0 ? input.no_fit : null,
     candidates: input.candidates.map((c, i) => {
       const e = employeeById(c.employee_id)!;
-      const sys = systemCautions(c.employee_id, request.event?.date);
+      const sys = systemCautions(c.employee_id, eventDateOf(request) ?? undefined);
       // 登壇経験の印（talk_tag）と同じことだけを言っている注意点は、表示の前に除く（印が理由の近くに出るため）
       const cautions = withoutTalkTagRepeats(c.cautions);
       for (const s of sys) if (!cautions.some((x) => x.includes(s.slice(0, 4)))) cautions.push(s);

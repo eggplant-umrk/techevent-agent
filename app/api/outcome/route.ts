@@ -2,6 +2,7 @@
 // If the agent proposed someone without a card, approving creates a card from the proposal first.
 import { appendOutreach, getCardById, upsertCard, type DeclineReason, type OutreachResult } from "@/lib/cards";
 import { resolveRequest } from "@/lib/requests";
+import { eventDateOf } from "@/lib/data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     request_id: body.request_id,
     result: body.result,
     reason: body.result === "declined" ? body.reason! : null,
-    event_date: request?.event?.date ?? null,
+    event_date: eventDateOf(request), // 受信箱の依頼は会話から確かめた日程
   });
   return Response.json({ ok: true, card });
 }

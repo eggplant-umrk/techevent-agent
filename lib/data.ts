@@ -182,3 +182,11 @@ export function appendUsage(entry: UsageEntry) {
 export function employeeById(id: string): Employee | undefined {
   return employees().find((e) => e.id === id);
 }
+
+/**
+ * 依頼の開催日。サンプルの依頼は event.date、受信箱の依頼は会話から読み取ってコードで確かめた日程（intake.date）。
+ * 決まっていなければ null。日付の検証・「予定が重なる」の判定・打診の記録の開催日に使う
+ */
+export function eventDateOf(r: Pick<SpeakingRequest, "event" | "intake"> | null | undefined): string | null {
+  return r?.event?.date ?? r?.intake?.date ?? null;
+}

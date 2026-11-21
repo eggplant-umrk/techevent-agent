@@ -2,6 +2,7 @@
 // Every write goes through validation: evidence must be real activity ids by the card's
 // owner, and published ids must be real items by the same person. Nothing invalid is saved.
 import fs from "node:fs";
+import { resolveRequest } from "./requests";
 import { nowJst } from "./clock";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
@@ -188,9 +189,9 @@ export function validateCardInput(input: CardInput, cards = loadCards()): string
     errs.push("根拠の activity id がありません（発信済みの取り組みなら published_ids、指名された本人なら依頼のidを入れてください）");
   }
   if (input.evidence_request_ids?.length) {
-    const reqs = new Map(requests().map((r) => [r.id, r]));
     for (const id of input.evidence_request_ids) {
-      const r = reqs.get(id);
+      // サンプルの依頼（data/requests.json）だけでなく、受信箱の依頼（inb-…）も引く
+      const r = id.startsWith("custom") ? null : resolveRequest({ request_id: id });
       if (!r) errs.push(`依頼 ${id} は存在しません`);
       else if (r.nominated_employee_id !== input.employee_id) errs.push(`依頼 ${id} は ${input.employee_id} を指名していません`);
     }
@@ -280,9 +281,9 @@ export function upsertCard(rawInput: CardInput): UpsertOutcome {
   const pubIds = [...new Set(input.published_ids ?? [])];
   const reqIds = [...new Set(input.evidence_request_ids ?? [])];
   const requestDate = () =>
-    requests()
-      .filter((r) => reqIds.includes(r.id))
-      .reduce((m, r) => ((r.received_at ?? "") > m ? r.received_at ?? "" : m), "");
+    reqIds
+      .map((id) => resolveRequest({ request_id: id }))
+      .reduce((m, r) => ((r?.received_at ?? "") > m ? r?.received_at ?? "" : m), "");
 
   if (!input.card_id) {
     const card: Card = {

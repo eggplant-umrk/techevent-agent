@@ -55,17 +55,19 @@ function fakeInput(eventId: string): AnalysisInput {
   const all = surveys();
   const sents = sentencesOf(eventId, all);
   const sentences = sents.map((s) => {
-    if (OTHER.test(s.text)) return { id: s.id, polarity: "other" as const, topic: null, attack: false };
+    if (OTHER.test(s.text)) return { id: s.id, polarity: "good" as const, topic: "operation" as const, attack: false }; // イベント全体の良い点
     if (BAD.test(s.text)) return { id: s.id, polarity: "bad" as const, topic: OPS.test(s.text) ? ("operation" as const) : ("content" as const), attack: ATTACK.test(s.text) };
-    return { id: s.id, polarity: "good" as const, topic: null, attack: false };
+    return { id: s.id, polarity: "good" as const, topic: "content" as const, attack: false };
   });
   const speakers = talkStats(eventId, all).map((t) => t.speaker_id);
-  const positive_themes = speakers
+  const positive_themes: AnalysisInput["positive_themes"] = speakers
     .map((sp) => {
-      const ids = sentences.filter((l) => l.polarity === "good" && sents.find((s) => s.id === l.id)!.speaker_id === sp).map((l) => l.id);
-      return { speaker_id: sp, theme: "話の中身が参考になった", sentence_ids: ids, representative_ids: ids.slice(0, 1) };
+      const ids = sentences.filter((l) => l.polarity === "good" && l.topic === "content" && sents.find((s) => s.id === l.id)!.speaker_id === sp).map((l) => l.id);
+      return { speaker_id: sp as string | null, theme: "話の中身が参考になった", sentence_ids: ids, representative_ids: ids.slice(0, 1) };
     })
     .filter((t) => t.sentence_ids.length);
+  const eventWide = sentences.filter((l) => l.polarity === "good" && l.topic === "operation").map((l) => l.id);
+  if (eventWide.length) positive_themes.push({ speaker_id: null, theme: "懇親会や受付など運営がよかった", sentence_ids: eventWide, representative_ids: eventWide.slice(0, 1) });
   const talks = speakers.map((sp) => {
     const content = sentences.some((l) => l.polarity === "bad" && l.topic === "content" && !l.attack && sents.find((s) => s.id === l.id)!.speaker_id === sp);
     const wants = new Map<string, string[]>();
@@ -154,6 +156,13 @@ async function main() {
     check("不満に運営か内容かがないと弾く", bad((x) => (x.sentences.find((l) => l.polarity === "bad")!.topic = null)).some((e) => e.includes("運営か内容か")));
     check("良い点のテーマに不満の文を入れると弾く", bad((x) => x.positive_themes[0].sentence_ids.push(x.sentences.find((l) => l.polarity === "bad")!.id)).some((e) => e.includes("良い点に分けていません")));
     check("良い点の文をテーマに入れ忘れると弾く", bad((x) => x.positive_themes[0].sentence_ids.pop()).some((e) => e.includes("テーマに入れていない")));
+    check(
+      "イベント全体の良い点を登壇のテーマに入れると弾く",
+      bad((x) => {
+        const ev = x.positive_themes.find((p) => p.speaker_id === null)!;
+        x.positive_themes[0].sentence_ids.push(ev.sentence_ids.pop()!);
+      }).some((e) => e.includes("イベント全体の良い点")),
+    );
     const attackText = sentencesOf("ev020").find((s) => /下手すぎ/.test(s.text))!.text;
     check("反応のまとめに攻撃の言葉が入ると弾く", bad((x) => (x.talks[0].summary = attackText)).some((e) => e.includes("攻撃")));
     const complaint = sentencesOf("ev020").find((s) => /前提知識/.test(s.text))!.text;
@@ -177,6 +186,8 @@ async function main() {
     check("運営と内容に分ける", a.negatives.operation.length > 0 && a.negatives.content.length > 0);
     check("攻撃の言葉も画面には出す（印つき）", [...a.negatives.operation, ...a.negatives.content].some((n) => n.attack && n.text === attackText));
     check("ポジティブはテーマごとに件数と代表の声", a.positives.every((p) => p.count > 0 && p.representatives.length >= 1 && p.representatives.length <= 2));
+    const evWide = a.positives.filter((p) => p.speaker_id === null);
+    check("懇親会・受付などはイベント全体の良い点として分ける", evWide.length === 1 && evWide[0].representatives.every((r) => OTHER.test(r.text)));
 
     const c4 = loadCards().find((c) => c.card_id === "card-e004-01")!;
     const rx = c4.reactions?.find((r) => r.kind === "reception");
@@ -184,6 +195,7 @@ async function main() {
     check("カードには内容への不満の事実だけ", rx?.stumbles.length === 1 && rx.stumbles[0] === contentFact(t4) && /^前回は.+を指摘する声が\d+件$/.test(rx.stumbles[0]), rx?.stumbles[0]);
     check("カードに不満の原文・運営への不満・攻撃の言葉が入らない", cardLeakProblems(a).length === 0 && !JSON.stringify(loadCards().flatMap((c) => c.reactions ?? [])).includes(attackText));
     check("良かった点はテーマと件数だけ", (rx?.hits ?? []).every((h) => /（\d+件）$/.test(h)));
+    check("イベント全体の良い点はカードに入れない", !JSON.stringify(loadCards().flatMap((c) => c.reactions ?? [])).includes(evWide[0].theme));
     const dm = loadCards().find((c) => c.card_id === "card-e023-01")!.reactions?.find((r) => r.kind === "demand");
     check("重なるテーマは別の社員のカードに「需要あり」の提案", dm?.status === "pending" && dm.from_speaker_id === "e004");
     check("提案中の需要は提案のツールに渡らない", JSON.stringify(getCard({ card_id: "card-e023-01" })).indexOf("需要あり") < 0);

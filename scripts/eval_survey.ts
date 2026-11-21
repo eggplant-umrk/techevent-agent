@@ -2,7 +2,7 @@
 // - APIを使わない判定（--offline でも流す）：保存済みの分析結果（docs/survey_latest.json）を今の検証で判定し直す
 //     根拠の回答id・文idが実在／内部の言葉・数字がない／画面の数字がコードの計算と一致／
 //     AI が不満に分けた文が画面に原文のまま全部出ている／確認済みカードを上書きしない・カードに不満の原文と攻撃の言葉を入れない
-// - APIを使う判定：アンケート分析 → 書き戻し（提案は採用した状態にする）→ 次の提案が変わる
+// - APIを使う判定：本番のアンケート分析の結果 → 書き戻し（提案は採用した状態にする）→ 次の提案が変わる（APIは書き戻し後の提案1回だけ）
 // data/cards.json は判定のたびにバイトごと元に戻す。
 import fs from "node:fs";
 import path from "node:path";
@@ -12,7 +12,6 @@ import { dataFile } from "../lib/dataSource";
 import { events, type SpeakingRequest } from "../lib/data";
 import { surveys } from "../lib/surveyCsv";
 import {
-  analyzeEvent,
   buildAnalysis,
   cardLeakProblems,
   eventDetail,
@@ -134,6 +133,14 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
   return checks;
 }
 
+/** 保存済みの提案（docs/eval_latest.json）。なければ null */
+function savedProposal(requestId: string): ProposalResult | null {
+  const f = path.join(process.cwd(), "docs", "eval_latest.json");
+  if (!fs.existsSync(f)) return null;
+  const j = JSON.parse(fs.readFileSync(f, "utf-8")) as { rows?: Array<{ request_id: string; result: ProposalResult | null }> };
+  return j.rows?.find((r) => r.request_id === requestId)?.result ?? null;
+}
+
 const REACTION_WORDS = /アンケート|参加者|聞きたい|需要/;
 const textOf = (p: ProposalResult | null | undefined) =>
   [...(p?.learnings_applied ?? []), ...(p?.candidates ?? []).flatMap((c) => [c.reason, c.caveat ?? "", ...c.cautions])].join("\n");
@@ -148,15 +155,14 @@ export async function surveyLiveCheck(
   propose: (r: SpeakingRequest) => Promise<{ result: ProposalResult | null; usd: number }>,
 ): Promise<{ check: SurveyCheck; record: Record<string, unknown> }> {
   return withCardsRestored(async () => {
-    console.log(`\n=== アンケートの書き戻しテスト：${SURVEY_EVENT} を分析して書き戻し、${req.id} をもう一度`);
-    const b = before ?? (await propose(req)).result;
-    const log: string[] = [];
-    const analysis = await analyzeEvent(SURVEY_EVENT, (e) => {
-      if (e.type === "writeback") log.push(e.message);
-      if (e.type === "rejected") log.push(`差し戻し：${e.errors.join(" / ")}`);
-      if (e.type === "error") log.push(`エラー：${e.message}`);
-    });
-    if (!analysis) return { check: { name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: false, detail: `分析できなかった：${log.join(" / ")}` }, record: { log } };
+    // 金額を抑えるため、分析は本番で分析した保存結果（docs/survey_latest.json）を使い、書き戻し（コード）からやり直す。
+    // 書き戻し前の提案も保存済みの結果（docs/eval_latest.json）を使う。新しく API を使うのは書き戻し後の提案1回だけ
+    console.log(`\n=== アンケートの書き戻しテスト：${SURVEY_EVENT} の本番の分析結果を書き戻し、${req.id} をもう一度`);
+    const analysis = loadSavedAnalyses()?.analyses[SURVEY_EVENT];
+    if (!analysis)
+      return { check: { name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: false, detail: "本番の分析結果がない（npx tsx scripts/analyze_surveys.ts で作る）" }, record: {} };
+    const b = before ?? savedProposal(req.id) ?? (await propose(req)).result;
+    const log = writeBack(events().find((e) => e.id === SURVEY_EVENT)!, analysis);
     // 技術広報が提案を採用した状態にする
     for (const c of loadCards()) {
       if ((c.reactions ?? []).some((r) => r.status === "pending" && r.event_id === SURVEY_EVENT))
@@ -170,10 +176,10 @@ export async function surveyLiveCheck(
     const changed = (afterUsed.length > 0 || afterLearn) && !REACTION_WORDS.test(textOf(b));
     const top = (p: ProposalResult | null | undefined) => (p?.candidates ?? []).map((c) => c.employee_id).join(",");
     const detail = `前 ${top(b)} → 後 ${top(a)}${afterUsed.length ? `（反応を理由・注意点に使った候補：${afterUsed.map((c) => c.name).join("・")}）` : ""}${afterLearn ? "（反応の反映を明記）" : ""}`;
-    console.log(`  ${detail}  分析 $${analysis.run_usd.toFixed(3)}／提案 $${again.usd.toFixed(3)}`);
+    console.log(`  ${detail}  提案 $${again.usd.toFixed(3)}（分析は本番の保存結果を使用）`);
     return {
       check: { name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: changed, detail },
-      record: { event_id: SURVEY_EVENT, request_id: req.id, analysis, writebacks: log, before: b, after: a, analysis_usd: analysis.run_usd, proposal_usd: again.usd },
+      record: { event_id: SURVEY_EVENT, request_id: req.id, analyzed_at: analysis.analyzed_at, writebacks: log, before: b, after: a, proposal_usd: again.usd },
     };
   });
 }

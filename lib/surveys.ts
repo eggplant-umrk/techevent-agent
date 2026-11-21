@@ -108,7 +108,7 @@ export function sentencesOf(eventId: string, all: SurveyAnswer[] = surveys()): S
 export interface SentenceLabel {
   id: string;
   polarity: "good" | "bad" | "other";
-  /** 不満のとき：運営（音響・時間・会場・配信・受付など）か、内容（難しい・速い・資料など）か */
+  /** 良い点・不満のとき：運営（イベント全体：音響・時間・会場・配信・受付・懇親会・食事など）か、内容（登壇の中身）か。どちらでもない文は null */
   topic: "operation" | "content" | null;
   /** 人を攻撃する言葉 */
   attack: boolean;
@@ -116,7 +116,8 @@ export interface SentenceLabel {
 
 export interface AnalysisInput {
   sentences: SentenceLabel[];
-  positive_themes: Array<{ speaker_id: string; theme: string; sentence_ids: string[]; representative_ids: string[] }>;
+  /** speaker_id が null のテーマは「イベント全体」の良い点（懇親会・受付・会場など）。登壇者のカードには書き戻さない */
+  positive_themes: Array<{ speaker_id: string | null; theme: string; sentence_ids: string[]; representative_ids: string[] }>;
   talks: Array<{
     speaker_id: string;
     /** 反応のまとめ1行（不満の原文や攻撃の言葉は入れない） */
@@ -137,7 +138,8 @@ export interface NegativeItem {
   attack: boolean;
 }
 export interface PositiveTheme {
-  speaker_id: string;
+  /** null＝イベント全体の良い点（登壇者のカードには書き戻さない） */
+  speaker_id: string | null;
   theme: string;
   /** その声を書いた回答の数（コードで数える） */
   count: number;
@@ -205,7 +207,7 @@ export function validateAnalysis(eventId: string, input: AnalysisInput, all: Sur
     if (!byId.has(l.id)) errs.push(`文 ${l.id} は存在しません`);
     else if (seen.has(l.id)) errs.push(`文 ${l.id} を2回分類しています`);
     seen.set(l.id, l);
-    if (l.polarity === "bad" && l.topic !== "operation" && l.topic !== "content") errs.push(`不満の文 ${l.id} に運営か内容かがありません`);
+    if (l.polarity !== "other" && l.topic !== "operation" && l.topic !== "content") errs.push(`${l.polarity === "bad" ? "不満" : "良い点"}の文 ${l.id} に運営か内容かがありません`);
   }
   const missing = sents.filter((s) => !seen.has(s.id)).map((s) => s.id);
   if (missing.length) errs.push(`分類していない文があります：${missing.slice(0, 10).join("、")}${missing.length > 10 ? ` ほか${missing.length - 10}文` : ""}`);
@@ -216,8 +218,10 @@ export function validateAnalysis(eventId: string, input: AnalysisInput, all: Sur
     for (const id of t.sentence_ids ?? []) {
       const s = byId.get(id);
       if (!s) errs.push(`テーマ「${t.theme}」：文 ${id} は存在しません`);
-      else if (s.speaker_id !== t.speaker_id) errs.push(`テーマ「${t.theme}」：文 ${id} は別の登壇への回答です`);
       else if (seen.get(id)?.polarity !== "good") errs.push(`テーマ「${t.theme}」：文 ${id} は良い点に分けていません`);
+      else if (t.speaker_id === null && seen.get(id)?.topic !== "operation") errs.push(`イベント全体のテーマ「${t.theme}」：文 ${id} は運営（イベント全体）に分けていません`);
+      else if (t.speaker_id !== null && seen.get(id)?.topic !== "content") errs.push(`テーマ「${t.theme}」：文 ${id} は登壇の中身ではなくイベント全体の良い点です。登壇者のないテーマ（speaker_id=null）に入れてください`);
+      else if (t.speaker_id !== null && s.speaker_id !== t.speaker_id) errs.push(`テーマ「${t.theme}」：文 ${id} は別の登壇への回答です`);
       if (inTheme.has(id)) errs.push(`文 ${id} が2つのテーマに入っています`);
       inTheme.add(id);
     }
@@ -331,9 +335,11 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 # やること
 1. 文ごとの分類（sentences）：渡したすべての文に1回ずつ
    - polarity：good（良い点）／bad（不満・改善してほしいこと・分からなかったこと）／other（どちらでもない・イベントと関係ない）。1つの回答に良い点と不満が混ざることがある。点数が高い回答でも、不満の文は bad にする
-   - topic（bad のときだけ）：operation（運営：音響・マイク・時間・開始の遅れ・会場・寒さ・配信・受付・質疑の時間など）／content（内容：難しい・速い・資料・抽象的・前提知識など）。good・other は null
+   - topic（good・bad のとき）：operation（運営・イベント全体：音響・マイク・時間・開始の遅れ・会場・寒さ・配信・受付・質疑の時間・懇親会・食事など、登壇の中身と関係ないこと）／content（登壇の中身：分かりやすい・具体的・難しい・速い・資料・抽象的・前提知識など）。other は null
    - attack：人を攻撃する言葉（登壇者や人への侮辱・人格の否定）なら true。内容への率直な批判は攻撃ではない
-2. 良い点のテーマ（positive_themes）：登壇ごとに、good の文をテーマでまとめる。good の文はどれか1つのテーマに必ず入れる。代表的な声を1〜2文選ぶ（representative_ids）
+2. 良い点のテーマ（positive_themes）：good の文をテーマでまとめる。good の文はどれか1つのテーマに必ず入れる。代表的な声を1〜2文選ぶ（representative_ids）
+   - 登壇の中身の良い点（topic=content）は、その登壇の speaker_id のテーマに
+   - 懇親会・受付・会場など登壇と関係ない良い点（topic=operation）は、speaker_id を null にした「イベント全体」のテーマに（登壇者のカードには書き戻さない）
 3. 登壇ごと（talks）
    - summary：反応のまとめ1行。登壇者のカードに残るので、不満の原文や攻撃の言葉は入れない
    - content_issue：内容への不満（攻撃を除く）があるとき、何を指摘されたかを一言で（例：前提知識の多さ／話す速さ／資料の文字の小ささ）。なければ null。原文を写さない
@@ -404,7 +410,7 @@ export const SUBMIT_SURVEY_DEF: Anthropic.Tool = {
         items: {
           type: "object",
           properties: {
-            speaker_id: { type: "string" },
+            speaker_id: { type: ["string", "null"], description: "登壇の中身の良い点はその登壇者、イベント全体の良い点は null" },
             theme: { type: "string" },
             sentence_ids: { type: "array", items: { type: "string" } },
             representative_ids: { type: "array", items: { type: "string" } },
@@ -530,14 +536,19 @@ export function writeBack(ev: EventRecord, a: Pick<EventAnalysis, "talks" | "pos
   return lines;
 }
 
-/** カードに入ってはいけないもの（運営への不満・不満の原文・攻撃の言葉）が入っていないか。問題を文で返す */
-export function cardLeakProblems(a: Pick<EventAnalysis, "negatives" | "event_id">, cards: Card[] = loadCards()): string[] {
+/** カードに入ってはいけないもの（運営への不満・不満の原文・攻撃の言葉・イベント全体の良い点）が入っていないか。問題を文で返す */
+export function cardLeakProblems(a: Pick<EventAnalysis, "negatives" | "event_id" | "positives">, cards: Card[] = loadCards()): string[] {
   const bad = [...a.negatives.operation, ...a.negatives.content].map((n) => n.text);
+  const eventWide = (a.positives ?? []).filter((p) => p.speaker_id === null);
+  const eventTexts = eventWide.flatMap((p) => p.representatives.map((r) => r.text));
+  const eventThemes = new Set(eventWide.map((p) => p.theme));
   const out: string[] = [];
   for (const c of cards)
     for (const r of (c.reactions ?? []).filter((x) => x.event_id === a.event_id)) {
       const texts = [r.text, ...r.hits, ...r.stumbles];
       if (texts.some((t) => quotesAny(t, bad))) out.push(`${c.card_id} の反応に不満の原文（運営・内容・攻撃）が入っています`);
+      if (texts.some((t) => quotesAny(t, eventTexts)) || r.hits.some((h) => eventThemes.has(h.replace(/（\d+件）$/, ""))))
+        out.push(`${c.card_id} の反応にイベント全体の良い点（懇親会・受付・会場など）が入っています`);
     }
   return out;
 }

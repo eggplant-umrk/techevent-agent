@@ -114,7 +114,7 @@ function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: string; 
   if (!d) return <p className="meta pad">読み込んでいます…</p>;
   const a = d.analysis;
   const total = d.answers.length;
-  const nameOf = (sp: string) => d.talks.find((t) => t.speaker_id === sp)?.name ?? sp;
+  const nameOf = (sp: string | null) => (sp === null ? "イベント全体" : d.talks.find((t) => t.speaker_id === sp)?.name ?? sp);
 
   return (
     <>
@@ -195,6 +195,7 @@ function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: string; 
               <h2 id="pos-title" className="h2">
                 ポジティブな声
               </h2>
+              <p className="meta">懇親会・受付・会場などは「イベント全体」として分け、登壇者のカードには入れません。</p>
             </div>
             <ul className="pos-list">
               {a.positives.map((p) => (
@@ -270,7 +271,7 @@ function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: string; 
   );
 }
 
-function NegList({ title, items, nameOf }: { title: string; items: NegativeItem[]; nameOf: (sp: string) => string }) {
+function NegList({ title, items, nameOf }: { title: string; items: NegativeItem[]; nameOf: (sp: string | null) => string }) {
   const n = items.reduce((x, i) => x + i.count, 0);
   return (
     <div className="cand">

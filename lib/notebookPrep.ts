@@ -193,18 +193,39 @@ export function prepareEmployee(employeeId: string, allActs: Activity[], legacyD
 // ---------------------------------------------------------------------------
 // 金額の見積もり
 // ---------------------------------------------------------------------------
-/** 日本語と英語が混ざった文の、文字数からのトークン数の目安（本物の GitHub データの実測：4.2万字 ≒ 3.7万トークン） */
-export const tokensOf = (chars: number) => Math.ceil(chars / 1.1);
+/**
+ * 依頼文の文字数からのトークン数の目安。記録した回の実測（依頼文の文字数と入力トークン）で、
+ * 汚れたデータ 0.79〜0.83、本物の GitHub 0.80 トークン／字だった（scripts/check_notebook_estimate.ts）
+ */
+export const TOKENS_PER_CHAR = 0.8;
+export const tokensOf = (chars: number) => Math.ceil(chars * TOKENS_PER_CHAR);
 
-/** 1人分の見積もり（USD）。出力は活動1件あたり45トークン＋固定300（実測から）。差し戻しの分は入れない */
-export function estimateUsd(model: string, messageChars: number, items: number, systemChars: number, firstCall: boolean): number {
+/**
+ * 出力の目安：1回の呼び出しの固定分＋渡した活動の文字数に比例する分。
+ * Opus 5.5 は考える分（thinking）も出力に数えるので、活動が1〜2件でも1回 約1千トークン出る（ブログの回：6回で6,510）。
+ * 前の式（固定300＋1件45）は、活動の少ない呼び出しで実際の約半分になっていた。
+ */
+export const OUTPUT_BASE_TOKENS = 1000;
+export const OUTPUT_TOKENS_PER_ACTIVITY_CHAR = 0.16;
+export const TOOL_DEF_TOKENS = 1000;
+export const estimateOutputTokens =(activityChars: number) => Math.min(16000, Math.round(OUTPUT_BASE_TOKENS + OUTPUT_TOKENS_PER_ACTIVITY_CHAR * activityChars));
+
+/**
+ * 1人分の見積もり（USD）。messageChars は依頼文の文字数、activityChars は渡した活動のタイトル＋本文の文字数。
+ * 指示文は最初の呼び出しでキャッシュに書き込み、2人目からはキャッシュから読む。差し戻しの分は入れない
+ */
+export function estimateUsd(model: string, messageChars: number, activityChars: number, systemChars: number, firstCall: boolean): number {
   const key = Object.keys(PRICING).find((k) => model.startsWith(k));
   const p = key ? PRICING[key] : PRICING["claude-fable-5-2"];
   const input = tokensOf(messageChars);
-  const output = Math.min(8000, 300 + 45 * items);
-  const system = tokensOf(systemChars);
+  const output = estimateOutputTokens(activityChars);
+  // キャッシュする部分は指示文＋ツールの定義（upsert_card）。ツールの定義は記録した回で約1千トークン（キャッシュの書き込み量と指示文の差）
+  const system = tokensOf(systemChars) + TOOL_DEF_TOKENS;
   return (input * p.input + output * p.output + system * (firstCall ? p.cacheWrite : p.cacheRead)) / 1_000_000;
 }
+
+/** 渡す活動のタイトル＋本文の文字数（見積もりの出力に使う） */
+export const sentChars = (acts: Array<{ title: string; body: string }>) => acts.reduce((n, a) => n + a.title.length + a.body.length, 0);
 
 // ---------------------------------------------------------------------------
 // 重複カードの検査（保存の前）

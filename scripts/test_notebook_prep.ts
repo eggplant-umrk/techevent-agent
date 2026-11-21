@@ -97,8 +97,16 @@ async function main() {
   // ---- 金額の見積もりと予算 ----
   const cfg = prepConfig();
   check("予算の既定は $1（.env に NOTEBOOK_BUDGET_USD がなければ）", cfg.budgetUsd === 1);
-  const est = estimateUsd("claude-opus-5-5", 42000, 128, 16000, true);
-  check("見積もり：本物の GitHub 1人分（4.2万字・128件）が実測 $0.28〜0.30 に近い", est > 0.2 && est < 0.4, `$${est.toFixed(3)}`);
+  // 記録した回（scripts/check_notebook_estimate.ts で作り直した依頼文・活動・指示文の文字数）で、実際との差が2割以内
+  const recorded: Array<[string, number, Array<[number, number]>, number]> = [
+    ["本物の GitHub（本人・53件）", 4343, [[21353, 17870]], 0.1681],
+    ["汚れたデータ（3人）", 2620, [[3240, 1571], [2008, 947], [2777, 1297]], 0.1106],
+    ["ブログ（6人・1〜2件ずつ）", 4282, [[1254, 342], [1065, 369], [775, 180], [456, 204], [421, 192], [716, 176]], 0.18],
+  ];
+  for (const [label, sys, rows, actual] of recorded) {
+    const est = rows.reduce((n, [m, a], k) => n + estimateUsd("claude-opus-5-5", m, a, sys, k === 0), 0);
+    check(`見積もり：${label}が実際 $${actual.toFixed(3)} の±2割`, Math.abs(est - actual) / actual <= 0.2, `$${est.toFixed(3)}（${est >= actual ? "+" : ""}${Math.round(((est - actual) / actual) * 100)}%）`);
+  }
 
   const { updateNotebook } = await import("../lib/notebook");
   const cardsFile = path.join("data", "sources", "stress", "cards.json");

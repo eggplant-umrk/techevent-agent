@@ -1,0 +1,218 @@
+{
+  "runs": [
+    {
+      "at": "2026-11-21T09:25:58.687Z",
+      "targets": [
+        "e031"
+      ],
+      "spent_usd": 0.1681029999999999,
+      "per": [
+        {
+          "employee_id": "e031",
+          "cards": [
+            {
+              "card_id": "card-e031-01",
+              "theme": "LCP 14秒からの軽量化：演出の多い個人サイトを計測して直した記録",
+              "evidence": 13
+            },
+            {
+              "card_id": "card-e031-02",
+              "theme": "生成AIで770問に解説を付ける：確信度と独立レビューで品質を保つやり方",
+              "evidence": 20
+            },
+            {
+              "card_id": "card-e031-03",
+              "theme": "個人開発のFirebaseアプリを本番に出す前に固めたこと：ルール・App Check・APIキーの制限",
+              "evidence": 13
+            },
+            {
+              "card_id": "card-e031-04",
+              "theme": "社内の埋もれた取り組みをAIエージェントで発信につなげる：技術広報向けのエージェントの作り方",
+              "evidence": 2
+            }
+          ],
+          "activities": 128,
+          "activity_chars": 42175,
+          "seconds": 36.6,
+          "usd": 0.168103,
+          "estimate_usd": 0.15023,
+          "prep": {
+            "fresh": 128,
+            "sent": 53,
+            "dropped": {
+              "unmerged_pr": 1
+            },
+            "deferred": 74
+          },
+          "log": [
+            "見積もり $0.150（上限 $1）",
+            "梅澤陸：新しい活動128件（全128件のうち読んだ0件を除く）→ 渡す53件・コードで落とした1件（マージされていない PR1）・次回に回した74件",
+            "新しく作ったカード card-e031-01（未発信）：LCP 14秒からの軽量化：演出の多い個人サイトを計測して直した記録",
+            "新しく作ったカード card-e031-02（未発信）：生成AIで770問に解説を付ける：確信度と独立レビューで品質を保つやり方",
+            "新しく作ったカード card-e031-03（未発信）：個人開発のFirebaseアプリを本番に出す前に固めたこと：ルール・App Check・APIキーの制限",
+            "新しく作ったカード card-e031-04（未発信）：社内の埋もれた取り組みをAIエージェントで発信につなげる：技術広報向けのエージェントの作り方"
+          ],
+          "left_for_next": 74,
+          "second_run": null
+        }
+      ],
+      "cards": [
+        {
+          "card_id": "card-e031-01",
+          "employee_id": "e031",
+          "summary": "個人ポートフォリオを「基板（PCB）」がコンセプトのデザインに作り替えました。カーソルを乗せた配線の電圧やI2Cの波形が見えるプローブ、基板の色を3色から選べる切り替えなど、遊び心のある演出を入れています。あわせて重さの原因を計測して突き止め、詳細ページだけのためのFramer Motion（約120KB）の削除、Server Components化、YouTubeを最初はサムネイルだけ表示にする変更（LCPは約14秒かかっていた）、動きを減らす設定（reduced-motion）への対応、スマホでの12px未満の文字や44px未満のタップ範囲の解消を進めました。",
+          "themes": [
+            "LCP 14秒からの軽量化：演出の多い個人サイトを計測して直した記録",
+            "Framer Motion を外して Server Components へ：見た目を変えずに JS を減らす手順",
+            "基板デザインのポートフォリオで両立させた、凝った演出とアクセシビリティ（reduced-motion・文字サイズ・タップ範囲）"
+          ],
+          "evidence_activity_ids": [
+            "act276",
+            "act277",
+            "act278",
+            "act279",
+            "act280",
+            "act281",
+            "act283",
+            "act285",
+            "act286",
+            "act287",
+            "act288",
+            "act289",
+            "act290"
+          ],
+          "format": "blog",
+          "format_reason": "計測で突き止めた原因と直した内容が具体的な数字つきでそろっていて、登壇経験のない本人でもまず記事にまとめやすいためです。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-04",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:25:58.570Z",
+          "updated_at": "2026-11-21T09:25:58.570Z",
+          "reactions": []
+        },
+        {
+          "card_id": "card-e031-02",
+          "employee_id": "e031",
+          "summary": "美容師国家試験の過去問アプリのために、第41〜54回の770問をデータ化し、生成AIを使って全問に解説を付けました。解説には確信度（例：第51回は高37・中12・低6）を付け、独立したレビューで見つかった指摘を、次の回の解説の作り方に反映しています。OCRの確認待ちは、2人の別々のAIの読み手に原本と独立に読み比べさせて18問から6問に減らしました。図から正答の〇印を消したときの跡を自動で見つける仕組みも作り、跡が残っていた11問を直しています。さらに、教科書の参照を44問に付け、答えのない類題プリントについては今の法令と過去問で答えの裏付けを取りました。",
+          "themes": [
+            "生成AIで770問に解説を付ける：確信度と独立レビューで品質を保つやり方",
+            "AIの読み手2人で照合してOCRの確認待ちを18問から6問へ",
+            "画像処理の消し跡を自動で見つけて直す：AIで作ったデータを検査する仕組み"
+          ],
+          "evidence_activity_ids": [
+            "act294",
+            "act301",
+            "act302",
+            "act303",
+            "act304",
+            "act305",
+            "act306",
+            "act307",
+            "act308",
+            "act309",
+            "act310",
+            "act311",
+            "act312",
+            "act313",
+            "act314",
+            "act315",
+            "act316",
+            "act317",
+            "act325",
+            "act326"
+          ],
+          "format": "lt",
+          "format_reason": "生成AIで作ったものの品質をどう保つかという今注目の話題で、数字もはっきりしているため、初登壇でも話しやすい5〜10分の発表に向いています。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-19",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:25:58.596Z",
+          "updated_at": "2026-11-21T09:25:58.596Z",
+          "reactions": []
+        },
+        {
+          "card_id": "card-e031-03",
+          "employee_id": "e031",
+          "summary": "同じ過去問アプリを、Vite＋React＋Firebaseで作ったPWAとして個人で開発し、公開しました。Firestoreのセキュリティルールの厳格化とApp Checkの強制（無料のSparkプランのまま使えることを確認）を行い、本番の設定からlocalhostを外し、使っていないAPIキーにも制限を付けています。あわせて、本番で見つかった不具合を原因から直しました。新しいService Workerが切り替わらない問題、iPhoneのホーム画面のアプリでGoogleログインが戻ってこない問題、Windowsのgrepが異常終了してビルド結果の秘密の値の検査が効いていなかった問題です。",
+          "themes": [
+            "個人開発のFirebaseアプリを本番に出す前に固めたこと：ルール・App Check・APIキーの制限",
+            "iPhoneのホーム画面アプリでGoogleログインが戻らない問題の原因と対処",
+            "効いていなかった秘密の値の検査：Windowsのgrepの落とし穴と、検査が効いていることをCIで確かめる方法"
+          ],
+          "evidence_activity_ids": [
+            "act292",
+            "act293",
+            "act295",
+            "act296",
+            "act298",
+            "act299",
+            "act300",
+            "act318",
+            "act319",
+            "act320",
+            "act321",
+            "act323",
+            "act324"
+          ],
+          "format": "blog",
+          "format_reason": "はまった点ごとに原因と対処が具体的に書かれていて、同じ問題に当たった人が検索で読みつけやすい記事の形が合っているためです。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-19",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:25:58.621Z",
+          "updated_at": "2026-11-21T09:25:58.621Z",
+          "reactions": []
+        },
+        {
+          "card_id": "card-e031-04",
+          "employee_id": "e031",
+          "summary": "LayerXの自律型AI Agentハッカソン（2026年11月、テーマは「Techイベントを一気通貫で支援せよ」）で、技術広報を支えるAIエージェントを作りました。社内の埋もれた取り組みを見つけて登壇やブログの候補にする上流の仕組みと、イベント運営の手作業を減らす仕組みを狙っています。Slackボットとして、依頼チャンネルの投稿を受け取り、同じスレッドに候補を返す形で動きます。",
+          "themes": [
+            "社内の埋もれた取り組みをAIエージェントで発信につなげる：技術広報向けのエージェントの作り方",
+            "Slackのスレッドで動く業務エージェント：依頼を受けて候補を返すまでの設計"
+          ],
+          "evidence_activity_ids": [
+            "act327",
+            "act328"
+          ],
+          "format": "lt",
+          "format_reason": "今日できたばかりのハッカソンの成果物で、まだ運用の結果や数字がないため、まずは短い発表でデモと設計の考え方を紹介するのが合っています。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-21",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:25:58.642Z",
+          "updated_at": "2026-11-21T09:25:58.642Z",
+          "reactions": []
+        }
+      ]
+    }
+  ]
+}

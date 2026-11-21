@@ -19,6 +19,8 @@ import type {
   OutreachDraft,
   SpeakingRequest,
   SurveyEvent,
+  VenueDraftBody,
+  VenueEvent,
 } from "./types";
 
 export interface DraftResponse {
@@ -57,6 +59,10 @@ export interface Api {
   analyzeEvent(id: string, onEvent: (e: SurveyEvent) => void): Promise<void>;
   /** イベント後の反応の提案を採用／見送り */
   resolveReaction(cardId: string, reactionId: string, accept: boolean): Promise<void>;
+  /** カード → 出し先を探す（作業ログを流す） */
+  venues(cardId: string, onEvent: (e: VenueEvent) => void): Promise<void>;
+  /** カード → 出し先：本人への声かけ文の下書き（送らない） */
+  venueDraft(body: VenueDraftBody): Promise<DraftResponse>;
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -121,6 +127,8 @@ export const realApi: Api = {
   resolveReaction: async (card_id, reaction_id, accept) => {
     await json(await post("/api/cards/reactions", { card_id, reaction_id, accept }));
   },
+  venues: async (cardId, onEvent) => readNdjson(await post("/api/venues", { card_id: cardId }), onEvent),
+  venueDraft: async (body) => json(await post("/api/venues/draft", body)),
 };
 
 export function pickApi(): Api {

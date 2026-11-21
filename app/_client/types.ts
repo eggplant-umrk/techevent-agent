@@ -14,6 +14,17 @@ export type { EventAnalysis, EventListItem, SurveyEvent, TalkAnalysis, TalkStats
 import type { eventDetail } from "@/lib/surveys";
 /** GET /api/events/{id} の形 */
 export type EventDetail = NonNullable<ReturnType<typeof eventDetail>>;
+export type { VenueCard, VenueEvent, VenueResult } from "@/lib/venues";
+
+/** カード → 出し先：声かけ文の下書きを頼むときの本文（イベントの情報はサーバーがデータから引き直す） */
+export interface VenueDraftBody {
+  run_id: string;
+  card_id: string;
+  event_id: string;
+  theme: string;
+  reason: string;
+  cautions: string[];
+}
 
 /** One card as GET /api/cards returns it (card + joined employee, evidence, publication records). */
 export type NotebookCard = Card & {

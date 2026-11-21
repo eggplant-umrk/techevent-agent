@@ -7,6 +7,7 @@
 import type { Api, DraftResponse } from "./api";
 import proposals from "./proposals.json";
 import postevent from "./postevent.json";
+import venueFixtures from "./venues.json";
 import type {
   AgentEvent,
   EventAnalysis,
@@ -21,6 +22,8 @@ import type {
   OutreachDraft,
   Proposal,
   SpeakingRequest,
+  VenueEvent,
+  VenueResult,
 } from "./types";
 
 type Fixture = { result: Proposal; run_usd: number };
@@ -48,6 +51,10 @@ const FIXTURES: Record<string, Fixture> = Object.fromEntries(
     },
   ]),
 );
+
+/** カード → 出し先の保存済みの結果（scripts/update_mock.ts が docs/eval_latest.json から作る）。card_id ごと */
+type VenueFixture = { result: VenueResult; events: VenueEvent[]; run_usd: number };
+const VENUE_FIXTURES = venueFixtures as unknown as Record<string, VenueFixture>;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const today = "2026-11-21";
@@ -274,6 +281,67 @@ export function mockApi(real: Api): Api {
     async inboxOpen(id) {
       const it = inboxItems.find((x) => x.id === id);
       if (it) it.is_new = false;
+    },
+    // ---- カード → 出し先：保存済みの結果（venues.json）を再生する。ないカードは「見つからない」を見せる
+    async venues(cardId, onEvent) {
+      const fx = VENUE_FIXTURES[cardId];
+      const card = lastCards.find((c) => c.card_id === cardId);
+      const result: VenueResult = fx
+        ? { ...fx.result, run_id: `mock-venue-${Date.now()}` }
+        : {
+            run_id: `mock-venue-${Date.now()}`,
+            card_id: cardId,
+            employee_id: card?.employee_id ?? "",
+            employee_name: card?.employee?.name ?? "",
+            summary: "（モック）このカードの保存済みの結果はありません。表示を確かめるための例です。",
+            venues: [],
+            no_fit: {
+              reasons: ["手元の外部イベントのデータに、このネタのテーマに合う募集中のイベントがありませんでした。"],
+              next_checks: ["来月の募集をもう一度探す。", "まずブログにして、反応を見てから登壇先を探す。"],
+            },
+            blog: null,
+            blog_note: "（モック）ブログ案は保存済みの結果があるカードだけ表示します",
+          };
+      const events: VenueEvent[] = fx?.events?.length
+        ? fx.events
+        : [
+            { type: "tool_call", id: "v1", name: "search_external_events", input: { query: card?.themes[0]?.slice(0, 12) ?? "" } },
+            { type: "tool_result", id: "v1", name: "search_external_events", ok: true, summary: "8件（応募できるもの 5件）" },
+          ];
+      for (const e of events) {
+        if (e.type === "venue_final" || e.type === "done" || e.type === "usage" || e.type === "start") continue;
+        await wait(e.type === "tool_result" ? 300 : 150);
+        onEvent(e);
+      }
+      total += fx?.run_usd ?? 0.05;
+      onEvent({ type: "venue_final", result });
+      onEvent({ type: "done", run_usd: fx?.run_usd ?? 0.05, total_usd: total, steps: 3 });
+    },
+    async venueDraft(body) {
+      await wait(700);
+      const card = lastCards.find((c) => c.card_id === body.card_id);
+      const name = card?.employee?.name.split(" ")[0] ?? "";
+      const fx = VENUE_FIXTURES[body.card_id];
+      const v = fx?.result.venues.find((x) => x.event_id === body.event_id);
+      const ev = v?.name ?? "社外イベント";
+      total += 0.05;
+      return {
+        draft: {
+          subject: `【ご相談】「${body.theme}」で${ev}に出てみませんか`,
+          message: `${name}さん\n\n技術広報の〇〇です。${name}さんの取り組みを拝見して、このネタで「${ev}」に応募してみるのはどうかなと思い、ご連絡しました。\n\n${body.reason}\n\n応募の締切や募集の内容は、公式ページで最新の情報を確かめてください。応募文や資料づくりはこちらでも手伝えます。ご都合が合わなければ、見送っていただいて大丈夫です。`,
+          lt_outline: [
+            { minutes: 2, heading: "自己紹介と背景", points: ["チームと担当している領域", "なぜこの課題に取り組んだか"] },
+            { minutes: 8, heading: "やったこと", points: ["最初に試したことと、うまくいかなかった点", "最終的な仕組み"] },
+            { minutes: 8, heading: "結果と数字", points: ["ビフォーアフター", "運用して分かったこと"] },
+            { minutes: 2, heading: "まとめ", points: ["持ち帰ってほしい1つのこと"] },
+          ],
+          tips_for_pr: ["応募の締切と募集の形式を、公式ページで先に確かめておく。", ...(body.cautions ?? []).map((c) => `注意点：${c}`)],
+        },
+        model: "claude-fable-5-2",
+        fell_back: false,
+        run_usd: 0.05,
+        total_usd: total,
+      };
     },
     async updateNotebook(onEvent) {
       const emit = async (e: NotebookEvent) => {

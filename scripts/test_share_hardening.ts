@@ -130,7 +130,7 @@ async function main() {
   for (const bad of ["http://layerx.slack.com/archives/C01", "https://evil.example/slack.com", "https://slack.com.evil.example/x", "javascript:alert(1)", "https://user:pw@layerx.slack.com/x", "https://notslack.com/x"])
     if (safeSlackPermalink(bad) !== null) check(`Slack 以外のリンクは通さない：${bad}`, false);
   check("Slack 以外のリンク（http・ほかのホスト・javascript: など）は通さない", true);
-  const parsed = parseInboxInput({ text: "依頼", source: "slack", meta: { channel: "C1", permalink: "https://evil.example/p" } });
+  const parsed = parseInboxInput({ text: "依頼です", source: "slack", meta: { channel: "C1", permalink: "https://evil.example/p" } });
   check("Slack 以外のリンクは保存しない（ほかの項目は残す）", parsed.ok && parsed.input.meta?.permalink === undefined && parsed.input.meta?.channel === "C1");
 
   // ---- 6. 下書きは保存済みの候補から引き直す

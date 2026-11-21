@@ -7,6 +7,19 @@
 export const ORGANIZER_REPLY_MAX = 280;
 
 /** 社内の評価・社内の事情に当たる言い方（主催者に見せない） */
+/** 連絡先の形（電話番号・メールアドレス）。返事に出たら、決まった文に差し替える（作り直さない） */
+export const CONTACT_PROBLEM = "主催者への返事に電話番号やメールアドレスの形が入っています";
+const PHONE = /(?:\+?81[\s-]*\(?0?\)?[\s-]*\d{1,4}|\(?0\d{1,4}\)?)[\s-]*\d{1,4}[\s-]*\d{3,4}(?!\d)/;
+const EMAIL = /[\w.+-]+\s*@\s*[\w-]+(?:\.[\w-]+)+/;
+export function contactProblem(text: string): string | null {
+  const t = text.normalize("NFKC");
+  const phone = t.match(PHONE);
+  if (phone && phone[0].replace(/\D/g, "").length >= 10) return `${CONTACT_PROBLEM}（「${phone[0]}」）`;
+  const mail = t.match(EMAIL);
+  if (mail) return `${CONTACT_PROBLEM}（「${mail[0]}」）`;
+  return null;
+}
+
 const INTERNAL_EVALUATION: Array<[RegExp, string]> = [
   [/忙し|多忙|稼働|負荷|工数|リソース|手が空|手一杯/, "忙しさ・稼働の話"],
   [/(予定|スケジュール|カレンダー)(の)?(が|は|も)?(埋ま|詰ま|空い|空き|立て込|厳し)|埋まり具合|空き状況/, "予定の埋まり具合"],
@@ -27,6 +40,8 @@ export function organizerReplyProblems(text: string, name: string, otherNames: s
   const t = text.trim();
   if (!t) return ["主催者への返事が空です"];
   if (t.length > ORGANIZER_REPLY_MAX) out.push(`主催者への返事が長すぎます（${t.length}字、${ORGANIZER_REPLY_MAX}字まで）`);
+  const contact = contactProblem(t);
+  if (contact) out.push(contact);
   for (const [re, what] of INTERNAL_EVALUATION) {
     const m = t.match(re);
     if (m) out.push(`主催者への返事に${what}が入っています（「${m[0]}」）。社内の評価に当たる情報は書かない`);

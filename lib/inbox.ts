@@ -8,6 +8,7 @@ import { randomBytes } from "node:crypto";
 import { withPitchLater, type AgentEvent, type ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
 import { buildDateSuggestions, type DateSuggestions } from "./dateSuggest";
+import { KIND_LABEL, type IntakeKind } from "./intake";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
@@ -47,6 +48,11 @@ export interface InboxItem {
   nominee: NomineeReading | null;
   /** 会話から読み取った項目（イベント名・日程・形式・テーマ・主催者）。読み取る前・古い形の読み取りでは null */
   intake?: IntakeReading | null;
+  /** 貼られた文の種類（読み取りの AI が判定）。依頼ではない・不適切なら候補づくりを走らせない。古い1件にはない（登壇の依頼） */
+  kind?: IntakeKind;
+  kind_reason?: string | null;
+  /** 「依頼ではない」と読んだものを、人が「依頼として進める」で先に進めた */
+  kind_override?: "request" | null;
   result: ProposalResult | null;
   /** 作業ログ（画面の「Agentがやったこと」を再現するため） */
   events: AgentEvent[];
@@ -219,12 +225,29 @@ export function safeSlackPermalink(url: string | null | undefined): string | nul
   }
 }
 
+/** 入口でコードが止めるときの文（API を呼ぶ前） */
+export const NO_REQUEST_TEXT = "依頼の文が見つかりません（記号だけ・URL だけの文は受け付けません。URL の中身は読みません）";
+/** 意味のある文字（かな・漢字・英字）がこれより少ない文は、依頼の文がないとみなす */
+export const MIN_MEANINGFUL_CHARS = 3;
+
+/** 依頼の文がありそうか（コード）。URL とアカウント名（@…）を除いて、かな・漢字・英字が少なすぎなければ true */
+export function hasRequestText(text: string): boolean {
+  const t = text
+    .normalize("NFKC")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/www\.\S+/gi, " ")
+    .replace(/@[A-Za-z0-9_]+/g, " ");
+  const meaningful = t.match(/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}A-Za-z]/gu) ?? [];
+  return meaningful.length >= MIN_MEANINGFUL_CHARS;
+}
+
 export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } | { ok: false; error: string } {
   if (!body || typeof body !== "object") return { ok: false, error: "JSON の本文がありません" };
   const b = body as Record<string, unknown>;
   const text = typeof b.text === "string" ? b.text.trim() : "";
   if (!text) return { ok: false, error: "text が空です" };
   if (text.length > MAX_TEXT) return { ok: false, error: `text は ${MAX_TEXT} 文字までです` };
+  if (!hasRequestText(text)) return { ok: false, error: NO_REQUEST_TEXT };
   if (b.source !== "slack" && b.source !== "manual") return { ok: false, error: 'source は "slack" か "manual" です' };
   let meta: InboxMeta | undefined;
   if (b.meta !== undefined && b.meta !== null) {
@@ -296,8 +319,28 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       update(id, (x) => ({ ...x, nominee, intake }));
       it = { ...it, nominee, intake };
     }
+    // 種類で止める（判定は読み取りの AI、止めるのはコード）。依頼ではない・不適切なら候補づくりを走らせない
+    const kind: IntakeKind = it.intake?.kind ?? "request";
+    if (kind !== "request" && !(kind === "not_request" && it.kind_override === "request")) {
+      update(id, (x) => ({
+        ...x,
+        status: "ready",
+        error: null,
+        kind,
+        kind_reason: it!.intake?.kind_reason ?? null,
+        result: null,
+        events,
+        run_usd: usageOfRun(id),
+        finished_at: nowJst(),
+        progress: null,
+      }));
+      return;
+    }
+    update(id, (x) => ({ ...x, kind: "request", kind_reason: null }));
     const note = it.nominee?.note ?? null;
     const undecided = undecidedNote(it.intake);
+    // 判断が要る依頼の注意（属性で絞らない・競合の比較・ほかの依頼は別に）は、コードが候補の注意点に足す
+    const judgment = it.intake?.notes ?? [];
     const request = inboxRequest(it);
     // 代わりの人を推す文は、この中では作らない（準備済みにしてから下で作る）
     const raw = await withPitchLater(() =>
@@ -311,7 +354,7 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
         }
       }),
     );
-    const result = raw ? addNomineeNote(addNomineeNote(raw, note), undecided) : null;
+    const result = raw ? judgment.reduce((r, n) => addNomineeNote(r, n), addNomineeNote(addNomineeNote(raw, note), undecided)) : null;
     runUsd += usageOfRun(id); // 指名の読み取りの分（依頼の id で記録している）
     const failed = events.find((e): e is Extract<AgentEvent, { type: "error" }> => e.type === "error");
     const needsPitch =
@@ -369,6 +412,21 @@ async function makePitch(id: string, request: SpeakingRequest, result: ProposalR
 }
 
 /** もう一度探す（画面の「もう一度探す」とは別に、エラーの依頼を準備し直すとき用） */
+/**
+ * 「依頼ではない」と読んだ1件を、人が「依頼として進める」で先に進める（AI の読み違いに備える）。
+ * 読み取った項目は使わない（未定のまま）。不適切なものは進めない
+ */
+export function proceedAsRequest(id: string, runner: Runner, onSettled?: () => void): { ok: true } | { ok: false; error: string } {
+  const it = getInboxItem(id);
+  if (!it) return { ok: false, error: "その依頼は受信箱にありません" };
+  if (it.kind === "inappropriate") return { ok: false, error: "この内容には対応しません" };
+  if (it.kind !== "not_request") return { ok: false, error: "この依頼はもう登壇の依頼として扱っています" };
+  if (it.status === "processing") return { ok: false, error: "準備中です" };
+  update(id, (x) => ({ ...x, kind_override: "request", status: "processing", started_at: nowJst(), finished_at: null, error: null }));
+  void prepare(id, runner).finally(() => onSettled?.());
+  return { ok: true };
+}
+
 export function restart(id: string, runner: Runner, extractor?: IntakeExtractor) {
   update(id, (x) => ({ ...x, status: "processing", started_at: nowJst(), finished_at: null, error: null }));
   void prepare(id, runner, extractor);
@@ -404,6 +462,11 @@ export interface InboxListItem {
   permalink: string | null;
   /** 準備中の進み具合（段階の言葉だけ。lib/progressStage.ts） */
   progress?: Progress | null;
+  /** 貼られた文の種類（登壇の依頼／依頼ではない／不適切）。一覧で「候補なし」と見分けるため */
+  kind?: IntakeKind;
+  /** 種類の理由の一言と、画面に出す文 */
+  kind_reason?: string | null;
+  kind_label?: string | null;
 }
 
 export function listView(it: InboxItem): InboxListItem {
@@ -422,8 +485,14 @@ export function listView(it: InboxItem): InboxListItem {
     // 前に保存したものも、Slack の投稿へのリンクでなければ出さない
     permalink: safeSlackPermalink(it.meta?.permalink),
     progress: it.status === "processing" ? it.progress ?? null : null,
+    kind: it.kind ?? "request",
+    kind_reason: it.kind && it.kind !== "request" ? it.kind_reason ?? null : null,
+    kind_label: it.kind === "not_request" ? "依頼ではなさそうです" : it.kind === "inappropriate" ? "この内容には対応しません" : null,
   };
 }
+
+/** 種類の表示名（画面・ログ用） */
+export const kindLabel = (k: IntakeKind) => KIND_LABEL[k];
 
 export interface InboxDetail extends InboxListItem {
   text: string;

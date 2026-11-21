@@ -39,6 +39,7 @@ export function RequestInput({
   loading = false,
   progress = null,
   children,
+  onProceed,
 }: {
   mode: RequestMode;
   onMode: (m: RequestMode) => void;
@@ -61,6 +62,8 @@ export function RequestInput({
   progress?: Progress | null;
   /** The agent's steps, shown under the request without another frame. */
   children?: React.ReactNode;
+  /** 「依頼ではなさそう」と読んだ1件を、人が依頼として進める */
+  onProceed?: () => void;
 }) {
   const preparing = mode === "inbox" && inbox?.status === "processing";
   const st = inbox?.state;
@@ -141,6 +144,16 @@ export function RequestInput({
               <span className="meta">候補ができるまで30秒ほどかかります。このまま待つか、ほかの依頼を見ていても大丈夫です。</span>
             </div>
           )}
+          {inbox.kind === "not_request" && inbox.status !== "processing" && (
+            <p className="small caveat" role="note">
+              依頼ではなさそうです{inbox.kind_reason ? `（${inbox.kind_reason}）` : ""}。候補は出していません。登壇の依頼なら「依頼として進める」を押してください（読み取った項目は使わず、会話から候補を探します）。
+            </p>
+          )}
+          {inbox.kind === "inappropriate" && (
+            <p className="error-line" role="alert">
+              この内容には対応しません{inbox.kind_reason ? `（${inbox.kind_reason}）` : ""}。候補・下書き・主催者への返事は作りません。
+            </p>
+          )}
           {inbox.status === "error" && <p className="error-line" role="alert">{inbox.error ?? "候補を出せませんでした"}。「もう一度探す」を押してください。</p>}
         </div>
       )}
@@ -178,6 +191,10 @@ export function RequestInput({
               やめる
             </button>
           </>
+        ) : inbox?.kind === "inappropriate" ? null : inbox?.kind === "not_request" ? (
+          <button type="button" className="btn btn-primary" disabled={preparing || !onProceed} onClick={onProceed}>
+            依頼として進める
+          </button>
         ) : (
           inbox &&
           st?.stage !== "accepted" && (

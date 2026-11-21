@@ -420,6 +420,9 @@ export function mockApi(real: Api): Api {
         ...extra,
       };
     },
+    async inboxProceed() {
+      // モックでは貼った会話を読まない（種類の判定もしない）ので、進めるものはない
+    },
     async inboxOpen(id) {
       const it = inboxItems.find((x) => x.id === id);
       if (it) it.is_new = false;

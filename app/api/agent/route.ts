@@ -2,6 +2,7 @@ import { runAgent, type AgentEvent } from "@/lib/agent";
 import { resolveRequest } from "@/lib/requests";
 import { saveSampleProposal } from "@/lib/board";
 import { slotted } from "@/lib/apiSlots";
+import { userErrorText } from "@/lib/userError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ async function handlePost(req: Request) {
         if (result && !body.custom_text) saveSampleProposal(request.id, result, events, runUsd);
       } catch (err) {
         // Never echo request headers or config; only the error message.
-        emit({ type: "error", message: err instanceof Error ? err.message : "不明なエラー" });
+        emit({ type: "error", message: userErrorText(err, { where: "候補づくり", retryLabel: "もう一度探す" }) });
       } finally {
         controller.close();
       }

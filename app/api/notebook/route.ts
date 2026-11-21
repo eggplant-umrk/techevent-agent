@@ -2,6 +2,7 @@
 import { updateNotebook, type NotebookEvent } from "@/lib/notebook";
 import { slotted } from "@/lib/apiSlots";
 import { LAN_BLOCKED, shareMode } from "@/lib/share";
+import { userErrorText } from "@/lib/userError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ async function handlePost() {
       try {
         await updateNotebook("pending", emit);
       } catch (err) {
-        emit({ type: "error", message: err instanceof Error ? err.message : "不明なエラー" });
+        emit({ type: "error", message: userErrorText(err, { where: "ネタ帳の更新" }) });
       } finally {
         controller.close();
       }

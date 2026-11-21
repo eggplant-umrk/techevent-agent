@@ -2,6 +2,7 @@
 import { getCardById } from "@/lib/cards";
 import { findVenues, type VenueEvent } from "@/lib/venues";
 import { slotted } from "@/lib/apiSlots";
+import { userErrorText } from "@/lib/userError";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +20,7 @@ async function handlePost(req: Request) {
       try {
         await findVenues(cardId, emit);
       } catch (err) {
-        emit({ type: "error", message: err instanceof Error ? err.message : "不明なエラー" });
+        emit({ type: "error", message: userErrorText(err, { where: "出し先" }) });
       } finally {
         controller.close();
       }

@@ -232,6 +232,8 @@ async function main() {
     const cardIds = (result?.candidates.map((c) => c.card_id).filter(Boolean) as string[]) ?? [];
     const cards = new Set(loadCards().map((c) => c.card_id));
     const badCards = cardIds.filter((id) => !cards.has(id));
+    const reqIds = new Set(all.map((x) => x.id));
+    for (const c of result?.candidates ?? []) if (c.evidence_request_id && !reqIds.has(c.evidence_request_id)) badCards.push(c.evidence_request_id);
     const anyHit = exp.ids.some((id) => top3.includes(id));
     const primaryHit = exp.primary ? top3.includes(exp.primary) : false;
     const alts = result?.candidates.filter((c) => c.is_alternative_to_nominee).map((c) => c.employee_id) ?? [];
@@ -249,6 +251,16 @@ async function main() {
       detail: conds.length ? `条件付き${conds.length}人${noCaveat.length ? `、文なし: ${noCaveat.join(",")}` : "すべて文あり"}` : "条件付きの候補なし",
     });
     if (altOk !== null) checks.push({ name: `${r.id} 代わりの提案`, pass: altOk, detail: `代わり=${alts.join(",") || "なし"}` });
+    if (r.nominated_employee_id) {
+      const nominee = result?.candidates.find((c) => c.employee_id === r.nominated_employee_id);
+      checks.push({
+        name: `${r.id} 指名された本人が候補にいる`,
+        pass: !!nominee && nominee.is_nominee && nominee.evidence_request_id === r.id,
+        detail: nominee
+          ? `${nominee.rank}位・${nominee.confidence}${nominee.caveat ? `：${nominee.caveat}` : ""}`
+          : `${r.nominated_employee_id} が候補にいない`,
+      });
+    }
 
     console.log(
       `  top3: ${result?.candidates.map((c) => `${c.employee_id} ${c.name}[${c.confidence}]`).join(" / ") || "(なし)"}${result?.no_fit ? `（3人未満: ${result.no_fit.reasons[0]}）` : ""}`,

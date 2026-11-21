@@ -53,7 +53,8 @@ let md = `# 評価結果 v0.2（after）と v0.1（before）の比較
 | 依頼 | パターン | before 上位 | after 上位 | 想定のいずれか（前→後） | 代わりの提案（前→後） | 呼び出し（前→後） | 金額（前→後） |
 |---|---|---|---|---|---|---|---|
 `;
-const candLabel = (c: Cand) => `${nm(c.employee_id)}${c.confidence === "conditional" ? "（条件付き）" : ""}`;
+const candLabel = (c: Cand & { is_nominee?: boolean }) =>
+  `${nm(c.employee_id)}${c.is_nominee ? "［指名］" : ""}${c.confidence === "conditional" ? "（条件付き）" : ""}`;
 for (const a of after.rows) {
   const b = before.rows.find((x) => x.request_id === a.request_id)!;
   const aTop = a.result?.candidates.map(candLabel).join("<br>") || "（なし）";
@@ -111,16 +112,26 @@ for (const a of short) {
   md += `\n**${a.request_id}**（${a.top3.length}人）\n- 見つからない理由：${a.result!.no_fit!.reasons.join("／")}\n- 次に確認すべきこと：${a.result!.no_fit!.next_checks.join("／")}\n`;
 }
 
-// ---- vs the previous after (v0.2.0: fewer than 3 allowed, no confidence)
-const prevFile = path.join(root, "docs", "eval_after_v020.json");
-if (fs.existsSync(prevFile)) {
+// ---- vs the previous after runs (newest first)
+const PREVIOUS = [
+  { file: "eval_after_v021", label: "v0.2.1", policy: "自信のある候補＋条件付きの候補で3人まで（指名された本人は根拠がなければ外れる）" },
+  { file: "eval_after_v020", label: "v0.2.0", policy: "合う人がいなければ3人そろえない" },
+];
+const CURRENT_POLICY = "指名の依頼では指名された本人を必ず候補に並べる（根拠は依頼そのもの）";
+const prevEntry = PREVIOUS.find((p) => fs.existsSync(path.join(root, "docs", `${p.file}.json`)));
+const prevFile = prevEntry ? path.join(root, "docs", `${prevEntry.file}.json`) : "";
+if (prevEntry) {
   const prev = JSON.parse(fs.readFileSync(prevFile, "utf-8")) as typeof after;
   const count = (x: typeof after) => x.rows.reduce((s, r) => s + (r.result?.candidates.length ?? 0), 0);
   const condCount = (x: typeof after) => x.rows.reduce((s, r) => s + (r.result?.candidates ?? []).filter((c) => c.confidence === "conditional").length, 0);
   const shortCount = (x: typeof after) => x.rows.filter((r) => r.result?.no_fit).length;
   const qAll = (x: typeof after, k: "before_scores" | "after_scores") => avg((x.quality ?? []).flatMap((q) => q[k].map(sc)));
   const qTop = (x: typeof after) => avg((x.quality ?? []).map((q) => (q.after_scores[0] ? sc(q.after_scores[0]) : 0)));
-  md += `\n## 前回の after（v0.2.0）との差\n\n前回は「合う人がいなければ3人そろえない」方針、今回は「自信のある候補＋条件付きの候補で3人まで」。前回の結果：[eval_after_v020.md](eval_after_v020.md)\n\n| 項目 | 前回 after | 今回 after |\n|---|---|---|\n`;
+  md += `\n## 前回の after（${prevEntry.label}）との差\n\n前回は「${prevEntry.policy}」、今回は「${CURRENT_POLICY}」。前回の結果：[${prevEntry.file}.md](${prevEntry.file}.md)\n\n| 項目 | 前回 after | 今回 after |\n|---|---|---|\n`;
+  const nomineeIn = (x: typeof after) =>
+    x.rows.filter((r) => r.pattern === "named_speaker").filter((r) => (r.result?.candidates ?? []).some((c) => (c as Cand & { is_nominee?: boolean }).is_nominee)).length;
+  const named = after.rows.filter((r) => r.pattern === "named_speaker").length;
+  md += `| 指名された本人が候補にいる | ${nomineeIn(prev)}/${named} | ${nomineeIn(after)}/${named} |\n`;
   md += `| 結合テスト | ${prev.checks.filter((c) => c.pass).length}/${prev.checks.length}（${Math.round(prev.pass_rate * 100)}%） | ${after.checks.filter((c) => c.pass).length}/${after.checks.length}（${Math.round(after.pass_rate * 100)}%） |\n`;
   md += `| 想定候補が上位3人 | ${prev.rows.filter((r) => r.any_hit).length}/${prev.rows.length} | ${after.rows.filter((r) => r.any_hit).length}/${after.rows.length} |\n`;
   md += `| 候補の数（5件の合計） | ${count(prev)} | ${count(after)} |\n`;

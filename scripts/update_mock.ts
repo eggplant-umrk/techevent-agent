@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { busynessFor, busyText } from "../lib/busyness";
 import { employeeById } from "../lib/data";
-import { talkTag } from "../lib/talkTag";
+import { talkTag, withoutTalkTagRepeats } from "../lib/talkTag";
 
 const root = process.cwd();
 const latest = JSON.parse(fs.readFileSync(path.join(root, "docs", "eval_latest.json"), "utf-8")) as {
@@ -27,7 +27,8 @@ function withBusy(result: unknown): unknown {
     candidates: r.candidates.map(({ workload: _fixed, ...c }) => {
       const b = busynessFor(String(c.employee_id));
       // 「最近登壇した（日付）」もコードが足していた注意点。今は注意点にせず、登壇経験の印（talk_tag）で見せる
-      const cautions = ((c.cautions as string[]) ?? []).filter((x) => !/^忙しい（忙しさ\d）$/.test(x) && !/^最近登壇した（[\d-]+）$/.test(x));
+      // 登壇経験の印と同じことだけを言っている注意点（「登壇経験なし（初登壇）」など）も、画面と同じく除く
+      const cautions = withoutTalkTagRepeats(((c.cautions as string[]) ?? []).filter((x) => !/^忙しい（忙しさ\d）$/.test(x)));
       if (b.known && b.level === "詰まっている" && !cautions.some((x) => x.startsWith("今後2週"))) cautions.push(busyText(b));
       const e = employeeById(String(c.employee_id));
       return { ...c, busy_text: busyText(b), talk_tag: e ? talkTag(e) : c.talk_tag, cautions };

@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
 import { dataFile } from "./dataSource";
+import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
 
 // Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
 const FILE = () => dataFile("cards.json");
@@ -49,9 +50,13 @@ export interface Card {
   updated_at: string;
 }
 
+function readCardFile(file: string): Card[] {
+  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as Card[]) : [];
+}
+
 export function loadCards(): Card[] {
-  if (!fs.existsSync(FILE())) return [];
-  const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Card[];
+  // DEMO_PERSON=on：本人のカードは data/sources/demo-person/cards.json にあり、架空の30人のカードの後ろに足す
+  const raw = [...readCardFile(FILE()), ...(demoPersonOn() ? readCardFile(demoFile("cards.json")) : [])];
   // Cards written before these fields existed.
   return raw.map((c) => ({
     ...c,
@@ -63,6 +68,12 @@ export function loadCards(): Card[] {
 }
 
 function saveCards(cards: Card[]) {
+  if (demoPersonOn()) {
+    // 本人のカードは別のファイルへ。架空の30人のファイルは中身が変わったときだけ書く
+    writeIfChanged(demoFile("cards.json"), cards.filter((c) => c.employee_id === DEMO_ID));
+    writeIfChanged(FILE(), cards.filter((c) => c.employee_id !== DEMO_ID));
+    return;
+  }
   fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");
 }
 

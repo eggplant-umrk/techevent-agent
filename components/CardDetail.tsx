@@ -20,10 +20,13 @@ export function CardDetail({
   onFindVenues,
   onVenueDraft,
   requestTitle,
+  surveyThemes = [],
 }: {
   card: NotebookCard;
   /** 依頼のイベント名（承諾済みの依頼を「○○で承諾済み」と出すため）。分からなければ null */
   requestTitle?: (requestId: string) => string | null;
+  /** アンケートの声の文（テーマ案がアンケート由来なら「アンケートの声」のタグを付ける） */
+  surveyThemes?: string[];
   focusEvidence: string | null;
   onClose: () => void;
   onSave: (patch: CardPatch) => Promise<void>;
@@ -176,7 +179,14 @@ export function CardDetail({
             <ul className="pending-list">
               {card.pending_themes.map((t) => (
                 <li key={t}>
-                  <span className="strong">{t}</span>
+                  <span>
+                    {surveyThemes.includes(t.trim()) && (
+                      <>
+                        <Tag tone="accent">アンケートの声</Tag>{" "}
+                      </>
+                    )}
+                    <span className="strong">{t}</span>
+                  </span>
                   <span className="btn-row">
                     <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(() => onResolve(t, true))}>
                       採用
@@ -200,7 +210,7 @@ export function CardDetail({
               {reactions.map((r) => (
                 <li key={r.id}>
                   <span className="reaction">
-                    {r.status === "pending" && <Tag tone="warn">提案</Tag>}{" "}
+                    {r.status === "pending" && <Tag tone="warn">提案</Tag>} <Tag tone="accent">アンケートの声</Tag>{" "}
                     <span className="strong">需要あり：</span>「{r.text}」を聞きたいという声
                     <br />
                     <span className="meta">

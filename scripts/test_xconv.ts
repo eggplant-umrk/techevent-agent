@@ -54,7 +54,10 @@ async function main() {
 
   // ---- 2. 日程の確かめ（細かいところ）
   const t = "開催は2027/1/29です。予備日は2/5";
-  check("日程：引用が会話にあり1日なら決まり", intakeLib.checkDate(t, "開催は2027/1/29です", "2026-11-21").date === "2027-01-29");
+  check("日程：引用が会話にあり1日なら決まり", intakeLib.checkDate("開催は2027/1/29です。よろしくお願いします", "開催は2027/1/29です", "2026-11-21").date === "2027-01-29");
+  // 引用の後ろに別の日付（予備日など）があれば、1日に決めずに主催者に確かめる（lib/intake.ts の checkDate・lib/dateHint.ts の otherDatesInConversation）
+  const withSpare = intakeLib.checkDate(t, "開催は2027/1/29です", "2026-11-21");
+  check("日程：引用の後ろに別の日付（予備日）があれば未定にして、理由を返す", withSpare.date === null && (withSpare.reason ?? "").includes("別の日付"), withSpare.reason ?? "");
   check("日程：引用が会話になければ未定", intakeLib.checkDate(t, "開催は2027/1/30です", "2026-11-21").date === null);
   check("日程：期間（1/27〜1/29）は未定", intakeLib.checkDate("1/27〜1/29のどこか", "1/27〜1/29のどこか", "2026-11-21").date === null);
   check("日程：「調整中」が付けば未定", intakeLib.checkDate("1/29で調整中です", "1/29で調整中です", "2026-11-21").date === null);

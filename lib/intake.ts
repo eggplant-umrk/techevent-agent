@@ -6,7 +6,7 @@
 // - 確かめられなかった項目は「未定」にして、注意点に書く。推測で埋めない
 // X には手を出さない（読みにいかない・返信しない）。ここで扱うのは人が貼った文だけ。
 import { getClient } from "./anthropic";
-import { findDates } from "./dates";
+import { decideDate, otherDatesInConversation } from "./dateHint";
 import { resolveNominee, type NomineeReading } from "./nominee";
 import { chooseModels, recordUsage } from "./usage";
 
@@ -62,7 +62,6 @@ export interface IntakeReading {
   notes?: string[];
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
 /** 引用の照合用：全角半角・空白の違いは無視する */
 const norm = (s: string) => s.normalize("NFKC").replace(/\s+/g, "");
 const inText = (text: string, quote: string | null) => !!quote && norm(quote).length >= 2 && norm(text).includes(norm(quote));
@@ -72,25 +71,22 @@ const NOT_FIXED = /調整中|未定|候補|どちらか|いずれか|か[、,]?\
 
 /**
  * 日程の確かめ（コード）。引用が会話にあり、日付がちょうど1つで、期間でも候補でもないときだけ決まったとみなす。
- * 年が書かれていなければ、受信日より後になる年にする（受信日の30日前より前なら翌年）。
+ * - 日付を読むのは lib/dateHint.ts の decideDate（英語の月名・ピリオド区切り・「12月15日、16日」を2つ・暦にない日付は決めない。
+ *   年が書かれていなければ、受信日より後になる年にする）
+ * - 「候補」「未定」などの言い回しは、今までどおり NOT_FIXED で見る
+ * - 決まったら会話全体を見る（otherDatesInConversation）。引用の後ろに別の日付が1つでもあれば未定にする
+ *   （あとで書き直した・チラシと違う、など）。引用の前だけなら、決めた日のまま（あとのメッセージで決まった日程を使う）
  */
 export function checkDate(text: string, quote: string | null, receivedAt: string): { date: string | null; reason: string | null } {
   if (!quote) return { date: null, reason: "会話の中に日程が書かれていません" };
   if (!inText(text, quote)) return { date: null, reason: "読み取った日程が会話の中に見つからないため、確かめられませんでした" };
-  const ds = findDates(quote.normalize("NFKC"));
-  if (ds.length === 0) return { date: null, reason: `「${quote.slice(0, 30)}」からは日付が1日に決まりません` };
-  if (ds.length > 1 || ds[0].start.m !== ds[0].end.m || ds[0].start.d !== ds[0].end.d || NOT_FIXED.test(quote)) {
-    return { date: null, reason: `日程は「${quote.slice(0, 30)}」で、まだ1日に決まっていません` };
-  }
-  const d = ds[0];
-  const yearM = d.text.match(/^(\d{4})/);
-  const received = receivedAt.slice(0, 10);
-  const make = (y: number) => `${y}-${pad(d.start.m)}-${pad(d.start.d)}`;
-  if (yearM) return { date: make(Number(yearM[1])), reason: null };
-  const recvYear = Number(received.slice(0, 4));
-  const limit = new Date(Date.parse(received) - 30 * 86_400_000).toISOString().slice(0, 10);
-  const same = make(recvYear);
-  return { date: same < limit ? make(recvYear + 1) : same, reason: null };
+  const decided = decideDate(quote, receivedAt);
+  if (!decided.date) return { date: null, reason: decided.reason ?? `「${quote.slice(0, 30)}」からは日付が1日に決まりません` };
+  if (NOT_FIXED.test(quote)) return { date: null, reason: `日程は「${quote.slice(0, 30)}」で、まだ1日に決まっていません` };
+  const after = otherDatesInConversation(text, quote, decided.date, receivedAt).filter((o) => !o.before_quote);
+  if (after.length)
+    return { date: null, reason: `会話に別の日付（${after.map((o) => o.text).join("・")}）もあるため、日程を1日に決めていません。主催者に確認してください` };
+  return { date: decided.date, reason: null };
 }
 
 /** 文に曜日（「（木）」「(Thu)」など）が書いてあれば、その日付の曜日と合っているか。書いていなければ true */

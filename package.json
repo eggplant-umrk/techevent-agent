@@ -17,6 +17,7 @@
     "test:loop": "tsx scripts/test_notebook_loop.ts",
     "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",
+    "usage": "tsx scripts/usage_report.ts",
     "test:sources": "tsx scripts/test_more_sources.ts",
     "slack:sources": "tsx scripts/slack-bot.ts --read-sources",
     "slack:sources:dry-run": "tsx scripts/slack/sources-dry-run.ts",

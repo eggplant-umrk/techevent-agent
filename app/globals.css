@@ -72,7 +72,13 @@ p { margin: 0; }
   flex: 1 1 400px; max-width: 520px; min-width: 0;
   display: flex; flex-direction: column;
   position: sticky; top: 72px; max-height: calc(100vh - 88px);
+  /* 列は画面に貼り付くので、はみ出した分はページのスクロールでは見えない。最後の手段として列の中でスクロールさせる */
+  overflow-y: auto;
 }
+/* 列の中の欄（作業ログ・ブログにしやすいネタ）：長くても列を押し出さず、欄の中でスクロールする。一覧（.nb-list）にも場所を残す */
+.notebook > .nb-section { flex: none; max-height: 40vh; overflow-y: auto; }
+.notebook > .nb-top { flex: none; }
+.notebook > .nb-list { flex: 1 1 auto; min-height: 120px; }
 .panel { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
 .wide { flex: 1 1 100%; max-width: 960px; margin: 0 auto; }
 .stack { display: flex; flex-direction: column; gap: 16px; }
@@ -273,7 +279,8 @@ textarea.input { resize: vertical; }
 
 /* ---------- narrow screens: stack ---------- */
 @media (max-width: 1040px) {
-  .notebook { max-width: none; flex-basis: 100%; position: static; max-height: none; }
+  .notebook { max-width: none; flex-basis: 100%; position: static; max-height: none; overflow: visible; }
+  .notebook > .nb-section { max-height: 40vh; }
   .nb-list { max-height: 60vh; }
 }
 @media (max-width: 640px) {

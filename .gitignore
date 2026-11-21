@@ -74,3 +74,6 @@ next-env.d.ts
 eval-results/
 .claude/
 data/inbox.json
+
+# アンケート分析の結果（実行のたびに変わる。?mock は app/_client/postevent.json を使う）
+data/survey_analysis.json

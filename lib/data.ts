@@ -14,6 +14,7 @@ const ALLOWED = new Set([
   "published.json",
   "schedules.json",
   "cards.json",
+  "surveys.json",
   "usage.json",
 ]);
 
@@ -108,7 +109,7 @@ export interface Schedule {
 export interface UsageEntry {
   at: string;
   run_id: string;
-  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge";
+  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "survey";
   model: string;
   input_tokens: number;
   output_tokens: number;
@@ -123,6 +124,18 @@ export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");
 export const usage = () => readJson<UsageEntry[]>("usage.json", []);
+
+/** イベント後のアンケート。1行＝1つの登壇への1回答（匿名）。 */
+export interface SurveyAnswer {
+  id: string;
+  event_id: string;
+  talk_speaker_id: string;
+  rating: number;
+  comment: string;
+  want_next: string | null;
+  role: string | null;
+}
+export const surveys = () => readJson<SurveyAnswer[]>("surveys.json", []);
 
 /** Requests with demo-only fields (note_for_demo) removed. This is the only way requests reach the agent or the browser. */
 export function requests(): SpeakingRequest[] {

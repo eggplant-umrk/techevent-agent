@@ -10,6 +10,7 @@
     "eval": "tsx scripts/eval.ts",
     "notebook": "tsx scripts/notebook.ts",
     "test:inbox": "tsx scripts/test_inbox.ts",
+    "test:surveys": "tsx scripts/test_surveys.ts",
     "slack": "tsx scripts/slack-bot.ts",
     "slack:mock-inbox": "tsx scripts/slack/mock-inbox.ts",
     "slack:dry-run": "tsx scripts/slack/dry-run.ts"

@@ -3,6 +3,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { activities, employeeById, employees, events, published, schedules } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
 import { filterCards, getCardById, loadCards, outreachSummary, type CardFilter } from "./cards";
+import { reactionLines } from "./surveys";
 
 const clip = (s: string, n = BODY_CHARS) => (s.length > n ? s.slice(0, n) + "…" : s);
 
@@ -366,7 +367,7 @@ export const SEARCH_CARDS_DEF: Anthropic.Tool = {
 
 export const GET_CARD_DEF: Anthropic.Tool = {
   name: "get_card",
-  description: "カード1枚の詳細（根拠の投稿のタイトルと日付、発信済みの記録、打診履歴のすべて）を見る。",
+  description: "カード1枚の詳細（根拠の投稿のタイトルと日付、発信済みの記録、打診履歴のすべて、イベント後のアンケートの反応）を見る。",
   input_schema: {
     type: "object",
     properties: { card_id: { type: "string" } },
@@ -470,6 +471,7 @@ export function searchCards(input: Input) {
       reviewed: c.reviewed,
       latest_activity_date: c.latest_activity_date,
       outreach: outreachSummary(c),
+      reactions: reactionLines(c).map((l) => clip(l, 120)),
       score,
     })),
   };
@@ -484,6 +486,8 @@ export function getCard(input: Input) {
   const e = employeeById(c.employee_id);
   return {
     ...c,
+    // イベント後の反応は、採用済みのものだけを文で渡す（提案中・見送りは渡さない）
+    reactions: reactionLines(c),
     employee: e ? `${e.id} ${e.name}｜${e.business_unit}｜忙しさ${e.workload}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}` : c.employee_id,
     evidence: c.evidence_activity_ids.map((id) => {
       const a = acts.get(id);

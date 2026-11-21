@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
 import { dataFile } from "./dataSource";
+import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
 
 // Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
 const FILE = () => dataFile("cards.json");
@@ -45,25 +46,77 @@ export interface Card {
   reviewed_at: string | null;
   /** Which fields 技術広報 changed by hand (summary / themes / format / format_reason / evidence). */
   edited_fields: string[];
+  /** イベント後のアンケートから書き戻した反応（lib/surveys.ts）。提案中のものは技術広報が採用／見送りする */
+  reactions?: Reaction[];
   created_at: string;
   updated_at: string;
 }
 
+/** イベント後の反応。reception＝登壇者のカードへの「反応のまとめ」、demand＝別の社員のカードへの「需要あり」 */
+export interface Reaction {
+  id: string;
+  kind: "reception" | "demand";
+  /** pending＝提案中（技術広報が採用／見送り）、adopted＝カードに入っている（提案で使う）、dismissed＝見送り */
+  status: "pending" | "adopted" | "dismissed";
+  event_id: string;
+  event_title: string;
+  event_date: string;
+  /** reception：反応のまとめ1行。demand：参加者が聞きたいテーマ */
+  text: string;
+  hits: string[];
+  stumbles: string[];
+  /** コードで数えた件数・平均（reception だけ） */
+  count: number | null;
+  average: number | null;
+  /** 根拠の回答id */
+  response_ids: string[];
+  /** demand：その声が出た登壇の登壇者 */
+  from_speaker_id: string | null;
+  added_at: string;
+}
+
+function readCardFile(file: string): Card[] {
+  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as Card[]) : [];
+}
+
 export function loadCards(): Card[] {
-  if (!fs.existsSync(FILE())) return [];
-  const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Card[];
-  // Cards written before these fields existed.
-  return raw.map((c) => ({
+  // DEMO_PERSON=on：本人のカードは data/sources/demo-person/cards.json にあり、架空の30人のカードの後ろに足す
+  const raw = [...readCardFile(FILE()), ...(demoPersonOn() ? readCardFile(demoFile("cards.json")) : [])];
+  return raw.map(withDefaults);
+}
+
+/** Cards written before these fields existed. */
+function withDefaults(c: Card): Card {
+  return {
     ...c,
     announcement_activity_ids: c.announcement_activity_ids ?? [],
     evidence_request_ids: c.evidence_request_ids ?? [],
     pending_themes: c.pending_themes ?? [],
     edited_fields: c.edited_fields ?? [],
-  }));
+    reactions: c.reactions ?? [],
+  };
 }
 
 function saveCards(cards: Card[]) {
+  if (demoPersonOn()) {
+    // 本人のカードは別のファイルへ。架空の30人のファイルは、カードの中身が変わったときだけ書く
+    // （読み込み時に補った空の項目だけの違いでは書かない）
+    writeIfChanged(demoFile("cards.json"), cards.filter((c) => c.employee_id === DEMO_ID));
+    const base = cards.filter((c) => c.employee_id !== DEMO_ID);
+    if (JSON.stringify(base) !== JSON.stringify(readCardFile(FILE()).map(withDefaults))) writeIfChanged(FILE(), base);
+    return;
+  }
   fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");
+}
+
+/** カード1枚をまとめて書き換える（lib/surveys.ts の書き戻し用）。見つからなければ null */
+export function patchCard(cardId: string, fn: (c: Card) => Card): Card | null {
+  const cards = loadCards();
+  const i = cards.findIndex((c) => c.card_id === cardId);
+  if (i < 0) return null;
+  cards[i] = { ...fn(cards[i]), updated_at: now() };
+  saveCards(cards);
+  return cards[i];
 }
 
 export function getCardById(id: string): Card | undefined {

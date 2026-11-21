@@ -21,6 +21,7 @@ import { getClient } from "../lib/anthropic";
 import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
+import { SURVEY_REQUEST, surveyCodeChecks, surveyLiveCheck } from "./eval_survey";
 import { getInboxItem, prepare, registerInbox, type InboxItem } from "../lib/inbox";
 import { extractIntakeWithAgent } from "../lib/intake";
 import { externalEventById, isClosed, themesOf } from "../lib/externalEvents";
@@ -39,8 +40,27 @@ if (!process.argv.includes("--offline")) {
 
 // 評価は常に架空データで行う（.env に DATA_SOURCE があっても切り替えない）
 delete process.env.DATA_SOURCE;
+delete process.env.DEMO_PERSON; // デモ用の31人目（本人）も入れない
 
 const PASS_RATE = 0.9;
+
+/** 候補の人数（0〜5人、0人なら見つからない理由）・並び（自信のある候補が先）・登壇経験の印 */
+function countCheck(label: string, result: ProposalResult | null): Check {
+  if (!result) return { name: `${label} 候補は5人まで・自信のある候補が先・印あり`, pass: false, detail: "結果なし" };
+  const c = result.candidates;
+  const problems: string[] = [];
+  if (c.length > 5) problems.push(`${c.length}人`);
+  if (c.length === 0 && !result.no_fit?.reasons.length) problems.push("0人なのに見つからない理由がない");
+  const firstCond = c.findIndex((x) => x.confidence === "conditional");
+  if (firstCond >= 0 && c.slice(firstCond).some((x) => x.confidence === "strong")) problems.push("条件付きの後に自信のある候補");
+  const noTag = c.filter((x) => !["初登壇", "半年以内に登壇", "登壇経験あり"].includes(String(x.talk_tag))).map((x) => x.employee_id);
+  if (noTag.length) problems.push(`印なし: ${noTag.join(",")}`);
+  return {
+    name: `${label} 候補は5人まで・自信のある候補が先・印あり`,
+    pass: problems.length === 0,
+    detail: problems.join(" / ") || `${c.length}人（自信あり${c.filter((x) => x.confidence === "strong").length}・条件付き${c.filter((x) => x.confidence === "conditional").length}）`,
+  };
+}
 const WRITEBACK_REQUEST = "req003";
 
 /**
@@ -98,9 +118,12 @@ function loadUntold(): string[] {
 
 // ---------------------------------------------------------------------------
 // 「送信なし」：コードを静的に調べる（app/・lib/・components/・scripts/）
-// ルール：送ってよいのは、依頼が来たSlackスレッドへの返信だけ。DM・別チャンネル・候補者本人への送信は作らない。
-// - Slack への投稿（chat.postMessage）は scripts/slack-bot.ts の replyInThread の1か所だけ許す。
-//   そこは「チャンネルが SLACK_REQUEST_CHANNEL 固定」「thread_ts 必須」でなければ不合格
+// ルール：送ってよいのは、依頼スレッドへの受付の返信と、SLACK_NOTIFY_CHANNEL（技術広報だけの非公開チャンネル）への通知だけ。
+//         候補の名前・理由・件数・見つからない理由は Slack のどこにも書かない。DM・別チャンネル・候補者本人への送信は作らない。
+// - Slack への投稿（chat.postMessage）は scripts/slack-bot.ts の2か所だけ許す
+//     replyInThread：チャンネルは SLACK_REQUEST_CHANNEL 固定・thread_ts 必須・文は決まった文（THREAD_TEXT）
+//     notifyPrivate：チャンネルは SLACK_NOTIFY_CHANNEL 固定・設定がなければ送らない・文は決まった文とリンク（notifyText）
+// - 決まった文（scripts/slack/core.ts の THREAD_TEXT・NOTIFY_TEXT）に値を埋め込まない。ボットは候補の情報を読まない
 // - それ以外の投稿・DM・メールなどの送信の処理があれば不合格
 // ---------------------------------------------------------------------------
 const FORBIDDEN_SEND = [
@@ -121,22 +144,59 @@ const FORBIDDEN_SEND = [
 ];
 const POST_MESSAGE = /chat\.postMessage/g;
 const ALLOWED_POST_FILE = path.join("scripts", "slack-bot.ts");
+const SLACK_CORE_FILE = path.join("scripts", "slack", "core.ts");
 const SCAN_SELF = path.join("scripts", "eval.ts"); // この判定自身（パターンを書いているので除く）
+/** ボットが読んではいけない、候補の情報の項目名 */
+const CANDIDATE_FIELDS = /\b(candidates|reason_short|no_fit|summary|next_checks|cautions|caveat)\b/;
 
-/** 許可した1か所が「依頼チャンネル固定・thread_ts 必須の返信」になっているか。問題を文で返す。 */
-function checkAllowedPost(src: string): string[] {
+/** 関数の本体（2スペースの字下げで閉じるところまで） */
+const bodyOf = (src: string, sig: RegExp) => src.match(new RegExp(sig.source + String.raw`\s*\{([\s\S]*?)\n  \}`))?.[1] ?? null;
+
+/** 許可した2か所が「決まったチャンネル・決まった文」の投稿になっているか。問題を文で返す。 */
+export function checkAllowedPost(src: string, core: string): string[] {
   const problems: string[] = [];
-  if (!/const\s+requestChannel\s*=\s*required\(\s*"SLACK_REQUEST_CHANNEL"/.test(src)) problems.push("投稿先が SLACK_REQUEST_CHANNEL に固定されていない");
-  const fn = src.match(/async function replyInThread\(threadTs: string, text: string\) \{([\s\S]*?)\n  \}/);
-  if (!fn) return [...problems, "投稿が replyInThread(threadTs, text) の中にない"];
-  const body = fn[1];
-  if (!/if \(!threadTs\) throw/.test(body)) problems.push("thread_ts がないときに止めていない");
-  const call = body.match(/chat\.postMessage\(\{([^}]*)\}\)/);
-  if (!call) problems.push("replyInThread の中に投稿がない");
+  if (!/const\s+requestChannel\s*=\s*required\(\s*"SLACK_REQUEST_CHANNEL"/.test(src)) problems.push("返信のチャンネルが SLACK_REQUEST_CHANNEL に固定されていない");
+  if (!/const\s+notifyChannel\s*=\s*process\.env\.SLACK_NOTIFY_CHANNEL\b/.test(src)) problems.push("通知のチャンネルが SLACK_NOTIFY_CHANNEL に固定されていない");
+
+  const reply = bodyOf(src, /async function replyInThread\(threadTs: string, kind: ThreadKind\)/);
+  if (reply === null) problems.push("返信が replyInThread(threadTs, kind) の中にない");
   else {
-    if (!/\bchannel:\s*requestChannel\b/.test(call[1])) problems.push("投稿のチャンネルが requestChannel ではない");
-    if (!/\bthread_ts:\s*threadTs\b/.test(call[1])) problems.push("投稿に thread_ts: threadTs がない");
+    if (!/if \(!threadTs\) throw/.test(reply)) problems.push("thread_ts がないときに止めていない");
+    const call = reply.match(/chat\.postMessage\(\{([^}]*)\}\)/)?.[1];
+    if (!call) problems.push("replyInThread の中に投稿がない");
+    else {
+      if (!/\bchannel:\s*requestChannel\b/.test(call)) problems.push("返信のチャンネルが requestChannel ではない");
+      if (!/\bthread_ts:\s*threadTs\b/.test(call)) problems.push("返信に thread_ts: threadTs がない");
+      if (!/\btext:\s*THREAD_TEXT\[kind\]/.test(call)) problems.push("返信の文が決まった文（THREAD_TEXT）ではない");
+    }
   }
+
+  const notify = bodyOf(src, /async function notifyPrivate\(kind: NotifyKind, link: string \| null\)/);
+  if (notify === null) problems.push("通知が notifyPrivate(kind, link) の中にない");
+  else {
+    if (!/if \(!notifyChannel\) return/.test(notify)) problems.push("SLACK_NOTIFY_CHANNEL がないときに送らない作りになっていない");
+    const call = notify.match(/chat\.postMessage\(\{([^}]*)\}\)/)?.[1];
+    if (!call) problems.push("notifyPrivate の中に投稿がない");
+    else {
+      if (!/\bchannel:\s*notifyChannel\b/.test(call)) problems.push("通知のチャンネルが notifyChannel ではない");
+      if (/\bthread_ts\b/.test(call)) problems.push("通知に thread_ts がある（依頼スレッドに書いてしまう）");
+      if (!/\btext:\s*notifyText\(kind, link\)/.test(call)) problems.push("通知の文が決まった文（notifyText）ではない");
+    }
+  }
+
+  // 決まった文：値を埋め込まない。notifyText は決まった文とリンクだけ
+  for (const name of ["THREAD_TEXT", "NOTIFY_TEXT"]) {
+    const obj = core.match(new RegExp(String.raw`export const ${name} = \{([\s\S]*?)\} as const;`))?.[1];
+    if (!obj) problems.push(`${name} が決まった文の一覧（as const）になっていない`);
+    else if (/\$\{|`/.test(obj)) problems.push(`${name} に値を埋め込んでいる`);
+  }
+  const nt = core.match(/export function notifyText\(kind: NotifyKind, link: string \| null\): string \{([\s\S]*?)\n\}/)?.[1];
+  if (!nt) problems.push("notifyText(kind, link) がない");
+  else if (/\$\{(?!NOTIFY_TEXT\[kind\]\}|link\}|label\})/.test(nt)) problems.push("notifyText が決まった文とリンク以外を埋め込んでいる");
+
+  // ボットは候補の情報を読まない
+  for (const [where, text] of [["scripts/slack-bot.ts", src], ["scripts/slack/core.ts", core]] as const)
+    if (CANDIDATE_FIELDS.test(text)) problems.push(`${where} が候補の情報（${text.match(CANDIDATE_FIELDS)![0]}）を読んでいる`);
   return problems;
 }
 
@@ -158,17 +218,23 @@ function scanForSend(): { hits: string[]; allowed: string[] } {
       const posts = src.match(POST_MESSAGE)?.length ?? 0;
       if (posts === 0) continue;
       if (rel !== ALLOWED_POST_FILE) hits.push(`${rel}: 許可していない Slack への投稿 ${posts}か所`);
-      else if (posts > 1) hits.push(`${rel}: Slack への投稿が${posts}か所（許すのはスレッドへの返信1か所だけ）`);
+      else if (posts !== 2) hits.push(`${rel}: Slack への投稿が${posts}か所（許すのは受付の返信と非公開チャンネルへの通知の2か所だけ）`);
       else {
-        const problems = checkAllowedPost(src);
+        const core = fs.existsSync(path.join(process.cwd(), SLACK_CORE_FILE)) ? fs.readFileSync(path.join(process.cwd(), SLACK_CORE_FILE), "utf-8") : "";
+        const problems = checkAllowedPost(src, core);
         if (problems.length) hits.push(`${rel}: ${problems.join("・")}`);
-        else allowed.push(`${rel} のスレッド返信1か所`);
+        else allowed.push(`${rel} の受付の返信と非公開チャンネルへの通知（決まった文だけ）`);
       }
     }
   };
   for (const dir of ["app", "lib", "components", "scripts"]) {
     if (fs.existsSync(path.join(process.cwd(), dir))) walk(path.join(process.cwd(), dir));
   }
+  // 窓口（GET /api/inbox/{id}）は候補の名前・理由を返さない
+  const inboxSrc = fs.readFileSync(path.join(process.cwd(), "lib", "inbox.ts"), "utf-8");
+  const pv = inboxSrc.match(/export function publicView\([^)]*\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? "";
+  if (!pv) hits.push("lib/inbox.ts: publicView がない");
+  else if (/summary|candidates|result/.test(pv)) hits.push("lib/inbox.ts: 窓口が候補の情報を返している");
   const routes = fs.readdirSync(path.join(process.cwd(), "app", "api"));
   for (const r of routes) if (/send|post|mail|notify|slack/i.test(r)) hits.push(`app/api/${r}: send-like route`);
   return { hits, allowed };
@@ -310,14 +376,15 @@ async function main() {
   const all = requests();
   const full = target === "all";
   const wantInbox = full || target.split(",").includes("inbox") || !!fromInbox;
+  const wantSurvey = full || target.split(",").includes("survey");
   const wantVenues = !fromInbox && (full || target.split(",").includes("venues"));
   // --venue <card_id>: カード → 出し先の1件だけ流す（結果は card_id ごとに最新の結果へ合わせる）
   const venueIdx = args.indexOf("--venue");
   const onlyVenue = venueIdx >= 0 ? args[venueIdx + 1] : undefined;
   const targets = full ? all : all.filter((r) => target.split(",").includes(r.id));
-  if (targets.length === 0 && !wantInbox && !wantVenues) {
+  if (targets.length === 0 && !wantInbox && !wantVenues && !wantSurvey) {
     console.error(
-      "使い方: npm run eval -- req001 | req001,req004 | inbox | venues | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
+      "使い方: npm run eval -- req001 | req001,req004 | inbox | venues | survey | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
     );
     process.exit(1);
   }
@@ -326,7 +393,7 @@ async function main() {
   const actIds = new Set(activities().map((a) => a.id));
   const startTotal = totalUsd();
   const { hits: sendHits, allowed: sendAllowed } = scanForSend();
-  const sendOk = sendAllowed.length ? `スレッド返信以外の送信なし（許可：${sendAllowed.join("、")}）` : "送信の処理・ルートなし";
+  const sendOk = sendAllowed.length ? `受付の返信と非公開チャンネルへの通知のほかに送信なし（許可：${sendAllowed.join("、")}）` : "送信の処理・ルートなし";
   const checks: Check[] = [];
   const rows: Array<Record<string, unknown>> = [];
   const results = new Map<string, ProposalResult | null>();
@@ -355,7 +422,8 @@ async function main() {
 
     checks.push({ name: `${r.id} 根拠idが実在`, pass: !!result && badEvidence.length === 0 && badCards.length === 0, detail: [...badEvidence, ...badCards].join(", ") || `${evidenceIds.length}件すべて実在` });
     checks.push({ name: `${r.id} 送信なし`, pass: sendHits.length === 0, detail: sendHits.join(" / ") || sendOk });
-    checks.push({ name: `${r.id} 想定候補が上位3人`, pass: anyHit, detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+    checks.push({ name: `${r.id} 想定候補が候補（5人まで）にいる`, pass: anyHit, detail: `候補=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+    checks.push(countCheck(r.id, result));
     const conds = result?.candidates.filter((c) => c.confidence === "conditional") ?? [];
     const noCaveat = conds.filter((c) => !c.caveat?.trim()).map((c) => c.employee_id);
     const badConf = result?.candidates.filter((c) => c.confidence !== "strong" && c.confidence !== "conditional").map((c) => c.employee_id) ?? [];
@@ -389,7 +457,7 @@ async function main() {
     }
 
     console.log(
-      `  top3: ${result?.candidates.map((c) => `${c.employee_id} ${c.name}[${c.confidence}]`).join(" / ") || "(なし)"}${result?.no_fit ? `（3人未満: ${result.no_fit.reasons[0]}）` : ""}`,
+      `  候補${result?.candidates.length ?? 0}人: ${result?.candidates.map((c) => `${c.employee_id} ${c.name}[${c.confidence}・${c.talk_tag ?? "印なし"}]`).join(" / ") || "(なし)"}${result?.no_fit ? `（見つからない理由: ${result.no_fit.reasons[0]}）` : ""}`,
     );
     for (const c of conds) console.log(`    条件付き ${c.name}：${c.caveat}`);
     console.log(`  想定のいずれか=${anyHit ? "○" : "×"} 主候補=${primaryHit ? "○" : "×"}${altOk === null ? "" : ` 代わりの提案=${altOk ? "○" : "×"}`}  $${usd.toFixed(3)}（${steps}回）`);
@@ -455,7 +523,8 @@ async function main() {
         pass: !!nominee && nominee.is_nominee && nominee.evidence_request_id === item.id,
         detail: nominee ? `${nominee.rank}位・${nominee.confidence}${nominee.caveat ? `：${nominee.caveat}` : ""}` : `${INBOX_CASE.nominee} が候補にいない`,
       });
-      checks.push({ name: "受信箱：想定候補が上位3人", pass: exp.ids.some((id) => top3.includes(id)), detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+      checks.push({ name: "受信箱：想定候補が候補（5人まで）にいる", pass: exp.ids.some((id) => top3.includes(id)), detail: `候補=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+      checks.push(countCheck("受信箱", res ?? null));
       checks.push({ name: "受信箱：根拠idが実在", pass: evIds.every((id) => actIds.has(id)), detail: `${evIds.length}件` });
       checks.push({ name: "受信箱：使う人向けの文に内部の言葉がない", pass: plainErrs.length === 0, detail: plainErrs.join(" / ") || "なし" });
       checks.push({ name: "受信箱：送信なし", pass: sendHits.length === 0, detail: sendHits.join(" / ") || "送信の処理・ルートなし" });
@@ -564,6 +633,19 @@ async function main() {
     }
   }
 
+  // ---- イベント後のアンケート（v0.4）。中身は scripts/eval_survey.ts
+  let surveyCase: Record<string, unknown> | null = null;
+  if (wantSurvey) {
+    checks.push(...(await surveyCodeChecks()));
+    if (offline) console.log("\n（オフラインのためアンケートの書き戻しテストは省略）");
+    else {
+      const req = all.find((x) => x.id === SURVEY_REQUEST)!;
+      const s = await surveyLiveCheck(req, results.get(SURVEY_REQUEST) ?? null, (r) => propose(r, false));
+      checks.push(s.check);
+      surveyCase = s.record;
+    }
+  }
+
   const passed = checks.filter((c) => c.pass).length;
   const rate = checks.length ? passed / checks.length : 0;
   console.log(`\n=== 段階1 結合テスト：${passed}/${checks.length}（${Math.round(rate * 100)}%）${rate >= PASS_RATE ? "合格" : "不合格"}`);
@@ -606,6 +688,7 @@ async function main() {
     writeback,
     quality,
     inbox_case: inboxCaseOut,
+    survey_case: surveyCase,
     ...(wantVenues ? { venue_cases: venueCases } : {}),
   };
   // 受信箱の実データで判定したら、その結果を最新の結果に足しておく（--offline でも判定できるように）

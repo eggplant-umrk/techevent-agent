@@ -1,23 +1,45 @@
 // Slack ボットの中身（Bolt に依存しない部分）。scripts/slack-bot.ts と scripts/slack/dry-run.ts から使う。
-// 投稿してよいのは「依頼が来たチャンネルのスレッドへの返信」だけ。投稿の API を呼ぶのは
-// scripts/slack-bot.ts の replyInThread の1か所だけで、ここからは SlackLike.replyInThread を通す。
-// （結合テストの「送信なし」がこの形を判定する）
+//
+// 送信のルール：送ってよいのは「依頼スレッドへの受付の返信」と「SLACK_NOTIFY_CHANNEL（技術広報だけの非公開チャンネル）への通知」だけ。
+// 候補の名前・理由・件数・見つからない理由は Slack のどこにも書かない（人選の検討は技術広報が画面で見る）。
+// そのため Slack に出す文は下の決まった文（THREAD_TEXT・NOTIFY_TEXT）だけで、窓口の返り値から文を組み立てない。
+// 投稿の API を呼ぶのは scripts/slack-bot.ts の replyInThread と notifyPrivate の2か所だけ（結合テストが判定する）。
 
-/** 窓口（①が作る app/api/inbox）の返り値。形は勝手に変えない。 */
+/** 窓口（app/api/inbox）の返り値。候補の名前・理由は返ってこない */
 export interface InboxItem {
   id: string;
   status: "processing" | "ready" | "error";
-  summary?: {
-    candidates: Array<{ name: string; confidence: "strong" | "conditional"; reason_short: string }>;
-    no_fit?: { reasons: string[] };
-  };
   url: string;
 }
 
-/** ボットが使う Slack の操作は2つだけ。投稿は「依頼チャンネルの、このスレッドへの返信」しかできない形にしてある。 */
+/** 依頼スレッドへの返信（決まった文だけ） */
+export const THREAD_TEXT = {
+  received: "受け付けました。技術広報から連絡します",
+  failed: "うまく受け付けられませんでした。お手数ですが、技術広報に直接ご連絡ください",
+} as const;
+export type ThreadKind = keyof typeof THREAD_TEXT;
+
+/** 非公開チャンネルへの通知（決まった文＋画面へのリンクだけ） */
+export const NOTIFY_TEXT = {
+  ready: "新しい依頼の候補が準備できました",
+  error: "新しい依頼が届きましたが、候補を準備できませんでした",
+  timeout: "新しい依頼が届きました（候補の準備に時間がかかっています）",
+  unreachable: "新しい依頼が届きましたが、受信箱に入れられませんでした（窓口が止まっているかもしれません）",
+} as const;
+export type NotifyKind = keyof typeof NOTIFY_TEXT;
+
+/** 通知の本文：決まった文と、リンクだけ（リンクは画面の依頼か、Slack の依頼の投稿） */
+export function notifyText(kind: NotifyKind, link: string | null): string {
+  const label = kind === "unreachable" ? "依頼の投稿を見る" : "画面で見る";
+  return link ? `${NOTIFY_TEXT[kind]}\n<${link}|${label}>` : NOTIFY_TEXT[kind];
+}
+
+/** ボットが使う Slack の操作。投稿は決まった文しか渡せない形にしてある */
 export interface SlackLike {
-  /** 依頼チャンネルの threadTs のスレッドに返信する（チャンネルは slack-bot.ts 側で固定） */
-  replyInThread(threadTs: string, text: string): Promise<unknown>;
+  /** 依頼チャンネル（固定）の threadTs のスレッドに、決まった文を返信する */
+  replyInThread(threadTs: string, kind: ThreadKind): Promise<unknown>;
+  /** SLACK_NOTIFY_CHANNEL（固定）に、決まった文とリンクを送る。設定がなければ何もしない */
+  notifyPrivate(kind: NotifyKind, link: string | null): Promise<unknown>;
   getPermalink(args: { channel: string; message_ts: string }): Promise<string | null>;
 }
 
@@ -58,9 +80,6 @@ export function shouldHandle(e: MessageEventLike, cfg: Pick<BotConfig, "channel"
   return { ok: true };
 }
 
-/** Slack の mrkdwn で特別な意味を持つ文字を逃がす。 */
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
 export function absoluteUrl(url: string, base: string): string {
   try {
     return new URL(url, base).toString();
@@ -69,45 +88,13 @@ export function absoluteUrl(url: string, base: string): string {
   }
 }
 
-const link = (url: string, base: string) => `<${absoluteUrl(url, base)}|画面で詳しく見る>`;
-
-/** 準備ができた・失敗した・時間切れ、のスレッドへの返信文。 */
-export function formatResult(item: InboxItem | null, base: string, reason?: "timeout" | "unreachable"): string {
-  if (reason === "unreachable") return "受信箱に入れられませんでした。窓口（npm run dev）が動いているか確認してから、もう一度投稿してください。";
-  if (!item || reason === "timeout")
-    return `5分たっても候補の準備が終わりませんでした。画面で状況を確認してください。${item ? `\n${link(item.url, base)}` : ""}`;
-  if (item.status === "error") return `候補を準備できませんでした。画面で依頼を確認してください。\n${link(item.url, base)}`;
-
-  const cands = item.summary?.candidates ?? [];
-  const reasons = item.summary?.no_fit?.reasons ?? [];
-  const lines: string[] = [];
-  if (cands.length > 0) {
-    lines.push(`候補が出ました（${cands.length}人）`);
-    cands.forEach((c, i) => {
-      const conf = c.confidence === "conditional" ? "条件付き" : "自信あり";
-      lines.push(`${i + 1}. *${esc(c.name)}*（${conf}）${c.reason_short ? `：${esc(c.reason_short)}` : ""}`);
-    });
-    if (reasons.length > 0) {
-      lines.push("", "ほかに見つからなかった理由");
-      for (const r of reasons) lines.push(`• ${esc(r)}`);
-    }
-  } else {
-    lines.push("合う候補が見つかりませんでした");
-    for (const r of reasons) lines.push(`• ${esc(r)}`);
-  }
-  lines.push("", link(item.url, base));
-  return lines.join("\n");
-}
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** 1件の依頼を処理する：受け付け → 受信箱へ → 準備ができるまで確認 → 結果をスレッドへ。 */
+/** 1件の依頼を処理する：受け付けの返信 → 受信箱へ → 準備ができるまで確認 → 非公開チャンネルに通知 */
 export async function handleRequest(e: Required<Pick<MessageEventLike, "channel" | "ts" | "user" | "text">>, slack: SlackLike, cfg: BotConfig) {
-  // 投稿先は常に「依頼が来たチャンネルの、その投稿のスレッド」
   if (e.channel !== cfg.channel) throw new Error("依頼のチャンネル以外の投稿は扱いません");
-  const replyInThread = (text: string) => slack.replyInThread(e.ts, text);
 
-  await replyInThread("受け付けました。候補を準備しています");
+  await slack.replyInThread(e.ts, "received");
 
   const permalink = await slack.getPermalink({ channel: e.channel, message_ts: e.ts }).catch(() => null);
   let id: string;
@@ -122,7 +109,8 @@ export async function handleRequest(e: Required<Pick<MessageEventLike, "channel"
     if (!id) throw new Error("POST /api/inbox の返り値に id がない");
   } catch (err) {
     cfg.log(`受信箱に入れられませんでした（${err instanceof Error ? err.message : "不明"}）ts=${e.ts}`);
-    await replyInThread(formatResult(null, cfg.inboxBaseUrl, "unreachable"));
+    await slack.replyInThread(e.ts, "failed");
+    await slack.notifyPrivate("unreachable", permalink);
     return;
   }
   cfg.log(`受信箱に入れました id=${id} ts=${e.ts}`);
@@ -140,12 +128,12 @@ export async function handleRequest(e: Required<Pick<MessageEventLike, "channel"
     }
     if (last.status !== "processing") {
       cfg.log(`id=${id} は ${last.status}`);
-      await replyInThread(formatResult(last, cfg.inboxBaseUrl));
+      await slack.notifyPrivate(last.status === "ready" ? "ready" : "error", absoluteUrl(last.url, cfg.inboxBaseUrl));
       return;
     }
   }
   cfg.log(`id=${id} は時間切れ`);
-  await replyInThread(formatResult(last, cfg.inboxBaseUrl, "timeout"));
+  await slack.notifyPrivate("timeout", last ? absoluteUrl(last.url, cfg.inboxBaseUrl) : permalink);
 }
 
 /** Socket Mode の再送で同じ投稿を2回処理しないための記録。 */

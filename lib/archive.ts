@@ -7,6 +7,7 @@ import { TODAY } from "./config";
 import { employeeById, events, requests } from "./data";
 import { findDates } from "./dates";
 import { listInbox, type InboxItem } from "./inbox";
+import { listEvents } from "./surveys";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -55,6 +56,9 @@ export interface ArchiveRow {
   date: string;
   /** 登壇した人（決まっていれば）。いなければ空 */
   speakers: string[];
+  /** 過去のイベントだけ：アンケートの回答数と、分析済みか */
+  answers?: number;
+  analyzed?: boolean;
 }
 
 function outcomesOf(requestId: string) {
@@ -82,9 +86,20 @@ export function archiveRows(today = TODAY): ArchiveRow[] {
     if (!isPast(r.event?.date, today)) continue;
     rows.push({ kind: "request", id: r.id, title: r.event?.title ?? r.id, date: r.event!.date, speakers: acceptedNames(r.id) });
   }
+  // 過去のイベント：アンケートの件数と分析済みかは、イベント後の画面（lib/surveys.ts）の一覧から
+  const survey = new Map(listEvents().map((e) => [e.id, e]));
   for (const ev of events()) {
     if (!isPast(ev.date, today)) continue;
-    rows.push({ kind: "event", id: ev.id, title: ev.title, date: ev.date, speakers: ev.speaker_ids.map((s) => employeeById(s)?.name ?? s) });
+    const sv = survey.get(ev.id);
+    rows.push({
+      kind: "event",
+      id: ev.id,
+      title: ev.title,
+      date: ev.date,
+      speakers: ev.speaker_ids.map((s) => employeeById(s)?.name ?? s),
+      answers: sv?.answers ?? 0,
+      analyzed: sv?.analyzed ?? false,
+    });
   }
   return rows.sort((a, b) => (a.date < b.date ? 1 : -1));
 }

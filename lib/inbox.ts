@@ -8,7 +8,6 @@ import type { AgentEvent, ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
-import { internalTerms } from "./plainText";
 import { runUsd as usageOfRun } from "./usage";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
@@ -283,47 +282,12 @@ export function restart(id: string, runner: Runner, extractor?: IntakeExtractor)
 // ---------------------------------------------------------------------------
 // 窓口（GET /api/inbox/{id}）の返す形
 // ---------------------------------------------------------------------------
-const FALLBACK = "理由は画面で確認してください";
-
-/** 先頭の1文（長ければ60字で切る） */
-function shorten(s: string): string {
-  const first = s.split(/(?<=。)/)[0]?.trim() ?? "";
-  return first.length > 60 ? first.slice(0, 59) + "…" : first;
-}
-
-/** 内部の言葉が入っていたら使わない（lib/plainText.ts の判定） */
-const plain = (s: string | null | undefined) => !!s && internalTerms(s).length === 0;
-
-export interface InboxSummary {
-  candidates: Array<{ name: string; confidence: "strong" | "conditional"; reason_short: string }>;
-  no_fit?: { reasons: string[] };
-}
-
-export function summaryOf(it: InboxItem): InboxSummary | undefined {
-  if (it.status !== "ready" || !it.result) return undefined;
-  const candidates = it.result.candidates.map((c) => {
-    const short = shorten(c.reason);
-    return {
-      name: c.name,
-      confidence: c.confidence,
-      reason_short: plain(short) ? short : plain(c.theme) ? shorten(c.theme) : FALLBACK,
-    };
-  });
-  const summary: InboxSummary = { candidates };
-  if (it.result.no_fit) {
-    const reasons = it.result.no_fit.reasons.filter((r) => plain(r));
-    summary.no_fit = { reasons: reasons.length ? reasons : [FALLBACK] };
-  }
-  return summary;
-}
-
-/** 窓口の返す形（docs/inbox-api.md と同じ。形は変えない） */
+/** 窓口の返す形（docs/inbox-api.md と同じ）。
+ *  候補の名前・理由・件数・見つからない理由は返さない（人選の検討は技術広報が画面で見る。Slack には書かない） */
 export function publicView(it: InboxItem, origin: string) {
-  const summary = summaryOf(it);
   return {
     id: it.id,
     status: it.status,
-    ...(summary ? { summary } : {}),
     url: `${origin}/?inbox=${encodeURIComponent(it.id)}`,
   };
 }

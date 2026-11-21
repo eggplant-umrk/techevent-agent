@@ -1,6 +1,6 @@
 // 仮の受信箱サーバー（①の app/api/inbox ができるまでの動作確認用）。窓口と同じ形を返す。
 //   npx tsx scripts/slack/mock-inbox.ts [port]   既定 3999
-// 本文で返す結果を変える：「見つからない」→ 候補なし（no_fit）／「エラー」→ error／「遅い」→ ずっと processing／それ以外 → 3人
+// 本文で返す結果を変える：「見つからない」→ 候補なし（no_fit）／「エラー」→ error／「遅い」→ ずっと processing／「1人」→ 1人／「5人」→ 5人／それ以外 → 3人
 // 準備には READY_AFTER_MS（既定 6秒）かかる。
 import http from "node:http";
 import type { InboxItem } from "./core";
@@ -16,28 +16,8 @@ function view(id: string): InboxItem | null {
   const url = `/?inbox=${id}`;
   if (it.text.includes("遅い") || Date.now() - it.at < READY_AFTER_MS) return { id, status: "processing", url };
   if (it.text.includes("エラー")) return { id, status: "error", url };
-  if (it.text.includes("見つからない"))
-    return {
-      id,
-      status: "ready",
-      url,
-      summary: {
-        candidates: [],
-        no_fit: { reasons: ["ネタ帳に、このテーマの取り組みを持つカードがありませんでした", "投稿も探しましたが、根拠になるものが見つかりませんでした"] },
-      },
-    };
-  return {
-    id,
-    status: "ready",
-    url,
-    summary: {
-      candidates: [
-        { name: "織部 隼人", confidence: "strong", reason_short: "脆弱性アラートを月400件→50件に減らした本人" },
-        { name: "百瀬 結衣", confidence: "strong", reason_short: "初期表示の改善を数字で話せる" },
-        { name: "早乙女 蓮", confidence: "conditional", reason_short: "テーマは合うが忙しさ4で準備時間の確認が必要" },
-      ],
-    },
-  };
+  // 本物の窓口と同じく、候補の名前・理由は返さない（id・status・url だけ）
+  return { id, status: "ready", url };
 }
 
 const server = http.createServer((req, res) => {

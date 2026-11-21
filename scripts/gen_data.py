@@ -606,6 +606,231 @@ schedules = [
 ]
 dump("schedules.json", schedules)
 
+# ---------------------------------------------------------------------------
+# surveys — post-event questionnaires (v0.4), exported from Google Forms as CSV.
+# data/surveys/{event_id}.csv : first row = the question texts, first column = タイムスタンプ.
+# Fictional. The forms collect an optional e-mail and name (example.com / made-up names that are
+# not employees) so the import can show that personal columns are dropped.
+# Own RNG and written last, so every earlier file stays byte-identical.
+# ---------------------------------------------------------------------------
+import csv
+import io
+
+srng = random.Random(20261201)
+Q_TS = "タイムスタンプ"
+Q_MAIL = "メールアドレス"
+Q_TALK = "どの登壇についての回答ですか？"
+Q_RATE = "満足度を教えてください（5：とても満足 〜 1：不満）"
+Q_COMMENT = "感想・ご意見があれば自由にお書きください"
+Q_NEXT = "次に聞きたいテーマがあれば教えてください"
+Q_ROLE = "お仕事の職種を教えてください"
+Q_NAME = "お名前（任意）"
+Q_HOW = "このイベントを何で知りましたか？"  # no keyword the import knows: shown as an unread column
+
+ROLES = ["バックエンドエンジニア", "フロントエンドエンジニア", "SRE", "QAエンジニア", "EM", "PdM", "MLエンジニア", "学生", "", ""]
+ATTENDEE_NAMES = ["山田 花子", "佐藤 健", "高橋 美咲", "伊藤 大輔", "渡辺 さくら", "中村 翔", "小林 結衣", "加藤 直樹"]
+HOW = ["connpass", "X（旧Twitter）", "社内の知人", "前回の参加", "ブログ", ""]
+NOISE = ["", "", "", "特になし", "なし", "ピザがおいしかったです。", "懇親会も楽しかったです。", "受付がスムーズでした。", "次回も参加したいです。"]
+OPS_NEG = [  # complaints about the running of the event
+    "会場が寒かったです。",
+    "後ろの席だとマイクの音が聞き取りにくかったです。",
+    "開始が15分ほど遅れたのが残念でした。",
+    "配信の音声が途中で途切れました。",
+    "質疑の時間がもっとほしかったです。",
+]
+
+# (event_id, speaker_id, talk title, n, rating weights 1..5, positives, content negatives, p_content_neg, wants)
+SURVEY_SPEC = [
+    ("ev019", "e003", "AIエージェントの本番運用で効くガードレール設計", 22, [0, 0, 1, 5, 16], [
+        "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした。",
+        "本番で起きた失敗の話がリアルで一番参考になりました。",
+        "続編があればぜひ聞きたいです。",
+        "人の確認をどこに入れるかの判断基準が分かりやすかったです。",
+    ], [
+        "後半は駆け足で、メモが追いつきませんでした。",
+        "ツール呼び出しの制限のかけ方をもう少し詳しく知りたかったです。",
+    ], 0.3, [("ガードレールの続編：本番で起きた失敗と直し方", 6), ("エージェントの回帰テストをCIで回す方法", 4), ("LLMの出力を自動で評価する仕組み", 2), ("", 6)]),
+    ("ev019", "e001", "LLMプロダクトのアーキテクチャ選定基準", 14, [0, 1, 4, 7, 2], [
+        "アーキテクチャ選定の判断軸が整理されていて参考になりました。",
+        "社内でどう合意を取ったかの話が面白かったです。",
+    ], [
+        "少し抽象的で、具体的な構成図があるとよかったです。",
+    ], 0.35, [("実際の構成図とコストの内訳", 2), ("", 8)]),
+    ("ev020", "e004", "金融とSaaSでデータ整合性をどう守るか", 19, [1, 5, 8, 4, 1], [
+        "整合性をどう守るかの考え方は参考になりました。",
+        "二重記帳の図が分かりやすかったです。",
+    ], [
+        "前提知識が多くて、途中からついていけませんでした。",
+        "前提知識が多くて、途中からついていけませんでした。",
+        "金融の用語が分からず難しかったです。",
+        "スライドの文字が小さくて読めませんでした。",
+        "話すのが速くて追いつけませんでした。",
+    ], 0.6, [("改ざんを検知できる監査ログの作り方", 5), ("金融システムの整合性の入門編", 4), ("", 6)]),
+    ("ev020", "e001", "SaaSと金融のあいだのアーキテクチャ", 13, [0, 0, 3, 7, 3], [
+        "SaaSと金融の違いの整理が分かりやすかったです。",
+        "規制対応の話をもっと聞きたいと思いました。",
+    ], [], 0.0, [("金融規制に合わせた設計の実例", 2), ("", 7)]),
+    ("ev017", "e005", "テスト自動化の投資対効果", 15, [0, 0, 2, 9, 4], [
+        "テスト自動化の効果を数字で出していて説得力がありました。",
+        "自分の会社でも費用対効果の説明に使えそうです。",
+    ], [
+        "E2Eテストが不安定な問題にどう向き合っているのかが分からなかったです。",
+    ], 0.25, [("flakyなE2Eテストの原因の切り分け方", 5), ("テストの費用対効果の測り方", 2), ("", 5)]),
+    ("ev017", "e002", "型を入れる順番とチームへの広め方", 12, [0, 1, 3, 6, 2], [
+        "型を入れる順番の話が実践的でした。",
+        "チームへの広め方が参考になりました。",
+    ], [
+        "資料が事前に共有されていなかったので、手元で追えませんでした。",
+    ], 0.2, [("型の導入をチームに広めた進め方", 2), ("", 7)]),
+    ("ev018", "e002", "開発プロセスを週次で見直す振り返りの仕組み", 14, [0, 0, 3, 8, 3], [
+        "振り返りの回し方をそのまま真似したいです。",
+        "EMの悩みがリアルで共感しました。",
+    ], [
+        "夜間対応の負担をどう減らしているのかも知りたかったです。",
+    ], 0.25, [("夜間のオンコール呼び出しを減らした話", 5), ("振り返りの続編", 2), ("", 5)]),
+    ("ev018", "e001", "開発組織とLLM活用", 10, [0, 1, 4, 4, 1], [
+        "全体像はつかめました。",
+    ], [
+        "もう少し具体的な事例がほしかったです。",
+    ], 0.4, [("", 8)]),
+    ("ev015", "e003", "マルチエージェントの役割分担", 18, [0, 0, 1, 5, 12], [
+        "エージェント同士の役割分担の話が具体的で分かりやすかったです。",
+        "失敗談が多くて参考になりました、続きが聞きたいです。",
+        "続編を希望します。",
+    ], [
+        "前提が少し難しく、最初の10分は理解が追いつきませんでした。",
+    ], 0.2, [("マルチエージェントの続編：本番での失敗と対策", 5), ("", 6)]),
+    ("ev015", "e001", "マルチエージェントの設計の選択肢", 12, [0, 1, 3, 6, 2], [
+        "設計の選択肢が整理されていました。",
+    ], [
+        "時間が足りなさそうで、最後が駆け足でした。",
+    ], 0.3, [("", 8)]),
+    ("ev016", "e001", "生成AIを社内に入れるまで", 24, [0, 2, 6, 12, 4], [
+        "生成AIの導入の進め方が参考になりました。",
+    ], [
+        "スライドを共有してほしいです。",
+        "話が広く浅くて、持ち帰れるものが少なかったです。",
+    ], 0.3, [("生成AIの社内導入の失敗談", 2), ("", 12)]),
+]
+# Attacks on a person: shown on the event page, never written to a card. (event, speaker, text, rating)
+ATTACKS = [
+    ("ev020", "e004", "説明が下手すぎて、聞く価値がありませんでした。", 1),
+    ("ev016", "e001", "登壇者にやる気が感じられず、不快でした。", 2),
+]
+# High score but with a complaint mixed in (always included). (event, speaker, text, rating)
+HIGH_BUT = [
+    ("ev019", "e003", "内容はとても良かったです。ただ後半は駆け足で、メモが追いつきませんでした。", 5),
+    ("ev017", "e005", "数字の出し方は参考になりました。ただ会場が寒くて集中しにくかったです。", 5),
+]
+# The trend the analysis should find for e004 at ev020 (always included).
+TREND = [
+    ("ev020", "e004", "前提知識が多くて、途中からついていけませんでした。", 2),
+    ("ev020", "e004", "前提知識が多く、金融の用語も分からず難しかったです。", 3),
+    ("ev020", "e004", "整合性の考え方は参考になりましたが、前提知識が多くて難しかったです。", 3),
+    # complaints about the running of the event (always included)
+    ("ev020", "e001", "話は分かりやすかったです。開始が15分ほど遅れたのが残念でした。", 4),
+    ("ev019", "e001", "配信の音声が途中で途切れました。", 3),
+]
+
+
+def weighted(pairs):
+    return srng.choices([t for t, _ in pairs], weights=[w for _, w in pairs], k=1)[0]
+
+
+def comment_for(pos, neg, p_neg):
+    if srng.random() < 0.3:
+        return srng.choice(NOISE)
+    if neg and srng.random() < p_neg:
+        # complaint only, or a positive sentence followed by a complaint
+        parts = [srng.choice(neg)] if srng.random() < 0.5 else [srng.choice(pos), srng.choice(neg)]
+    else:
+        parts = [srng.choice(pos)]
+    if srng.random() < 0.12:
+        parts.append(srng.choice(OPS_NEG))
+    return "".join(parts)
+
+
+SURVEY_DIR = OUT / "surveys"
+SURVEY_DIR.mkdir(exist_ok=True)
+ev_by_id = {e["id"]: e for e in events}
+for ev_id in sorted({s[0] for s in SURVEY_SPEC}):
+    specs = [s for s in SURVEY_SPEC if s[0] == ev_id]
+    multi = len(specs) > 1
+    rows = []
+    for _, sp, title, n, rw, pos, neg, p_neg, wants in specs:
+        talk_label = f"{emp_by_id[sp]['name']}「{title}」"
+        own = []
+        for _ in range(n):
+            rating = srng.choices([1, 2, 3, 4, 5], weights=rw, k=1)[0]
+            own.append({"talk": talk_label, "rating": rating, "comment": comment_for(pos, neg, p_neg), "want": weighted(wants)})
+        fixed = [(t, r) for (e, s, t, r) in HIGH_BUT + ATTACKS + TREND if e == ev_id and s == sp]
+        for i, (t, r) in enumerate(fixed):
+            own[i * 3 + 1].update(comment=t, rating=r)
+        rows += own
+    srng.shuffle(rows)
+    y, m, dd = ev_by_id[ev_id]["date"].split("-")
+    header = [Q_TS, Q_MAIL] + ([Q_TALK] if multi else []) + [Q_RATE, Q_COMMENT, Q_NEXT, Q_ROLE, Q_NAME] + ([Q_HOW] if ev_id == "ev020" else [])
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator="\n")
+    w.writerow(header)
+    minute = 0
+    for r in rows:
+        minute += srng.randint(1, 9)
+        stamp = f"{y}/{m}/{dd} {21 + minute // 60}:{minute % 60:02d}:{srng.randint(0, 59):02d}"
+        mail = f"attendee{srng.randint(100, 999)}@example.com" if srng.random() < 0.25 else ""
+        name = srng.choice(ATTENDEE_NAMES) if srng.random() < 0.15 else ""
+        line = [stamp, mail] + ([r["talk"]] if multi else []) + [str(r["rating"]), r["comment"], r["want"], srng.choice(ROLES), name]
+        if ev_id == "ev020":
+            line.append(srng.choice(HOW))
+        w.writerow(line)
+    (SURVEY_DIR / f"{ev_id}.csv").write_text(buf.getvalue(), encoding="utf-8", newline="\n")
+# calendar — hour-level fictional appointments, used to COMPUTE busyness
+# (lib/busyness.ts). Only start / end / all_day: no titles, places or attendees.
+# Added at the end with its own seed, so every file above stays byte-identical.
+# The fill rate loosely follows the old fictional workload so the demo keeps the
+# same story (e002・e015 are packed, e012 has room); the number shown to users is
+# what lib/busyness.ts computes from these appointments, not the old workload.
+# ---------------------------------------------------------------------------
+cal_rng = random.Random(20261122)
+CAL_FROM = date(2026, 11, 23)
+CAL_TO = date(2026, 12, 31)
+FILL = {1: 0.12, 2: 0.24, 3: 0.42, 4: 0.56, 5: 0.72}
+SLOTS = 18  # 10:00-19:00 in 30-minute slots
+calendar = []
+for e in EMP:
+    eid, busy = e[0], e[6]
+    base = FILL[busy] + cal_rng.uniform(-0.05, 0.05)
+    d = CAL_FROM
+    while d <= CAL_TO:
+        if d.weekday() < 5:
+            want = round(max(0.0, min(0.95, base + cal_rng.uniform(-0.15, 0.15))) * SLOTS)
+            taken = [False] * SLOTS
+            filled, tries = 0, 0
+            while filled < want and tries < 200:
+                tries += 1
+                length = cal_rng.choice([1, 2, 2, 3, 4])
+                start = cal_rng.randrange(0, SLOTS - length + 1)
+                if any(taken[start:start + length]) or filled + length > want + 1:
+                    continue
+                for i in range(start, start + length):
+                    taken[i] = True
+                filled += length
+            i = 0
+            while i < SLOTS:  # merge adjacent slots into one appointment
+                if not taken[i]:
+                    i += 1
+                    continue
+                j = i
+                while j < SLOTS and taken[j]:
+                    j += 1
+                def hm(k):
+                    m = 10 * 60 + k * 30
+                    return f"{m // 60:02d}:{m % 60:02d}"
+                calendar.append({"employee_id": eid, "start": f"{d}T{hm(i)}:00+09:00", "end": f"{d}T{hm(j)}:00+09:00", "all_day": False})
+                i = j
+        d += timedelta(days=1)
+dump("calendar.json", calendar)
+
 # answer key for README (printed, not written to JSON)
 print("GEMS")
 for aid, a, th in gem_answer:

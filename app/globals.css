@@ -249,6 +249,28 @@ textarea.input { resize: vertical; }
 .ok-line { color: var(--ok); }
 .ev-kind { flex: none; min-width: 3em; }
 
+/* ---------- events (v0.4) ---------- */
+.nav { display: flex; gap: 4px; }
+.nav-item { min-height: 40px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; white-space: nowrap; }
+.nav-item:hover { color: var(--text); background: var(--neutral-soft); }
+.nav-item[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.ev-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.talk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.talk-table th { text-align: left; font-weight: 400; color: var(--muted); font-size: 12px; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); }
+.talk-table td { padding: 8px 8px 8px 0; border-bottom: 1px solid var(--neutral-soft); vertical-align: baseline; }
+.talk-table .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.caveat-inline { color: var(--warn); font-size: 12px; }
+.answer { padding: 8px 12px; background: var(--bg); border-radius: var(--radius-sm); }
+.reaction { flex: 1 1 260px; min-width: 0; }
+.neg-list, .pos-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.neg-list li { padding: 4px 0; border-bottom: 1px solid var(--neutral-soft); }
+.pos-list { padding: 0 20px 16px; gap: 12px; }
+.quote { color: var(--text-2); padding-left: 8px; }
+.import-box { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+@media (max-width: 640px) {
+  .talk-table th:nth-child(4), .talk-table td:nth-child(4) { display: none; }
+}
+
 /* ---------- narrow screens: stack ---------- */
 @media (max-width: 1040px) {
   .notebook { max-width: none; flex-basis: 100%; position: static; max-height: none; }

@@ -1,11 +1,12 @@
 // Slack の依頼チャンネルを入口にするボット（npm run slack）。Socket Mode なので外部公開URLは不要。
 // - 決まったチャンネルへの新しい投稿だけを拾い、受信箱（POST /api/inbox）に入れる
-// - 準備ができたら、同じスレッドに候補と「画面で詳しく見る」リンクを返す
-// - 投稿するのは、依頼が来たチャンネルのスレッドへの返信だけ（DM・候補者本人への送信はしない）
+// - 依頼スレッドには「受け付けました。技術広報から連絡します」とだけ返す
+// - 準備ができたら、SLACK_NOTIFY_CHANNEL（技術広報だけの非公開チャンネル）に「新しい依頼の候補が準備できました」と画面へのリンクだけを送る
+// - 候補の名前・理由・件数・見つからない理由は Slack のどこにも書かない（人選の検討は技術広報が画面で見る）
 // - 練習用ワークスペース専用。本物の会社の Slack では動かさない
 // トークンは .env からこのプロセスにだけ読み込む。値は表示・ログ出力しない。
 import { App, LogLevel } from "@slack/bolt";
-import { handleRequest, makeSeen, shouldHandle, type BotConfig, type MessageEventLike, type SlackLike } from "./slack/core";
+import { type BotConfig, handleRequest, makeSeen, type MessageEventLike, type NotifyKind, notifyText, shouldHandle, type SlackLike, THREAD_TEXT, type ThreadKind } from "./slack/core";
 
 try {
   process.loadEnvFile(".env");
@@ -28,6 +29,9 @@ function fail(message: string): never {
 const botToken = required("SLACK_BOT_TOKEN", (v) => v.startsWith("xoxb-"), "xoxb- で始まる Bot User OAuth Token");
 const appToken = required("SLACK_APP_TOKEN", (v) => v.startsWith("xapp-"), "xapp- で始まる App-Level Token（connections:write）");
 const requestChannel = required("SLACK_REQUEST_CHANNEL", (v) => /^[CG][A-Z0-9]+$/.test(v), "依頼を拾うチャンネルの id。C で始まる英数字");
+/** 技術広報だけが入る非公開チャンネル。設定がなければ通知しない */
+const notifyChannel = process.env.SLACK_NOTIFY_CHANNEL?.trim() || null;
+if (notifyChannel && !/^[CG][A-Z0-9]+$/.test(notifyChannel)) fail(".env の SLACK_NOTIFY_CHANNEL の形が違います（技術広報だけの非公開チャンネルの id。C または G で始まる英数字）");
 const allowedTeam = process.env.SLACK_ALLOWED_TEAM_ID?.trim() || null;
 const inboxBaseUrl = process.env.INBOX_BASE_URL?.trim() || "http://127.0.0.1:3000";
 
@@ -49,13 +53,20 @@ async function main() {
     log,
   };
 
-  /** 唯一の投稿：依頼チャンネル（固定）の、threadTs のスレッドへの返信。DM・別チャンネル・新しい投稿はしない。 */
-  async function replyInThread(threadTs: string, text: string) {
+  // 投稿は次の2か所だけ。文は決まった文（THREAD_TEXT・NOTIFY_TEXT）だけで、候補の名前・理由は書かない
+  /** 依頼チャンネル（固定）の、threadTs のスレッドへの受付の返信 */
+  async function replyInThread(threadTs: string, kind: ThreadKind) {
     if (!threadTs) throw new Error("スレッドの指定がない投稿はしません");
-    return app.client.chat.postMessage({ channel: requestChannel, thread_ts: threadTs, text, unfurl_links: false, unfurl_media: false });
+    return app.client.chat.postMessage({ channel: requestChannel, thread_ts: threadTs, text: THREAD_TEXT[kind], unfurl_links: false, unfurl_media: false });
+  }
+  /** SLACK_NOTIFY_CHANNEL（固定・技術広報だけの非公開チャンネル）への通知。設定がなければ送らない */
+  async function notifyPrivate(kind: NotifyKind, link: string | null) {
+    if (!notifyChannel) return null;
+    return app.client.chat.postMessage({ channel: notifyChannel, text: notifyText(kind, link), unfurl_links: false, unfurl_media: false });
   }
   const slack: SlackLike = {
     replyInThread,
+    notifyPrivate,
     getPermalink: async (args) => (await app.client.chat.getPermalink(args)).permalink ?? null,
   };
   const firstTime = makeSeen();
@@ -73,7 +84,7 @@ async function main() {
   });
 
   await app.start();
-  log(`起動しました。ワークスペース：${auth.team}（${auth.team_id}、練習用か確認してください）／チャンネル：${requestChannel}／窓口：${inboxBaseUrl}`);
+  log(`起動しました。ワークスペース：${auth.team}（${auth.team_id}、練習用か確認してください）／依頼チャンネル：${requestChannel}／通知：${notifyChannel ?? "なし（SLACK_NOTIFY_CHANNEL 未設定）"}／窓口：${inboxBaseUrl}`);
 }
 
 process.on("SIGINT", async () => {

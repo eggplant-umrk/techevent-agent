@@ -9,6 +9,15 @@ export type { OutreachDraft } from "@/lib/heavy";
 export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
 export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
+export type { Reaction } from "@/lib/cards";
+export type { EventAnalysis, EventListItem, NegativeItem, PositiveTheme, SurveyEvent, TalkAnalysis, TalkStats } from "@/lib/surveys";
+export type { ColumnInfo, ColumnRole } from "@/lib/surveyCsv";
+import type { SurveyImport } from "@/lib/surveyCsv";
+/** POST /api/events/{id}/import の返り値（回答そのものは返さない） */
+export type ImportResult = Omit<SurveyImport, "answers"> & { answers: number; saved: boolean };
+import type { eventDetail } from "@/lib/surveys";
+/** GET /api/events/{id} の形 */
+export type EventDetail = NonNullable<ReturnType<typeof eventDetail>>;
 export type { VenueCard, VenueEvent, VenueResult } from "@/lib/venues";
 export type { Person, PersonDetail, PersonPatch, PersonRow, SpeakingIntent } from "@/lib/people";
 export type { ArchiveDetail, ArchiveKind, ArchiveRow } from "@/lib/archive";
@@ -33,7 +42,8 @@ export type NotebookCard = Card & {
     role: string;
     past_talk_count: number;
     last_talk_date: string | null;
-    workload: number;
+    /** 今後2週間の予定の埋まり具合（言葉）。lib/busyness.ts で計算 */
+    busy_text: string;
   } | null;
   evidence: Array<{ id: string; type: string; date: string; title: string; body: string; where: string | null; url?: string | null }>;
   announcements: Array<{ id: string; date: string; title: string }>;

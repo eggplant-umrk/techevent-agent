@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { dataFile } from "./dataSource";
+import { demoActivities, demoEmployee, demoPersonOn } from "./demoPerson";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -40,7 +41,8 @@ export interface Employee {
   expertise_tags: string[];
   past_talk_count: number;
   last_talk_date: string | null;
-  workload: number;
+  /** 架空データに決め打ちで書いてあった忙しさ（1〜5）。使わない（11/21〜）：忙しさは予定から計算する（lib/busyness.ts） */
+  workload?: number;
 }
 
 export interface Activity {
@@ -115,7 +117,7 @@ export interface Schedule {
 export interface UsageEntry {
   at: string;
   run_id: string;
-  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "inbox_extract";
+  purpose: "loop" | "draft" | "alternative_pitch" | "notebook" | "blog_ideas" | "judge" | "inbox_extract" | "survey";
   model: string;
   input_tokens: number;
   output_tokens: number;
@@ -124,12 +126,31 @@ export interface UsageEntry {
   cost_usd: number;
 }
 
-export const employees = () => readJson<Employee[]>("employees.json");
-export const activities = () => readJson<Activity[]>("activities.json");
+// DEMO_PERSON=on のときだけ、開発者本人を31人目として足す（lib/demoPerson.ts）。既定は架空の30人だけ
+export const employees = () => {
+  const list = readJson<Employee[]>("employees.json");
+  return demoPersonOn() ? [...list, demoEmployee()] : list;
+};
+export const activities = () => {
+  const list = readJson<Activity[]>("activities.json");
+  return demoPersonOn() ? [...list, ...demoActivities()] : list;
+};
 export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");
 export const usage = () => readJson<UsageEntry[]>("usage.json", []);
+
+/** イベント後のアンケートの1回答（1行＝1つの登壇への回答）。Googleフォームの CSV から lib/surveyCsv.ts が作る。個人情報の列は入らない */
+export interface SurveyAnswer {
+  id: string;
+  event_id: string;
+  talk_speaker_id: string;
+  /** 満足度1〜5。読み取れなければ null */
+  rating: number | null;
+  comment: string;
+  want_next: string | null;
+  role: string | null;
+}
 
 /** Requests with demo-only fields (note_for_demo) removed. This is the only way requests reach the agent or the browser. */
 export function requests(): SpeakingRequest[] {

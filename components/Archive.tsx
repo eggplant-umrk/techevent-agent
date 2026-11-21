@@ -1,6 +1,8 @@
 "use client";
 
+import type { Api } from "@/app/_client/api";
 import type { ArchiveDetail, ArchiveKind, ArchiveRow } from "@/app/_client/types";
+import { EventPanel } from "./Events";
 import { md, REASON_LABEL, RESULT_LABEL } from "./labels";
 import { Tag } from "./ui";
 
@@ -35,10 +37,16 @@ export function ArchiveList({
               <span className="nb-who">
                 <span className="meta archive-date">{r.date}</span>
                 <span className="grow" />
-                <span className="tags nb-marks">{r.kind !== "event" && <Tag>{KIND_LABEL[r.kind]}</Tag>}</span>
+                <span className="tags nb-marks">
+                  {r.kind !== "event" && <Tag>{KIND_LABEL[r.kind]}</Tag>}
+                  {r.analyzed && <Tag tone="ok">分析済み</Tag>}
+                </span>
               </span>
               <span className="nb-theme strong-theme">{r.title}</span>
-              <span className="meta">{r.speakers.length ? `登壇：${r.speakers.join("・")}` : "登壇者なし"}</span>
+              <span className="meta">
+                {r.speakers.length ? `登壇：${r.speakers.join("・")}` : "登壇者なし"}
+                {r.kind === "event" && `　${r.answers ? `アンケート${r.answers}件` : "アンケートなし"}`}
+              </span>
             </button>
           </li>
         ))}
@@ -47,8 +55,23 @@ export function ArchiveList({
   );
 }
 
-/** アーカイブタブの右：日付・登壇者・依頼の結果。アンケートは②の画面が入る場所だけ用意する */
-export function ArchiveView({ detail }: { detail: ArchiveDetail | null }) {
+/**
+ * アーカイブタブの右。
+ * - 過去のイベント：イベント後の画面（日付・登壇者・アンケートの取り込み・分析・カードへの書き戻し）をそのまま出す
+ * - 過去の依頼：日付・登壇者・依頼の結果
+ */
+export function ArchiveView({
+  detail,
+  api,
+  onOpenCard,
+  onChanged,
+}: {
+  detail: ArchiveDetail | null;
+  api: Api;
+  onOpenCard: (cardId: string) => void;
+  /** アンケートを取り込んだ・分析した（カードと一覧を読み直す） */
+  onChanged: () => void;
+}) {
   if (!detail)
     return (
       <div className="panel">
@@ -57,8 +80,14 @@ export function ArchiveView({ detail }: { detail: ArchiveDetail | null }) {
         </section>
       </div>
     );
+  if (detail.kind === "event")
+    return (
+      <div className="panel" aria-label="過去のイベントの詳細">
+        <EventPanel key={detail.id} api={api} id={detail.id} onOpenCard={onOpenCard} onChanged={onChanged} />
+      </div>
+    );
   return (
-    <div className="panel" aria-label="過去の依頼・イベントの詳細">
+    <div className="panel" aria-label="過去の依頼の詳細">
       <section className="surface pad-lg" aria-labelledby="ar-title">
         <p className="meta">
           {KIND_LABEL[detail.kind]}・{detail.date}
@@ -106,12 +135,6 @@ export function ArchiveView({ detail }: { detail: ArchiveDetail | null }) {
         )}
       </section>
 
-      <section className="surface pad-lg placeholder" aria-labelledby="ar-survey">
-        <h3 id="ar-survey" className="h3">
-          アンケート
-        </h3>
-        <p className="meta">アンケートの取り込みと分析（イベント後の画面がここに入ります）</p>
-      </section>
     </div>
   );
 }

@@ -11,7 +11,37 @@ const INTENT: Array<[SpeakingIntent, string]> = [
   ["unknown", "未確認"],
 ];
 const intentLabel = (i: SpeakingIntent) => INTENT.find(([k]) => k === i)?.[1] ?? "未確認";
-const FIELD: Record<string, string> = { expertise_tags: "得意分野", speaking_intent: "登壇の意向", ng_themes: "NGのテーマ" };
+const WEEK = ["日", "月", "火", "水", "木", "金", "土"];
+const jst = (ms: number) => new Date(ms + 9 * 3600_000);
+const dayOf = (d: Date) => `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）`;
+const hm = (d: Date) => `${d.getUTCHours()}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+type Slot = { start: string; end: string; all_day: boolean };
+/**
+ * 予定を日ごとの1行にする（時刻だけ。タイトルは持っていないし出さない）。
+ * 終日の予定は日付の範囲で1行（end は含まない日）。
+ */
+function slotLines(slots: Slot[]): Array<{ day: string; times: string }> {
+  const out: Array<{ day: string; times: string; key: number }> = [];
+  const byDay = new Map<string, { key: number; times: string[] }>();
+  for (const s of slots) {
+    if (s.all_day) {
+      const startMs = Date.parse(`${s.start}T00:00:00+09:00`);
+      const lastMs = Date.parse(`${s.end}T00:00:00+09:00`) - 86_400_000;
+      const day = lastMs > startMs ? `${dayOf(jst(startMs))}〜${dayOf(jst(lastMs))}` : dayOf(jst(startMs));
+      out.push({ day, times: "終日", key: startMs });
+      continue;
+    }
+    const a = jst(Date.parse(s.start));
+    const b = jst(Date.parse(s.end));
+    const day = dayOf(a);
+    const g = byDay.get(day) ?? { key: Date.parse(s.start), times: [] };
+    g.times.push(`${hm(a)}〜${hm(b)}`);
+    byDay.set(day, g);
+  }
+  for (const [day, g] of byDay) out.push({ day, times: g.times.join("、"), key: g.key });
+  return out.sort((x, y) => x.key - y.key).map(({ day, times }) => ({ day, times }));
+}
+const FIELD: Record<string, string> ={ expertise_tags: "得意分野", speaking_intent: "登壇の意向", ng_themes: "NGのテーマ" };
 
 /**
  * ネタ帳タブの右：人の詳細。
@@ -74,7 +104,7 @@ export function PersonDetail({
           </span>
         </div>
         <p className="meta">
-          {p.business_unit}・{p.role}・登壇{p.past_talk_count}回{p.last_talk_date ? `（最終 ${p.last_talk_date}）` : ""}
+          {p.business_unit}・{p.role}・{detail.talk_tag}・登壇{p.past_talk_count}回{p.last_talk_date ? `（最終 ${p.last_talk_date}）` : ""}
         </p>
 
         {!editing ? (
@@ -133,20 +163,23 @@ export function PersonDetail({
           予定
         </h3>
         <p className="small">
-          埋まり具合：{a.load === null ? "—" : `${Math.round(a.load * 100)}%`}
+          {a.text}
+          {a.level && <span className="meta">（{a.level}）</span>}
         </p>
+        <h4 className="h4 pd-sub">今後2週間の予定（{md(a.from)}〜{md(a.to)}、時刻だけ）</h4>
         {a.upcoming === null ? (
-          <p className="meta">今後2週間の予定は、予定の計算ができたらここに出ます。</p>
+          <p className="meta">予定が分からないため出せません。</p>
         ) : a.upcoming.length === 0 ? (
-          <p className="meta">今後2週間の予定はありません。</p>
+          <p className="meta">予定は入っていません。</p>
         ) : (
-          <ul className="plain-list small">
-            {a.upcoming.map((u, i) => (
-              <li key={i}>
-                {md(u.date)}　{u.title}
-              </li>
+          <dl className="person-facts slot-list">
+            {slotLines(a.upcoming).map((l) => (
+              <div key={l.day} className="intake-row">
+                <dt>{l.day}</dt>
+                <dd>{l.times}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
         )}
       </section>
 

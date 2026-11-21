@@ -19,12 +19,12 @@
 
 ## 守ること
 - APIキー：.env の ANTHROPIC_API_KEY はサーバー側だけで使う。値を表示・ログ出力・コミットしない。環境変数（set / export）に入れない
-- Slackトークン：.env の SLACK_BOT_TOKEN（xoxb-）・SLACK_APP_TOKEN（xapp-）は scripts/slack-bot.ts だけで使う。値を表示・ログ出力・コミットしない。環境変数（set / export）に入れない。練習用ワークスペース専用で、投稿は依頼が来たチャンネルのスレッドへの返信だけ
+- Slackトークン：.env の SLACK_BOT_TOKEN（xoxb-）・SLACK_APP_TOKEN（xapp-）は scripts/slack-bot.ts だけで使う。値を表示・ログ出力・コミットしない。環境変数（set / export）に入れない。練習用ワークスペース専用で、投稿は依頼スレッドへの受付の返信と SLACK_NOTIFY_CHANNEL への通知だけ
 - 正解データ：data/README.md と note_for_demo はAgentの入力に絶対に含めない（評価スクリプトだけが読む）
-- 送信：送ってよいのは、依頼が来たSlackスレッドへの返信だけ。DM・別チャンネル・候補者本人への送信は作らない。声かけ文は下書きの表示とコピーだけ。Slackへの投稿は scripts/slack-bot.ts の replyInThread の1か所にまとめる（結合テストが判定する）
+- 送信：送ってよいのは、依頼スレッドへの受付の返信（「受け付けました。技術広報から連絡します」）と、SLACK_NOTIFY_CHANNEL（技術広報だけが入る非公開チャンネル）への通知（「新しい依頼の候補が準備できました」と画面へのリンク）だけ。候補の名前・理由・件数・見つからない理由は Slack のどこにも書かない。DM・別チャンネル・候補者本人への送信は作らない。声かけ文は下書きの表示とコピーだけ。Slackへの投稿は scripts/slack-bot.ts の replyInThread と notifyPrivate の2か所にまとめ、文は scripts/slack/core.ts の決まった文だけにする（結合テストが判定する）
 - 根拠：カードや提案の根拠には、実在するidだけを使う
 - 人が直したカード（確認済み）の項目は上書きしない
-- データはすべて架空。実在の人物や社内の情報を入れない（例外：data/sources/github/ は開発者本人の了承を得た公開リポジトリの取り込み。本人以外の人のデータは入れない）
+- データはすべて架空。実在の人物や社内の情報を入れない（例外：data/sources/github/ と data/sources/demo-person/ は開発者本人の了承を得た公開リポジトリの取り込みと、そこから作ったカード。本人以外の人のデータは入れない）
 
 ## API代
 - APIクレジットは月$200まで（カード未登録なので、使い切ると止まるだけ）

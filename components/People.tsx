@@ -52,13 +52,13 @@ export function People({
   const [unit, setUnit] = useState("");
 
   const counts = useMemo(
-    () => ({ unpublished: people.filter((p) => p.unpublished_cards > 0).length, noTalk: people.filter((p) => p.past_talk_count === 0).length }),
+    () => ({ unpublished: people.filter((p) => p.unpublished_cards > 0).length, noTalk: people.filter((p) => p.talk_tag === "初登壇").length }),
     [people],
   );
   const needle = q.trim().toLowerCase();
   const visible = people.filter((p) => {
     if (filters.has("unpublished") && p.unpublished_cards === 0) return false;
-    if (filters.has("noTalk") && p.past_talk_count !== 0) return false;
+    if (filters.has("noTalk") && p.talk_tag !== "初登壇") return false;
     if (unit && p.business_unit !== unit) return false;
     if (!needle) return true;
     return [p.name, p.business_unit, ...p.expertise_tags].join(" ").toLowerCase().includes(needle);
@@ -95,7 +95,7 @@ export function People({
               未発信のネタあり {counts.unpublished}
             </button>
             <button type="button" className="chip" aria-pressed={filters.has("noTalk")} onClick={() => toggle("noTalk")}>
-              登壇経験なし {counts.noTalk}
+              初登壇 {counts.noTalk}
             </button>
           </div>
           <select className="input input-sm" aria-label="事業部" value={unit} onChange={(e) => setUnit(e.target.value)}>
@@ -184,8 +184,8 @@ export function People({
                 <span className="meta person-num" title="未発信のネタ">
                   未発信 {p.unpublished_cards}
                 </span>
-                <span className="meta person-num" title="予定の埋まり具合（計算ができるまでは —）">
-                  予定 {p.load === null ? "—" : `${Math.round(p.load * 100)}%`}
+                <span className="meta person-num" title={p.busy_text}>
+                  予定 {p.load === null ? "不明" : `${Math.round(p.load * 10)}割`}
                 </span>
               </span>
             </button>

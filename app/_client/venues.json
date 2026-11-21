@@ -1,11 +1,11 @@
 {
   "card-e024-01": {
     "result": {
-      "run_id": "f9c84448-e018-491d-92b5-17ba97e63d9e",
+      "run_id": "7735ac04-01d4-4cea-8e5f-9136e45fed9c",
       "card_id": "card-e024-01",
       "employee_id": "e024",
       "employee_name": "織部 隼人",
-      "summary": "織部さんの取り組みは、全リポジトリでSBOMを作り、脆弱性アラートを「実際に呼ばれるコードか」で自動で振り分けて、開発チームに届く件数を月400件から50件程度に減らしたものです。今の時流のサプライチェーンセキュリティにそのまま合います。手元のデータでセキュリティ寄りの応募可能な出し先はSECCONのOpen Conferenceだけでした。そこでアラート疲れの軽減・自動化という切り口でSRE系の2件も足しています。3件とも締切が公式で未確認なので、すべて条件付きの提案です。",
+      "summary": "織部さんの取り組みは、全リポジトリでSBOMを作り、脆弱性アラートを「そのコードに実際に到達できるか」で自動で振り分けて、開発チームに届くアラートを月400件から50件程度に減らしたものです。今の時流であるサプライチェーンセキュリティと脆弱性管理の自動化にそのまま当てはまります。セキュリティの実践者が集まり自作ツールの発表を歓迎する場を第一候補にし、アラート疲れや自動化の切り口で話せるSRE系の2件を次に並べました。JSAC2027は登壇未経験者枠とLTがあるものの、テーマが攻撃分析・脅威情報寄りで合わないため外しました。",
       "venues": [
         {
           "rank": 1,
@@ -20,15 +20,14 @@
             "セッション"
           ],
           "location": "浅草橋ヒューリックホール&カンファレンス（2/20-21）",
-          "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に：自作の自動トリアージの設計と誤判定の扱い",
-          "reason": "情報セキュリティと自作ツールがテーマの場で、セキュリティに関心のある聴衆に判定ロジックの設計とOSS化の構想をそのまま話せる",
+          "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に：自動で振り分ける仕組みの設計と誤判定の扱い",
+          "reason": "テーマの「情報セキュリティ」「自作ツール」に、自分たちで作った振り分けの判定ロジック（OSSとして切り出しを検討中）がそのまま合い、セキュリティの実践者に数字つきの事例を届けられる",
           "cautions": [
-            "応募の締切が公式で未確認。早めに公式サイトで確認が必要",
-            "形式はセッションで、カードで想定しているLTより長い枠になる可能性がある",
-            "開催は2027年2月20〜21日。本人の前後の予定に重なりはなかった",
-            "SRE Kaigi 2027と同じ2月20日の開催なので、両方には出られない",
-            "本人は登壇経験も社外発信もまだないので、事前にブログで一度まとめておくと準備しやすい",
-            "締切は公式で要確認"
+            "締切は公式で要確認",
+            "応募締切は公式で未確認のため、早めに確認が必要",
+            "枠は「セッション」で、カードで想定しているLT（5〜10分）より長くなる可能性がある。設計の考え方と誤判定の扱いまで話を広げる準備が要る",
+            "同じ2027年2月20日にSRE Kaigi 2027も開かれるため、両方に応募する場合は片方に絞る必要がある",
+            "判定ロジックをOSSとして公開できるなら、公開の時期を発表に合わせると訴求力が上がる"
           ],
           "evidence": [
             {
@@ -44,8 +43,8 @@
               "title": "脆弱性アラート、月400件→対応要50件に"
             }
           ],
-          "confidence": "conditional",
-          "caveat": "テーマはいちばん合いますが、応募の締切が公式でまだ確認できていません。",
+          "confidence": "strong",
+          "caveat": null,
           "checked_at": "2026-11-21"
         },
         {
@@ -61,14 +60,13 @@
             "セッション"
           ],
           "location": "中野セントラルパーク カンファレンス（ハイブリッド）",
-          "theme": "脆弱性アラート疲れを自動化で解消する：開発チームに届く通知を月400件から50件にした全社展開の話",
-          "reason": "自動化・ツーリングがテーマのひとつで、アラートを減らして運用の負担を下げた話は運用・信頼性に関心のある聴衆に響きやすい",
+          "theme": "開発チームをアラート疲れから解放する：脆弱性アラートの自動振り分けを全社に展開するまで",
+          "reason": "テーマの「自動化・ツーリング」の文脈で、ノイズの多いアラートを減らして運用の負担を下げた話として、SRE・運用の聴衆に響く",
           "cautions": [
-            "応募の締切が公式で未確認",
-            "メインテーマはSREなので、セキュリティの話を運用の負担軽減という切り口に寄せる必要がある",
-            "開催は2027年2月20日（ハイブリッド）。本人の前後の予定に重なりはなかった",
-            "SECCONのOpen Conferenceと同じ日",
-            "締切は公式で要確認"
+            "締切は公式で要確認",
+            "応募締切は公式で未確認",
+            "セキュリティの話題はイベントの中心からやや外れるため、アラート疲れの解消や運用負担の削減を前面に出す構成が必要",
+            "SECCON 15 電脳会議と同じ2027年2月20日の開催"
           ],
           "evidence": [
             {
@@ -85,7 +83,7 @@
             }
           ],
           "confidence": "conditional",
-          "caveat": "SREが中心のイベントなのでテーマが少しずれますし、締切もまだ確認できていません。",
+          "caveat": "イベントの中心はSREで、脆弱性管理は話の軸を運用の自動化に寄せる必要がある。",
           "checked_at": "2026-11-21"
         },
         {
@@ -102,44 +100,44 @@
             "LT"
           ],
           "location": "RCC文化センター（広島）",
-          "theme": "「対応すべき12%」の見分け方：到達可能性で脆弱性アラートを自動で振り分ける",
-          "reason": "LT枠があるので初登壇の本人の第一歩に合う。運用の負担を下げた事例として話せる",
+          "theme": "脆弱性アラートを月400件→50件に減らした自動トリアージ（LT）",
+          "reason": "LT枠があり、登壇経験のない織部さんが数字のはっきりした成果を短く伝える最初の場にしやすい",
           "cautions": [
-            "応募の締切が公式で未確認（応募受付開始の告知はあり）",
-            "テーマはSRE・信頼性・運用が中心で、セキュリティとは少しずれる",
-            "会場は広島なので移動が必要になる",
-            "開催は2027年2月13日。本人の前後の予定に重なりはなかった",
-            "締切は公式で要確認"
+            "締切は公式で要確認",
+            "応募締切は公式で未確認",
+            "会場は広島で、移動が必要",
+            "テーマは信頼性・運用が中心のため、運用負担の削減の話として組み立てる必要がある",
+            "2027年2月13日の前後に本人の予定の重なりはなく、今後の予定にも比較的余裕がある"
           ],
           "evidence": [
-            {
-              "id": "act037",
-              "type": "design_doc",
-              "date": "2026-09-29",
-              "title": "依存ライブラリ脆弱性の自動トリアージ"
-            },
             {
               "id": "act100",
               "type": "slack_post",
               "date": "2026-11-04",
               "title": "脆弱性アラート、月400件→対応要50件に"
+            },
+            {
+              "id": "act037",
+              "type": "design_doc",
+              "date": "2026-09-29",
+              "title": "依存ライブラリ脆弱性の自動トリアージ"
             }
           ],
           "confidence": "conditional",
-          "caveat": "LTの形式は合いますが、テーマが運用寄りで少しずれるうえ、会場が広島で締切もまだ確認できていません。",
+          "caveat": "セキュリティはイベントのテーマから少しずれ、さらに広島への移動が必要になる。",
           "checked_at": "2026-11-21"
         }
       ],
       "no_fit": null,
       "blog": {
         "card_id": "card-e024-01",
-        "title": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に減らした自動トリアージ",
-        "why_easy_to_blog": "「月400件→50件」「対応が必要なのは全体の12%」と数字がはっきりしていて、設計資料とSlack投稿の裏付けもあり、サプライチェーンセキュリティの時流にも合います。織部さんは登壇経験がなく打診もまだなので最初の発信にちょうどよい題材ですが、内容は未確認のため、数字と社外に出せる範囲を本人に確認してから進めてください。",
+        "title": "SBOMと到達可能性解析で脆弱性アラートを月400件から50件に減らした自動トリアージ",
+        "why_easy_to_blog": "「月400件→50件」「対応が必要なのは全体の12%」という具体的な数字があり、サプライチェーンセキュリティと脆弱性管理の自動化という時流にも合っています。織部 隼人さんは登壇経験がなく今後2週間の予定も勤務時間の4割程度ですが、内容はまだ未確認なので、数字と設計の詳細を本人に確かめてから進めるのが安全です。",
         "outline": [
           "開発チームを悩ませていた月400件の脆弱性アラート",
           "全リポジトリでのSBOM生成と「実際に到達可能なコードか」による自動振り分けの設計",
-          "対応が必要な12%に絞り込んだ結果と全社展開で工夫したこと",
-          "判定ロジックのOSS化に向けた検討とこれから"
+          "対応が必要な12%への絞り込みと、全社展開までの道のり",
+          "判定ロジックのOSS化の検討と今後"
         ],
         "card": {
           "card_id": "card-e024-01",
@@ -180,7 +178,7 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_01FdoMVvryEWLdBYJevfsThS",
+        "id": "toolu_01TVZ4Asnp4WQF1wATGGfr5c",
         "name": "get_card",
         "input": {
           "card_id": "card-e024-01"
@@ -188,29 +186,14 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01FdoMVvryEWLdBYJevfsThS",
+        "id": "toolu_01TVZ4Asnp4WQF1wATGGfr5c",
         "name": "get_card",
         "ok": true,
         "summary": "カードを確認：根拠2件"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01STEkymM8TpjECA3roXGgx5",
-        "name": "get_speaking_history",
-        "input": {
-          "id": "e024"
-        }
-      },
-      {
-        "type": "tool_result",
-        "id": "toolu_01STEkymM8TpjECA3roXGgx5",
-        "name": "get_speaking_history",
-        "ok": true,
-        "summary": "登壇0回、最終 なし"
-      },
-      {
-        "type": "tool_call",
-        "id": "toolu_01VbJ95xLNy5YWb7kpazF9c4",
+        "id": "toolu_016MdtEXP7e1qw14vokbPZ9k",
         "name": "get_published",
         "input": {
           "author_id": "e024"
@@ -218,26 +201,41 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01VbJ95xLNy5YWb7kpazF9c4",
+        "id": "toolu_016MdtEXP7e1qw14vokbPZ9k",
         "name": "get_published",
         "ok": true,
         "summary": "発信済み 0件"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01XyjH5KPLNgyqse6fMt43yG",
+        "id": "toolu_01E8hbUCGWNXmDgou2WfcNkx",
+        "name": "get_speaking_history",
+        "input": {
+          "id": "e024"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01E8hbUCGWNXmDgou2WfcNkx",
+        "name": "get_speaking_history",
+        "ok": true,
+        "summary": "登壇0回、最終 なし"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01PRVW8dgSacQA9syXsTZcov",
         "name": "search_external_events",
         "input": {
-          "query": "脆弱性 SBOM サプライチェーン",
+          "query": "セキュリティ 脆弱性 SBOM サプライチェーン",
           "from": "2026-11-21"
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_01XyjH5KPLNgyqse6fMt43yG",
+        "id": "toolu_01PRVW8dgSacQA9syXsTZcov",
         "name": "search_external_events",
         "ok": true,
-        "summary": "1件（応募できるもの 0件）／上位: 制御システムセキュリティカンファレンス2027（締切済み）"
+        "summary": "3件（応募できるもの 2件）／上位: 制御システムセキュリティカンファレンス2027（締切済み）、SECCON 15 電脳会議 Open Conference、JSAC2027"
       },
       {
         "type": "step",
@@ -246,45 +244,32 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_01C6fu5fGD9m9AXYaFbGvytL",
+        "id": "toolu_01EFMcPH58kZGesJHuupQjFf",
         "name": "search_external_events",
         "input": {
-          "query": "セキュリティ"
+          "query": "OSS 開発生産性 DevSecOps 自動化 依存関係",
+          "from": "2026-11-21"
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_01C6fu5fGD9m9AXYaFbGvytL",
+        "id": "toolu_01EFMcPH58kZGesJHuupQjFf",
         "name": "search_external_events",
         "ok": true,
-        "summary": "3件（応募できるもの 2件）／上位: SECCON 15 電脳会議 Open Conference、制御システムセキュリティカンファレンス2027（締切済み）、JSAC2027"
+        "summary": "1件（応募できるもの 1件）／上位: SRE Kaigi 2027"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01Pv472ZnQizrHouGnMrLwi3",
+        "id": "toolu_01VMBwuCjnSUTM6aj5CnV3Ta",
         "name": "search_external_events",
         "input": {
-          "query": "DevSecOps 依存関係 OSS 開発生産性"
+          "query": "",
+          "from": "2026-11-21"
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_01Pv472ZnQizrHouGnMrLwi3",
-        "name": "search_external_events",
-        "ok": true,
-        "summary": "0件（応募できるもの 0件）／上位: "
-      },
-      {
-        "type": "tool_call",
-        "id": "toolu_01RPhBkUroRXBRfPNFwiafyb",
-        "name": "search_external_events",
-        "input": {
-          "query": ""
-        }
-      },
-      {
-        "type": "tool_result",
-        "id": "toolu_01RPhBkUroRXBRfPNFwiafyb",
+        "id": "toolu_01VMBwuCjnSUTM6aj5CnV3Ta",
         "name": "search_external_events",
         "ok": true,
         "summary": "8件（応募できるもの 5件）／上位: JAWS DAYS 2027、SRE Kaigi 2027、SRE NEXT mini in HIROSHIMA 2027"
@@ -296,7 +281,7 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_012PqSd5sNj6JmoZPEjFiEWS",
+        "id": "toolu_01UioqFRkcQZyDwdtg4dvL61",
         "name": "check_schedule",
         "input": {
           "id": "e024",
@@ -305,14 +290,14 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_012PqSd5sNj6JmoZPEjFiEWS",
+        "id": "toolu_01UioqFRkcQZyDwdtg4dvL61",
         "name": "check_schedule",
         "ok": true,
         "summary": "予定の重なりなし"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01R5GXKTTmjbjksgSMPKxPhq",
+        "id": "toolu_019r7datVmAfJemp1oaGBWRJ",
         "name": "check_schedule",
         "input": {
           "id": "e024",
@@ -321,7 +306,7 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01R5GXKTTmjbjksgSMPKxPhq",
+        "id": "toolu_019r7datVmAfJemp1oaGBWRJ",
         "name": "check_schedule",
         "ok": true,
         "summary": "予定の重なりなし"
@@ -333,84 +318,82 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_015eZMhMtTKSF7TCp4rTREv6",
+        "id": "toolu_01K6WMJzPD7msVHGMhvxjrsv",
         "name": "submit_venues",
         "input": {
-          "summary": "織部さんの取り組みは、全リポジトリでSBOMを作り、脆弱性アラートを「実際に呼ばれるコードか」で自動で振り分けて、開発チームに届く件数を月400件から50件程度に減らしたものです。今の時流のサプライチェーンセキュリティにそのまま合います。手元のデータでセキュリティ寄りの応募可能な出し先はSECCONのOpen Conferenceだけでした。そこでアラート疲れの軽減・自動化という切り口でSRE系の2件も足しています。3件とも締切が公式で未確認なので、すべて条件付きの提案です。",
+          "summary": "織部さんの取り組みは、全リポジトリでSBOMを作り、脆弱性アラートを「そのコードに実際に到達できるか」で自動で振り分けて、開発チームに届くアラートを月400件から50件程度に減らしたものです。今の時流であるサプライチェーンセキュリティと脆弱性管理の自動化にそのまま当てはまります。セキュリティの実践者が集まり自作ツールの発表を歓迎する場を第一候補にし、アラート疲れや自動化の切り口で話せるSRE系の2件を次に並べました。JSAC2027は登壇未経験者枠とLTがあるものの、テーマが攻撃分析・脅威情報寄りで合わないため外しました。",
           "no_fit": null,
           "venues": [
             {
               "event_id": "x004",
-              "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に：自作の自動トリアージの設計と誤判定の扱い",
-              "reason": "情報セキュリティと自作ツールがテーマの場で、セキュリティに関心のある聴衆に判定ロジックの設計とOSS化の構想をそのまま話せる",
+              "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に：自動で振り分ける仕組みの設計と誤判定の扱い",
+              "reason": "テーマの「情報セキュリティ」「自作ツール」に、自分たちで作った振り分けの判定ロジック（OSSとして切り出しを検討中）がそのまま合い、セキュリティの実践者に数字つきの事例を届けられる",
               "evidence_activity_ids": [
                 "act037",
                 "act100"
               ],
               "cautions": [
-                "応募の締切が公式で未確認。早めに公式サイトで確認が必要",
-                "形式はセッションで、カードで想定しているLTより長い枠になる可能性がある",
-                "開催は2027年2月20〜21日。本人の前後の予定に重なりはなかった",
-                "SRE Kaigi 2027と同じ2月20日の開催なので、両方には出られない",
-                "本人は登壇経験も社外発信もまだないので、事前にブログで一度まとめておくと準備しやすい"
+                "応募締切は公式で未確認のため、早めに確認が必要",
+                "枠は「セッション」で、カードで想定しているLT（5〜10分）より長くなる可能性がある。設計の考え方と誤判定の扱いまで話を広げる準備が要る",
+                "同じ2027年2月20日にSRE Kaigi 2027も開かれるため、両方に応募する場合は片方に絞る必要がある",
+                "判定ロジックをOSSとして公開できるなら、公開の時期を発表に合わせると訴求力が上がる"
               ],
-              "confidence": "conditional",
-              "caveat": "テーマはいちばん合いますが、応募の締切が公式でまだ確認できていません。"
+              "confidence": "strong",
+              "caveat": null
             },
             {
               "event_id": "x002",
-              "theme": "脆弱性アラート疲れを自動化で解消する：開発チームに届く通知を月400件から50件にした全社展開の話",
-              "reason": "自動化・ツーリングがテーマのひとつで、アラートを減らして運用の負担を下げた話は運用・信頼性に関心のある聴衆に響きやすい",
+              "theme": "開発チームをアラート疲れから解放する：脆弱性アラートの自動振り分けを全社に展開するまで",
+              "reason": "テーマの「自動化・ツーリング」の文脈で、ノイズの多いアラートを減らして運用の負担を下げた話として、SRE・運用の聴衆に響く",
               "evidence_activity_ids": [
                 "act100",
                 "act037"
               ],
               "cautions": [
-                "応募の締切が公式で未確認",
-                "メインテーマはSREなので、セキュリティの話を運用の負担軽減という切り口に寄せる必要がある",
-                "開催は2027年2月20日（ハイブリッド）。本人の前後の予定に重なりはなかった",
-                "SECCONのOpen Conferenceと同じ日"
+                "応募締切は公式で未確認",
+                "セキュリティの話題はイベントの中心からやや外れるため、アラート疲れの解消や運用負担の削減を前面に出す構成が必要",
+                "SECCON 15 電脳会議と同じ2027年2月20日の開催"
               ],
               "confidence": "conditional",
-              "caveat": "SREが中心のイベントなのでテーマが少しずれますし、締切もまだ確認できていません。"
+              "caveat": "イベントの中心はSREで、脆弱性管理は話の軸を運用の自動化に寄せる必要がある。"
             },
             {
               "event_id": "x003",
-              "theme": "「対応すべき12%」の見分け方：到達可能性で脆弱性アラートを自動で振り分ける",
-              "reason": "LT枠があるので初登壇の本人の第一歩に合う。運用の負担を下げた事例として話せる",
+              "theme": "脆弱性アラートを月400件→50件に減らした自動トリアージ（LT）",
+              "reason": "LT枠があり、登壇経験のない織部さんが数字のはっきりした成果を短く伝える最初の場にしやすい",
               "evidence_activity_ids": [
-                "act037",
-                "act100"
+                "act100",
+                "act037"
               ],
               "cautions": [
-                "応募の締切が公式で未確認（応募受付開始の告知はあり）",
-                "テーマはSRE・信頼性・運用が中心で、セキュリティとは少しずれる",
-                "会場は広島なので移動が必要になる",
-                "開催は2027年2月13日。本人の前後の予定に重なりはなかった"
+                "応募締切は公式で未確認",
+                "会場は広島で、移動が必要",
+                "テーマは信頼性・運用が中心のため、運用負担の削減の話として組み立てる必要がある",
+                "2027年2月13日の前後に本人の予定の重なりはなく、今後の予定にも比較的余裕がある"
               ],
               "confidence": "conditional",
-              "caveat": "LTの形式は合いますが、テーマが運用寄りで少しずれるうえ、会場が広島で締切もまだ確認できていません。"
+              "caveat": "セキュリティはイベントのテーマから少しずれ、さらに広島への移動が必要になる。"
             }
           ]
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_015eZMhMtTKSF7TCp4rTREv6",
+        "id": "toolu_01K6WMJzPD7msVHGMhvxjrsv",
         "name": "submit_venues",
         "ok": true,
         "summary": "出し先3件を提出"
       }
     ],
-    "run_usd": 0.0984342
+    "run_usd": 0.10138960000000001
   },
   "card-e016-01": {
     "result": {
-      "run_id": "b6f2cf23-f025-4901-9512-c61242eaf691",
+      "run_id": "af3c964c-dde7-4edb-b48c-b2a7da715d40",
       "card_id": "card-e016-01",
       "employee_id": "e016",
       "employee_name": "鳴海 慎",
-      "summary": "鳴海さんの取り組みは、アラートを発報元と対応内容で分類してオンコールの負荷を見える化し、対応が要らないアラートを半分に減らして、夜間の呼び出しを月14回から5回にしたというSREの改善事例です。数字がはっきりしていて、ダッシュボードの作り方もまとまっています。鳴海さんはまだ社外で発表したことがなく、登壇の記録もないため、LT枠があるSREのイベントをいちばんに挙げ、セッション枠しかないSREの大きなカンファレンスと、締切がはっきりしているAWS系のイベントを条件付きで続けました。",
+      "summary": "鳴海さんの取り組みは、アラートを発報元と対応内容で分類してオンコール負荷を見える化し、対応不要なアラートを半分に、夜間呼び出しを月14回から5回に減らしたSREの改善事例です。数字がはっきりしていて、初めての登壇に向くLT向きのネタなので、SREのイベントでLT枠があるものを1番目、より大きなSREカンファレンスを2番目にしました。どちらも締切は公式でまだ確かめられていないため、条件付きです。",
       "venues": [
         {
           "rank": 1,
@@ -427,12 +410,12 @@
           ],
           "location": "RCC文化センター（広島）",
           "theme": "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
-          "reason": "テーマがSRE・信頼性・運用で取り組みにそのまま合っていて、LT枠もあるので、初めて登壇する人が数字のはっきりした改善事例を短く話すのにちょうどよい。",
+          "reason": "SRE・信頼性・運用がテーマでLT枠があり、初めて登壇する鳴海さんが数字のはっきりしたオンコール改善を5〜10分で話すのにちょうどよい。",
           "cautions": [
             "締切は公式で要確認",
-            "応募締切は公式でまだ確認できていないので、CfPページで締切と応募方法を確かめる必要がある",
-            "会場が広島なので出張が必要。忙しさが4の本人に、移動の負担を含めて確認したい",
-            "開催日（2027年2月13日）の前後に本人の予定は入っていないことを確認済み"
+            "CfPの受付開始は告知済みだが、締切は公式でまだ確かめていない",
+            "開催地は広島（RCC文化センター）なので、移動と出張の手配がいる",
+            "開催日（2027年2月13日）の前後3日に鳴海さんの予定は入っていない"
           ],
           "evidence": [
             {
@@ -442,8 +425,8 @@
               "title": "オンコール負荷の可視化と削減"
             }
           ],
-          "confidence": "strong",
-          "caveat": null,
+          "confidence": "conditional",
+          "caveat": "締切が公式でまだ確かめられておらず、広島への出張も必要です。",
           "checked_at": "2026-11-21"
         },
         {
@@ -459,13 +442,13 @@
             "セッション"
           ],
           "location": "中野セントラルパーク カンファレンス（ハイブリッド）",
-          "theme": "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方",
-          "reason": "モニタリング・オブザーバビリティやインシデント管理が公募テーマにあり、聴衆がSREそのものなので、アラートの分類とダッシュボード作りの話がよく届く。",
+          "theme": "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方と、夜間呼び出しを月14回から5回にした進め方",
+          "reason": "テーマにモニタリング・オブザーバビリティ、インシデント管理、自動化・ツーリングが入っていて、アラートの分類とダッシュボードの話がそのまま合う、SREの大きなカンファレンス。",
           "cautions": [
             "締切は公式で要確認",
-            "応募締切は公式でまだ確認できていない",
-            "公募の形式がセッションだけで、LT枠が載っていない。初登壇で長めの発表になるため、ダッシュボードの作り方や分類のやり方まで広げて話を組み立てる必要がある",
-            "開催日（2027年2月20日）の前後に本人の予定は入っていないことを確認済み。ハイブリッド開催で会場は都内"
+            "締切は公式でまだ確かめていない",
+            "募集はセッション形式だけで、LT枠は確認できていない。LT向きのネタを、ダッシュボードの作り方まで広げてセッションの長さにする必要がある",
+            "開催日（2027年2月20日）の前後3日に鳴海さんの予定は入っていない"
           ],
           "evidence": [
             {
@@ -476,42 +459,7 @@
             }
           ],
           "confidence": "conditional",
-          "caveat": "セッション枠しかなく、初登壇の本人にはLTより重い発表になる。",
-          "checked_at": "2026-11-21"
-        },
-        {
-          "rank": 3,
-          "event_id": "x001",
-          "name": "JAWS DAYS 2027",
-          "url": "https://fortee.jp/jawsdays-2027/speaker/proposal/cfp",
-          "cfp_url": "https://fortee.jp/jawsdays-2027/speaker/proposal/cfp",
-          "event_date": null,
-          "cfp_status": "open",
-          "cfp_deadline": "2026-12-23",
-          "format": [
-            "セッション（20分）",
-            "パネルディスカッション（50分）",
-            "ワークショップ（90分）"
-          ],
-          "location": null,
-          "theme": "AWS上のアラートを発報元×対応内容で分類し、夜間呼び出しを月14回から5回に減らした話",
-          "reason": "締切がはっきりしている（2026年12月23日）唯一の公募で、幅広いテーマを受け付けている。監視の仕組みがAWS上にあるなら、運用改善の事例として出せる。",
-          "cautions": [
-            "開催日は要確認",
-            "根拠の投稿からは監視の仕組みがAWS上にあるかどうか分からないので、本人に確認が必要",
-            "開催日はまだ公式で確認できておらず、本人の予定と重ならないかは確かめられていない",
-            "発表は20分のセッションで、LTより長い"
-          ],
-          "evidence": [
-            {
-              "id": "act102",
-              "type": "design_doc",
-              "date": "2026-11-06",
-              "title": "オンコール負荷の可視化と削減"
-            }
-          ],
-          "confidence": "conditional",
-          "caveat": "AWSのイベントなので、監視の仕組みがAWS上でなければテーマが合わない。",
+          "caveat": "募集がセッション形式だけで締切も確かめられていないため、話を広げる準備と締切の確認が必要です。",
           "checked_at": "2026-11-21"
         }
       ],
@@ -519,12 +467,12 @@
       "blog": {
         "card_id": "card-e016-01",
         "title": "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
-        "why_easy_to_blog": "夜間呼び出しが月14回から5回に減ったという明確な数字があり、ダッシュボードの作り方もすでにドキュメントにまとまっているため記事の骨格を作りやすいです。なお、鳴海さんは登壇経験がなく発信の後押しに向く一方、内容はまだ未確認で忙しさも高めなので、事前に事実確認と負担の少ない進め方の相談をおすすめします。",
+        "why_easy_to_blog": "「夜間呼び出し月14回→5回」「対応不要アラート半減」という具体的な数字があり、可視化ダッシュボードの作り方もすでにドキュメントにまとまっているため、それを土台に書き起こしやすいです。ただし内容はまだ未確認で、鳴海さんは今後2週間は勤務時間の6割が予定で埋まっているため、負担の少ない進め方で打診するのがよさそうです。",
         "outline": [
-          "オンコール負荷の課題：夜間呼び出しが月14回あった状況",
-          "アラートを発報元と対応内容で分類して負荷を見える化する",
-          "対応不要なアラートを半分に減らすまでの取り組み",
-          "可視化ダッシュボードの作り方と、夜間呼び出し月5回という結果"
+          "夜間呼び出しが月14回あった頃のオンコールの状況",
+          "アラートを発報元×対応内容で分類して負荷を見える化する",
+          "対応不要なアラートを半分に減らした取り組み",
+          "オンコール負荷を可視化するダッシュボードの作り方"
         ],
         "card": {
           "card_id": "card-e016-01",
@@ -563,7 +511,7 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_01E2hUFWYhpfcqAVXzRdDLUa",
+        "id": "toolu_01BthG4u1iCDdMTP1nKuYi5P",
         "name": "get_card",
         "input": {
           "card_id": "card-e016-01"
@@ -571,14 +519,14 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01E2hUFWYhpfcqAVXzRdDLUa",
+        "id": "toolu_01BthG4u1iCDdMTP1nKuYi5P",
         "name": "get_card",
         "ok": true,
         "summary": "カードを確認：根拠1件"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01G71Q95ZpvZ3w4DNdtqEtKc",
+        "id": "toolu_01HB2Gk1xxgpdoo1x5QNgtcd",
         "name": "get_speaking_history",
         "input": {
           "id": "e016"
@@ -586,14 +534,14 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01G71Q95ZpvZ3w4DNdtqEtKc",
+        "id": "toolu_01HB2Gk1xxgpdoo1x5QNgtcd",
         "name": "get_speaking_history",
         "ok": true,
         "summary": "登壇0回、最終 なし"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01SfPtGrs6ZPqjL7eXTDUwoQ",
+        "id": "toolu_019iuYNwNTK5KbjtnQTPjoHN",
         "name": "get_published",
         "input": {
           "author_id": "e016"
@@ -601,26 +549,55 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01SfPtGrs6ZPqjL7eXTDUwoQ",
+        "id": "toolu_019iuYNwNTK5KbjtnQTPjoHN",
         "name": "get_published",
         "ok": true,
         "summary": "発信済み 0件"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01F3CdVvNgoUd51vm5Ev4gaV",
+        "id": "toolu_01MJWDiMMxP1DwMK3mnWGWTx",
         "name": "search_external_events",
         "input": {
-          "query": "オンコール アラート SRE",
-          "from": "2026-11-21"
+          "query": "オンコール アラート"
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_01F3CdVvNgoUd51vm5Ev4gaV",
+        "id": "toolu_01MJWDiMMxP1DwMK3mnWGWTx",
+        "name": "search_external_events",
+        "ok": true,
+        "summary": "0件（応募できるもの 0件）／上位: "
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01HMnisJWWQtNS9RHUVa1irN",
+        "name": "search_external_events",
+        "input": {
+          "query": "SRE 障害対応 ポストモーテム"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01HMnisJWWQtNS9RHUVa1irN",
         "name": "search_external_events",
         "ok": true,
         "summary": "2件（応募できるもの 2件）／上位: SRE Kaigi 2027、SRE NEXT mini in HIROSHIMA 2027"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01BZ11cM6MDaecyC5HiTFbze",
+        "name": "search_external_events",
+        "input": {
+          "query": "監視 オブザーバビリティ ダッシュボード"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01BZ11cM6MDaecyC5HiTFbze",
+        "name": "search_external_events",
+        "ok": true,
+        "summary": "1件（応募できるもの 1件）／上位: SRE Kaigi 2027"
       },
       {
         "type": "step",
@@ -629,22 +606,22 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_01Q6ZYoUZ7FHteuK4j6kdAxj",
+        "id": "toolu_01SZY6CuwCD9G8AWDTEeWJCb",
         "name": "search_external_events",
         "input": {
-          "query": "運用 モニタリング 障害対応 ダッシュボード"
+          "query": ""
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_01Q6ZYoUZ7FHteuK4j6kdAxj",
+        "id": "toolu_01SZY6CuwCD9G8AWDTEeWJCb",
         "name": "search_external_events",
         "ok": true,
-        "summary": "3件（応募できるもの 2件）／上位: SRE Kaigi 2027、SRE NEXT mini in HIROSHIMA 2027、GopherCon Japan 2027（締切済み）"
+        "summary": "8件（応募できるもの 5件）／上位: JAWS DAYS 2027、SRE Kaigi 2027、SRE NEXT mini in HIROSHIMA 2027"
       },
       {
         "type": "tool_call",
-        "id": "toolu_015vjMynqmZG7gQ2K7i9yXi9",
+        "id": "toolu_01X2Ux2UMqMsJQuqdREwa2U3",
         "name": "check_schedule",
         "input": {
           "id": "e016",
@@ -653,14 +630,14 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_015vjMynqmZG7gQ2K7i9yXi9",
+        "id": "toolu_01X2Ux2UMqMsJQuqdREwa2U3",
         "name": "check_schedule",
         "ok": true,
         "summary": "予定の重なりなし"
       },
       {
         "type": "tool_call",
-        "id": "toolu_01YZidnDHZGouH3sdUyeCFMW",
+        "id": "toolu_01FNxJAa6nBMGPXPddVMEjx7",
         "name": "check_schedule",
         "input": {
           "id": "e016",
@@ -669,7 +646,7 @@
       },
       {
         "type": "tool_result",
-        "id": "toolu_01YZidnDHZGouH3sdUyeCFMW",
+        "id": "toolu_01FNxJAa6nBMGPXPddVMEjx7",
         "name": "check_schedule",
         "ok": true,
         "summary": "予定の重なりなし"
@@ -681,88 +658,53 @@
       },
       {
         "type": "tool_call",
-        "id": "toolu_01TZfB7tCxS531CRRDxhbHbr",
-        "name": "search_external_events",
-        "input": {
-          "query": ""
-        }
-      },
-      {
-        "type": "tool_result",
-        "id": "toolu_01TZfB7tCxS531CRRDxhbHbr",
-        "name": "search_external_events",
-        "ok": true,
-        "summary": "8件（応募できるもの 5件）／上位: JAWS DAYS 2027、SRE Kaigi 2027、SRE NEXT mini in HIROSHIMA 2027"
-      },
-      {
-        "type": "step",
-        "n": 4,
-        "max": 15
-      },
-      {
-        "type": "tool_call",
-        "id": "toolu_01EY83e1THJ7E4uKePaeFLD2",
+        "id": "toolu_01KZaTeFWfUUiZZXvk4gxdV3",
         "name": "submit_venues",
         "input": {
-          "summary": "鳴海さんの取り組みは、アラートを発報元と対応内容で分類してオンコールの負荷を見える化し、対応が要らないアラートを半分に減らして、夜間の呼び出しを月14回から5回にしたというSREの改善事例です。数字がはっきりしていて、ダッシュボードの作り方もまとまっています。鳴海さんはまだ社外で発表したことがなく、登壇の記録もないため、LT枠があるSREのイベントをいちばんに挙げ、セッション枠しかないSREの大きなカンファレンスと、締切がはっきりしているAWS系のイベントを条件付きで続けました。",
+          "summary": "鳴海さんの取り組みは、アラートを発報元と対応内容で分類してオンコール負荷を見える化し、対応不要なアラートを半分に、夜間呼び出しを月14回から5回に減らしたSREの改善事例です。数字がはっきりしていて、初めての登壇に向くLT向きのネタなので、SREのイベントでLT枠があるものを1番目、より大きなSREカンファレンスを2番目にしました。どちらも締切は公式でまだ確かめられていないため、条件付きです。",
           "no_fit": null,
           "venues": [
             {
               "event_id": "x003",
               "theme": "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
-              "reason": "テーマがSRE・信頼性・運用で取り組みにそのまま合っていて、LT枠もあるので、初めて登壇する人が数字のはっきりした改善事例を短く話すのにちょうどよい。",
+              "reason": "SRE・信頼性・運用がテーマでLT枠があり、初めて登壇する鳴海さんが数字のはっきりしたオンコール改善を5〜10分で話すのにちょうどよい。",
               "evidence_activity_ids": [
                 "act102"
               ],
               "cautions": [
-                "応募締切は公式でまだ確認できていないので、CfPページで締切と応募方法を確かめる必要がある",
-                "会場が広島なので出張が必要。忙しさが4の本人に、移動の負担を含めて確認したい",
-                "開催日（2027年2月13日）の前後に本人の予定は入っていないことを確認済み"
+                "CfPの受付開始は告知済みだが、締切は公式でまだ確かめていない",
+                "開催地は広島（RCC文化センター）なので、移動と出張の手配がいる",
+                "開催日（2027年2月13日）の前後3日に鳴海さんの予定は入っていない"
               ],
-              "confidence": "strong",
-              "caveat": null
+              "confidence": "conditional",
+              "caveat": "締切が公式でまだ確かめられておらず、広島への出張も必要です。"
             },
             {
               "event_id": "x002",
-              "theme": "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方",
-              "reason": "モニタリング・オブザーバビリティやインシデント管理が公募テーマにあり、聴衆がSREそのものなので、アラートの分類とダッシュボード作りの話がよく届く。",
+              "theme": "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方と、夜間呼び出しを月14回から5回にした進め方",
+              "reason": "テーマにモニタリング・オブザーバビリティ、インシデント管理、自動化・ツーリングが入っていて、アラートの分類とダッシュボードの話がそのまま合う、SREの大きなカンファレンス。",
               "evidence_activity_ids": [
                 "act102"
               ],
               "cautions": [
-                "応募締切は公式でまだ確認できていない",
-                "公募の形式がセッションだけで、LT枠が載っていない。初登壇で長めの発表になるため、ダッシュボードの作り方や分類のやり方まで広げて話を組み立てる必要がある",
-                "開催日（2027年2月20日）の前後に本人の予定は入っていないことを確認済み。ハイブリッド開催で会場は都内"
+                "締切は公式でまだ確かめていない",
+                "募集はセッション形式だけで、LT枠は確認できていない。LT向きのネタを、ダッシュボードの作り方まで広げてセッションの長さにする必要がある",
+                "開催日（2027年2月20日）の前後3日に鳴海さんの予定は入っていない"
               ],
               "confidence": "conditional",
-              "caveat": "セッション枠しかなく、初登壇の本人にはLTより重い発表になる。"
-            },
-            {
-              "event_id": "x001",
-              "theme": "AWS上のアラートを発報元×対応内容で分類し、夜間呼び出しを月14回から5回に減らした話",
-              "reason": "締切がはっきりしている（2026年12月23日）唯一の公募で、幅広いテーマを受け付けている。監視の仕組みがAWS上にあるなら、運用改善の事例として出せる。",
-              "evidence_activity_ids": [
-                "act102"
-              ],
-              "cautions": [
-                "根拠の投稿からは監視の仕組みがAWS上にあるかどうか分からないので、本人に確認が必要",
-                "開催日はまだ公式で確認できておらず、本人の予定と重ならないかは確かめられていない",
-                "発表は20分のセッションで、LTより長い"
-              ],
-              "confidence": "conditional",
-              "caveat": "AWSのイベントなので、監視の仕組みがAWS上でなければテーマが合わない。"
+              "caveat": "募集がセッション形式だけで締切も確かめられていないため、話を広げる準備と締切の確認が必要です。"
             }
           ]
         }
       },
       {
         "type": "tool_result",
-        "id": "toolu_01EY83e1THJ7E4uKePaeFLD2",
+        "id": "toolu_01KZaTeFWfUUiZZXvk4gxdV3",
         "name": "submit_venues",
         "ok": true,
-        "summary": "出し先3件を提出"
+        "summary": "出し先2件を提出"
       }
     ],
-    "run_usd": 0.07166360000000001
+    "run_usd": 0.0692372
   }
 }

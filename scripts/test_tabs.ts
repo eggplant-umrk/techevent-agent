@@ -27,7 +27,10 @@ async function main() {
   const rows = people.peopleRows();
   check("人の一覧は社員全員（カードのない人も出す）", rows.length === employees().length, `${rows.length}人`);
   check("カードのない人もいる", rows.some((r) => r.unpublished_cards === 0));
-  check("予定の埋まり具合は計算ができるまで空欄", rows.every((r) => r.load === null));
+  check("予定の埋まり具合は予定から計算した言葉（架空データは全員分かる）", rows.every((r) => r.load !== null && r.busy_text !== "予定は不明"), rows[0].busy_text);
+  const av = people.personDetail("e013")!.availability;
+  check("今後2週間の予定は時刻だけ（タイトルを持たない）", !!av.upcoming && av.upcoming.every((u) => Object.keys(u).sort().join(",") === "all_day,end,start"));
+  check("登壇経験の印は候補と同じ言い方", rows.every((r) => ["初登壇", "半年以内に登壇", "登壇経験あり"].includes(r.talk_tag)));
   const noCard = rows.find((r) => r.unpublished_cards === 0 && !people.personDetail(r.id)!.card_ids.length);
   check("カードのない人の詳細も開ける（最近の活動を出す）", !!noCard && Array.isArray(people.personDetail(noCard.id)!.recent_activities));
 
@@ -72,6 +75,7 @@ async function main() {
   const ev = rowsA.find((x) => x.kind === "event")!;
   const d = archive.archiveDetail("event", ev.id)!;
   check("過去のイベントの詳細に日付と登壇者", !!d.date && d.speakers.length > 0, `${d.title}／${d.speakers.join("・")}`);
+  check("過去のイベントの行にアンケートの件数が付く（イベント後の画面と同じ数）", rowsA.filter((x) => x.kind === "event").some((x) => (x.answers ?? 0) > 0));
 
   fs.rmSync(tmp, { force: true });
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");

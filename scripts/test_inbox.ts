@@ -53,30 +53,13 @@ async function main() {
   check("作業ログを保存する", ready.events.length === 2 && ready.run_usd === 0.1);
   check("既存の流れ（承認・下書き・書き戻し）から同じ依頼を引ける", resolveRequest({ request_id: added.id })?.message === ready.text);
 
-  // ---- 窓口の返す形
+  // ---- 窓口の返す形（候補の名前・理由は返さない）
   const view = inbox.publicView(ready, "http://localhost:3000");
   const keys = Object.keys(view).sort().join(",");
-  check("GET の形：id・status・summary・url", keys === "id,status,summary,url", keys);
+  check("GET の形：id・status・url だけ", keys === "id,status,url", keys);
   check("url は画面でその依頼を開くURL", view.url === `http://localhost:3000/?inbox=${added.id}`);
-  const cands = view.summary!.candidates;
-  check("候補ごとに name・confidence・reason_short", cands.length === req004.candidates.length && cands.every((c) => Object.keys(c).sort().join(",") === "confidence,name,reason_short"));
-  check("no_fit は reasons だけ", !view.summary!.no_fit || Object.keys(view.summary!.no_fit).join(",") === "reasons");
-  check("summary の文に内部の言葉がない", JSON.stringify(view.summary).length > 0 && [...cands.map((c) => c.reason_short), ...(view.summary!.no_fit?.reasons ?? [])].every((t) => internalTerms(t).length === 0));
-  const processingView = inbox.publicView({ ...ready, status: "processing" }, "http://localhost:3000");
-  check("準備中は summary を返さない", !("summary" in processingView));
-
-  // ---- 内部の言葉が入っていたら summary に出さない
-  const dirty = {
-    ...ready,
-    result: {
-      ...req004,
-      candidates: req004.candidates.map((c, i) => (i === 0 ? { ...c, reason: "百瀬さん（act088）は reviewed=false です。", theme: "初期表示の改善" } : c)),
-      no_fit: { reasons: ["e017 は外しました", "ほかに根拠のある人はいません"], next_checks: [] },
-    },
-  };
-  const dv = inbox.publicView(dirty, "http://localhost:3000").summary!;
-  check("理由に内部の言葉があればテーマ案に置き換える", dv.candidates[0].reason_short === "初期表示の改善", dv.candidates[0].reason_short);
-  check("見つからない理由は内部の言葉を含む文を落とす", dv.no_fit!.reasons.join("|") === "ほかに根拠のある人はいません", dv.no_fit!.reasons.join("|"));
+  const dump = JSON.stringify(view);
+  check("候補の名前・理由を返さない", req004.candidates.every((c) => !dump.includes(c.name) && !dump.includes(c.reason.slice(0, 10))));
 
   // ---- 失敗したらエラー
   const bad = inbox.addToInbox({ text: "失敗する依頼", source: "manual" }, async () => {
@@ -87,7 +70,7 @@ async function main() {
   });
   const err = inbox.getInboxItem(bad.id)!;
   check("失敗したらエラー（理由を残す）", err.status === "error" && err.error === "テスト用の失敗");
-  check("エラーは summary を返さない", !("summary" in inbox.publicView(err, "http://localhost:3000")));
+  check("エラーでも id・status・url だけ", Object.keys(inbox.publicView(err, "http://localhost:3000")).sort().join(",") === "id,status,url");
 
   // ---- 指名の読み取り（読み取りは偽物、社員データとの照合は本物のコード）
   const { resolveNominee } = await import("../lib/nominee");

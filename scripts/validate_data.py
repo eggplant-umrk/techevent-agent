@@ -91,6 +91,38 @@ for c in data.get("cards.json", []):
         check(rid in req_by_id and req_by_id[rid].get("nominated_employee_id") == c["employee_id"], f"{c['card_id']} bad request id {rid}")
     check(bool(c["evidence_activity_ids"] or c["published_ids"] or c.get("evidence_request_ids")), f"{c['card_id']} has no evidence")
 
+# surveys (v0.4): Google Forms CSV exports, data/surveys/{event_id}.csv. Fictional.
+import csv as _csv
+ev_by_id = {v["id"]: v for v in evs}
+emp_names = [e["name"] for e in emps]
+files = sorted((D / "surveys").glob("*.csv")) if (D / "surveys").exists() else []
+check(5 <= len(files) <= 6, f"surveys cover {len(files)} events (want 5-6)")
+for f in files:
+    ev_id = f.stem
+    ev = ev_by_id.get(ev_id)
+    check(ev is not None, f"surveys/{f.name}: unknown event")
+    rows = list(_csv.reader(f.read_text(encoding="utf-8").splitlines()))
+    head, body = rows[0], rows[1:]
+    check(head[0] == "タイムスタンプ", f"surveys/{f.name}: first column must be タイムスタンプ")
+    check(20 <= len(body) <= 40, f"surveys/{f.name}: {len(body)} answers (want 20-40)")
+    col = {h: i for i, h in enumerate(head)}
+    mail = next((i for h, i in col.items() if "メール" in h), None)
+    name = next((i for h, i in col.items() if "名前" in h), None)
+    talk = next((i for h, i in col.items() if "どの登壇" in h), None)
+    rate = next((i for h, i in col.items() if "満足度" in h), None)
+    for n, r in enumerate(body, 2):
+        check(len(r) == len(head), f"surveys/{f.name} row {n}: {len(r)} cells")
+        check(r[rate] in ("1", "2", "3", "4", "5"), f"surveys/{f.name} row {n}: rating {r[rate]}")
+        if talk is not None and ev:
+            check(any(r[talk].startswith(eid_name) for eid_name in [eid[s_]["name"] for s_ in ev["speaker_ids"]]), f"surveys/{f.name} row {n}: talk {r[talk]}")
+        if mail is not None and r[mail]:
+            check(r[mail].endswith("@example.com"), f"surveys/{f.name} row {n}: e-mail must be @example.com")
+        if name is not None and r[name]:
+            check(r[name] not in emp_names, f"surveys/{f.name} row {n}: an employee name in the name column")
+        free = [c for i, c in enumerate(r) if i not in (mail, name, talk)]
+        check(not any("@" in c for c in free), f"surveys/{f.name} row {n}: e-mail outside the e-mail column")
+        check(not any(en in c for c in free for en in emp_names), f"surveys/{f.name} row {n}: an employee name in a free answer")
+
 print(f"employees={len(emps)} activities={len(acts)} {dict(types)} events={len(evs)} requests={len(reqs)} rules={len(rules)}")
 print(f"top5 talk share={top5_share:.0%}  attendance rate range="
       f"{min(v['attendance_rate'] for v in evs)}-{max(v['attendance_rate'] for v in evs)}")

@@ -15,6 +15,7 @@ export function CardDetail({
   onClose,
   onSave,
   onResolve,
+  onResolveReaction,
   onFindVenues,
   onVenueDraft,
 }: {
@@ -23,10 +24,13 @@ export function CardDetail({
   onClose: () => void;
   onSave: (patch: CardPatch) => Promise<void>;
   onResolve: (theme: string, accept: boolean) => Promise<void>;
+  /** イベント後の反応の提案（反応のまとめ・需要あり）を採用／見送り */
+  onResolveReaction: (reactionId: string, accept: boolean) => Promise<void>;
   /** カード → 出し先を探す（渡されたときだけボタンを出す） */
   onFindVenues?: (cardId: string, onEvent: (e: VenueEvent) => void) => Promise<void>;
   onVenueDraft?: (body: VenueDraftBody) => Promise<DraftResponse>;
 }) {
+  const reactions = (card.reactions ?? []).filter((r) => r.status !== "dismissed");
   const [venueDirty, setVenueDirty] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState(false);
@@ -133,7 +137,7 @@ export function CardDetail({
             {e?.name ?? card.employee_id}
           </h2>
           <p className="meta">
-            {e?.business_unit}・{e?.role}・登壇{e?.past_talk_count ?? 0}回{e?.last_talk_date ? `（最終 ${e.last_talk_date}）` : ""}・忙しさ{e?.workload}
+            {e?.business_unit}・{e?.role}・登壇{e?.past_talk_count ?? 0}回{e?.last_talk_date ? `（最終 ${e.last_talk_date}）` : ""}・{e?.busy_text}
           </p>
           <div className="tags">
             <CardMarks card={card} />
@@ -165,6 +169,53 @@ export function CardDetail({
                       却下
                     </button>
                   </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {reactions.length > 0 && (
+          <section className="block" aria-labelledby="cd-reactions">
+            <h3 id="cd-reactions" className="h3">
+              イベントの反応
+            </h3>
+            <ul className="pending-list">
+              {reactions.map((r) => (
+                <li key={r.id}>
+                  <span className="reaction">
+                    {r.status === "pending" && <Tag tone="warn">提案</Tag>}{" "}
+                    {r.kind === "demand" ? (
+                      <>
+                        <span className="strong">需要あり：</span>「{r.text}」を聞きたいという声
+                      </>
+                    ) : (
+                      <span className="strong">{r.text}</span>
+                    )}
+                    <br />
+                    <span className="meta">
+                      {r.event_date}「{r.event_title}」
+                      {r.kind === "reception" && r.count !== null && `・回答${r.count}件・平均${r.average?.toFixed(1)}`}
+                    </span>
+                    {r.kind === "reception" && (r.hits.length > 0 || r.stumbles.length > 0) && (
+                      <span className="meta">
+                        <br />
+                        {r.hits.length > 0 && `良かった点：${r.hits.join("、")}`}
+                        {r.hits.length > 0 && r.stumbles.length > 0 && "／"}
+                        {r.stumbles.length > 0 && r.stumbles.join("、")}
+                      </span>
+                    )}
+                  </span>
+                  {r.status === "pending" && (
+                    <span className="btn-row">
+                      <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(() => onResolveReaction(r.id, true))}>
+                        採用
+                      </button>
+                      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => run(() => onResolveReaction(r.id, false))}>
+                        見送り
+                      </button>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

@@ -193,6 +193,14 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiReady, api]);
 
+  // アーカイブを開いたとき、何も選んでいなければアンケートのある一番新しいイベントを開く
+  useEffect(() => {
+    if (tab !== "archive" || archiveKey || !archiveLoaded) return;
+    const first = archiveRows.find((r) => r.kind === "event" && (r.answers ?? 0) > 0) ?? archiveRows[0];
+    if (first) void openArchive(first.kind, first.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, archiveLoaded, archiveRows]);
+
   const units = useMemo(() => [...new Set(people.map((p) => p.business_unit))].sort(), [people]);
   const personCards = useMemo(() => (personId ? cards.filter((c) => c.employee_id === personId) : []), [cards, personId]);
 
@@ -572,7 +580,15 @@ export default function Home() {
       {tab === "archive" && (
         <main className="main">
           <ArchiveList rows={archiveRows} loaded={archiveLoaded} openKey={archiveKey} onOpen={(k, id) => void openArchive(k, id)} />
-          <ArchiveView detail={archiveDetail} />
+          <ArchiveView
+            detail={archiveDetail}
+            api={api}
+            onOpenCard={(id) => openCard(id)}
+            onChanged={() => {
+              void loadCards();
+              void loadArchive();
+            }}
+          />
         </main>
       )}
 
@@ -584,6 +600,10 @@ export default function Home() {
           onClose={() => setDetail(null)}
           onSave={async (p) => {
             await api.editCard(detailCard.card_id, p);
+            await loadCards();
+          }}
+          onResolveReaction={async (reactionId, accept) => {
+            await api.resolveReaction(detailCard.card_id, reactionId, accept);
             await loadCards();
           }}
           onResolve={async (theme, accept) => {

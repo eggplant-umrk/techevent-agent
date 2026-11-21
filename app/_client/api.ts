@@ -8,6 +8,9 @@ import type {
   Card,
   CardPatch,
   DraftBody,
+  EventDetail,
+  EventListItem,
+  ImportResult,
   InboxDetail,
   InboxListItem,
   ModelChoice,
@@ -16,6 +19,7 @@ import type {
   OutcomeBody,
   OutreachDraft,
   SpeakingRequest,
+  SurveyEvent,
   VenueDraftBody,
   VenueEvent,
   ArchiveDetail,
@@ -55,6 +59,16 @@ export interface Api {
   inboxDetail(id: string): Promise<InboxDetail>;
   /** 開いた印を付ける */
   inboxOpen(id: string): Promise<void>;
+  /** 過去イベントの一覧（新しい順） */
+  events(): Promise<EventListItem[]>;
+  /** イベントの詳細（数字はコードで計算済み） */
+  eventDetail(id: string): Promise<EventDetail>;
+  /** アンケートを分析してカードに書き戻す（作業ログを流す） */
+  analyzeEvent(id: string, onEvent: (e: SurveyEvent) => void): Promise<void>;
+  /** イベント後の反応の提案を採用／見送り */
+  resolveReaction(cardId: string, reactionId: string, accept: boolean): Promise<void>;
+  /** Googleフォームの CSV を取り込む（個人情報の列は捨てる） */
+  importSurvey(id: string, csv: string): Promise<ImportResult>;
   /** カード → 出し先を探す（作業ログを流す） */
   venues(cardId: string, onEvent: (e: VenueEvent) => void): Promise<void>;
   /** カード → 出し先：本人への声かけ文の下書き（送らない） */
@@ -126,6 +140,13 @@ export const realApi: Api = {
   inboxOpen: async (id) => {
     await json(await post(`/api/inbox/${encodeURIComponent(id)}/open`));
   },
+  events: async () => (await json<{ events: EventListItem[] }>(await fetch("/api/events"))).events,
+  eventDetail: async (id) => json(await fetch(`/api/events/${encodeURIComponent(id)}`)),
+  analyzeEvent: async (id, onEvent) => readNdjson(await post(`/api/events/${encodeURIComponent(id)}/analyze`), onEvent),
+  resolveReaction: async (card_id, reaction_id, accept) => {
+    await json(await post("/api/cards/reactions", { card_id, reaction_id, accept }));
+  },
+  importSurvey: async (id, csv) => json(await post(`/api/events/${encodeURIComponent(id)}/import`, { csv })),
   venues: async (cardId, onEvent) => readNdjson(await post("/api/venues", { card_id: cardId }), onEvent),
   venueDraft: async (body) => json(await post("/api/venues/draft", body)),
   people: async () => (await json<{ people: PersonRow[] }>(await fetch("/api/people"))).people,

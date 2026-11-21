@@ -72,6 +72,17 @@ export function checkDate(text: string, quote: string | null, receivedAt: string
   return { date: same < limit ? make(recvYear + 1) : same, reason: null };
 }
 
+/** 文に曜日（「（木）」「(Thu)」など）が書いてあれば、その日付の曜日と合っているか。書いていなければ true */
+export function weekdayMatches(text: string, date: string): boolean {
+  const t = text.normalize("NFKC");
+  const ja = t.match(/[(（]\s*([月火水木金土日])\s*(?:曜日?)?\s*[)）]/);
+  const en = t.match(/[(（]\s*(sun|mon|tue|wed|thu|fri|sat)[a-z]*\.?\s*[)）]/i);
+  if (!ja && !en) return true;
+  const dow = new Date(`${date}T00:00:00Z`).getUTCDay();
+  if (ja) return "日月火水木金土"[dow] === ja[1];
+  return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][dow] === en![1].toLowerCase();
+}
+
 /** 日程の手がかりの確かめ（コード）：言い回しそのものが会話の中にあるときだけ使う（20字まで）。日程が決まっていれば使わない */
 export function checkDateHint(text: string, hint: Quoted | null | undefined, date: string | null): string | null {
   const v = hint?.value?.trim();
@@ -99,12 +110,22 @@ export function checkIntake(text: string, raw: RawIntake, receivedAt: string): {
   const format = plain("format");
   const theme = plain("theme");
   const organizer = plain("organizer");
-  const d = raw.date?.value ? checkDate(text, raw.date.quote, receivedAt) : { date: null, reason: "会話の中でまだ決まっていません" };
+  let d = raw.date?.value ? checkDate(text, raw.date.quote, receivedAt) : { date: null as string | null, reason: "会話の中でまだ決まっていません" as string | null };
+  let hint = checkDateHint(text, raw.date_hint, d.date);
+  // Agent が日程を「手がかり」に回しても、手がかりがちょうど1日（期間・候補・「ごろ」でない）で、曜日が書いてあれば合っているなら、決まっているとする
+  // （会話に指示の文などが混ざると、Agent が言い切らずに手がかりに回すことがあるため。判定はコード）
+  if (!d.date && hint) {
+    const fromHint = checkDate(text, hint, receivedAt);
+    if (fromHint.date && weekdayMatches(hint, fromHint.date)) {
+      d = fromHint;
+      hint = null;
+    }
+  }
   if (d.reason) reasons.date = d.reason;
   const intake: IntakeReading = {
     event_name,
     date: d.date,
-    date_hint: checkDateHint(text, raw.date_hint, d.date),
+    date_hint: hint,
     format,
     theme,
     organizer,

@@ -6,7 +6,7 @@ import { ACTIVITY_LABEL, FIELD_LABEL, FORMAT_LABEL, md, REASON_LABEL, RESULT_LAB
 import { CardMarks, ErrorLine, statusText, Tag } from "./ui";
 
 /** Card detail as a side sheet (full screen on a phone). Native <dialog>: Esc closes, focus stays inside.
- *  外側（暗い部分）のクリックでも閉じる。ただし書きかけの入力があるときは閉じない。 */
+ *  外側（暗い部分）のクリックでも閉じる。書きかけの入力があるときは、外側クリックでも Esc でも閉じない（×は閉じる）。 */
 export function CardDetail({
   card,
   focusEvidence,
@@ -45,15 +45,31 @@ export function CardDetail({
     return ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
   }
 
+  const KEEP_OPEN = "書きかけの内容があるので閉じませんでした。保存するか「やめる」を押してから閉じてください。";
+
   function onBackdropClick(ev: React.MouseEvent<HTMLDialogElement>) {
     const outside = pressedOutside.current && isOutside(ev);
     pressedOutside.current = false;
     if (!outside) return;
     if (dirty) {
-      setError("書きかけの内容があるので閉じませんでした。保存するか「やめる」を押してから閉じてください。");
+      setError(KEEP_OPEN);
       return;
     }
     ref.current?.close(); // onClose が呼ばれる（Esc・×と同じ閉じ方）
+  }
+
+  /** Esc（<dialog> の cancel）。書きかけがあるときは外側クリックと同じく閉じない */
+  function onCancel(ev: React.SyntheticEvent<HTMLDialogElement>) {
+    if (!dirty) return;
+    ev.preventDefault();
+    setError(KEEP_OPEN);
+  }
+
+  /** Chrome は cancel を止められるのが1回までで、続けて Esc を押すと閉じてしまう。キーの段階で止める */
+  function onKeyDown(ev: React.KeyboardEvent<HTMLDialogElement>) {
+    if (ev.key !== "Escape" || !dirty) return;
+    ev.preventDefault();
+    setError(KEEP_OPEN);
   }
 
   useEffect(() => {
@@ -97,6 +113,8 @@ export function CardDetail({
       className="sheet"
       aria-labelledby="cd-title"
       onClose={onClose}
+      onCancel={onCancel}
+      onKeyDown={onKeyDown}
       onMouseDown={(ev) => (pressedOutside.current = isOutside(ev))}
       onClick={onBackdropClick}
     >

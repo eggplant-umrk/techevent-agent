@@ -266,3 +266,21 @@ textarea.input { resize: vertical; }
   .sheet { width: 100vw; border-left: 0; }
   .sheet-head, .sheet-body, .sheet-foot { padding-left: 16px; padding-right: 16px; }
 }
+
+/* ---- 受信箱（画面の一番上） ---- */
+.inbox { margin: 16px 24px 0; }
+.inbox-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; max-height: 260px; overflow-y: auto; }
+.inbox-item {
+  width: 100%; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left;
+  min-height: 40px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  background: var(--surface); cursor: pointer; font-size: 13px;
+}
+.inbox-item:hover { border-color: var(--accent-line); }
+.inbox-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.inbox-item[aria-current="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.inbox-marks { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.inbox-title { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .inbox { margin: 16px 16px 0; }
+  .inbox-list { grid-template-columns: 1fr; }
+}

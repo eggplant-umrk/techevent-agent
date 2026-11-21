@@ -1,0 +1,1125 @@
+{
+  "at": "2026-11-21T06:40:10.065Z",
+  "version": "v0.2",
+  "mode": "stage1",
+  "spent_usd": 0.5593241999999989,
+  "pass_rate": 1,
+  "checks": [
+    {
+      "name": "req001 根拠idが実在",
+      "pass": true,
+      "detail": "6件すべて実在"
+    },
+    {
+      "name": "req001 送信なし",
+      "pass": true,
+      "detail": "送信の処理・ルートなし"
+    },
+    {
+      "name": "req001 想定候補が上位3人",
+      "pass": true,
+      "detail": "top3=e024,e012,e013 想定=e012,e018"
+    },
+    {
+      "name": "req001 条件付きの候補に引っかかる点の文がある",
+      "pass": true,
+      "detail": "条件付き1人すべて文あり"
+    },
+    {
+      "name": "req001 使う人向けの文に内部の言葉がない",
+      "pass": true,
+      "detail": "内部の項目名・値・idなし"
+    },
+    {
+      "name": "req001 注意点の日付が開催日と食い違わない",
+      "pass": true,
+      "detail": "開催日 2026-12-17 と矛盾なし"
+    },
+    {
+      "name": "req002 根拠idが実在",
+      "pass": true,
+      "detail": "5件すべて実在"
+    },
+    {
+      "name": "req002 送信なし",
+      "pass": true,
+      "detail": "送信の処理・ルートなし"
+    },
+    {
+      "name": "req002 想定候補が上位3人",
+      "pass": true,
+      "detail": "top3=e013,e014,e026 想定=e013,e014"
+    },
+    {
+      "name": "req002 条件付きの候補に引っかかる点の文がある",
+      "pass": true,
+      "detail": "条件付き2人すべて文あり"
+    },
+    {
+      "name": "req002 使う人向けの文に内部の言葉がない",
+      "pass": true,
+      "detail": "内部の項目名・値・idなし"
+    },
+    {
+      "name": "req002 注意点の日付が開催日と食い違わない",
+      "pass": true,
+      "detail": "開催日 2027-01-21 と矛盾なし"
+    },
+    {
+      "name": "req003 根拠idが実在",
+      "pass": true,
+      "detail": "3件すべて実在"
+    },
+    {
+      "name": "req003 送信なし",
+      "pass": true,
+      "detail": "送信の処理・ルートなし"
+    },
+    {
+      "name": "req003 想定候補が上位3人",
+      "pass": true,
+      "detail": "top3=e015,e016 想定=e015,e016"
+    },
+    {
+      "name": "req003 条件付きの候補に引っかかる点の文がある",
+      "pass": true,
+      "detail": "条件付き2人すべて文あり"
+    },
+    {
+      "name": "req003 使う人向けの文に内部の言葉がない",
+      "pass": true,
+      "detail": "内部の項目名・値・idなし"
+    },
+    {
+      "name": "req003 注意点の日付が開催日と食い違わない",
+      "pass": true,
+      "detail": "開催日 2027-02-10 と矛盾なし"
+    },
+    {
+      "name": "req004 根拠idが実在",
+      "pass": true,
+      "detail": "2件すべて実在"
+    },
+    {
+      "name": "req004 送信なし",
+      "pass": true,
+      "detail": "送信の処理・ルートなし"
+    },
+    {
+      "name": "req004 想定候補が上位3人",
+      "pass": true,
+      "detail": "top3=e012,e002,e017 想定=e012"
+    },
+    {
+      "name": "req004 条件付きの候補に引っかかる点の文がある",
+      "pass": true,
+      "detail": "条件付き2人すべて文あり"
+    },
+    {
+      "name": "req004 使う人向けの文に内部の言葉がない",
+      "pass": true,
+      "detail": "内部の項目名・値・idなし"
+    },
+    {
+      "name": "req004 注意点の日付が開催日と食い違わない",
+      "pass": true,
+      "detail": "開催日 2027-01-28 と矛盾なし"
+    },
+    {
+      "name": "req004 代わりの提案",
+      "pass": true,
+      "detail": "代わり=e012,e017"
+    },
+    {
+      "name": "req004 指名された本人が候補にいる",
+      "pass": true,
+      "detail": "2位・conditional：当日が合宿と重なり、忙しさも最大、テーマも本人の取り組みとずれるので、主催者には百瀬さんを代わりに提案し、笹倉さんの名前を残すならアーカイブ出演など別の形で関われないか相談するのがよさそうです。"
+    },
+    {
+      "name": "req005 根拠idが実在",
+      "pass": true,
+      "detail": "2件すべて実在"
+    },
+    {
+      "name": "req005 送信なし",
+      "pass": true,
+      "detail": "送信の処理・ルートなし"
+    },
+    {
+      "name": "req005 想定候補が上位3人",
+      "pass": true,
+      "detail": "top3=e024,e007 想定=e024"
+    },
+    {
+      "name": "req005 条件付きの候補に引っかかる点の文がある",
+      "pass": true,
+      "detail": "条件付き1人すべて文あり"
+    },
+    {
+      "name": "req005 使う人向けの文に内部の言葉がない",
+      "pass": true,
+      "detail": "内部の項目名・値・idなし"
+    },
+    {
+      "name": "req005 注意点の日付が開催日と食い違わない",
+      "pass": true,
+      "detail": "開催日 2027-02-18 と矛盾なし"
+    },
+    {
+      "name": "req005 代わりの提案",
+      "pass": true,
+      "detail": "代わり=e024"
+    },
+    {
+      "name": "req005 指名された本人が候補にいる",
+      "pass": true,
+      "detail": "2位・conditional：テーマが本人の取り組み（クラウドセキュリティ）とずれるため、織部さんと組む共同登壇か、クラウドセキュリティから見た脆弱性管理の話にしてもらえるかの確認が必要です。"
+    }
+  ],
+  "rows": [
+    {
+      "request_id": "req001",
+      "pattern": "open_slot",
+      "top3": [
+        "e024",
+        "e012",
+        "e013"
+      ],
+      "expected": [
+        "e012",
+        "e018"
+      ],
+      "primary": "e012",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [],
+      "alternative_ok": null,
+      "run_usd": 0.136024,
+      "steps": 3,
+      "result": {
+        "run_id": "21ae2519-a8e6-48e0-962b-6127cc2f943d",
+        "request_id": "req001",
+        "request_pattern": "open_slot",
+        "summary": "12月17日のSaaSエンジニア向け10分LTで、テーマはお任せの依頼です。時流に合っていて、まだ社外に出していない取り組みを持つ人から、登壇経験がなく、忙しさと予定にも問題が少ない人を優先して選びました。数字で成果を示しやすく、LTに向いた題材を持つ人を上に並べています。",
+        "nominee_assessment": null,
+        "learnings_applied": [
+          "3人ともネタ帳に打診履歴がなく、過去の辞退理由で順位を下げた人はいません"
+        ],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e024",
+            "name": "織部 隼人",
+            "business_unit": "セキュリティ",
+            "role": "セキュリティエンジニア",
+            "workload": 3,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に減らした自動トリアージ",
+            "reason": "全社に展開した脆弱性の自動振り分けで、アラートを月400件から50件に減らした実績があり、時流のサプライチェーンセキュリティにそのまま合い、LT向きの分かりやすい数字もそろっています。",
+            "evidence": [
+              {
+                "id": "act037",
+                "type": "design_doc",
+                "date": "2026-09-29",
+                "title": "依存ライブラリ脆弱性の自動トリアージ",
+                "where": "security/design-docs"
+              },
+              {
+                "id": "act100",
+                "type": "slack_post",
+                "date": "2026-11-04",
+                "title": "脆弱性アラート、月400件→対応要50件に",
+                "where": "#security"
+              }
+            ],
+            "cautions": [
+              "登壇は今回が初めてなので、資料づくりの支援があると安心です",
+              "ネタ帳のカードは未確認です"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e024-01",
+            "card": {
+              "card_id": "card-e024-01",
+              "employee_id": "e024",
+              "summary": "全リポジトリでSBOMを生成し、依存ライブラリの脆弱性アラートを「実際に到達可能なコードか」で自動で振り分ける仕組みを設計・全社展開した。対応が必要なアラートは全体の12%に絞り込まれ、開発チームに届くアラートは月400件から50件程度に減った。判定ロジックはOSSとして切り出すことを検討中。",
+              "themes": [
+                "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に減らした自動トリアージ",
+                "「対応すべき12%」をどう見分けるか：到達可能性で脆弱性アラートを振り分ける設計と誤判定の扱い",
+                "脆弱性管理の自動化を全社展開するまで：開発チームをアラート疲れから解放する"
+              ],
+              "evidence_activity_ids": [
+                "act037",
+                "act100"
+              ],
+              "format": "lt",
+              "format_reason": "月400件→50件、12%という分かりやすい数字があり、時流のサプライチェーンセキュリティにも合うため、登壇経験がない本人の最初の一歩として5〜10分のLTで成果を伝えやすい。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-11-04",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:27:20.794Z",
+              "updated_at": "2026-11-21T05:27:20.794Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e012",
+            "name": "百瀬 結衣",
+            "business_unit": "バクラク",
+            "role": "フロントエンドエンジニア",
+            "workload": 2,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "初期JSを2.1MBから900KBへ：SaaSフロントエンドのバンドル改善でLCPを1.8秒短縮",
+            "reason": "不要な依存の削除とルート単位のコード分割で、LCPを1.8秒短くした取り組みです。時流のWebパフォーマンスに合い、SaaSエンジニアが聞き手のLTに向いています。",
+            "evidence": [
+              {
+                "id": "act088",
+                "type": "github_pr",
+                "date": "2026-10-28",
+                "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+                "where": "bakuraku/web-frontend"
+              }
+            ],
+            "cautions": [
+              "根拠はプルリクエスト1件（10月28日）です",
+              "登壇は今回が初めてです",
+              "ネタ帳のカードは未確認です"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e012-01",
+            "card": {
+              "card_id": "card-e012-01",
+              "employee_id": "e012",
+              "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+              "themes": [
+                "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+                "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+              ],
+              "evidence_activity_ids": [
+                "act088"
+              ],
+              "format": "blog",
+              "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-28",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:23.278Z",
+              "updated_at": "2026-11-21T05:26:23.278Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 3,
+            "employee_id": "e013",
+            "name": "早乙女 蓮",
+            "business_unit": "Ai Workforce",
+            "role": "MLエンジニア",
+            "workload": 4,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "モデル切り替えの判断を1週間から1日に：AIエージェント評価基盤を本番で運用して分かったこと",
+            "reason": "LLMに判定させる回帰テストをCIに組み込み、人手評価との一致率87%、モデル切り替えの判断を1日に短縮しました。時流のAIエージェントの本番運用と評価にいちばん合っています。",
+            "evidence": [
+              {
+                "id": "act019",
+                "type": "github_pr",
+                "date": "2026-09-14",
+                "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
+                "where": "ai-workforce/agent-eval"
+              },
+              {
+                "id": "act050",
+                "type": "slack_post",
+                "date": "2026-10-06",
+                "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
+                "where": "#ai-workforce-dev"
+              },
+              {
+                "id": "act073",
+                "type": "design_doc",
+                "date": "2026-10-20",
+                "title": "AIエージェント評価基盤 設計ドキュメント v2",
+                "where": "ai-workforce/design-docs"
+              }
+            ],
+            "cautions": [
+              "忙しさが4と高めです",
+              "登壇は今回が初めてです",
+              "ネタ帳のカードは未確認です",
+              "忙しい（忙しさ4）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "忙しさが4なので、12月中旬までにLTの準備時間が取れるか、本人に確認が必要です。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e013-01",
+            "card": {
+              "card_id": "card-e013-01",
+              "employee_id": "e013",
+              "summary": "AIエージェントの評価基盤を作り、プロンプトやツール定義を変えたときに過去の正解ケース200件で挙動を自動評価する回帰テストをCIに組み込んだ。判定LLMのブレは3回判定の多数決で抑え、人手評価との一致率は87%。新モデルへの切り替え判断は手動確認で1週間かかっていたのが1日になり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。",
+              "themes": [
+                "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：200件の正解ケースと3回判定の多数決",
+                "モデル切り替えの判断を1週間から1日に：エージェント評価基盤を本番運用して分かったこと",
+                "判定LLMは信用できるか：人手評価との一致率87%の測り方と評価コストの見積もり"
+              ],
+              "evidence_activity_ids": [
+                "act019",
+                "act050",
+                "act073"
+              ],
+              "format": "blog",
+              "format_reason": "設計ドキュメントに評価ケースの管理・判定LLMの選定・一致率の測り方・コストの見積もりまで具体的な中身と数字がそろっていて、登壇経験のない本人がまず文章で出すのに向いているため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-20",
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:12:03.817Z",
+              "updated_at": "2026-11-21T05:12:03.817Z",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "req002",
+      "pattern": "theme_specified",
+      "top3": [
+        "e013",
+        "e014",
+        "e026"
+      ],
+      "expected": [
+        "e013",
+        "e014"
+      ],
+      "primary": "e013",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [],
+      "alternative_ok": null,
+      "run_usd": 0.09229419999999999,
+      "steps": 4,
+      "result": {
+        "run_id": "841183cd-045c-4961-a600-0318fe5e607a",
+        "request_id": "req002",
+        "request_pattern": "theme_specified",
+        "summary": "「AIエージェントの品質をどう評価・担保しているか」というテーマ指定の依頼（2027年1月21日・オンライン・25分）です。評価基盤を実際に作り、数値と試行錯誤の話がそろっている早乙女さんを第一候補にしました。プロンプト変更時の評価運用をしている東雲さんを、共同登壇もできる条件付きの候補として続けています。三人目は、効果測定の観点で話せる鷹野さんを条件付きで入れました。ガードレール設計の久住さんは、当日に別の社外登壇が入っており、9月に登壇したばかりでもあるため外しています。",
+        "nominee_assessment": null,
+        "learnings_applied": [],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e013",
+            "name": "早乙女 蓮",
+            "business_unit": "Ai Workforce",
+            "role": "MLエンジニア",
+            "workload": 4,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "AIエージェントの品質をCIで担保する：LLM-as-a-judgeの回帰テスト200件と、人手評価との一致率87%までの試行錯誤",
+            "reason": "エージェント評価基盤を作って本番で回しており（モデル切り替えの判断が1週間から1日に、一致率87%、判定のブレは試行錯誤中）、依頼が求める数値と失敗談がそろっていて、時流の『エージェントの本番運用と評価』にもそのまま合います。",
+            "evidence": [
+              {
+                "id": "act019",
+                "type": "github_pr",
+                "date": "2026-09-14",
+                "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
+                "where": "ai-workforce/agent-eval"
+              },
+              {
+                "id": "act050",
+                "type": "slack_post",
+                "date": "2026-10-06",
+                "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
+                "where": "#ai-workforce-dev"
+              },
+              {
+                "id": "act073",
+                "type": "design_doc",
+                "date": "2026-10-20",
+                "title": "AIエージェント評価基盤 設計ドキュメント v2",
+                "where": "ai-workforce/design-docs"
+              }
+            ],
+            "cautions": [
+              "忙しさ4なので準備時間を確認したい",
+              "登壇は初めてなので、設計ドキュメントをもとに資料づくりを支援するとよい",
+              "ネタ帳のカードは技術広報が未確認",
+              "忙しい（忙しさ4）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e013-01",
+            "card": {
+              "card_id": "card-e013-01",
+              "employee_id": "e013",
+              "summary": "AIエージェントの評価基盤を作り、プロンプトやツール定義を変えたときに過去の正解ケース200件で挙動を自動評価する回帰テストをCIに組み込んだ。判定LLMのブレは3回判定の多数決で抑え、人手評価との一致率は87%。新モデルへの切り替え判断は手動確認で1週間かかっていたのが1日になり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。",
+              "themes": [
+                "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：200件の正解ケースと3回判定の多数決",
+                "モデル切り替えの判断を1週間から1日に：エージェント評価基盤を本番運用して分かったこと",
+                "判定LLMは信用できるか：人手評価との一致率87%の測り方と評価コストの見積もり"
+              ],
+              "evidence_activity_ids": [
+                "act019",
+                "act050",
+                "act073"
+              ],
+              "format": "blog",
+              "format_reason": "設計ドキュメントに評価ケースの管理・判定LLMの選定・一致率の測り方・コストの見積もりまで具体的な中身と数字がそろっていて、登壇経験のない本人がまず文章で出すのに向いているため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-20",
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:12:03.817Z",
+              "updated_at": "2026-11-21T05:12:03.817Z",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e014",
+            "name": "東雲 健吾",
+            "business_unit": "Ai Workforce",
+            "role": "バックエンドエンジニア",
+            "workload": 3,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "プロンプト変更で壊さないために：PRに評価結果を添えるレビューと本番A/B比較",
+            "reason": "プロンプトをリポジトリで管理し、変更のたびに評価結果をPRに添え、本番ではフラグでA/B比較する運用を始めていて、『品質をどう担保しているか』の運用面を話せます。",
+            "evidence": [
+              {
+                "id": "act043",
+                "type": "slack_post",
+                "date": "2026-10-01",
+                "title": "プロンプトをコードと同じようにレビューする運用を始めた",
+                "where": "#ai-workforce-dev"
+              }
+            ],
+            "cautions": [
+              "根拠はSlack投稿1件だけ",
+              "数値がまだない",
+              "登壇は初めて",
+              "ネタ帳のカードは技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "根拠が1件だけで数値もないため、25分の単独登壇は難しそうです。同じ事業部の早乙女さんとの共同登壇（評価基盤と運用の2部構成）なら成り立ちます。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e014-01",
+            "card": {
+              "card_id": "card-e014-01",
+              "employee_id": "e014",
+              "summary": "プロンプトをリポジトリで管理し、変更はPRでレビューして評価結果を添える運用を始めた。本番ではフラグで切り替えてA/B比較もできるようにし、「なんとなく変えて壊れる」ことがなくなった。",
+              "themes": [
+                "プロンプトもコードレビューする：PRに評価結果を添える運用の始め方",
+                "フラグで切り替えるプロンプトの本番A/B比較",
+                "「なんとなく変えて壊れる」をなくすLLMプロダクトのプロンプト管理"
+              ],
+              "evidence_activity_ids": [
+                "act043"
+              ],
+              "format": "lt",
+              "format_reason": "運用の仕組みは具体的で時流（AIエージェントの本番運用と評価）にも合うが、数字がまだなく登壇経験もないため、5〜10分のLTから始めるのがちょうどよい。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-01",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:28.116Z",
+              "updated_at": "2026-11-21T05:26:28.116Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 3,
+            "employee_id": "e026",
+            "name": "鷹野 未来",
+            "business_unit": "CTO室",
+            "role": "エンジニアリングマネージャー",
+            "workload": 4,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "社内向けAIエージェントの効果をどう測るか：オンボーディングでの試験導入と5名の反応",
+            "reason": "社内ドキュメントを参照するオンボーディング用エージェントを10月入社の5名で試験導入し、効果の測り方を考えている段階で、エージェント導入の評価という切り口で話せます。",
+            "evidence": [
+              {
+                "id": "act110",
+                "type": "slack_post",
+                "date": "2026-11-11",
+                "title": "新入社員オンボーディングにAIエージェントを試験導入",
+                "where": "#cto-office"
+              }
+            ],
+            "cautions": [
+              "忙しさ4",
+              "根拠はSlack投稿1件だけで、効果は体感の声にとどまる",
+              "登壇は初めて",
+              "ネタ帳のカードは技術広報が未確認",
+              "忙しい（忙しさ4）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "テーマが少しずれ（本番プロダクトの品質担保ではなく、社内の試験導入の効果測定）、根拠も1件だけです。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e026-01",
+            "card": {
+              "card_id": "card-e026-01",
+              "employee_id": "e026",
+              "summary": "新入社員のオンボーディングにAIエージェントを試験導入した。エージェントは社内ドキュメントを参照して質問に答え、初週のタスクも進める。10月入社の5名で試したところ、立ち上がりまでの期間が体感で半分になったという声があった。",
+              "themes": [
+                "社内ドキュメントを参照するAIエージェントで新入社員の初週を支える：試験導入の設計と5名の反応",
+                "立ち上がり期間が体感で半分に：オンボーディング用AIエージェントの効果をどう測るか"
+              ],
+              "evidence_activity_ids": [
+                "act110"
+              ],
+              "format": "blog",
+              "format_reason": "試験導入の段階で、材料は投稿1件と体感ベースの声だけです。登壇経験もないため、まずはブログで導入の経緯と初期の反応をまとめるのが合っています。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-11-11",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:27:32.778Z",
+              "updated_at": "2026-11-21T05:27:32.778Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "req003",
+      "pattern": "theme_specified",
+      "top3": [
+        "e015",
+        "e016"
+      ],
+      "expected": [
+        "e015",
+        "e016"
+      ],
+      "primary": "e015",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [],
+      "alternative_ok": null,
+      "run_usd": 0.08747479999999999,
+      "steps": 4,
+      "result": {
+        "run_id": "8f2aa091-1a56-4389-b612-137522abe17f",
+        "request_id": "req003",
+        "request_pattern": "theme_specified",
+        "summary": "金融系エンジニア向けに「障害対応と振り返りの文化」を20分で話す、テーマ指定の依頼と読みました。決済バッチ障害のポストモーテムを書いた芹沢さんがテーマに一番合い、次にオンコール改善の鳴海さんです。お二人とも登壇経験がなく、登壇者の偏りを減らすことにもつながります。ただ、お二人とも忙しさに不安があるため、どちらも条件付きにしています。",
+        "nominee_assessment": null,
+        "learnings_applied": [
+          "候補のお二人のカードには打診履歴がなく、過去の辞退や承諾は反映していません"
+        ],
+        "no_fit": {
+          "reasons": [
+            "障害対応や振り返りで実際に手を動かした根拠があるのは芹沢さんと鳴海さんだけで、3人目にあたる人が見つかりませんでした",
+            "笹倉さんの振り返りは開発プロセスの見直しで、障害の振り返りではありません。さらに最近登壇していて忙しさも最大なので外しました",
+            "監視アラートのしきい値を変えたという投稿（真壁さん・氷室さんほか）は日常の作業連絡で、登壇の根拠にするには足りません"
+          ],
+          "next_checks": []
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e015",
+            "name": "芹沢 葵",
+            "business_unit": "Fintech",
+            "role": "バックエンドエンジニア",
+            "workload": 5,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化をどう止め、振り返りを他チームに広げたか",
+            "reason": "金融の決済バッチ障害を振り返って書いたポストモーテムが他チームからも参考にされています。再発防止で処理時間も40%短くなっており、「障害の振り返り」という時流と金融系の聞き手の両方にぴったり合います。",
+            "evidence": [
+              {
+                "id": "act032",
+                "type": "design_doc",
+                "date": "2026-09-25",
+                "title": "ポストモーテム: 月末決済バッチの4時間遅延",
+                "where": "fintech/postmortems"
+              },
+              {
+                "id": "act057",
+                "type": "weekly_report",
+                "date": "2026-10-09",
+                "title": "週報 10/5-10/9 芹沢",
+                "where": "#weekly-fintech"
+              }
+            ],
+            "cautions": [
+              "忙しさが最大の5です",
+              "登壇経験はありません（カードでは短いLT向きとしています）",
+              "カードは未確認です",
+              "2月10日の前後に予定の重なりはありません",
+              "忙しい（忙しさ5）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "忙しさ5で20分のセッションを準備する時間が取れるか要確認です。難しければ、準備の軽いパネル登壇だけにする案もあります。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e015-01",
+            "card": {
+              "card_id": "card-e015-01",
+              "employee_id": "e015",
+              "summary": "9月末の月末決済バッチが4時間遅延した障害を振り返り、ロック競合とリトライの雪だるま化という原因を、検知から復旧までのタイムラインとともにポストモーテムにまとめた。再発防止としてバッチを分割・冪等化して本番に入れ、月末の処理時間は平均40%短くなった。ポストモーテムは他チームからも参考にしたいと声が上がっている。",
+              "themes": [
+                "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化をどう止めたか",
+                "決済バッチの分割と冪等化で月末の処理時間を平均40%短縮した話",
+                "他チームも参考にしたポストモーテムの書き方：金融バッチ障害のタイムラインと再発防止"
+              ],
+              "evidence_activity_ids": [
+                "act032",
+                "act057"
+              ],
+              "format": "lt",
+              "format_reason": "原因・対策・40%短縮という数字がそろった1本の障害事例で5〜10分に収めやすく、登壇経験0回の本人にとって最初の一歩として負担が小さいため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-09",
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:12:09.564Z",
+              "updated_at": "2026-11-21T05:12:09.564Z",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e016",
+            "name": "鳴海 慎",
+            "business_unit": "バクラク",
+            "role": "SRE",
+            "workload": 4,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "夜間呼び出しを月14回から5回に：アラートの分類で進めたオンコール改善と障害対応の負荷削減",
+            "reason": "アラートを発報元と対応内容で分類して対応不要なものを半分にし、夜間の呼び出しを月14回から5回に減らしました。障害対応の文化を支える運用改善として話せます。",
+            "evidence": [
+              {
+                "id": "act102",
+                "type": "design_doc",
+                "date": "2026-11-06",
+                "title": "オンコール負荷の可視化と削減",
+                "where": "bakuraku/sre-docs"
+              }
+            ],
+            "cautions": [
+              "忙しさは4で要注意です",
+              "根拠は11月6日の設計ドキュメント1件です",
+              "バクラクの事例なので、金融系の聞き手には少し遠いかもしれません",
+              "2月10日の前後に予定の重なりはありません",
+              "忙しい（忙しさ4）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "テーマが少しずれます（障害の振り返りではなくオンコール改善）。根拠も1件だけなので、パネルで話す役が向いています。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e016-01",
+            "card": {
+              "card_id": "card-e016-01",
+              "employee_id": "e016",
+              "summary": "アラートを発報元と対応内容で分類してオンコール負荷を可視化し、対応不要なアラートを半分に減らした。その結果、夜間呼び出しは月14回から5回になった。可視化に使ったダッシュボードの作り方もドキュメントにまとめている。",
+              "themes": [
+                "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
+                "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方"
+              ],
+              "evidence_activity_ids": [
+                "act102"
+              ],
+              "format": "lt",
+              "format_reason": "分かりやすい数字が出ていて取り組みもまとまっており、登壇経験のない本人が最初に話すなら5〜10分のLTがちょうどよいため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-11-06",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:32.694Z",
+              "updated_at": "2026-11-21T05:26:32.694Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "req004",
+      "pattern": "named_speaker",
+      "top3": [
+        "e012",
+        "e002",
+        "e017"
+      ],
+      "expected": [
+        "e012"
+      ],
+      "primary": "e012",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [
+        "e012",
+        "e017"
+      ],
+      "alternative_ok": true,
+      "run_usd": 0.1167714,
+      "steps": 4,
+      "result": {
+        "run_id": "89d47266-8b85-45de-a057-f6d99070e70b",
+        "request_id": "req004",
+        "request_pattern": "named_speaker",
+        "summary": "Web Performance Night（2027年1月28日、渋谷で対面、20分）で「大規模SaaSの初期表示改善」について話してほしいと、笹倉さんを名指しした依頼です。笹倉さんは取り組みがチームづくりと開発プロセスで、フロントエンドの性能とはずれています。忙しさも最大で、当日はバクラク開発組織の合宿と重なっています。このため、バクラクで初期表示を1.8秒短くした百瀬さんを代わりの登壇者として一番に推します。",
+        "nominee_assessment": "笹倉 由紀さん：これまでの発信はチームづくり・開発プロセス・型とテストの話で、フロントエンドの性能改善に取り組んだ記録は見つからず、テーマがずれています。忙しさは5段階で最大の5、最後の登壇は2026年10月9日（通算12回）で、登壇の多い人に入ります。予定を見ると2027年1月27〜29日がバクラク開発組織の合宿で、イベント当日と重なっています。本人が登壇するのは難しそうです。主催者には、同じバクラクのチームで初期表示を改善した百瀬さんを代わりに提案するのがよさそうです。",
+        "learnings_applied": [],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e012",
+            "name": "百瀬 結衣",
+            "business_unit": "バクラク",
+            "role": "フロントエンドエンジニア",
+            "workload": 2,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "初期JSを2.1MBから900KBへ：大規模SaaSでLCPを1.8秒縮めたバンドル改善",
+            "reason": "バクラクのWebフロントで不要な依存を消してルート単位でコードを分けた実績があり、数字もはっきりしていて依頼テーマ「大規模SaaSの初期表示改善」にそのまま合い、時流のWebパフォーマンスにも合う人です。",
+            "evidence": [
+              {
+                "id": "act088",
+                "type": "github_pr",
+                "date": "2026-10-28",
+                "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+                "where": "bakuraku/web-frontend"
+              }
+            ],
+            "cautions": [
+              "登壇はこれが初めてなので、資料づくりの手伝いがあると安心",
+              "ネタ帳のカードは技術広報がまだ確認していない",
+              "根拠は2026年10月28日の改善1件だけ"
+            ],
+            "is_alternative_to_nominee": true,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e012-01",
+            "card": {
+              "card_id": "card-e012-01",
+              "employee_id": "e012",
+              "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+              "themes": [
+                "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+                "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+              ],
+              "evidence_activity_ids": [
+                "act088"
+              ],
+              "format": "blog",
+              "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-28",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:23.278Z",
+              "updated_at": "2026-11-21T05:26:23.278Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e002",
+            "name": "笹倉 由紀",
+            "business_unit": "バクラク",
+            "role": "エンジニアリングマネージャー",
+            "workload": 5,
+            "past_talk_count": 12,
+            "last_talk_date": "2026-10-09",
+            "theme": "大規模SaaSのフロントエンド性能改善を支えるチームと開発プロセス",
+            "reason": "主催者がlayerx.goのアーカイブを見て名指しした人ですが、本人の取り組みは開発プロセスとチームづくりが中心です。",
+            "evidence": [],
+            "cautions": [
+              "イベント当日はバクラク開発組織の合宿（1月27〜29日）と重なる",
+              "忙しさは5段階で最大の5",
+              "最後の登壇は2026年10月9日で、登壇が多い人",
+              "最近登壇した（2026-10-09）",
+              "忙しい（忙しさ5）",
+              "予定が重なる（オフサイト 2027-01-27〜2027-01-29）"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "当日が合宿と重なり、忙しさも最大、テーマも本人の取り組みとずれるので、主催者には百瀬さんを代わりに提案し、笹倉さんの名前を残すならアーカイブ出演など別の形で関われないか相談するのがよさそうです。",
+            "is_nominee": true,
+            "evidence_request_id": "req004",
+            "card_id": null,
+            "card": null
+          },
+          {
+            "rank": 3,
+            "employee_id": "e017",
+            "name": "柚木 ほのか",
+            "business_unit": "バクラク",
+            "role": "デザイナー",
+            "workload": 2,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "速いだけでなく使える業務SaaSへ：申請フォームのフォーカス順とラベルの見直し",
+            "reason": "スクリーンリーダーで経費申請を最後まで通せるように直した実績があり、時流のアクセシビリティに合うので、パフォーマンス系イベントの関連テーマとして出せます。",
+            "evidence": [
+              {
+                "id": "act027",
+                "type": "slack_post",
+                "date": "2026-09-22",
+                "title": "スクリーンリーダーで経費申請を最後まで通せるようにしました",
+                "where": "#bakuraku-design"
+              }
+            ],
+            "cautions": [
+              "登壇はこれが初めて",
+              "ネタ帳のカードは技術広報がまだ確認していない",
+              "改善の効果を示す数字がまだない"
+            ],
+            "is_alternative_to_nominee": true,
+            "confidence": "conditional",
+            "caveat": "依頼テーマの初期表示改善ではなくアクセシビリティの話なので、主催者がこのテーマを受け入れるか確認が必要です。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e017-01",
+            "card": {
+              "card_id": "card-e017-01",
+              "employee_id": "e017",
+              "summary": "スクリーンリーダーを使う方へのインタビューをもとに、バクラクの経費申請フローのフォーカス順とラベルを見直しました。スクリーンリーダーで申請を最後まで通せるようになり、キーボードだけでも完了できるようになりました。直したときのチェックリストは、デザインシステムに入れる予定です。",
+              "themes": [
+                "スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善",
+                "業務SaaSの申請フォームをキーボードだけで完了させる：フォーカス順とラベル設計の勘所",
+                "アクセシビリティ対応をチェックリストにしてデザインシステムに組み込む"
+              ],
+              "evidence_activity_ids": [
+                "act027"
+              ],
+              "format": "blog",
+              "format_reason": "具体的な改善内容はありますが数字はまだなく、本人も登壇経験がないので、まずはインタビューから改善までの流れをブログにまとめるのが始めやすいです。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-09-22",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:41.933Z",
+              "updated_at": "2026-11-21T05:26:41.933Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          }
+        ],
+        "alternative_pitch": "笹倉さんへのご指名は、layerx.go #16「型とテストの話」をご覧になってのもので、主催者の期待は「実体験にもとづく大規模SaaSの話」にあると考えられます。この期待は尊重しつつ、今回は同じバクラクの百瀬 結衣さんを推すのがよさそうです。\n\n- 笹倉さんのこれまでの発信はチームづくり・開発プロセス・型とテストが中心で、フロントエンドの性能改善に取り組んだ記録は見つかっていません。\n- 百瀬さんはバクラクのWebフロントで不要な依存を消し、ルート単位でコードを分けて、初期JSを2.1MBから900KBに減らし、LCPを1.8秒縮めています。依頼テーマ「大規模SaaSの初期表示改善」にそのまま合い、数字で語れます。\n- イベント当日の2027年1月28日は、バクラク開発組織の合宿（1月27〜29日）と重なっています。笹倉さんは登壇回数も多く、いまの忙しさも最大です。\n\n角が立たない案として、百瀬さんが20分のメイン登壇を務め、笹倉さんが冒頭の紹介か質疑のモデレーターに回る共同登壇の形があります。ただし合宿と重なるため、笹倉さんが当日参加できるかは本人への確認が必要です。\n\nなお、百瀬さんは社外登壇が初めてです。笹倉さんには代案への意見とあわせて、準備の伴走をお願いできるかも相談したいところです。"
+      }
+    },
+    {
+      "request_id": "req005",
+      "pattern": "named_speaker",
+      "top3": [
+        "e024",
+        "e007"
+      ],
+      "expected": [
+        "e024"
+      ],
+      "primary": "e024",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [
+        "e024"
+      ],
+      "alternative_ok": true,
+      "run_usd": 0.1267598,
+      "steps": 4,
+      "result": {
+        "run_id": "6a38141f-5a63-4c7a-a520-4d8f423bba8f",
+        "request_id": "req005",
+        "request_pattern": "named_speaker",
+        "summary": "梶さんを指名した「脆弱性管理の自動化」の30分セッション（2027年2月18日、オンライン）の依頼です。梶さんは忙しさも予定も問題ありません。ただ、社外に出した資料はクラウドセキュリティの話で、最近の取り組みに脆弱性管理の自動化は見当たりませんでした。そこで、実際に脆弱性の自動振り分けを作って全社に広げた織部さんを、代わりの登壇者または共同登壇者として一番に推します。",
+        "nominee_assessment": "梶さん：得意分野に脆弱性管理が入っていて、忙しさは3、2月18日の前後に予定はなく、最後の登壇は2025年11月28日で約1年前です。断られる理由のうち「忙しい」「予定が重なる」には当たりません。ただ、社外に出した資料は2025年12月1日の「金融サービスのクラウドセキュリティ」（クラウドセキュリティ・AWS）だけで、最近の投稿（採用面接の調整、権限申請のやり方）にも脆弱性管理を自動化した取り組みは見当たりません。テーマが本人の取り組みとずれていて、「そのテーマなら自分ではない」と断られるおそれがあります。",
+        "learnings_applied": [],
+        "no_fit": {
+          "reasons": [
+            "脆弱性管理の自動化を実際に手がけた記録があるのは、ネタ帳と社内の投稿を通して織部さんだけでした",
+            "ほかのセキュリティやSREのメンバー（オンコール改善、コスト最適化など）は脆弱性管理と別のテーマで、根拠がないため候補に入れていません"
+          ],
+          "next_checks": [
+            "参考資料の「Fintech Engineering Meetup #4 登壇資料」が梶さんの「金融サービスのクラウドセキュリティ」と同じ資料かを確かめ、脆弱性管理の話がどのくらい含まれているかを見る",
+            "梶さんに、脆弱性管理を自動化した取り組みでネタ帳に載っていないものがないか聞く",
+            "織部さんのネタ帳カードはまだ技術広報が内容を確かめていないので、数字（月400件→50件、対応が必要なのは12%）を確かめる",
+            "主催者に、梶さんと織部さんの共同登壇、または織部さんへの変更でもよいかを聞く"
+          ]
+        },
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e024",
+            "name": "織部 隼人",
+            "business_unit": "セキュリティ",
+            "role": "セキュリティエンジニア",
+            "workload": 3,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に：脆弱性管理の自動化を全社に広げるまで",
+            "reason": "全リポジトリでSBOMを作り、脆弱性アラートを自動で振り分ける仕組みを全社に広げた本人で、依頼のテーマと時流のサプライチェーンセキュリティの両方にぴったり合い、登壇経験もないので偏りを減らせます。",
+            "evidence": [
+              {
+                "id": "act037",
+                "type": "design_doc",
+                "date": "2026-09-29",
+                "title": "依存ライブラリ脆弱性の自動トリアージ",
+                "where": "security/design-docs"
+              },
+              {
+                "id": "act100",
+                "type": "slack_post",
+                "date": "2026-11-04",
+                "title": "脆弱性アラート、月400件→対応要50件に",
+                "where": "#security"
+              }
+            ],
+            "cautions": [
+              "今回が初めての登壇で、30分のセッションは負担が大きい可能性があります（梶さんとの共同登壇も考えられます）",
+              "ネタ帳のカードはまだ技術広報が確かめていません",
+              "指名は梶さんなので、主催者に変更や共同登壇でもよいか聞く必要があります"
+            ],
+            "is_alternative_to_nominee": true,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e024-01",
+            "card": {
+              "card_id": "card-e024-01",
+              "employee_id": "e024",
+              "summary": "全リポジトリでSBOMを生成し、依存ライブラリの脆弱性アラートを「実際に到達可能なコードか」で自動で振り分ける仕組みを設計・全社展開した。対応が必要なアラートは全体の12%に絞り込まれ、開発チームに届くアラートは月400件から50件程度に減った。判定ロジックはOSSとして切り出すことを検討中。",
+              "themes": [
+                "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に減らした自動トリアージ",
+                "「対応すべき12%」をどう見分けるか：到達可能性で脆弱性アラートを振り分ける設計と誤判定の扱い",
+                "脆弱性管理の自動化を全社展開するまで：開発チームをアラート疲れから解放する"
+              ],
+              "evidence_activity_ids": [
+                "act037",
+                "act100"
+              ],
+              "format": "lt",
+              "format_reason": "月400件→50件、12%という分かりやすい数字があり、時流のサプライチェーンセキュリティにも合うため、登壇経験がない本人の最初の一歩として5〜10分のLTで成果を伝えやすい。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-11-04",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:27:20.794Z",
+              "updated_at": "2026-11-21T05:27:20.794Z",
+              "edited_fields": [],
+              "evidence_request_ids": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e007",
+            "name": "梶 真之介",
+            "business_unit": "セキュリティ",
+            "role": "セキュリティエンジニア",
+            "workload": 3,
+            "past_talk_count": 1,
+            "last_talk_date": "2025-11-28",
+            "theme": "金融サービスのクラウドセキュリティと脆弱性管理の自動化（織部さんとの共同登壇の案）",
+            "reason": "主催者が以前の登壇資料を見て指名した方で、得意分野に脆弱性管理が入っています。忙しさは3で、2月18日の前後に予定もありません。",
+            "evidence": [],
+            "cautions": [
+              "社外に出した資料はクラウドセキュリティの話で、脆弱性管理の自動化の取り組みは見当たりません",
+              "参考資料が梶さんの過去の資料と同じかどうか確かめが必要です"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "テーマが本人の取り組み（クラウドセキュリティ）とずれるため、織部さんと組む共同登壇か、クラウドセキュリティから見た脆弱性管理の話にしてもらえるかの確認が必要です。",
+            "is_nominee": true,
+            "evidence_request_id": "req005",
+            "card_id": null,
+            "card": null
+          }
+        ],
+        "alternative_pitch": "依頼元は、Fintech Engineering Meetup #4の梶さんの資料を見て「脆弱性管理の自動化」を依頼してくださっています。ただ、今回のテーマに取り組みの中身が最も合うのは織部隼人さんです。\n\n- 梶さんの状況：脆弱性管理は得意分野に入っており、忙しさや2月18日前後の予定にも問題はありません。一方、社外に出した資料は2025年12月1日の「金融サービスのクラウドセキュリティ」だけで、最近の投稿にも自動化の取り組みは見当たりません。「そのテーマなら自分ではない」と断られるおそれがあります。\n- 織部さんを推す理由：全リポジトリでSBOMを作り、到達可能性解析と組み合わせて脆弱性アラートを自動で振り分ける仕組みを全社に広げた本人です。アラートを月400件から50件に減らした実績があり、イベントの主題であるサプライチェーンセキュリティにも直結します。\n- 注意点：織部さんは登壇経験がなく、打診もまだです。\n\n角が立たない案としては、梶さんが冒頭で金融サービスのセキュリティ全体像を5分ほど話し、織部さんが本編を担う共同登壇が考えられます。\n\n梶さんには先に「このテーマは織部さんの取り組みが近いと思うが、どう思うか」と相談し、了承を得てから織部さんに打診するのがよさそうです。依頼元には、指名への感謝を伝えたうえで「自動化を実際に進めた担当者からお話しできます」と提案する形になります。"
+      }
+    }
+  ],
+  "coverage": null,
+  "writeback": null,
+  "quality": null
+}

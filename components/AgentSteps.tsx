@@ -25,9 +25,11 @@ function oneLine(log: LogItem[], result: Proposal | null, seconds: number) {
   const tools = log.filter((l): l is Extract<LogItem, { kind: "tool" }> => l.kind === "tool");
   const cards = new Set(tools.filter((t) => t.name === "get_card").map((t) => String((t.input as { card_id?: string })?.card_id))).size;
   const looked = cards > 0 ? `${cards}枚のカードを調べて` : `${tools.length}回調べて`;
-  if (!result) return `${looked}、途中で止まりました（${seconds}秒）`;
+  // 受信箱で準備済みの依頼を開いたときは、その場で動かしていないので秒数を出さない
+  const took = seconds > 0 ? `（${seconds}秒）` : "";
+  if (!result) return `${looked}、途中で止まりました${took}`;
   const n = result.candidates.length;
-  return n > 0 ? `${looked}、${n}人を選びました（${seconds}秒）` : `${looked}、合う人はいませんでした（${seconds}秒）`;
+  return n > 0 ? `${looked}、${n}人を選びました${took}` : `${looked}、合う人はいませんでした${took}`;
 }
 
 /** While running: the steps grow one by one. When done: one summary line; open it to see the steps. */

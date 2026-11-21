@@ -1,0 +1,375 @@
+// Agent tools over data/*.json. Results are kept short (top 10, 200-char bodies).
+import type Anthropic from "@anthropic-ai/sdk";
+import {
+  activities,
+  appendLearning,
+  employeeById,
+  employees,
+  events,
+  learnings,
+  published,
+  schedules,
+  type DeclineReason,
+  type Learning,
+  type OutcomeResult,
+} from "./data";
+import { BODY_CHARS, SEARCH_LIMIT } from "./config";
+
+const clip = (s: string, n = BODY_CHARS) => (s.length > n ? s.slice(0, n) + "…" : s);
+const nameOf = (id: string) => employeeById(id)?.name ?? id;
+
+// ---------------------------------------------------------------------------
+// Tool definitions (order is fixed: part of the cached prefix)
+// ---------------------------------------------------------------------------
+export const SUBMIT_TOOL = "submit_candidates";
+
+export const TOOL_DEFS: Anthropic.Tool[] = [
+  {
+    name: "read_learnings",
+    description:
+      "過去の登壇打診の結果（承諾・辞退と理由）を読む。提案の最初に必ず1回呼ぶ。辞退理由と開催月から、今回下げるべき人を判断する。",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "search_activities",
+    description:
+      "社内のSlack投稿・GitHubのPR・週報・設計ドキュメントから取り組みを探す。queryはスペース区切りのキーワード（日本語可、どれかに一致すれば候補、一致数でスコア）。上位10件を返す。本文は先頭200文字。",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "キーワード（スペース区切り）" },
+        since: { type: "string", description: "この日付以降（YYYY-MM-DD）。省略可" },
+        type: {
+          type: "string",
+          enum: ["slack_post", "github_pr", "design_doc", "weekly_report"],
+          description: "種類で絞る。省略可",
+        },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_employees",
+    description: "条件で社員を絞り込む。得意分野タグ・事業部・忙しさの上限・登壇回数の上限で絞れる。",
+    input_schema: {
+      type: "object",
+      properties: {
+        business_unit: { type: "string" },
+        tag: { type: "string", description: "得意分野タグの部分一致" },
+        max_workload: { type: "integer", description: "忙しさ(1-5)の上限" },
+        max_talk_count: { type: "integer", description: "過去の登壇回数の上限" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_employee",
+    description: "社員1人の詳細（得意分野・忙しさ・登壇回数・直近の取り組み件数・発信数）を見る。",
+    input_schema: {
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_speaking_history",
+    description: "社員の登壇履歴（自社イベントでの登壇、最後に登壇した日、通算回数）を見る。",
+    input_schema: {
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "check_schedule",
+    description: "指定日の前後3日に、出張・他の登壇・リリース対応・休暇などの予定が重なっていないか見る。",
+    input_schema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        date: { type: "string", description: "YYYY-MM-DD" },
+      },
+      required: ["id", "date"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_published",
+    description: "社員の発信済みの記録（ブログ・登壇資料・インタビューなど）を見る。そのテーマをすでに社外に出しているかの確認に使う。",
+    input_schema: {
+      type: "object",
+      properties: { author_id: { type: "string" } },
+      required: ["author_id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: SUBMIT_TOOL,
+    description:
+      "最終回答。候補をちょうど3人、おすすめ順に出す。これを呼んだら作業は終わり。根拠の取り組みIDは search_activities で実際に見たものだけを書く。",
+    strict: true,
+    input_schema: {
+      type: "object",
+      properties: {
+        request_pattern: { type: "string", enum: ["open_slot", "theme_specified", "named_speaker"] },
+        summary: { type: "string", description: "依頼の読み取りと、今回の選び方の要約（2〜3文）" },
+        nominee_assessment: {
+          type: ["string", "null"],
+          description: "指名の依頼のとき、指名された人の確認結果（テーマの合い具合・忙しさ・予定）。指名でなければnull",
+        },
+        learnings_applied: {
+          type: "array",
+          items: { type: "string" },
+          description: "過去の学びを今回どう反映したか。なければ空配列",
+        },
+        candidates: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              employee_id: { type: "string" },
+              theme: { type: "string", description: "テーマ案（タイトル風に）" },
+              reason: { type: "string", description: "選んだ理由（2〜3文。本人の取り組みと時流の両方から）" },
+              evidence_activity_ids: { type: "array", items: { type: "string" } },
+              cautions: {
+                type: "array",
+                items: { type: "string" },
+                description: "注意点（最近登壇した／忙しい／予定が重なる など）",
+              },
+              is_alternative_to_nominee: {
+                type: "boolean",
+                description: "指名された人の代わり（または共同登壇）として推す人ならtrue",
+              },
+            },
+            required: ["employee_id", "theme", "reason", "evidence_activity_ids", "cautions", "is_alternative_to_nominee"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["request_pattern", "summary", "nominee_assessment", "learnings_applied", "candidates"],
+      additionalProperties: false,
+    },
+  },
+];
+
+export interface SubmitInput {
+  request_pattern: "open_slot" | "theme_specified" | "named_speaker";
+  summary: string;
+  nominee_assessment: string | null;
+  learnings_applied: string[];
+  candidates: Array<{
+    employee_id: string;
+    theme: string;
+    reason: string;
+    evidence_activity_ids: string[];
+    cautions: string[];
+    is_alternative_to_nominee: boolean;
+  }>;
+}
+
+// ---------------------------------------------------------------------------
+// Implementations
+// ---------------------------------------------------------------------------
+type Input = Record<string, unknown>;
+const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+const num = (v: unknown) => (typeof v === "number" ? v : undefined);
+
+export function readLearningsTool() {
+  const all = learnings();
+  if (all.length === 0) return { count: 0, learnings: [], note: "まだ記録はありません" };
+  return {
+    count: all.length,
+    learnings: all.slice(-30).map((l) => ({
+      employee: `${l.employee_id} ${nameOf(l.employee_id)}`,
+      result: l.result,
+      reason: l.reason,
+      note: l.note,
+      theme: l.theme,
+      event_date: l.event_date,
+      recorded_at: l.recorded_at.slice(0, 10),
+    })),
+  };
+}
+
+export function searchActivities(input: Input) {
+  const query = str(input.query) ?? "";
+  const since = str(input.since);
+  const type = str(input.type);
+  const terms = query
+    .split(/[\s　、,]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  const emps = new Map(employees().map((e) => [e.id, e]));
+  const scored = activities()
+    .filter((a) => (!since || a.date >= since) && (!type || a.type === type))
+    .map((a) => {
+      const hay = `${a.title} ${a.body} ${a.channel ?? ""} ${a.repo ?? ""}`.toLowerCase();
+      const tags = (emps.get(a.author_id)?.expertise_tags ?? []).join(" ").toLowerCase();
+      let score = 0;
+      for (const t of terms) {
+        if (a.title.toLowerCase().includes(t)) score += 3;
+        else if (hay.includes(t)) score += 2;
+        else if (tags.includes(t)) score += 1;
+      }
+      return { a, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((x, y) => y.score - x.score || (y.a.date > x.a.date ? 1 : -1));
+  return {
+    total_hits: scored.length,
+    results: scored.slice(0, SEARCH_LIMIT).map(({ a, score }) => ({
+      id: a.id,
+      type: a.type,
+      date: a.date,
+      author: `${a.author_id} ${emps.get(a.author_id)?.name ?? ""}`,
+      title: a.title,
+      body: clip(a.body),
+      where: a.channel ?? a.repo,
+      score,
+    })),
+  };
+}
+
+export function listEmployees(input: Input) {
+  const unit = str(input.business_unit);
+  const tag = str(input.tag)?.toLowerCase();
+  const maxW = num(input.max_workload);
+  const maxT = num(input.max_talk_count);
+  return employees()
+    .filter(
+      (e) =>
+        (!unit || e.business_unit === unit) &&
+        (!tag || e.expertise_tags.some((t) => t.toLowerCase().includes(tag))) &&
+        (maxW === undefined || e.workload <= maxW) &&
+        (maxT === undefined || e.past_talk_count <= maxT),
+    )
+    .map((e) => ({
+      id: e.id,
+      name: e.name,
+      unit: e.business_unit,
+      role: e.role,
+      tags: e.expertise_tags,
+      talks: e.past_talk_count,
+      last_talk: e.last_talk_date,
+      workload: e.workload,
+    }));
+}
+
+export function getEmployee(input: Input) {
+  const id = str(input.id) ?? "";
+  const e = employeeById(id);
+  if (!e) return { error: `社員 ${id} は見つかりません` };
+  const acts = activities().filter((a) => a.author_id === id);
+  return {
+    ...e,
+    recent_activity_count: acts.length,
+    recent_activity_titles: acts.slice(-5).map((a) => `${a.id} ${a.date} ${a.title}`),
+    published_count: published().filter((p) => p.author_id === id).length,
+  };
+}
+
+export function getSpeakingHistory(input: Input) {
+  const id = str(input.id) ?? "";
+  const e = employeeById(id);
+  if (!e) return { error: `社員 ${id} は見つかりません` };
+  const talks = events()
+    .filter((ev) => ev.speaker_ids.includes(id))
+    .map((ev) => ({ date: ev.date, title: ev.title, attendees: ev.attendees }));
+  return {
+    id,
+    name: e.name,
+    past_talk_count: e.past_talk_count,
+    last_talk_date: e.last_talk_date,
+    own_events: talks,
+    note: talks.length < e.past_talk_count ? "通算回数には社外カンファレンスでの登壇も含む" : undefined,
+  };
+}
+
+const addDays = (d: string, n: number) => {
+  const t = new Date(d + "T00:00:00Z");
+  t.setUTCDate(t.getUTCDate() + n);
+  return t.toISOString().slice(0, 10);
+};
+
+export function checkSchedule(input: Input) {
+  const id = str(input.id) ?? "";
+  const date = str(input.date) ?? "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "date は YYYY-MM-DD で指定してください" };
+  const lo = addDays(date, -3);
+  const hi = addDays(date, 3);
+  const items = schedules()
+    .filter((s) => s.employee_id === id && s.from <= hi && s.to >= lo)
+    .map((s) => ({ ...s, overlaps_event_day: s.from <= date && s.to >= date }));
+  return {
+    id,
+    date,
+    conflict: items.some((s) => s.overlaps_event_day),
+    nearby: items,
+    note: items.length === 0 ? "前後3日に既知の予定はありません" : undefined,
+  };
+}
+
+export function getPublished(input: Input) {
+  const id = str(input.author_id) ?? "";
+  const items = published()
+    .filter((p) => p.author_id === id)
+    .sort((a, b) => (a.published_at < b.published_at ? 1 : -1));
+  return {
+    author_id: id,
+    count: items.length,
+    items: items.slice(0, SEARCH_LIMIT).map((p) => ({
+      date: p.published_at.slice(0, 10),
+      genre: p.genre,
+      title: p.title,
+      tags: p.tags,
+    })),
+  };
+}
+
+/** Called from the UI (a human records the outcome), not by the agent. */
+export function recordOutcome(args: {
+  request_id: string;
+  employee_id: string;
+  result: OutcomeResult;
+  reason: DeclineReason | null;
+  note?: string;
+  event_date?: string | null;
+  theme?: string | null;
+}): Learning {
+  const entry: Learning = {
+    request_id: args.request_id,
+    employee_id: args.employee_id,
+    result: args.result,
+    reason: args.result === "declined" ? args.reason ?? "other" : null,
+    note: args.note ?? "",
+    event_date: args.event_date ?? null,
+    theme: args.theme ?? null,
+    recorded_at: new Date().toISOString(),
+  };
+  appendLearning(entry);
+  return entry;
+}
+
+const IMPL: Record<string, (input: Input) => unknown> = {
+  read_learnings: () => readLearningsTool(),
+  search_activities: searchActivities,
+  list_employees: listEmployees,
+  get_employee: getEmployee,
+  get_speaking_history: getSpeakingHistory,
+  check_schedule: checkSchedule,
+  get_published: getPublished,
+};
+
+export function executeTool(name: string, input: unknown): { ok: boolean; result: unknown } {
+  const fn = IMPL[name];
+  if (!fn) return { ok: false, result: { error: `unknown tool: ${name}` } };
+  try {
+    const args = input && typeof input === "object" ? (input as Input) : {};
+    return { ok: true, result: fn(args) };
+  } catch (e) {
+    return { ok: false, result: { error: e instanceof Error ? e.message : String(e) } };
+  }
+}

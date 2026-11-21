@@ -90,7 +90,7 @@ if (after.quality) {
     md += `| ${q.request_id} | ${f2(q.before)} | ${f2(q.after)} | ${sign(q.after - q.before)} | ${f2(b1)} | ${f2(a1)} | ${sign(a1 - b1)} |\n`;
   }
   md += `| **全体** | **${f2(avg(allB))}** | **${f2(avg(allA))}** | **${sign(avg(allA) - avg(allB))}** | **${f2(avg(topB))}** | **${f2(avg(topA))}** | **${sign(avg(topA) - avg(topB))}** |\n`;
-  md += `\n候補数は before ${allB.length}人、after ${allA.length}人。after は合う人がいなければ3人そろえないので、平均には「弱い2〜3位を出さなくなった」効果も入っている。1位だけを比べた列のほうが、テーマ案そのものの差に近い。\n`;
+  md += `\n候補数は before ${allB.length}人、after ${allA.length}人。after は根拠のある人だけを（条件付きも含めて）並べ、それでも足りなければ3人そろえないので、平均には「根拠の薄い2〜3位を出さなくなった」効果も入っている。1位だけを比べた列のほうが、テーマ案そのものの差に近い。\n`;
   md += `\n### 採点のコメント（after）\n`;
   for (const q of after.quality) {
     md += `\n**${q.request_id}**\n`;

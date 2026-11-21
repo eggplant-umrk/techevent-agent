@@ -17,18 +17,17 @@ import type {
 import { AgentSteps, type LogItem } from "@/components/AgentSteps";
 import { Approved } from "@/components/Approved";
 import { CardDetail } from "@/components/CardDetail";
-import { Header, type View } from "@/components/Header";
+import { Header } from "@/components/Header";
 import { usd } from "@/components/labels";
 import { Notebook, type NbLogLine } from "@/components/Notebook";
-import { AlternativePitch, CandidateCardView, CandidateGroup, NoFit, ProposalNotes } from "@/components/Proposal";
+import { AlternativePitch, Candidates } from "@/components/Proposal";
 import { RequestInput, type RequestMode } from "@/components/RequestInput";
-import { HistoryView, LearningsView } from "@/components/SideViews";
 
 const msg = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback);
 
 export default function Home() {
   const [api, setApi] = useState<Api>(realApi);
-  const [view, setView] = useState<View>("notebook");
+  const [debug, setDebug] = useState(false);
 
   // notebook
   const [cards, setCards] = useState<NotebookCard[]>([]);
@@ -69,7 +68,10 @@ export default function Home() {
   const [models, setModels] = useState<ModelChoice | null>(null);
   const started = useRef(0);
 
-  useEffect(() => setApi(pickApi()), []);
+  useEffect(() => {
+    setApi(pickApi());
+    setDebug(new URLSearchParams(window.location.search).has("debug"));
+  }, []);
 
   const loadCards = useCallback(async () => {
     try {
@@ -106,10 +108,7 @@ export default function Home() {
     return () => clearInterval(t);
   }, [running]);
 
-  const candidateRanks = useMemo(
-    () => new Map((result?.candidates ?? []).filter((c) => c.card_id).map((c) => [c.card_id as string, c.rank])),
-    [result],
-  );
+  const candidateIds = useMemo(() => new Set((result?.candidates ?? []).flatMap((c) => (c.card_id ? [c.card_id] : []))), [result]);
   const detailCard = detail ? cards.find((c) => c.card_id === detail.id) ?? null : null;
   const openCard = (id: string, evidence: string | null = null) => setDetail({ id, evidence });
 
@@ -272,8 +271,7 @@ export default function Home() {
   return (
     <div className="app">
       <Header
-        view={view}
-        onView={setView}
+        debug={debug}
         runUsd={runUsd}
         totalUsd={totalUsd}
         models={models}
@@ -282,11 +280,6 @@ export default function Home() {
         onUpdate={updateNotebook}
         mock={api.mock}
       />
-      {models?.switched && (
-        <p className="banner" role="status">
-          累計が ${models.switchUsd} を超えたため、安いモデルに切り替えています（ループ {models.loop}／重い仕事 {models.heavy}）
-        </p>
-      )}
       {loadError && (
         <p className="banner banner-error" role="alert">
           {loadError}
@@ -294,90 +287,58 @@ export default function Home() {
       )}
 
       <main className="main">
-        {view === "notebook" && (
-          <>
-            <Notebook
-              cards={cards}
-              units={units}
-              loaded={loaded}
-              candidateRanks={candidateRanks}
-              log={nbLog}
-              updating={nbRunning}
-              blog={blog}
-              blogBusy={blogBusy}
-              blogError={blogError}
-              onBlog={blogIdeas}
-              onCloseBlog={() => setBlog(null)}
-              onOpen={(id) => openCard(id)}
-            />
+        <Notebook
+          cards={cards}
+          units={units}
+          loaded={loaded}
+          candidateIds={candidateIds}
+          log={nbLog}
+          updating={nbRunning}
+          blog={blog}
+          blogBusy={blogBusy}
+          blogError={blogError}
+          onBlog={blogIdeas}
+          onCloseBlog={() => setBlog(null)}
+          onOpen={(id) => openCard(id)}
+        />
 
-            <div className="panel" aria-label="依頼パネル">
-              {approved ? (
-                <Approved
-                  candidate={approved}
-                  draft={draft}
-                  drafting={drafting}
-                  draftError={draftError}
-                  draftNote={draftNote}
-                  onBack={() => {
-                    setApproved(null);
-                    setDraft(null);
-                    setDraftError(null);
-                  }}
-                  onRetryDraft={() => makeDraft(approved)}
-                  onRecord={record}
-                />
-              ) : (
-                <>
-                  <RequestInput
-                    presets={presets}
-                    selected={selected}
-                    onSelect={setSelected}
-                    mode={mode}
-                    onMode={setMode}
-                    customText={customText}
-                    onCustomText={setCustomText}
-                    running={running}
-                    onRun={run}
-                    compact={running || !!result}
-                  />
-                  {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} />}
-                  {result && (
-                    <>
-                      <ProposalNotes result={result} />
-                      {result.candidates.length > 0 && (
-                        <div className="row-between pad-x">
-                          <h3 className="h2">候補 {result.candidates.length}人</h3>
-                          <span className="meta">自信のある候補が先、条件付きの候補が後です</span>
-                        </div>
-                      )}
-                      {result.candidates.map((c, i) => (
-                        <CandidateGroup key={c.employee_id} first={i === 0 || result.candidates[i - 1].confidence !== c.confidence} conditional={c.confidence === "conditional"}>
-                        <CandidateCardView
-                          key={c.employee_id}
-                          c={c}
-                          disabled={drafting}
-                          onApprove={() => approve(c)}
-                          onOpenCard={(ev) => c.card_id && openCard(c.card_id, ev ?? null)}
-                        />
-                        </CandidateGroup>
-                      ))}
-                      <NoFit result={result} />
-                      {pitch && <AlternativePitch text={pitch} />}
-                    </>
-                  )}
-                  {!result && !running && log.length === 0 && (
-                    <p className="hint">
-                      依頼を選んで「ネタ帳から候補を出す」を押すと、Agentがネタ帳を探して候補を最大3人出します。声かけは下書きまでで、送るのは人です。
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          </>
-        )}
-        {view === "history" && <HistoryView presets={presets} cards={cards} onOpen={(id) => openCard(id)} />}
-        {view === "learnings" && <LearningsView cards={cards} onOpen={(id) => openCard(id)} />}
+        <div className="panel" aria-label="依頼パネル">
+          {approved ? (
+            <Approved
+              candidate={approved}
+              draft={draft}
+              drafting={drafting}
+              draftError={draftError}
+              draftNote={draftNote}
+              onBack={() => {
+                setApproved(null);
+                setDraft(null);
+                setDraftError(null);
+              }}
+              onRetryDraft={() => makeDraft(approved)}
+              onRecord={record}
+            />
+          ) : (
+            <>
+              <RequestInput
+                presets={presets}
+                selected={selected}
+                onSelect={setSelected}
+                mode={mode}
+                onMode={setMode}
+                customText={customText}
+                onCustomText={setCustomText}
+                running={running}
+                onRun={run}
+                compact={running || !!result}
+              >
+                {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
+              </RequestInput>
+              {result && <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} />}
+              {result && pitch && <AlternativePitch text={pitch} />}
+            </>
+          )}
+        </div>
       </main>
 
       {detailCard && (

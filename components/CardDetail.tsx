@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CardFormat, CardPatch, NotebookCard } from "@/app/_client/types";
 import { ACTIVITY_LABEL, FIELD_LABEL, FORMAT_LABEL, md, REASON_LABEL, RESULT_LABEL } from "./labels";
-import { CardTags, ErrorLine, Tag } from "./ui";
+import { CardMarks, ErrorLine, statusText, Tag } from "./ui";
 
 /** Card detail as a side sheet (full screen on a phone). Native <dialog>: Esc closes, focus stays inside. */
 export function CardDetail({
@@ -76,8 +76,8 @@ export function CardDetail({
             {e?.business_unit}・{e?.role}・登壇{e?.past_talk_count ?? 0}回{e?.last_talk_date ? `（最終 ${e.last_talk_date}）` : ""}・忙しさ{e?.workload}
           </p>
           <div className="tags">
-            <CardTags card={card} />
-            {!card.reviewed && <Tag>未確認</Tag>}
+            <CardMarks card={card} />
+            <span className="meta">{statusText(card)}</span>
           </div>
         </div>
         <button type="button" className="icon-btn" aria-label="カードを閉じる" onClick={() => ref.current?.close()}>
@@ -89,11 +89,10 @@ export function CardDetail({
 
       <div className="sheet-body">
         {card.pending_themes.length > 0 && (
-          <section className="notice notice-warn" aria-labelledby="cd-pending">
+          <section className="block" aria-labelledby="cd-pending">
             <h3 id="cd-pending" className="h3">
-              新しいテーマ案（未確認）
+              <Tag tone="warn">新しいテーマ案（未確認）</Tag>
             </h3>
-            <p className="small">新しい活動からAgentが考えた案です。確認済みのテーマ案はそのまま残っています。</p>
             <ul className="pending-list">
               {card.pending_themes.map((t) => (
                 <li key={t}>
@@ -135,7 +134,7 @@ export function CardDetail({
           </>
         ) : (
           <section className="block edit" aria-label="カードを直す">
-            <p className="small">直した項目は「確認済み」になり、Agentが活動を読み直しても上書きしません。</p>
+            <p className="meta">直した項目はAgentが上書きしません。</p>
             <label className="field">
               <span className="field-label">取り組みの要約</span>
               <textarea className="input" rows={4} value={summary} onChange={(ev) => setSummary(ev.target.value)} />
@@ -173,7 +172,7 @@ export function CardDetail({
             {card.evidence.map((ev) => (
               <li key={ev.id} id={`ev-${ev.id}`} className={openEv === ev.id ? "is-open" : undefined}>
                 <button type="button" className="ev-head" aria-expanded={openEv === ev.id} onClick={() => setOpenEv(openEv === ev.id ? null : ev.id)}>
-                  <Tag>{ACTIVITY_LABEL[ev.type] ?? ev.type}</Tag>
+                  <span className="meta ev-kind">{ACTIVITY_LABEL[ev.type] ?? ev.type}</span>
                   <span className="grow">{ev.title}</span>
                   <span className="meta">{ev.date}</span>
                 </button>

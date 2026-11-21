@@ -1,6 +1,6 @@
 # 画面のスクリーンショット
 
-`http://localhost:3000/?mock` で撮影（モックモード）。モックモードでは API を呼ばず、data/ にも書き込みません。
+`http://localhost:3000/?mock` で撮影（モックモード）。引き算の前の画面なので、今の画面は before_after/ の after-*.png を見てください。モックモードでは API を呼ばず、data/ にも書き込みません。
 
 - カード・依頼・状態は data/ の JSON を GET で読む
 - Agent の提案は、評価で保存した実際の結果（docs/eval_after.json → app/_client/proposals.json）を再生する

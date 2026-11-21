@@ -32,20 +32,31 @@ export function CopyButton({ text, label = "コピー", primary = false }: { tex
   );
 }
 
-/** Tags shown on a notebook row and in the card detail. */
-export function CardTags({ card, compact = false }: { card: NotebookCard; compact?: boolean }) {
-  const e = card.employee;
+/** At most two marks per card: 未発信 or 発信済み, plus 確認済み (check icon + text). */
+export function CardMarks({ card }: { card: NotebookCard }) {
+  const unpublished = card.publication_status === "unpublished";
   return (
     <>
-      <Tag tone={card.publication_status === "unpublished" ? "warn" : "neutral"}>{STATUS_LABEL[card.publication_status]}</Tag>
-      {e && e.past_talk_count === 0 && <Tag>登壇0回</Tag>}
-      <Tag tone="accent">{FORMAT_LABEL[card.format]}向き</Tag>
-      {card.reviewed && <Tag tone="ok">確認済み</Tag>}
-      {card.pending_themes.length > 0 && <Tag tone="warn">新しいテーマ案（未確認）</Tag>}
-      {!compact && card.outreach_history.length > 0 && <Tag>打診 {card.outreach_history.length}件</Tag>}
+      <Tag tone={unpublished ? "warn" : "neutral"}>{unpublished ? "未発信" : "発信済み"}</Tag>
+      {card.reviewed && <ReviewedMark />}
     </>
   );
 }
+
+export function ReviewedMark() {
+  return (
+    <span className="reviewed">
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 12.5l4.5 4.5L19 7.5" />
+      </svg>
+      確認済み
+    </span>
+  );
+}
+
+/** "ブログ済み" / "登壇済み" etc. for the detail view, as plain text. */
+export const statusText = (card: NotebookCard) =>
+  card.publication_status === "unpublished" ? `${FORMAT_LABEL[card.format]}向き` : `${STATUS_LABEL[card.publication_status]}・${FORMAT_LABEL[card.format]}向き`;
 
 export function Spinner({ label }: { label: string }) {
   return (

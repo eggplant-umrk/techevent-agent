@@ -13,6 +13,8 @@ try {
   console.error(".env がありません。APIを使うので .env の ANTHROPIC_API_KEY が必要です。");
   process.exit(1);
 }
+// アンケートは架空データのイベントだけ。.env に DATA_SOURCE があっても切り替えない（結合テストと同じ）
+delete process.env.DATA_SOURCE;
 
 import { events } from "../lib/data";
 import { surveys } from "../lib/surveyCsv";

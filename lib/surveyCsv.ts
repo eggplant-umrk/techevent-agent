@@ -112,7 +112,7 @@ export function claudeColumnAsker(runId: string): ColumnAsker {
       model,
       max_tokens: 2000,
       system:
-        "Googleフォームのアンケートを書き出したCSVの列の意味を決めます。各列を次のどれかにしてください：talk（どの登壇への回答か）、rating（満足度の数字）、comment（感想・自由記述）、want_next（次に聞きたいテーマ）、role（職種）、personal（メール・名前など個人を特定できる情報）、unread（どれでもない・分からない）。迷ったら unread。",
+        "Googleフォームのアンケートを書き出したCSVの列の意味を決め、submit_columns を1回呼んで提出します。各列を次のどれかにしてください：talk（どの登壇への回答か）、rating（満足度の数字）、comment（感想・自由記述）、want_next（次に聞きたいテーマ）、role（職種）、personal（メール・名前など個人を特定できる情報）、unread（どれでもない・分からない）。迷ったら unread。",
       tools: [
         {
           name: "submit_columns",
@@ -135,7 +135,6 @@ export function claudeColumnAsker(runId: string): ColumnAsker {
           },
         },
       ],
-      tool_choice: { type: "tool", name: "submit_columns" },
       messages: [{ role: "user", content: cols.map((c) => `列${c.index}：「${c.header}」 見本：${c.samples.map((x) => `「${x}」`).join("、") || "（空）"}`).join("\n") }],
     });
     recordUsage(runId, "survey", res.model, res.usage);

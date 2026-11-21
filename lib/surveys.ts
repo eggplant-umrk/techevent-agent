@@ -592,10 +592,9 @@ export function claudeAnalyzer(runId: string): Analyzer {
   return async (system, message, previous) => {
     const res = await client.messages.create({
       model,
-      max_tokens: 32000,
+      max_tokens: 16000,
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
       tools: [SUBMIT_SURVEY_DEF],
-      tool_choice: { type: "tool", name: SUBMIT_SURVEY_DEF.name },
       messages: previous.length ? previous : [{ role: "user", content: message }],
       output_config: { effort: "medium" },
     });

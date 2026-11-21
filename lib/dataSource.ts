@@ -25,7 +25,7 @@ export function sourceDir(): string {
   return s ? path.join(DATA_DIR, "sources", s) : DATA_DIR;
 }
 
-const SWITCHED = new Set(["employees.json", "activities.json", "cards.json", "notebook_state.json", "calendar.json"]);
+const SWITCHED = new Set(["employees.json", "activities.json", "cards.json", "notebook_state.json", "notebook_progress.json", "calendar.json"]);
 
 /** Full path of a data file, following DATA_SOURCE for the switched files. */
 export function dataFile(name: string): string {

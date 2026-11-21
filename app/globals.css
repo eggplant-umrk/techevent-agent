@@ -358,3 +358,8 @@ textarea.input { resize: vertical; }
 
 /* カード詳細：承諾された依頼 */
 .accepted-line { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+/* ネタ帳タブ：アンケートの声 */
+.voices-chip { align-self: flex-start; }
+.voice-list { list-style: none; margin: 0; padding: 0; }
+.voice-list .cand p + p { margin-top: 4px; }

@@ -77,6 +77,23 @@ async function main() {
   check("過去のイベントの詳細に日付と登壇者", !!d.date && d.speakers.length > 0, `${d.title}／${d.speakers.join("・")}`);
   check("過去のイベントの行にアンケートの件数が付く（イベント後の画面と同じ数）", rowsA.filter((x) => x.kind === "event").some((x) => (x.answers ?? 0) > 0));
 
+  // ---- アンケートの声（ネタ帳タブ）：保存済みの分析結果（?mock と同じもの）から作る
+  const { surveyVoices, isSurveyTheme } = await import("../lib/surveyOverview");
+  const { events } = await import("../lib/data");
+  const { loadCards } = await import("../lib/cards");
+  const fx = JSON.parse(fs.readFileSync(path.join(process.cwd(), "app", "_client", "postevent.json"), "utf-8")) as Record<string, { analysis: import("../lib/surveys").EventAnalysis }>;
+  const cardsForVoices = loadCards().map((c) => ({ card_id: c.card_id, employee_id: c.employee_id, name: employees().find((e) => e.id === c.employee_id)?.name ?? c.employee_id }));
+  const voices = surveyVoices(Object.values(fx).map((f) => f.analysis), events(), cardsForVoices);
+  const allNext = Object.values(fx).flatMap((f) => f.analysis.talks.flatMap((t) => t.next_themes));
+  check("アンケートの声：今後聞いてみたい話がイベント名・日付・件数つきで並ぶ", voices.length > 0 && voices.every((v) => v.event_title && /^\d{4}-\d{2}-\d{2}$/.test(v.event_date) && v.count > 0), `${voices.length}件`);
+  check("件数は回答の数の合計（同じ話はイベントごとにまとめる）", voices.reduce((n, v) => n + v.count, 0) === allNext.reduce((n, x) => n + x.response_ids.length, 0));
+  const withMatch = voices.filter((v) => v.match);
+  check("合う人がいる声（需要あり）には、その人とカード", withMatch.length > 0 && withMatch.every((v) => cardsForVoices.some((c) => c.card_id === v.match!.card_id && c.employee_id === v.match!.employee_id)), withMatch.map((v) => `${v.text}→${v.match!.name}`).slice(0, 2).join(" / "));
+  check("合う人がいない声は match なし（画面は「まだ話せる人がいない」）", voices.some((v) => !v.match));
+  check("どの登壇への声かは出さない", voices.every((v) => Object.keys(v).sort().join(",") === "count,event_date,event_id,event_title,match,text"));
+  check("新しいイベントが先", voices.every((v, i) => i === 0 || voices[i - 1].event_date >= v.event_date));
+  check("テーマ案がアンケート由来か（声と同じ文）", isSurveyTheme(` ${voices[0].text} `, voices) && !isSurveyTheme("関係のないテーマ", voices));
+
   fs.rmSync(tmp, { force: true });
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
   process.exitCode = failed ? 1 : 0;

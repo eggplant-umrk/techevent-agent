@@ -25,6 +25,7 @@ import type {
   ArchiveDetail,
   BoardDetail,
   BoardListItem,
+  SurveyVoice,
   ArchiveKind,
   ArchiveRow,
   PersonDetail,
@@ -83,6 +84,8 @@ export interface Api {
   editPerson(id: string, patch: PersonPatch): Promise<Person>;
   /** アーカイブタブ：開催日が過ぎた依頼とイベント */
   archive(): Promise<ArchiveRow[]>;
+  /** ネタ帳タブ：アンケートの声（参加者が今後聞いてみたい話） */
+  voices(): Promise<SurveyVoice[]>;
   archiveDetail(kind: ArchiveKind, id: string): Promise<ArchiveDetail>;
 }
 
@@ -160,6 +163,7 @@ export const realApi: Api = {
       )
     ).person,
   archive: async () => (await json<{ rows: ArchiveRow[] }>(await fetch("/api/archive"))).rows,
+  voices: async () => (await json<{ voices: SurveyVoice[] }>(await fetch("/api/voices"))).voices,
   archiveDetail: async (kind, id) => json(await fetch(`/api/archive/${kind}/${encodeURIComponent(id)}`)),
 };
 

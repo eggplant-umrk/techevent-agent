@@ -23,6 +23,7 @@ export type { Person, PersonDetail, PersonPatch, PersonRow, SpeakingIntent } fro
 export type { ArchiveDetail, ArchiveKind, ArchiveRow } from "@/lib/archive";
 export type { IntakeField, IntakeReading } from "@/lib/intake";
 export type { BoardDetail, BoardListItem, BoardSource } from "@/lib/board";
+export type { SurveyVoice } from "@/lib/surveyOverview";
 export type { RequestStage, RequestState } from "@/lib/requestStage";
 
 /** カード → 出し先：声かけ文の下書きを頼むときの本文（イベントの情報はサーバーがデータから引き直す） */

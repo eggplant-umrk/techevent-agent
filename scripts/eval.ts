@@ -641,7 +641,7 @@ async function main() {
     else {
       const req = all.find((x) => x.id === SURVEY_REQUEST)!;
       const s = await surveyLiveCheck(req, results.get(SURVEY_REQUEST) ?? null, (r) => propose(r, false));
-      checks.push(s.check);
+      checks.push(...s.checks);
       surveyCase = s.record;
     }
   }

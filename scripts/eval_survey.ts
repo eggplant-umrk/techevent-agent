@@ -27,6 +27,7 @@ import {
   validateAnalysis,
   writeBack,
   type EventAnalysis,
+  type TalkRecord,
 } from "../lib/surveys";
 
 export interface SurveyCheck {
@@ -177,6 +178,36 @@ function savedProposal(requestId: string): ProposalResult | null {
 }
 
 const REACTION_WORDS = /アンケート|参加者|聞きたい|需要/;
+
+/** 8文字以上続けて同じ部分があるか */
+function shares8(text: string, source: string): boolean {
+  const t = text.replace(/\s/g, "");
+  const x = source.replace(/[。！？!?、（）\s]|（\d+件）$/g, "");
+  for (let i = 0; i + 8 <= x.length; i++) if (t.includes(x.slice(i, i + 8))) return true;
+  return false;
+}
+
+/** 提案の文に、登壇者の反応（内部の記録：点数・内容への不満・まとめ・良い点のテーマ）が書かれていないか。見つかったものを返す */
+export function reactionLeaks(p: ProposalResult | null, records: TalkRecord[], analysis: Pick<EventAnalysis, "talks">): string[] {
+  if (!p) return [];
+  const texts = [
+    p.summary,
+    p.nominee_assessment ?? "",
+    ...p.learnings_applied,
+    ...p.candidates.flatMap((c) => [c.reason, c.caveat ?? "", ...c.cautions]),
+  ].filter(Boolean);
+  const out: string[] = [];
+  for (const t of texts) {
+    if (/満足度|点数の平均|平均[0-9０-９]/.test(t)) out.push(`点数：「${t.slice(0, 40)}」`);
+    if (/指摘する声|不満の声|という声が.{0,6}件/.test(t)) out.push(`不満の件数：「${t.slice(0, 40)}」`);
+    for (const r of records) {
+      if (shares8(t, r.summary)) out.push(`反応のまとめ：「${t.slice(0, 40)}」`);
+      for (const g of r.good_themes) if (shares8(t, g)) out.push(`良い点のテーマ：「${t.slice(0, 40)}」`);
+    }
+    for (const tk of analysis.talks) if (tk.content_issue && shares8(t, tk.content_issue)) out.push(`内容への不満：「${t.slice(0, 40)}」`);
+  }
+  return [...new Set(out)];
+}
 const textOf = (p: ProposalResult | null | undefined) =>
   [...(p?.learnings_applied ?? []), ...(p?.candidates ?? []).flatMap((c) => [c.reason, c.caveat ?? "", ...c.cautions])].join("\n");
 
@@ -188,14 +219,14 @@ export async function surveyLiveCheck(
   req: SpeakingRequest,
   before: ProposalResult | null,
   propose: (r: SpeakingRequest) => Promise<{ result: ProposalResult | null; usd: number }>,
-): Promise<{ check: SurveyCheck; record: Record<string, unknown> }> {
+): Promise<{ checks: SurveyCheck[]; record: Record<string, unknown> }> {
   return withCardsRestored(async () => {
     // 金額を抑えるため、分析は本番で分析した保存結果（docs/survey_latest.json）を使い、書き戻し（コード）からやり直す。
     // 書き戻し前の提案も保存済みの結果（docs/eval_latest.json）を使う。新しく API を使うのは書き戻し後の提案1回だけ
     console.log(`\n=== アンケートの書き戻しテスト：${SURVEY_EVENT} の本番の分析結果を書き戻し、${req.id} をもう一度`);
     const analysis = loadSavedAnalyses()?.analyses[SURVEY_EVENT];
     if (!analysis)
-      return { check: { name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: false, detail: "本番の分析結果がない（npx tsx scripts/analyze_surveys.ts で作る）" }, record: {} };
+      return { checks: [{ name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: false, detail: "本番の分析結果がない（npx tsx scripts/analyze_surveys.ts で作る）" }], record: {} };
     const b = before ?? savedProposal(req.id) ?? (await propose(req)).result;
     const log = writeBack(events().find((e) => e.id === SURVEY_EVENT)!, analysis);
     // 技術広報が提案を採用した状態にする
@@ -204,17 +235,28 @@ export async function surveyLiveCheck(
         patchCard(c.card_id, (x) => ({ ...x, reactions: (x.reactions ?? []).map((r) => (r.event_id === SURVEY_EVENT ? { ...r, status: "adopted" } : r)) }));
     }
     const withReaction = new Set(loadCards().filter((c) => (c.reactions ?? []).some((r) => r.status === "adopted")).map((c) => c.card_id));
+    const records = loadTalkRecords().filter((r) => r.event_id === SURVEY_EVENT);
     const again = await propose(req);
     const a = again.result;
+    // 登壇者の反応（内部の記録）を、理由・注意点・引っかかる点・反映したこと・まとめに書いていないか
+    const leaks = reactionLeaks(a, records, analysis);
     const afterUsed = (a?.candidates ?? []).filter((c) => c.card_id && withReaction.has(c.card_id) && REACTION_WORDS.test(`${c.reason}\n${c.caveat ?? ""}\n${c.cautions.join("\n")}`));
     const afterLearn = (a?.learnings_applied ?? []).some((t) => REACTION_WORDS.test(t));
     const changed = (afterUsed.length > 0 || afterLearn) && !REACTION_WORDS.test(textOf(b));
     const top = (p: ProposalResult | null | undefined) => (p?.candidates ?? []).map((c) => c.employee_id).join(",");
     const detail = `前 ${top(b)} → 後 ${top(a)}${afterUsed.length ? `（反応を理由・注意点に使った候補：${afterUsed.map((c) => c.name).join("・")}）` : ""}${afterLearn ? "（反応の反映を明記）" : ""}`;
     console.log(`  ${detail}  提案 $${again.usd.toFixed(3)}（分析は本番の保存結果を使用）`);
+    console.log(`  登壇者の反応の書き込み：${leaks.length ? leaks.join(" / ") : "なし"}`);
     return {
-      check: { name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: changed, detail },
-      record: { event_id: SURVEY_EVENT, request_id: req.id, analyzed_at: analysis.analyzed_at, writebacks: log, before: b, after: a, proposal_usd: again.usd },
+      checks: [
+        { name: "アンケート分析 → 書き戻し → 次の提案が変わる", pass: changed, detail },
+        {
+          name: "アンケート：提案の理由・注意点に登壇者の反応（点数・不満・良い点）を書かない",
+          pass: leaks.length === 0 && records.length > 0,
+          detail: leaks.slice(0, 5).join(" / ") || `登壇者の記録${records.length}件を渡したが、文には書いていない（需要ありだけを理由に使う）`,
+        },
+      ],
+      record: { event_id: SURVEY_EVENT, request_id: req.id, analyzed_at: analysis.analyzed_at, writebacks: log, before: b, after: a, proposal_usd: again.usd, reaction_leaks: leaks },
     };
   });
 }

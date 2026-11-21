@@ -5,6 +5,7 @@ import type { NotebookCard, PersonDetail as Detail, PersonPatch, SpeakingIntent 
 import { ACTIVITY_LABEL, md } from "./labels";
 import { acceptedRequestIds } from "@/lib/requestStage";
 import { CardMarks, ErrorLine, Tag } from "./ui";
+import { RecentBlogs } from "./RecentBlogs";
 
 const INTENT: Array<[SpeakingIntent, string]> = [
   ["available", "今は受けられる"],
@@ -208,6 +209,8 @@ export function PersonDetail({
           </ul>
         </section>
       )}
+
+      <RecentBlogs blogs={detail.blogs ?? []} />
 
       <section className="surface pad-lg" aria-labelledby="pd-acts">
         <h3 id="pd-acts" className="h3">

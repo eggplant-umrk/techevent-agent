@@ -56,6 +56,20 @@ async function main() {
     check("MORE_SOURCES=off なら入れない（評価は今までどおりの材料）", activities().every((a) => a.type !== "blog" && a.type !== "slack"));
     delete process.env.MORE_SOURCES;
 
+    // ---- 人の画面の「直近のブログ」と、架空の記事のページ
+    const bv = await import("../lib/blogView");
+    const mine = bv.blogsOf("e002");
+    check("その人のブログを新しい順に（笹倉さんは2件）", mine.length === 2 && mine[0].date > mine[1].date, mine.map((b) => b.date).join(" > "));
+    check("架空の記事はアプリの中の /blog/{id} に飛ぶ（新しいタブではない）", mine.every((b) => b.fictional && !b.external && b.href === `/blog/${b.id}`));
+    check("要約が付く", mine.every((b) => !!b.summary));
+    check("ブログがない人は0件（画面は「まだブログはありません」）", bv.blogsOf("e012").length === 0);
+    check("本物の URL（example.com などでない）は外のページとして扱う", !bv.isFictionalUrl("https://bakuraku.jp/news/20261021/") && bv.isFictionalUrl("https://example.com/published/pub002"));
+    const page = bv.fictionalBlogPost("blg008");
+    check("記事のページは、架空の記事の本文（要約）・書き手・日付を返す", !!page && page.author === "笹倉 由紀" && page.date === "2026-10-10" && !!page.body);
+    check("ない記事・本物の記事はページを出さない", bv.fictionalBlogPost("zzz") === null);
+    const pd = (await import("../lib/people")).personDetail("e002");
+    check("人の詳細（画面のデータ）に直近のブログが入る", pd?.blogs?.length === 2);
+
     // ---- Slack：落とす条件
     const users = { U_A: "e012" };
     check("ボットの投稿は落とす", s.skipReason({ ts: "1", user: "U_A", bot_id: "B1", text: "x".repeat(50) }, users) === "bot");

@@ -1,6 +1,7 @@
 // 人の情報（ネタ帳タブの「人」）。社員データ（employees.json）に、技術広報が画面で直した内容を重ねる。
 // 直した項目は「人が確認済み」になり、Agent やほかの自動処理は上書きしない（applyAutoPersonUpdate を通す）。
 import fs from "node:fs";
+import { blogsOf, type BlogItem } from "./blogView";
 import path from "node:path";
 import { activities, employeeById, employees, published, type Employee } from "./data";
 import { loadCards } from "./cards";
@@ -215,6 +216,8 @@ export interface PersonDetail {
   recent_activities: Array<{ id: string; type: string; date: string; title: string; url: string | null }>;
   published: Array<{ id: string; date: string; genre: string; title: string }>;
   availability: Availability;
+  /** 直近のブログ（新しい順、すべて。画面は3件まで出し、残りは「すべて見る」）。lib/blogView.ts */
+  blogs?: BlogItem[];
 }
 
 export function personDetail(id: string): PersonDetail | undefined {
@@ -239,5 +242,6 @@ export function personDetail(id: string): PersonDetail | undefined {
     published: pubs,
     availability: getAvailability(id),
     talk_tag: talkTag(person),
+    blogs: blogsOf(id),
   };
 }

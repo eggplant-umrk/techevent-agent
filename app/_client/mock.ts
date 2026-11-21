@@ -4,6 +4,7 @@
 // - Pasted request text always comes back as "no fit", to show that screen.
 // - 受信箱：保存済みの結果がある5件が「準備済み」で並ぶ。手で追加した依頼は手元だけで準備中→準備済み（合う候補なし）。
 // - Edits, adopt/drop, and outcomes are kept in memory only.
+// - 人の情報を直すのも手元だけ（data/people.json には書かない）。アーカイブは読むだけなので GET をそのまま使う。
 import type { Api, DraftResponse } from "./api";
 import proposals from "./proposals.json";
 import venueFixtures from "./venues.json";
@@ -16,6 +17,8 @@ import type {
   NotebookCard,
   NotebookEvent,
   OutreachDraft,
+  Person,
+  PersonPatch,
   Proposal,
   SpeakingRequest,
   VenueEvent,
@@ -127,8 +130,24 @@ ${c.name.split(" ")[0]}さんの取り組みを拝見して、
   };
 }
 
+type PersonOverlay = PersonPatch & { edited_fields: Person["edited_fields"] };
+
 export function mockApi(real: Api): Api {
   const overlay = initialOverlay();
+  // 人の情報（手元だけ）。最初から1人「確認済み」にしておく
+  const personOverlay = new Map<string, PersonOverlay>([["e013", { speaking_intent: "available", edited_fields: ["speaking_intent"] }]]);
+  const applyPerson = (p: Person): Person => {
+    const o = personOverlay.get(p.id);
+    if (!o) return p;
+    return {
+      ...p,
+      expertise_tags: o.expertise_tags ?? p.expertise_tags,
+      speaking_intent: o.speaking_intent ?? p.speaking_intent,
+      ng_themes: o.ng_themes ?? p.ng_themes,
+      reviewed: true,
+      edited_fields: [...new Set([...p.edited_fields, ...o.edited_fields])],
+    };
+  };
   let total = 2.24;
   let requests: SpeakingRequest[] = [];
   let lastCards: NotebookCard[] = [];
@@ -138,8 +157,10 @@ export function mockApi(real: Api): Api {
   // 受信箱（手元だけ）
   const inboxItems: InboxListItem[] = [];
   const inboxTexts = new Map<string, string>();
-  async function ensureInbox() {
-    if (inboxItems.length) return;
+  // 一覧の読み込みと ?inbox= で開く処理が同時に来ても、並べるのは1回だけ（2回並ぶと同じ依頼が重複する）
+  let inboxReady: Promise<void> | null = null;
+  const ensureInbox = () => (inboxReady ??= fillInbox());
+  async function fillInbox() {
     if (!requests.length) requests = await real.requests();
     // 保存済みの結果がある依頼を、Slackから届いて準備済みになったものとして並べる（新しい順）
     const ids = Object.keys(FIXTURES).sort().reverse();
@@ -441,6 +462,33 @@ export function mockApi(real: Api): Api {
         reviewed_at: new Date().toISOString(),
         edited_fields: [...new Set([...c.edited_fields, ...Object.keys(p).filter((k) => JSON.stringify(p[k as keyof typeof p]) !== JSON.stringify(c[k as keyof Card]))])],
       }));
+    },
+    async people() {
+      const rows = await real.people();
+      return rows.map((r) => {
+        const o = personOverlay.get(r.id);
+        return o ? { ...r, expertise_tags: o.expertise_tags ?? r.expertise_tags, speaking_intent: o.speaking_intent ?? r.speaking_intent, reviewed: true } : r;
+      });
+    },
+    async person(id) {
+      const d = await real.person(id);
+      return { ...d, person: applyPerson(d.person) };
+    },
+    async editPerson(id, p) {
+      await wait(200);
+      const d = await real.person(id);
+      const cur = applyPerson(d.person);
+      if (p.expertise_tags && p.expertise_tags.length === 0) throw new Error("得意分野を1つ以上入れてください");
+      const changed = (Object.keys(p) as Array<keyof PersonPatch>).filter((k) => JSON.stringify(p[k]) !== JSON.stringify(cur[k]));
+      const prev = personOverlay.get(id);
+      personOverlay.set(id, { ...prev, ...p, edited_fields: [...new Set([...(prev?.edited_fields ?? []), ...changed])] });
+      return applyPerson(d.person);
+    },
+    async archive() {
+      return real.archive();
+    },
+    async archiveDetail(kind, id) {
+      return real.archiveDetail(kind, id);
     },
     async resolvePending(cardId, theme, accept) {
       await wait(200);

@@ -10,6 +10,8 @@ export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
 export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
 export type { VenueCard, VenueEvent, VenueResult } from "@/lib/venues";
+export type { Person, PersonDetail, PersonPatch, PersonRow, SpeakingIntent } from "@/lib/people";
+export type { ArchiveDetail, ArchiveKind, ArchiveRow } from "@/lib/archive";
 
 /** カード → 出し先：声かけ文の下書きを頼むときの本文（イベントの情報はサーバーがデータから引き直す） */
 export interface VenueDraftBody {

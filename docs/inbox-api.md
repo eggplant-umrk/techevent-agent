@@ -64,8 +64,8 @@ Slackボット（セッション②）が使う窓口です。**この形は変�
 
 画面が使う補助のルートです。Slackボットからは使わないでください。
 
-- `GET /api/inbox`：一覧（新しい順）
-- `GET /api/inbox/{id}/detail`：1件の全体（保存した候補と作業ログ）
+- `GET /api/inbox`：一覧（新しい順）。サンプルの依頼（data/requests.json）も並び、依頼の状態 `state`（stage・accepted_by・outreach_to・declined_by。lib/requestStage.ts でコードが決める）と開催日 `event_date` が付く
+- `GET /api/inbox/{id}/detail`：1件の全体（保存した候補と作業ログ、依頼の状態、承諾した人への主催者への返事の下書き）。id はサンプルの依頼の id（req001 など）でもよい
 - `POST /api/inbox/{id}/open`：開いた印を付ける（「新しい依頼」の印が外れる）
 
 ## 試し方（APIクレジットを使わない）

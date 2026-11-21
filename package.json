@@ -21,7 +21,8 @@
     "slack:dry-run": "tsx scripts/slack/dry-run.ts",
     "test:venues": "tsx scripts/test_venues.ts",
     "test:tabs": "tsx scripts/test_tabs.ts",
-    "test:xconv": "tsx scripts/test_xconv.ts"
+    "test:xconv": "tsx scripts/test_xconv.ts",
+    "test:stage": "tsx scripts/test_stage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

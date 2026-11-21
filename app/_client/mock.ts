@@ -8,6 +8,7 @@
 import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
 import { analysisOverview as overviewOf } from "@/lib/surveyOverview";
+import { recordsFor, requestState } from "@/lib/requestStage";
 
 /** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
 const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
@@ -22,9 +23,10 @@ import type {
   SurveyEvent,
   BlogIdea,
   Candidate,
+  BoardDetail,
+  BoardListItem,
   Card,
   InboxDetail,
-  InboxListItem,
   NotebookCard,
   NotebookEvent,
   OutreachDraft,
@@ -192,21 +194,46 @@ export function mockApi(real: Api): Api {
   const analyzed = new Map<string, EventAnalysis>();
 
   // 受信箱（手元だけ）
-  const inboxItems: InboxListItem[] = [];
+  type MockItem = Omit<BoardListItem, "state" | "event_date">;
+  const inboxItems: MockItem[] = [];
+  /** 下書き（主催者への返事を承諾済みの依頼で出すため）。依頼id:社員id */
+  const drafts = new Map<string, OutreachDraft>();
   const inboxTexts = new Map<string, string>();
   // 一覧の読み込みと ?inbox= で開く処理が同時に来ても、並べるのは1回だけ（2回並ぶと同じ依頼が重複する）
   let inboxReady: Promise<void> | null = null;
+  /** 状態の計算に使うカード（打診履歴を手元で書き足したものも入れる） */
+  async function ensureCards() {
+    if (!lastCards.length) lastCards = [...(await real.cards()).cards, ...created];
+  }
+  function eventDateOf(id: string): string | null {
+    if (id === X_ID) return X_FIXTURE.detail.intake?.date ?? null;
+    return requests.find((r) => r.id === id)?.event?.date ?? null;
+  }
+  function withState(x: MockItem): BoardListItem {
+    const cards = lastCards.map(apply);
+    const nameOf = (eid: string) => cards.find((c) => c.employee_id === eid)?.employee?.name ?? eid;
+    const base = x.status === "processing" ? "processing" : x.status === "error" ? "error" : "ready";
+    const date = eventDateOf(x.id);
+    return { ...x, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date };
+  }
+  function acceptedReply(id: string, state: BoardListItem["state"]): BoardDetail["accepted_reply"] {
+    for (const p of state.accepted_by) {
+      const d = drafts.get(`${id}:${p.employee_id}`);
+      if (d?.organizer_reply) return { name: p.name, text: d.organizer_reply };
+    }
+    return null;
+  }
   const ensureInbox = () => (inboxReady ??= fillInbox());
   async function fillInbox() {
     if (!requests.length) requests = await real.requests();
-    // 保存済みの結果がある依頼を、Slackから届いて準備済みになったものとして並べる（新しい順）
+    // サンプルの依頼（保存済みの結果がある）を、受信箱に届いて準備済みになったものとして並べる（新しい順）
     const ids = Object.keys(FIXTURES).sort().reverse();
     for (const [i, id] of ids.entries()) {
       const r = requests.find((x) => x.id === id);
       const f = FIXTURES[id];
       inboxItems.push({
         id,
-        source: "slack",
+        source: "sample",
         status: "ready",
         received_at: `2026-11-21T0${9 - i}:30:00+09:00`,
         is_new: i < 2, // 上の2件は「新しい」
@@ -313,10 +340,12 @@ export function mockApi(real: Api): Api {
         onEvent(e);
       }
     },
-    // ---- 受信箱：保存済みの結果（proposals.json）を「準備済み」として並べる。追加は手元だけで準備中→準備済み
+    // ---- 受信箱：サンプルの依頼（保存済みの結果）を「準備済み」として並べる。追加は手元だけで準備中→準備済み
+    //      依頼の状態は、手元のカードの打診履歴からサーバーと同じ関数で決める
     async inbox() {
       await ensureInbox();
-      return inboxItems.map((x) => ({ ...x }));
+      await ensureCards();
+      return inboxItems.map(withState);
     },
     async inboxAdd(text) {
       await wait(200);
@@ -333,11 +362,14 @@ export function mockApi(real: Api): Api {
     },
     async inboxDetail(id) {
       await ensureInbox();
+      await ensureCards();
       const it = inboxItems.find((x) => x.id === id);
       if (!it) throw new Error("その依頼は受信箱にありません");
+      const st = withState(it);
+      const extra = { state: st.state, event_date: st.event_date, accepted_reply: acceptedReply(id, st.state) };
       if (id === X_ID) {
         const result = xResult();
-        return { ...X_FIXTURE.detail, is_new: it.is_new, result, events: result ? eventsFor(result, id, X_FIXTURE.run_usd).map(([e]) => e) : [] };
+        return { ...X_FIXTURE.detail, ...extra, is_new: it.is_new, result, events: result ? eventsFor(result, id, X_FIXTURE.run_usd).map(([e]) => e) : [] } as BoardDetail;
       }
       const fixture = FIXTURES[id];
       const result: Proposal | null =
@@ -351,6 +383,7 @@ export function mockApi(real: Api): Api {
         result,
         events: result ? eventsFor(result, id, runUsd).map(([e]) => e) : [],
         run_usd: result ? runUsd : 0,
+        ...extra,
       };
     },
     async inboxOpen(id) {
@@ -460,15 +493,16 @@ export function mockApi(real: Api): Api {
           ? ({ ...anyProfile, cautions: [], caveat: null } as Candidate) // profile only; cautions belong to another request
           : ({ name: "候補", busy_text: "予定は不明", cautions: [], ...body.candidate } as unknown as Candidate));
       // X の会話の依頼：保存済みの下書き（本物の API で作った主催者への返事つき）。ほかの人を選んだら決まった形の文
+      const keep = (d: OutreachDraft) => (body.request_id && drafts.set(`${body.request_id}:${body.candidate.employee_id}`, d), d);
       if (body.request_id === X_ID && X_FIXTURE.draft && X_FIXTURE.detail.result?.candidates[0]?.employee_id === body.candidate.employee_id) {
         total += 0.1;
-        return { draft: X_FIXTURE.draft, model: "claude-fable-5-2", fell_back: false, run_usd: 0.1, total_usd: total };
+        return { draft: keep(X_FIXTURE.draft), model: "claude-fable-5-2", fell_back: false, run_usd: 0.1, total_usd: total };
       }
       const xCand = body.request_id === X_ID ? X_FIXTURE.detail.result?.candidates.find((c) => c.employee_id === body.candidate.employee_id) : undefined;
       const req = body.request_id === X_ID ? xRequest() : requests.find((r) => r.id === body.request_id);
       total += 0.04;
-      if (xCand) return { draft: draftFor({ ...xCand, theme: body.candidate.theme, reason: body.candidate.reason }, req), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
-      return { draft: draftFor({ ...cand, theme: body.candidate.theme, reason: body.candidate.reason }, req), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
+      if (xCand) return { draft: keep(draftFor({ ...xCand, theme: body.candidate.theme, reason: body.candidate.reason }, req)), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
+      return { draft: keep(draftFor({ ...cand, theme: body.candidate.theme, reason: body.candidate.reason }, req)), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };
     },
     async outcome(body) {
       await wait(200);

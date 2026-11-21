@@ -10,11 +10,14 @@ export function Candidates({
   disabled,
   onApprove,
   onOpenCard,
+  marks = {},
 }: {
   result: ProposalT;
   disabled: boolean;
   onApprove: (c: Candidate) => void;
   onOpenCard: (cardId: string, evidenceId?: string) => void;
+  /** 依頼の状態から付ける、その人の印（声かけ中・辞退・承諾）。社員id → 印 */
+  marks?: Record<string, "outreach" | "declined" | "accepted">;
 }) {
   const n = result.candidates.length;
   return (
@@ -27,20 +30,28 @@ export function Candidates({
         {result.nominee_assessment && <p className="small muted-strong">指名された人：{result.nominee_assessment}</p>}
       </div>
       {result.candidates.map((c) => (
-        <CandidateRow key={c.employee_id} c={c} disabled={disabled} onApprove={() => onApprove(c)} onOpenCard={(ev) => c.card_id && onOpenCard(c.card_id, ev)} />
+        <CandidateRow key={c.employee_id} c={c} mark={marks[c.employee_id]} disabled={disabled} onApprove={() => onApprove(c)} onOpenCard={(ev) => c.card_id && onOpenCard(c.card_id, ev)} />
       ))}
       <NoFit result={result} />
     </section>
   );
 }
 
+const MARK: Record<"outreach" | "declined" | "accepted", { label: string; tone: "accent" | "warn" | "ok" }> = {
+  outreach: { label: "声かけ中", tone: "accent" },
+  declined: { label: "辞退", tone: "warn" },
+  accepted: { label: "承諾", tone: "ok" },
+};
+
 function CandidateRow({
   c,
+  mark,
   onApprove,
   onOpenCard,
   disabled,
 }: {
   c: Candidate;
+  mark?: "outreach" | "declined" | "accepted";
   onApprove: () => void;
   onOpenCard: (evidenceId?: string) => void;
   disabled: boolean;
@@ -61,6 +72,7 @@ function CandidateRow({
           {c.business_unit}・登壇{c.past_talk_count}回・{c.busy_text}
         </span>
         {conditional && <Tag tone="warn">条件付き</Tag>}
+        {mark && <Tag tone={MARK[mark].tone}>{MARK[mark].label}</Tag>}
       </div>
       <p className="cand-theme">{c.theme}</p>
       {conditional && <p className="caveat">{c.caveat?.trim() || "引っかかる点の記載がありません。カードで確かめてください。"}</p>}
@@ -91,8 +103,8 @@ function CandidateRow({
         </p>
       )}
       <div className="btn-row">
-        <button type="button" className="btn btn-primary btn-sm" onClick={onApprove} disabled={disabled}>
-          この人で進める
+        <button type="button" className={`btn btn-sm${mark ? "" : " btn-primary"}`} onClick={onApprove} disabled={disabled || mark === "declined"}>
+          {mark === "outreach" ? "返事を記録する" : "この人で進める"}
         </button>
         {c.card_id && (
           <button type="button" className="btn btn-sm" onClick={() => onOpenCard()}>

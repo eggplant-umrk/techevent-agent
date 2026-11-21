@@ -3,8 +3,8 @@
 //   GET  /api/inbox  画面用の一覧（新しい順）
 // localhost からのリクエストだけ受け付ける。
 import { runAgent } from "@/lib/agent";
-import { addToInbox, listInbox, listView, parseInboxInput } from "@/lib/inbox";
-import { isActiveInboxItem } from "@/lib/archive";
+import { addToInbox, parseInboxInput } from "@/lib/inbox";
+import { boardList } from "@/lib/board";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
 import { extractIntakeWithAgent } from "@/lib/intake";
 
@@ -24,6 +24,6 @@ export async function POST(req: Request) {
 
 export function GET(req: Request) {
   if (!isLocalRequest(req)) return forbidden();
-  // 開催日が過ぎた依頼は受信箱に出さない（アーカイブへ。判定はコード）
-  return Response.json({ items: listInbox().filter((it) => isActiveInboxItem(it)).map(listView) });
+  // 届いた依頼とサンプルの依頼を、依頼の状態つきで返す。開催日が過ぎた依頼は出さない（アーカイブへ。判定はコード）
+  return Response.json({ items: boardList() });
 }

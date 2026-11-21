@@ -1,5 +1,6 @@
 import { runAgent, type AgentEvent } from "@/lib/agent";
 import { resolveRequest } from "@/lib/requests";
+import { saveSampleProposal } from "@/lib/board";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,9 +14,17 @@ export async function POST(req: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const emit = (e: AgentEvent) => controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
+      const events: AgentEvent[] = [];
+      let runUsd = 0;
+      const emit = (e: AgentEvent) => {
+        events.push(e);
+        if (e.type === "done") runUsd = e.run_usd;
+        controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
+      };
       try {
-        await runAgent(request, emit);
+        const result = await runAgent(request, emit);
+        // サンプルの依頼は、出した候補を保存して受信箱の状態を「候補準備済み」にする（受信箱の依頼は受信箱が保存する）
+        if (result && !body.custom_text) saveSampleProposal(request.id, result, events, runUsd);
       } catch (err) {
         // Never echo request headers or config; only the error message.
         emit({ type: "error", message: err instanceof Error ? err.message : "不明なエラー" });

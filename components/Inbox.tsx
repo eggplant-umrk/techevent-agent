@@ -1,13 +1,9 @@
 "use client";
 
-import type { InboxListItem } from "@/app/_client/types";
+import type { BoardListItem, BoardSource, RequestStage } from "@/app/_client/types";
+import { STAGE_LABEL, STAGE_TONE } from "@/lib/requestStage";
+import { md } from "./labels";
 import { Tag } from "./ui";
-
-const STATUS: Record<InboxListItem["status"], { label: string; tone: "neutral" | "ok" | "warn" }> = {
-  processing: { label: "候補を準備中", tone: "neutral" },
-  ready: { label: "候補準備済み", tone: "ok" },
-  error: { label: "エラー", tone: "warn" },
-};
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -16,21 +12,48 @@ const when = (iso: string) => {
   return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-/** 画面の一番上。届いた依頼と、Agentが準備した候補の状態が一目で分かる。押すとその依頼の候補画面が開く */
+export const sourceLabel = (s: BoardSource) => (s === "slack" ? "Slack" : s === "sample" ? "サンプル" : "手で追加");
+
+/** 依頼の状態の印（準備中・候補準備済み・声かけ中・承諾済み・辞退）。状態はコードで決めたもの */
+export function StageTag({ stage }: { stage: RequestStage }) {
+  return <Tag tone={STAGE_TONE[stage]}>{STAGE_LABEL[stage]}</Tag>;
+}
+
+/** 状態に合わせた1行（だれが受けたか・だれに声をかけているか） */
+function stageLine(it: BoardListItem): string {
+  const s = it.state;
+  const names = (xs: Array<{ name: string }>) => xs.map((p) => `${p.name}さん`).join("・");
+  if (s.stage === "accepted") return `${names(s.accepted_by)}が承諾`;
+  if (s.stage === "outreach") return `${names(s.outreach_to)}に声かけ中（返事待ち）`;
+  if (s.stage === "declined") return `${names(s.declined_by)}が辞退。次の人を選べます`;
+  if (s.stage === "new") return "開いて「ネタ帳から候補を出す」を押すと、候補を準備します";
+  if (s.stage === "preparing") return "Agentがネタ帳を探しています";
+  if (s.stage === "error") return it.error ?? "候補を出せませんでした";
+  return it.no_fit ? "合う候補は見つかりませんでした（理由を確認できます）" : `候補：${it.candidate_names.join("・")}`;
+}
+
+/** 受信箱：届いた依頼（Slack・手で追加・サンプル）と、今の状態が一目で分かる。押すとその依頼の画面が開く */
 export function Inbox({
   items,
   loaded,
   openId,
   onOpen,
 }: {
-  items: InboxListItem[];
+  items: BoardListItem[];
   loaded: boolean;
   openId: string | null;
   onOpen: (id: string) => void;
 }) {
+  const count = (st: RequestStage) => items.filter((x) => x.state.stage === st).length;
   const fresh = items.filter((x) => x.is_new).length;
-  const ready = items.filter((x) => x.status === "ready").length;
-  const preparing = items.filter((x) => x.status === "processing").length;
+  const summary = [
+    fresh ? `新しい依頼 ${fresh}件` : "",
+    count("outreach") ? `声かけ中 ${count("outreach")}件` : "",
+    count("ready") ? `候補準備済み ${count("ready")}件` : "",
+    count("preparing") ? `準備中 ${count("preparing")}件` : "",
+  ]
+    .filter(Boolean)
+    .join("・");
 
   return (
     <section className="surface pad-lg inbox" aria-labelledby="inbox-title">
@@ -39,44 +62,32 @@ export function Inbox({
           受信箱
         </h2>
         <p className="meta" aria-live="polite">
-          {items.length === 0
-            ? ""
-            : [fresh ? `新しい依頼 ${fresh}件` : "", ready ? `候補準備済み ${ready}件` : "", preparing ? `準備中 ${preparing}件` : ""].filter(Boolean).join("・")}
+          {summary}
         </p>
       </div>
 
       {!loaded ? (
         <p className="meta">読み込んでいます…</p>
       ) : items.length === 0 ? (
-        <p className="meta">まだ依頼はありません。Slackで届いた依頼や、下の「手で追加」から入れた依頼がここに並び、候補が自動で準備されます。</p>
+        <p className="meta">まだ依頼はありません。Slackで届いた依頼や、右の「手で追加」から入れた依頼がここに並び、候補が自動で準備されます。</p>
       ) : (
         <ul className="inbox-list">
-          {items.map((it) => {
-            const s = STATUS[it.status];
-            return (
-              <li key={it.id}>
-                <button type="button" className="inbox-item" aria-current={it.id === openId ? "true" : undefined} onClick={() => onOpen(it.id)}>
-                  <span className="inbox-marks">
-                    {it.is_new && <Tag tone="accent">新しい</Tag>}
-                    <Tag tone={s.tone}>{s.label}</Tag>
-                    <span className="meta">
-                      {it.source === "slack" ? "Slack" : "手で追加"}・{when(it.received_at)}
-                    </span>
-                  </span>
-                  <span className="strong inbox-title">{it.title}</span>
+          {items.map((it) => (
+            <li key={it.id}>
+              <button type="button" className="inbox-item" aria-current={it.id === openId ? "true" : undefined} onClick={() => onOpen(it.id)}>
+                <span className="inbox-marks">
+                  {it.is_new && <Tag tone="accent">新しい</Tag>}
+                  <StageTag stage={it.state.stage} />
                   <span className="meta">
-                    {it.status === "processing"
-                      ? "Agentがネタ帳を探しています"
-                      : it.status === "error"
-                        ? it.error ?? "候補を出せませんでした"
-                        : it.no_fit
-                          ? "合う候補は見つかりませんでした（理由を確認できます）"
-                          : `候補：${it.candidate_names.join("・")}`}
+                    {sourceLabel(it.source)}・{when(it.received_at)}
+                    {it.event_date ? `・開催 ${md(it.event_date)}` : ""}
                   </span>
-                </button>
-              </li>
-            );
-          })}
+                </span>
+                <span className="strong inbox-title">{it.title}</span>
+                <span className={`meta${it.state.stage === "accepted" ? " strong" : ""}`}>{stageLine(it)}</span>
+              </button>
+            </li>
+          ))}
         </ul>
       )}
     </section>

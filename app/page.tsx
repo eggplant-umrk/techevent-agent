@@ -10,8 +10,8 @@ import type {
   BlogIdea,
   Candidate,
   DeclineReason,
-  InboxDetail,
-  InboxListItem,
+  BoardDetail,
+  BoardListItem,
   ModelChoice,
   NotebookCard,
   OutreachDraft,
@@ -19,10 +19,9 @@ import type {
   PersonDetail as PersonDetailData,
   PersonRow,
   Proposal,
-  SpeakingRequest,
 } from "@/app/_client/types";
 import { AgentSteps, type LogItem } from "@/components/AgentSteps";
-import { Approved } from "@/components/Approved";
+import { AcceptedView, Approved } from "@/components/Approved";
 import { ArchiveList, ArchiveView } from "@/components/Archive";
 import { CardDetail } from "@/components/CardDetail";
 import { Header, type Tab } from "@/components/Header";
@@ -65,9 +64,11 @@ export default function Home() {
   const [detail, setDetail] = useState<{ id: string; evidence: string | null } | null>(null);
 
   // request
-  const [presets, setPresets] = useState<SpeakingRequest[]>([]);
-  const [selected, setSelected] = useState("req001");
-  const [mode, setMode] = useState<RequestMode>("preset");
+  const [mode, setMode] = useState<RequestMode>("inbox");
+  /** 承諾済みの依頼で「ほかの候補を見る」を開いたか */
+  const [showOthers, setShowOthers] = useState(false);
+  /** 声かけ中の人の返事を記録しに戻ってきた（声かけ文は作り直さない） */
+  const [resume, setResume] = useState(false);
   const [customText, setCustomText] = useState("");
   const [customId, setCustomId] = useState("");
   const [running, setRunning] = useState(false);
@@ -77,10 +78,10 @@ export default function Home() {
   const [pitch, setPitch] = useState<string | null>(null);
 
   // inbox
-  const [inboxItems, setInboxItems] = useState<InboxListItem[]>([]);
+  const [inboxItems, setInboxItems] = useState<BoardListItem[]>([]);
   const [inboxLoaded, setInboxLoaded] = useState(false);
   const [inboxId, setInboxId] = useState<string | null>(null);
-  const [inbox, setInbox] = useState<InboxDetail | null>(null);
+  const [inbox, setInbox] = useState<BoardDetail | null>(null);
   const [adding, setAdding] = useState(false);
 
   // after approval
@@ -90,6 +91,8 @@ export default function Home() {
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState<string | null>(null);
   const [draftNote, setDraftNote] = useState<string | null>(null);
+  /** いまの下書き（draft）がだれへのものか */
+  const [draftOwner, setDraftOwner] = useState<string | null>(null);
 
   // cost
   const [runUsd, setRunUsd] = useState(0);
@@ -173,7 +176,6 @@ export default function Home() {
 
   useEffect(() => {
     if (!apiReady) return;
-    api.requests().then(setPresets).catch(() => setPresets([]));
     loadCards();
     loadState();
     loadInbox();
@@ -300,12 +302,7 @@ export default function Home() {
   }
 
   // ---- request
-  const requestRef = () =>
-    mode === "inbox" && inboxId
-      ? { request_id: inboxId }
-      : mode === "preset"
-        ? { request_id: selected }
-        : { request_id: customId, custom_text: customText };
+  const requestRef = () => (mode === "inbox" && inboxId ? { request_id: inboxId } : { request_id: customId, custom_text: customText });
 
   function resetPanel() {
     setLog([]);
@@ -317,6 +314,19 @@ export default function Home() {
     setDraftError(null);
     setDraftNote(null);
     setRunUsd(0);
+    setShowOthers(false);
+    setResume(false);
+  }
+
+  /** 依頼の状態だけを読み直す（結果を記録したあと。候補や作業ログはそのまま） */
+  async function refreshInbox(id: string) {
+    try {
+      const d = await api.inboxDetail(id);
+      setInbox(d);
+    } catch {
+      /* 状態が読めなくても画面はそのまま */
+    }
+    loadInbox();
   }
 
   /** 受信箱の1件を読み、保存してある候補と作業ログをそのまま出す（もう一度は実行しない） */
@@ -410,7 +420,7 @@ export default function Home() {
   }
 
   async function run() {
-    const id = mode === "inbox" && inboxId ? inboxId : mode === "custom" ? `custom-${Date.now().toString(36)}` : selected;
+    const id = mode === "inbox" && inboxId ? inboxId : `custom-${Date.now().toString(36)}`;
     if (mode === "custom") setCustomId(id);
     started.current = Date.now();
     setSeconds(0);
@@ -424,6 +434,8 @@ export default function Home() {
     setSeconds(Math.round((Date.now() - started.current) / 1000));
     setRunning(false);
     loadState();
+    // サンプルの依頼は、出した候補がサーバーに保存されて「候補準備済み」になる
+    if (mode === "inbox" && inboxId) void refreshInbox(inboxId);
   }
 
   const candBody = (c: Candidate) => ({ employee_id: c.employee_id, theme: c.theme, reason: c.reason, evidence_activity_ids: c.evidence.map((x) => x.id) });
@@ -437,6 +449,7 @@ export default function Home() {
     try {
       const j = await api.draft({ ...requestRef(), run_id: result.run_id, candidate: candBody(c) });
       setDraft(j.draft);
+      setDraftOwner(c.employee_id);
       if (j.fell_back) setDraftNote(`重いモデルが使えなかったため ${j.model} で作り直しました。`);
       setRunUsd(j.run_usd);
       setTotalUsd(j.total_usd);
@@ -447,15 +460,29 @@ export default function Home() {
     }
   }
 
+  /** その人のカード（承認したときに作ったカードも含む） */
+  const cardOf = (c: Candidate) =>
+    c.card_id ?? cards.find((x) => x.employee_id === c.employee_id && x.outreach_history.some((h) => h.request_id === result?.request_id))?.card_id ?? null;
+
   async function approve(c: Candidate) {
     if (!result) return;
-    setApproved(c);
     window.scrollTo({ top: 0, behavior: "smooth" });
+    // 声かけ中の人：もう一度承認は記録せず、返事（承諾・辞退）を記録する画面だけを出す
+    if (inbox?.state.outreach_to.some((p) => p.employee_id === c.employee_id)) {
+      setApproved(c);
+      setApprovedCardId(cardOf(c));
+      setDraft(null);
+      setResume(true);
+      return;
+    }
+    setResume(false);
+    setApproved(c);
     try {
       const card = await api.outcome({ ...requestRef(), request_id: result.request_id, card_id: c.card_id, result: "approved", candidate: candBody(c) });
       setApprovedCardId(card.card_id);
       loadCards();
       loadPeople();
+      if (inboxId) void refreshInbox(inboxId);
     } catch (err) {
       setDraftError(`承認を記録できませんでした（${msg(err, "不明なエラー")}）。`);
     }
@@ -467,12 +494,35 @@ export default function Home() {
     await api.outcome({
       ...requestRef(),
       request_id: result.request_id,
-      card_id: approvedCardId ?? approved.card_id,
+      card_id: approvedCardId ?? cardOf(approved),
       result: r,
       reason,
       candidate: candBody(approved),
     });
     loadCards();
+    loadPeople();
+    if (inboxId) await refreshInbox(inboxId);
+    // 承諾：決まった人の画面へ。辞退：候補の一覧に戻って次の人を選ぶ
+    if (r === "accepted" || r === "declined") {
+      setApproved(null);
+      setResume(false);
+      setShowOthers(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  const stage = mode === "inbox" ? inbox?.state.stage : undefined;
+  const marks: Record<string, "outreach" | "declined" | "accepted"> = {};
+  for (const p of inbox?.state.declined_by ?? []) marks[p.employee_id] = "declined";
+  for (const p of inbox?.state.outreach_to ?? []) marks[p.employee_id] = "outreach";
+  for (const p of inbox?.state.accepted_by ?? []) marks[p.employee_id] = "accepted";
+  // 承諾済みの人の主催者への返事：いま作った下書きがあればそれ、なければ保存した下書き
+  const acceptedReply =
+    inbox?.state.accepted_by
+      .map((p) => (draft?.organizer_reply && approvedFor(p.employee_id) ? { name: p.name, text: draft.organizer_reply } : null))
+      .find(Boolean) ?? inbox?.accepted_reply ?? null;
+  function approvedFor(employeeId: string) {
+    return draftOwner === employeeId;
   }
 
   const requestPanel = (
@@ -484,20 +534,21 @@ export default function Home() {
           drafting={drafting}
           draftError={draftError}
           draftNote={draftNote}
+          resume={resume}
           onBack={() => {
             setApproved(null);
-            setDraft(null);
+            setResume(false);
             setDraftError(null);
           }}
-          onRetryDraft={() => makeDraft(approved)}
+          onRetryDraft={() => {
+            setResume(false);
+            void makeDraft(approved);
+          }}
           onRecord={record}
         />
       ) : (
         <>
           <RequestInput
-            presets={presets}
-            selected={selected}
-            onSelect={setSelected}
             mode={mode}
             onMode={setMode}
             customText={customText}
@@ -511,8 +562,22 @@ export default function Home() {
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
           </RequestInput>
-          {result && <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} />}
-          {result && pitch && <AlternativePitch text={pitch} />}
+          {stage === "accepted" && inbox && (
+            <AcceptedView
+              detail={inbox}
+              reply={acceptedReply}
+              showOthers={showOthers}
+              onToggleOthers={() => setShowOthers((x) => !x)}
+              onOpenCard={(employeeId) => {
+                const id = cards.find((c) => c.employee_id === employeeId && c.outreach_history.some((h) => h.request_id === inbox.id))?.card_id;
+                if (id) openCard(id);
+              }}
+            />
+          )}
+          {result && (stage !== "accepted" || showOthers) && (
+            <Candidates result={result} disabled={drafting} onApprove={approve} onOpenCard={(id, ev) => openCard(id, ev ?? null)} marks={marks} />
+          )}
+          {result && pitch && (stage !== "accepted" || showOthers) && <AlternativePitch text={pitch} />}
         </>
       )}
     </div>
@@ -596,6 +661,7 @@ export default function Home() {
           key={detailCard.card_id}
           card={detailCard}
           focusEvidence={detail?.evidence ?? null}
+          requestTitle={(id) => inboxItems.find((x) => x.id === id)?.title ?? archiveRows.find((r) => r.id === id)?.title ?? null}
           onClose={() => setDetail(null)}
           onSave={async (p) => {
             await api.editCard(detailCard.card_id, p);

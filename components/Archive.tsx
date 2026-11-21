@@ -63,12 +63,10 @@ export function ArchiveList({
 export function ArchiveView({
   detail,
   api,
-  onOpenCard,
   onChanged,
 }: {
   detail: ArchiveDetail | null;
   api: Api;
-  onOpenCard: (cardId: string) => void;
   /** アンケートを取り込んだ・分析した（カードと一覧を読み直す） */
   onChanged: () => void;
 }) {
@@ -83,7 +81,7 @@ export function ArchiveView({
   if (detail.kind === "event")
     return (
       <div className="panel" aria-label="過去のイベントの詳細">
-        <EventPanel key={detail.id} api={api} id={detail.id} onOpenCard={onOpenCard} onChanged={onChanged} />
+        <EventPanel key={detail.id} api={api} id={detail.id} onChanged={onChanged} />
       </div>
     );
   return (

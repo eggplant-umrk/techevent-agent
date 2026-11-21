@@ -18,6 +18,7 @@ import {
   analyzeEvent,
   eventOverview,
   eventStats,
+  eventDetail,
   loadTalkRecords,
   overviewProblems,
   talkFeedback,
@@ -28,7 +29,6 @@ import {
   reactionLines,
   resolveReaction,
   sentencesOf,
-  talkStats,
   validateAnalysis,
   type AnalysisInput,
   type Analyzer,
@@ -66,7 +66,7 @@ function fakeInput(eventId: string): AnalysisInput {
     if (BAD.test(s.text)) return { id: s.id, polarity: "bad" as const, topic: OPS.test(s.text) ? ("operation" as const) : ("content" as const), attack: ATTACK.test(s.text) };
     return { id: s.id, polarity: "good" as const, topic: "content" as const, attack: false };
   });
-  const speakers = talkStats(eventId, all).map((t) => t.speaker_id);
+  const speakers = [...new Set(all.filter((a) => a.event_id === eventId).map((a) => a.talk_speaker_id))];
   const positive_themes: AnalysisInput["positive_themes"] = speakers
     .map((sp) => {
       const ids = sentences.filter((l) => l.polarity === "good" && l.topic === "content" && sents.find((s) => s.id === l.id)!.speaker_id === sp).map((l) => l.id);
@@ -136,27 +136,32 @@ async function main() {
 
     // ---------------------------------------------------------------- 集計（コード）
     const all = surveys();
-    const rows19 = parseCsv(csvOf("ev019")).slice(1).filter((r) => r[2].startsWith("久住"));
-    const st = talkStats("ev019").find((s) => s.speaker_id === "e003")!;
+    // イベント単位の集計（登壇者には結びつけない）
+    const rows19 = parseCsv(csvOf("ev019")).slice(1);
+    const st = eventStats("ev019");
     const avg = Math.round((rows19.reduce((a, r) => a + Number(r[3]), 0) / rows19.length) * 10) / 10;
-    check("件数・平均が CSV と一致", st.count === rows19.length && st.average === avg, `${st.count}件・平均${st.average}`);
-    check("分布の合計が件数と一致", st.distribution.reduce((a, b) => a + b, 0) === st.count);
-    check("点数の高い登壇・低い登壇を洗い出す", st.highlight === "high" && talkStats("ev020").find((s) => s.speaker_id === "e004")?.highlight === "low");
+    check("回答数・全体の満足度の平均が CSV と一致", st.answers === rows19.length && st.overall_rating?.average === avg, `${st.answers}件・平均${st.overall_rating?.average}`);
+    check("分布の合計が満足度のある回答数と一致", st.overall_rating!.distribution.reduce((a, b) => a + b, 0) === st.overall_rating!.rated);
     check("空欄・「特になし」の回答は除外して数える", st.excluded === rows19.filter((r) => ["", "なし", "特になし"].includes(r[4].trim()) && !r[5].trim()).length);
+    // 画面の窓口：登壇者は「誰が何を話したか」だけ（タイトルはアンケートの「どの登壇か」の列からコードで取り出す）
+    const det = eventDetail("ev019")!;
+    check("窓口は event・overview・speakers・source だけ（古い登壇者ごとの項目はない）", Object.keys(det).sort().join(",") === "event,overview,source,speakers", Object.keys(det).join(","));
+    check("登壇者は名前とタイトルだけ", det.speakers.every((sp) => Object.keys(sp).sort().join(",") === "business_unit,name,title") && det.speakers.some((sp) => sp.title === "AIエージェントの本番運用で効くガードレール設計"), det.speakers.map((sp) => `${sp.name}「${sp.title}」`).join(" / "));
     const mixed = sentencesOf("ev019").filter((s) => s.answer_id === all.find((a) => a.comment.startsWith("内容はとても良かったです。ただ"))?.id);
     check("1つの回答を文に分ける（良い点と不満が混ざる回答）", mixed.length === 2, mixed.map((m) => m.text).join(" / "));
 
     // ---------------------------------------------------------------- AI に渡すもの
     const msg = eventMessage(events().find((e) => e.id === "ev019")!);
+    const n003 = all.filter((x) => x.event_id === "ev019" && x.talk_speaker_id === "e003").length; // 久住さんの登壇への回答数
     check("AI に CSV 全体・個人情報を渡さない", !msg.includes("@") && !/2026\/09\/11 \d/.test(msg) && !/山田 花子|佐藤 健/.test(msg) && !msg.includes("どの登壇についての回答ですか"));
-    check("AI に集計結果と自由記述を渡す", msg.includes(`回答${st.count}件・感想あり`) && mixed.every((m) => msg.includes(`${m.id}｜${m.text}`)));
+    check("AI に集計結果と自由記述を渡す", msg.includes(`回答${n003}件・感想あり`) && mixed.every((m) => msg.includes(`${m.id}｜${m.text}`)));
     check("AI に渡す登壇ごとの集計に全体の満足度を入れない", !/満足度の平均|この登壇の点数/.test(msg), "全体の満足度しかないアンケートなので、登壇ごとの点数はなし");
 
     // ---- 全体の満足度は登壇者に結びつけない。登壇ごとの点数の列があるときだけ使う
     check("全体の満足度の列は「全体」、登壇の点数の列は「登壇ごと」と見分ける",
       detectColumns(["タイムスタンプ", "満足度を教えてください", "この登壇の満足度", "感想"]).map((c) => c.scope ?? "-").join(",") === "-,overall,talk,-");
     const fb = talkFeedback("ev019").find((t) => t.speaker_id === "e003")!;
-    check("全体の満足度しかないとき、登壇者ごとの点数は作らない", fb.talk_rating === null && fb.count === st.count);
+    check("全体の満足度しかないとき、登壇者ごとの点数は作らない", fb.talk_rating === null && fb.count === n003);
     const es = eventStats("ev019");
     check("全体の満足度はイベント単位の集計にだけ使う", es.overall_rating?.rated === all.filter((s) => s.event_id === "ev019" && s.rating).length && es.answers === all.filter((s) => s.event_id === "ev019").length);
     const twoCols = await importSurveyCsv(

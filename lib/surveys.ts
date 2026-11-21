@@ -11,6 +11,7 @@
 //   登壇者の記録（data/talk_records.json）に入れるのは「内容（登壇）」の良い点のテーマと、内容への不満の事実（「前回は〇〇を指摘する声が N件」）だけ。
 //   運営・会場・設備の不満と良い点、人を攻撃する言葉、不満の原文は入れない。カードには書かない。
 // 全体の満足度の点数は登壇者に結びつけない（イベント単位の集計にだけ使う）。登壇ごとの点数の列があるときだけ、その点数を登壇者の参考にする。
+import { analysisOverview } from "./surveyOverview";
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
 import path from "node:path";
@@ -36,55 +37,9 @@ const FILE = () => process.env.SURVEY_ANALYSIS_FILE || path.join(process.cwd(), 
 const EMPTY = /^(特になし|特にない|とくになし|なし|ない|無し|なし。|特になし。|-|ー|—|n\/?a)$/i;
 export const isEmpty = (t: string | null | undefined) => !t || !t.trim() || EMPTY.test(t.trim());
 
-/** @deprecated 画面の切り替え後に削除する。全体の満足度を登壇ごとに分けて出していた古い集計で、「全体の点数を登壇者に結びつけない」に合わない。
- *  今の画面（イベント画面）が読んでいるので、切り替えまで残す。内部では talkFeedback、画面では eventOverview を使う */
-export interface TalkStats {
-  event_id: string;
-  speaker_id: string;
-  /** 回答の数（その登壇への回答） */
-  count: number;
-  /** 満足度の平均（小数1桁。画面にもこの値を出す）。満足度の書かれた回答だけで計算 */
-  average: number;
-  /** 満足度1〜5の件数 */
-  distribution: [number, number, number, number, number];
-  /** 感想のある回答（空欄・「特になし」を除く） */
-  with_comment: number;
-  /** 感想も次に聞きたいテーマも空で、分析から外した回答 */
-  excluded: number;
-  with_want_next: number;
-  /** 点数の高い／低い登壇（コードで洗い出す） */
-  highlight: "high" | "low" | null;
-}
-
 const round1 = (x: number) => Math.round(x * 10) / 10;
 export const HIGH_AVG = 4.5;
 export const LOW_AVG = 3.3;
-
-/** @deprecated 画面の切り替え後に削除する（TalkStats を見る） */
-export function talkStats(eventId: string, all: SurveyAnswer[] = surveys()): TalkStats[] {
-  const ev = events().find((e) => e.id === eventId);
-  if (!ev) return [];
-  return ev.speaker_ids
-    .map((sp) => {
-      const rows = all.filter((s) => s.event_id === eventId && s.talk_speaker_id === sp);
-      const rated = rows.filter((r) => r.rating !== null);
-      const dist: TalkStats["distribution"] = [0, 0, 0, 0, 0];
-      for (const r of rated) dist[r.rating! - 1]++;
-      const average = rated.length ? round1(rated.reduce((a, r) => a + r.rating!, 0) / rated.length) : 0;
-      return {
-        event_id: eventId,
-        speaker_id: sp,
-        count: rows.length,
-        average,
-        distribution: dist,
-        with_comment: rows.filter((r) => !isEmpty(r.comment)).length,
-        excluded: rows.filter((r) => isEmpty(r.comment) && isEmpty(r.want_next)).length,
-        with_want_next: rows.filter((r) => !isEmpty(r.want_next)).length,
-        highlight: rated.length ? (average >= HIGH_AVG ? "high" : average <= LOW_AVG ? "low" : null) : null,
-      } satisfies TalkStats;
-    })
-    .filter((t) => t.count > 0);
-}
 
 type Dist = [number, number, number, number, number];
 function ratingSummary(values: number[]): { average: number; distribution: Dist; rated: number; highlight: "high" | "low" | null } | null {
@@ -225,8 +180,6 @@ export interface TalkAnalysis {
   /** 内容への不満（攻撃を除く）の文の数。カードに残す事実の数 */
   content_complaints: number;
   next_themes: AnalysisInput["talks"][number]["next_themes"];
-  /** @deprecated 画面の切り替え後に削除する（TalkStats を見る）。登壇者の記録には使わない */
-  stats: TalkStats;
 }
 export interface EventAnalysis {
   event_id: string;
@@ -380,7 +333,6 @@ export function inputOf(a: Pick<EventAnalysis, "labels" | "positives" | "talks">
 /** 検証を通った AI の出力から、画面とカードに出すもの（コード）を作る */
 export function buildAnalysis(eventId: string, input: AnalysisInput, all: SurveyAnswer[] = surveys()): Omit<EventAnalysis, "analyzed_at" | "model" | "run_usd" | "writebacks"> {
   const sents = new Map(sentencesOf(eventId, all).map((s) => [s.id, s]));
-  const stats = talkStats(eventId, all);
   const negatives = { operation: [] as NegativeItem[], content: [] as NegativeItem[] };
   for (const l of input.sentences) {
     if (l.polarity !== "bad" || !l.topic) continue;
@@ -409,7 +361,6 @@ export function buildAnalysis(eventId: string, input: AnalysisInput, all: Survey
     content_issue: t.content_issue?.trim() || null,
     content_complaints: input.sentences.filter((l) => l.polarity === "bad" && l.topic === "content" && !l.attack && sents.get(l.id)?.speaker_id === t.speaker_id).length,
     next_themes: t.next_themes.map((n) => ({ ...n, text: n.text.trim(), overlaps_card_id: n.overlaps_card_id || null })),
-    stats: stats.find((s) => s.speaker_id === t.speaker_id)!,
   }));
   return { event_id: eventId, labels: input.sentences, negatives, positives, talks };
 }
@@ -774,8 +725,8 @@ export async function analyzeEvent(
     emit({ type: "error", message: "そのイベントは見つかりません" });
     return null;
   }
-  const stats = talkStats(eventId);
-  if (!stats.length) {
+  const stats = eventStats(eventId);
+  if (!stats.answers) {
     emit({ type: "error", message: "このイベントにはアンケートの回答がありません。CSVを取り込んでください" });
     return null;
   }
@@ -786,10 +737,10 @@ export async function analyzeEvent(
     run_id: runId,
     model: opts.analyzer ? "test" : chooseModels().loop,
     event_id: eventId,
-    talks: stats.length,
-    answers: stats.reduce((a, s) => a + s.count, 0),
+    talks: stats.talks,
+    answers: stats.answers,
     sentences: sentencesOf(eventId).length,
-    excluded: stats.reduce((a, s) => a + s.excluded, 0),
+    excluded: stats.excluded,
   });
   const system = (SYSTEM ??= buildSystem());
   const message = eventMessage(ev);
@@ -882,25 +833,7 @@ export interface EventOverview {
 export function eventOverview(eventId: string): EventOverview | null {
   if (!events().some((e) => e.id === eventId)) return null;
   const a = (loadAnalyses()[eventId] as EventAnalysis | undefined) ?? null;
-  const next = new Map<string, { text: string; count: number; demand: boolean }>();
-  for (const n of a?.talks.flatMap((t) => t.next_themes) ?? []) {
-    const x = next.get(n.text) ?? { text: n.text, count: 0, demand: false };
-    x.count += n.response_ids.length;
-    x.demand ||= !!n.overlaps_card_id;
-    next.set(n.text, x);
-  }
-  const neg = (items: NegativeItem[]) => items.map((n) => ({ text: n.text, count: n.count, attack: n.attack }));
-  return {
-    stats: eventStats(eventId),
-    analysis: a
-      ? {
-          analyzed_at: a.analyzed_at,
-          negatives: { operation: neg(a.negatives.operation), content: neg(a.negatives.content) },
-          positives: a.positives.map((p) => ({ theme: p.theme, count: p.count, scope: p.speaker_id === null ? ("event" as const) : ("talk" as const), representatives: p.representatives.map((r) => r.text) })),
-          next_themes: [...next.values()].sort((x, y) => y.count - x.count),
-        }
-      : null,
-  };
+  return { stats: eventStats(eventId), analysis: a ? analysisOverview(a) : null };
 }
 
 /** 画面用の窓口（イベント単位の集計）に、登壇者ごとの評価が入っていないか。問題を文で返す */
@@ -916,32 +849,17 @@ export function overviewProblems(o: EventOverview): string[] {
 export function eventDetail(eventId: string) {
   const ev = events().find((e) => e.id === eventId);
   if (!ev) return null;
-  const cards = loadCards();
-  const all = surveys();
-  const stats = talkStats(eventId, all);
   const imp = loadImport(eventId);
   return {
     event: ev,
-    /** イベント単位の集計（画面はこれを使う）。登壇者ごとの点数・不満・良い点は入っていない */
+    /** イベント単位の集計（回答数・全体の満足度・良かった点のテーマ・改善点・次に聞きたいテーマ）。登壇者ごとの点数・不満・良い点は入っていない */
     overview: eventOverview(eventId)!,
-    /** @deprecated 画面の切り替え後に削除する。登壇者ごとの点数（全体の満足度を登壇ごとに分けたもの）を含む */
-    talks: ev.speaker_ids.map((id) => {
+    /** 誰が何を話したか（名前とタイトルだけ。点数・反応は入れない）。タイトルはアンケートの「どの登壇か」の列から */
+    speakers: ev.speaker_ids.map((id) => {
       const emp = employees().find((x) => x.id === id);
-      return {
-        speaker_id: id,
-        name: emp?.name ?? id,
-        business_unit: emp?.business_unit ?? "",
-        card_id: speakerCard(id, cards)?.card_id ?? null,
-        stats: stats.find((s) => s.speaker_id === id) ?? null,
-      };
+      return { name: emp?.name ?? id, business_unit: emp?.business_unit ?? "", title: imp?.talk_titles?.[id] ?? null };
     }),
     /** 取り込みの結果：列の意味（個人情報の列は捨てた・読み取れない列は無視した）と、どの登壇か分からなかった行 */
     source: imp ? { source: imp.source, imported_at: imp.imported_at, rows: imp.rows, columns: imp.columns as ColumnInfo[], unmatched_rows: imp.unmatched_rows } : null,
-    /** @deprecated 画面の切り替え後に削除する。回答ごとにだれの登壇への回答かを含む */
-    answers: all.filter((s) => s.event_id === eventId),
-    /** @deprecated 画面の切り替え後に削除する。文ごとにだれの登壇への声かを含む */
-    sentences: sentencesOf(eventId, all),
-    /** @deprecated 画面の切り替え後に削除する。登壇ごとのまとめ・不満の登壇者・良い点の登壇者を含む（画面は overview を使う） */
-    analysis: (loadAnalyses()[eventId] as EventAnalysis | undefined) ?? null,
   };
 }

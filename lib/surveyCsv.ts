@@ -36,6 +36,8 @@ export interface SurveyImport {
   answers: SurveyAnswer[];
   /** どの登壇への回答か分からなかった行（スプレッドシートの行番号） */
   unmatched_rows: number[];
+  /** 登壇のタイトル（「どの登壇か」の列の「名前「タイトル」」から、コードで取り出す）。登壇者 id → タイトル */
+  talk_titles?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -226,10 +228,13 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
   const [iComment, iTalk, iWant, iRole] = [col("comment"), col("talk"), col("want_next"), col("role")];
   const answers: SurveyAnswer[] = [];
   const unmatched: number[] = [];
+  const titles: Record<string, string> = {};
   body.forEach((r, i) => {
     const rowNo = i + 2; // スプレッドシートの行番号（1行目は質問文）
     const speaker = iTalk !== undefined ? speakerOf(r[iTalk] ?? "", speakerIds) : speakerIds.length === 1 ? speakerIds[0] : null;
     if (!speaker) return void unmatched.push(rowNo);
+    const title = iTalk !== undefined ? (r[iTalk] ?? "").match(/[「『]([^」』]{2,120})[」』]/)?.[1]?.trim() : undefined;
+    if (title && !titles[speaker]) titles[speaker] = title;
     // 自由記述の中のメール・電話番号は伏せる（原文を直すのはここだけ）
     answers.push({
       id: `${eventId}-r${rowNo}`,
@@ -242,7 +247,7 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
       role: iRole !== undefined && (r[iRole] ?? "").trim() ? r[iRole].trim() : null,
     });
   });
-  return { event_id: eventId, source, imported_at: new Date().toISOString(), rows: body.length, columns, answers, unmatched_rows: unmatched };
+  return { event_id: eventId, source, imported_at: new Date().toISOString(), rows: body.length, columns, answers, unmatched_rows: unmatched, talk_titles: titles };
 }
 
 // ---------------------------------------------------------------------------

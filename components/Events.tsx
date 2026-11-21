@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Api } from "@/app/_client/api";
-import type { ColumnInfo, EventDetail, EventListItem, ImportResult, NegativeItem, SurveyEvent } from "@/app/_client/types";
-import { md } from "./labels";
+import type { ColumnInfo, EventDetail, ImportResult, SurveyEvent } from "@/app/_client/types";
 import { ErrorLine, Spinner, Tag } from "./ui";
 
 const ROLE_LABEL: Record<ColumnInfo["role"], string> = {
@@ -18,10 +17,11 @@ const ROLE_LABEL: Record<ColumnInfo["role"], string> = {
 };
 
 /**
- * イベントの詳細（アンケートの取り込み・集計・分析・カードへの書き戻し）。
+ * イベントの詳細（アンケートの取り込み・集計・分析・カードへの書き戻し）。窓口のイベント単位の集計（overview）だけを使う。
+ * 登壇者は「誰が何を話したか」だけ。登壇者ごとの点数・不満・良い点、不満がどの登壇への声かは出さない。
  * 一覧はアーカイブタブ（components/Archive.tsx）にあり、過去のイベントを開くとここが右に出る。
  */
-export function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: string; onOpenCard: (cardId: string) => void; onChanged: () => void }) {
+export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onChanged: () => void }) {
   const [d, setD] = useState<EventDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -59,49 +59,49 @@ export function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: s
 
   if (error) return <ErrorLine message={error} />;
   if (!d) return <p className="meta pad">読み込んでいます…</p>;
-  const a = d.analysis;
-  const total = d.answers.length;
-  const nameOf = (sp: string | null) => (sp === null ? "イベント全体" : d.talks.find((t) => t.speaker_id === sp)?.name ?? sp);
+  const o = d.overview;
+  const a = o.analysis;
+  const st = o.stats;
+  const r = st.overall_rating;
+  const total = st.answers;
+  const negCount = a ? [...a.negatives.operation, ...a.negatives.content].reduce((n, x) => n + x.count, 0) : 0;
 
   return (
     <>
       <section className="surface pad-lg" aria-labelledby="evd-title">
         <p className="meta">
-          {d.event.date}・{d.event.series}・{d.event.venue}・参加{d.event.attendees}人
+          {d.event.date}・{d.event.series}・{d.event.venue}
         </p>
         <h2 id="evd-title" className="req-title">
           {d.event.title}
         </h2>
-        <table className="talk-table">
-          <thead>
-            <tr>
-              <th scope="col">登壇者</th>
-              <th scope="col">回答</th>
-              <th scope="col">満足度の平均</th>
-              <th scope="col">分布（1〜5）</th>
-            </tr>
-          </thead>
-          <tbody>
-            {d.talks.map((t) => (
-              <tr key={t.speaker_id}>
-                <td>
-                  {t.card_id ? (
-                    <button type="button" className="link" onClick={() => onOpenCard(t.card_id!)}>
-                      {t.name}
-                    </button>
-                  ) : (
-                    t.name
-                  )}{" "}
-                  {t.stats?.highlight === "high" && <Tag tone="ok">満足度が高い</Tag>}
-                  {t.stats?.highlight === "low" && <Tag tone="warn">満足度が低い</Tag>}
-                </td>
-                <td className="num">{t.stats ? `${t.stats.count}件` : "—"}</td>
-                <td className="num">{t.stats ? t.stats.average.toFixed(1) : "—"}</td>
-                <td className="num meta">{t.stats ? t.stats.distribution.join("・") : "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <h3 className="h4">登壇</h3>
+        <ul className="plain-list small">
+          {d.speakers.map((sp) => (
+            <li key={sp.name}>
+              <span className="strong">{sp.name}</span>
+              <span className="meta">（{sp.business_unit}）</span>
+              {sp.title ? `「${sp.title}」` : <span className="meta">　タイトルは記録にありません</span>}
+            </li>
+          ))}
+        </ul>
+        <dl className="person-facts">
+          <dt>回答</dt>
+          <dd>
+            {total}件<span className="meta">（感想あり{st.with_comment}件・次に聞きたいテーマあり{st.with_want_next}件）</span>
+          </dd>
+          <dt>全体の満足度</dt>
+          <dd>
+            {r ? (
+              <>
+                平均{r.average.toFixed(1)}
+                <span className="meta">（{r.rated}件・1〜5の分布 {r.distribution.join("・")}）</span>
+              </>
+            ) : (
+              <span className="meta">満足度の列がありません</span>
+            )}
+          </dd>
+        </dl>
         <SourceInfo d={d} />
         <ImportBox api={api} id={id} onImported={async () => (await load(), onChanged())} />
         <div className="btn-row">
@@ -126,36 +126,25 @@ export function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: s
 
       {a && (
         <>
-          <section className="surface cands" aria-labelledby="neg-title">
-            <div className="cands-head">
-              <h2 id="neg-title" className="h2">
-                ネガティブな声 <span className="meta">{a.negatives.operation.reduce((n, x) => n + x.count, 0) + a.negatives.content.reduce((n, x) => n + x.count, 0)}件</span>
-              </h2>
-              <p className="meta">原文のまま全部並べています（直しているのは個人情報の削除だけ）。カードには運営への不満と原文は入れません。</p>
-            </div>
-            <NegList title="運営（音響・時間・会場・配信など）" items={a.negatives.operation} nameOf={nameOf} />
-            <NegList title="内容（難しい・速い・資料など）" items={a.negatives.content} nameOf={nameOf} />
-          </section>
-
           <section className="surface cands" aria-labelledby="pos-title">
             <div className="cands-head">
               <h2 id="pos-title" className="h2">
-                ポジティブな声
+                良かった点
               </h2>
-              <p className="meta">懇親会・受付・会場などは「イベント全体」として分け、登壇者のカードには入れません。</p>
+              <p className="meta">感想をテーマごとにまとめています（イベント全体の声と、登壇の中身への声）。</p>
             </div>
             <ul className="pos-list">
               {a.positives.map((p) => (
-                <li key={`${p.speaker_id}-${p.theme}`}>
+                <li key={`${p.scope}-${p.theme}`}>
                   <p>
                     <span className="strong">{p.theme}</span>
                     <span className="meta">
-                      　{p.count}件・{nameOf(p.speaker_id)}
+                      　{p.count}件・{p.scope === "event" ? "イベント全体" : "登壇の中身"}
                     </span>
                   </p>
-                  {p.representatives.map((r) => (
-                    <p key={r.id} className="quote small">
-                      「{r.text}」
+                  {p.representatives.map((t, i) => (
+                    <p key={i} className="quote small">
+                      「{t}」
                     </p>
                   ))}
                 </li>
@@ -164,53 +153,33 @@ export function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: s
             </ul>
           </section>
 
-          <section className="surface cands" aria-labelledby="talk-title">
+          <section className="surface cands" aria-labelledby="neg-title">
             <div className="cands-head">
-              <h2 id="talk-title" className="h2">
-                登壇ごとのまとめ
+              <h2 id="neg-title" className="h2">
+                改善点 <span className="meta">{negCount}件</span>
+              </h2>
+              <p className="meta">原文のまま並べています（直しているのは個人情報の削除だけ）。</p>
+            </div>
+            <NegList title="運営・会場・設備" items={a.negatives.operation} />
+            <NegList title="内容" items={a.negatives.content} />
+          </section>
+
+          <section className="surface cands" aria-labelledby="next-title">
+            <div className="cands-head">
+              <h2 id="next-title" className="h2">
+                次に聞きたいテーマ
               </h2>
             </div>
-            {a.talks.map((t) => (
-              <article key={t.speaker_id} className="cand" aria-label={`${nameOf(t.speaker_id)}さんの登壇`}>
-                <div className="cand-head">
-                  <span className="cand-name">{nameOf(t.speaker_id)}</span>
-                  <span className="meta">
-                    回答{t.stats.count}件・平均{t.stats.average.toFixed(1)}
-                  </span>
-                </div>
-                <p className="cand-theme">{t.summary}</p>
-                {t.content_issue && (
-                  <p className="caveat">
-                    カードに残す事実：前回は{t.content_issue}を指摘する声が{t.content_complaints}件
-                  </p>
-                )}
-                {t.next_themes.length > 0 && (
-                  <div>
-                    <h4 className="h4">次に聞きたいテーマ</h4>
-                    <ul className="plain-list small">
-                      {t.next_themes.map((n, i) => (
-                        <li key={i}>
-                          {n.text}
-                          <span className="meta">　{n.response_ids.length}件</span>
-                          {n.overlaps_card_id && <span className="caveat-inline">（別の社員の未発信カードと重なる → 需要ありを提案）</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </article>
-            ))}
-            {a.writebacks.length > 0 && (
-              <div className="nofit small">
-                <h3 className="h4">カードに書き戻したこと</h3>
-                <ul className="plain-list">
-                  {a.writebacks.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ul>
-                <p className="meta">提案（確認済みカードの反応・需要あり・テーマ案）は、カード詳細で採用／見送りできます。</p>
-              </div>
-            )}
+            <ul className="plain-list small pad-list">
+              {a.next_themes.map((n, i) => (
+                <li key={i}>
+                  {n.text}
+                  <span className="meta">　{n.count}件</span>
+                  {n.demand && <span className="caveat-inline">（社内の未発信のネタと重なる → 需要ありを提案）</span>}
+                </li>
+              ))}
+              {a.next_themes.length === 0 && <li className="meta">ありませんでした。</li>}
+            </ul>
           </section>
         </>
       )}
@@ -218,7 +187,9 @@ export function EventPanel({ api, id, onOpenCard, onChanged }: { api: Api; id: s
   );
 }
 
-function NegList({ title, items, nameOf }: { title: string; items: NegativeItem[]; nameOf: (sp: string | null) => string }) {
+type OverviewNegative = EventDetail["overview"]["analysis"] extends infer A ? (A extends { negatives: { operation: Array<infer N> } } ? N : never) : never;
+
+function NegList({ title, items }: { title: string; items: OverviewNegative[] }) {
   const n = items.reduce((x, i) => x + i.count, 0);
   return (
     <div className="cand">
@@ -229,12 +200,10 @@ function NegList({ title, items, nameOf }: { title: string; items: NegativeItem[
         <p className="meta">ありませんでした。</p>
       ) : (
         <ul className="neg-list">
-          {items.map((i) => (
-            <li key={i.sentence_ids[0]}>
+          {items.map((i, k) => (
+            <li key={k}>
               <span>{i.text}</span>
-              <span className="meta">
-                {i.count > 1 ? `　${i.count}件` : "　1件"}・{i.speaker_ids.map(nameOf).join("・")}
-              </span>
+              <span className="meta">{i.count > 1 ? `　${i.count}件` : "　1件"}</span>
               {i.attack && (
                 <>
                   {" "}

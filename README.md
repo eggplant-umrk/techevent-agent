@@ -40,16 +40,21 @@ LayerX 自律型 AI Agent ハッカソン 2026/11 テーマ3「Techイベント�
 
 ## ディレクトリ構成・技術スタック
 
-MVPの仕様は [docs/spec.md](docs/spec.md)。
+MVPの仕様は [docs/spec.md](docs/spec.md)（v0.2：ネタ帳Agent）。
+
+中心は「Agentが育て続けるネタ帳（カード）」で、動きは3つだけ：カードを作る（ネタ帳を更新）／カードから選ぶ（依頼への提案・ブログのネタ）／カードに書き戻す（承認・承諾・辞退・公開）。
 
 - Next.js（App Router）＋TypeScript、Claude API の tool use（`@anthropic-ai/sdk`）
 - Agentのループは `AGENT_MODEL`（既定 claude-opus-5-5）、声かけ文や代わりの人を推す理由づけは `HEAVY_MODEL`（既定 claude-fable-5-2、失敗したら Opus で作り直す）
 - 累計の使用額が `USAGE_SWITCH_USD`（既定 $150）を超えると、ループを Sonnet 5.5、重い仕事を Opus 5.5 に自動で切り替える
 
 ```
-app/            画面（page.tsx）とAPI（api/agent はNDJSONで作業ログを流す）
-lib/agent.ts    Agentのループ（上限15ステップ）
-lib/tools.ts    ツール（data/*.json を読む）
+app/            画面（左：ネタ帳／右：依頼パネル）とAPI（agent・notebook はNDJSONで作業ログを流す）
+lib/cards.ts    ネタ帳（data/cards.json）。保存前に根拠idを検証、確認済みカードは人の修正を上書きしない
+lib/notebook.ts ネタ帳の更新（社員ごとに1回呼び出し、upsert_card でカードを作る）
+lib/agent.ts    依頼への提案のループ（ネタ帳を先に検索、上限15ステップ、合う人がいなければ3人そろえない）
+lib/blog.ts     ブログのネタ（未発信のカードから3枚）
+lib/tools.ts    ツール（search_cards / get_card / upsert_card ほか、data/*.json を読む）
 lib/prompt.ts   指示文と社員一覧（プロンプトキャッシュの対象）
 lib/heavy.ts    声かけ文・LT構成案、代わりの人を推す理由
 lib/pricing.ts  料金表（ここだけ直せばよい）
@@ -69,14 +74,30 @@ npm run dev
 
 http://localhost:3000 を開く。APIキーはサーバー側だけで使い、ブラウザには出しません。
 
+ネタ帳（data/cards.json）はコミット済みなので、すぐに使えます。新しい活動を読ませるときは画面の「ネタ帳を更新」を押すか、コマンドで：
+
+```bash
+npm run notebook -- pending
+```
+
+（新しい活動がある社員だけを読みます。全30人分を作り直すと約$0.45）
+
 ### 評価
 
-`data/README.md` の想定候補と、Agentの上位3人を照らし合わせます（APIクレジットを使います。1件 $0.1〜0.2 程度）。
+2段で評価します（APIクレジットを使います。全件で約$0.75）。
+
+1. 結合テスト（コードで判定、90%未満で失敗）：根拠idの実在・送信なし・想定候補が上位3人に入るか・代わりの提案・ネタ帳のカード化（未発信20件中15件以上）・書き戻し後に提案が変わるか
+2. テーマ案の質：LLMで採点し、v0.1（before）との差を記録
+
+想定候補は `data/README.md` から評価スクリプトだけが読みます。
 
 ```bash
 npm run eval -- req004
-npm run eval -- all
+npm run eval -- all --report docs/eval_after.md
+npx tsx scripts/eval_report.ts
 ```
+
+結果：[docs/eval_before.md](docs/eval_before.md)（v0.1）／[docs/eval_after.md](docs/eval_after.md)（v0.2 と比較）
 
 ## ライセンス
 

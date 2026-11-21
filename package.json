@@ -9,10 +9,14 @@
     "typecheck": "tsc --noEmit",
     "eval": "tsx scripts/eval.ts",
     "notebook": "tsx scripts/notebook.ts",
-    "test:inbox": "tsx scripts/test_inbox.ts"
+    "test:inbox": "tsx scripts/test_inbox.ts",
+    "slack": "tsx scripts/slack-bot.ts",
+    "slack:mock-inbox": "tsx scripts/slack/mock-inbox.ts",
+    "slack:dry-run": "tsx scripts/slack/dry-run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
+    "@slack/bolt": "5.1.0",
     "next": "^16.4.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

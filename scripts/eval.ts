@@ -12,7 +12,7 @@
 //   write-back: after recording a decline on a card, the same request's proposal changes
 // Stage 2 — quality of theme ideas, scored by an LLM judge for before (v0.1) and after.
 //
-// Uses API credits. The key is read from .env into this process only.
+// Uses API credits (except --offline). The key is read from .env into this process only, and only for real runs.
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -24,7 +24,15 @@ import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
 import { getInboxItem, prepare, registerInbox, type InboxItem } from "../lib/inbox";
 import { extractNomineeWithAgent } from "../lib/nominee";
 
-process.loadEnvFile(".env");
+// API キー（.env）を読むのは本番実行のときだけ。--offline は API を使わないので .env がなくても動く
+if (!process.argv.includes("--offline")) {
+  try {
+    process.loadEnvFile(".env");
+  } catch {
+    console.error(".env がありません。APIを使う評価には .env の ANTHROPIC_API_KEY が必要です（APIなしで判定し直すなら --offline）。");
+    process.exit(1);
+  }
+}
 
 const PASS_RATE = 0.9;
 const WRITEBACK_REQUEST = "req003";
@@ -74,28 +82,81 @@ function loadUntold(): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// "Nothing is sent": static scan of the app for outbound messaging
+// 「送信なし」：コードを静的に調べる（app/・lib/・components/・scripts/）
+// ルール：送ってよいのは、依頼が来たSlackスレッドへの返信だけ。DM・別チャンネル・候補者本人への送信は作らない。
+// - Slack への投稿（chat.postMessage）は scripts/slack-bot.ts の replyInThread の1か所だけ許す。
+//   そこは「チャンネルが SLACK_REQUEST_CHANNEL 固定」「thread_ts 必須」でなければ不合格
+// - それ以外の投稿・DM・メールなどの送信の処理があれば不合格
 // ---------------------------------------------------------------------------
-const SEND_PATTERNS = [/slack\.com\/api/i, /chat\.postMessage/, /hooks\.slack\.com/i, /nodemailer/i, /sendMail\s*\(/, /smtp/i, /sendgrid/i, /twilio/i];
+const FORBIDDEN_SEND = [
+  /slack\.com\/api/i,
+  /hooks\.slack\.com/i,
+  /response_url/,
+  /chat\.(postEphemeral|scheduleMessage|meMessage)/,
+  /conversations\.open|im\.open|mpim\.open/, // DM を開く
+  /files\.upload/,
+  /\bsay\s*\(/, // Bolt の say はスレッド外に投稿できる
+  /\brespond\s*\(/,
+  /new\s+WebClient\b/,
+  /nodemailer/i,
+  /sendMail\s*\(/,
+  /smtp/i,
+  /sendgrid/i,
+  /twilio/i,
+];
+const POST_MESSAGE = /chat\.postMessage/g;
+const ALLOWED_POST_FILE = path.join("scripts", "slack-bot.ts");
+const SCAN_SELF = path.join("scripts", "eval.ts"); // この判定自身（パターンを書いているので除く）
 
-function scanForSend(): string[] {
+/** 許可した1か所が「依頼チャンネル固定・thread_ts 必須の返信」になっているか。問題を文で返す。 */
+function checkAllowedPost(src: string): string[] {
+  const problems: string[] = [];
+  if (!/const\s+requestChannel\s*=\s*required\(\s*"SLACK_REQUEST_CHANNEL"/.test(src)) problems.push("投稿先が SLACK_REQUEST_CHANNEL に固定されていない");
+  const fn = src.match(/async function replyInThread\(threadTs: string, text: string\) \{([\s\S]*?)\n  \}/);
+  if (!fn) return [...problems, "投稿が replyInThread(threadTs, text) の中にない"];
+  const body = fn[1];
+  if (!/if \(!threadTs\) throw/.test(body)) problems.push("thread_ts がないときに止めていない");
+  const call = body.match(/chat\.postMessage\(\{([^}]*)\}\)/);
+  if (!call) problems.push("replyInThread の中に投稿がない");
+  else {
+    if (!/\bchannel:\s*requestChannel\b/.test(call[1])) problems.push("投稿のチャンネルが requestChannel ではない");
+    if (!/\bthread_ts:\s*threadTs\b/.test(call[1])) problems.push("投稿に thread_ts: threadTs がない");
+  }
+  return problems;
+}
+
+function scanForSend(): { hits: string[]; allowed: string[] } {
   const hits: string[] = [];
+  const allowed: string[] = [];
   const walk = (dir: string) => {
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, f.name);
-      if (f.isDirectory()) walk(p);
-      else if (/\.(ts|tsx)$/.test(f.name)) {
-        const src = fs.readFileSync(p, "utf-8");
-        for (const re of SEND_PATTERNS) if (re.test(src)) hits.push(`${path.relative(process.cwd(), p)}: ${re}`);
+      if (f.isDirectory()) {
+        if (f.name !== "node_modules") walk(p);
+        continue;
+      }
+      if (!/\.(ts|tsx)$/.test(f.name)) continue;
+      const rel = path.relative(process.cwd(), p);
+      if (rel === SCAN_SELF) continue;
+      const src = fs.readFileSync(p, "utf-8");
+      for (const re of FORBIDDEN_SEND) if (re.test(src)) hits.push(`${rel}: ${re}`);
+      const posts = src.match(POST_MESSAGE)?.length ?? 0;
+      if (posts === 0) continue;
+      if (rel !== ALLOWED_POST_FILE) hits.push(`${rel}: 許可していない Slack への投稿 ${posts}か所`);
+      else if (posts > 1) hits.push(`${rel}: Slack への投稿が${posts}か所（許すのはスレッドへの返信1か所だけ）`);
+      else {
+        const problems = checkAllowedPost(src);
+        if (problems.length) hits.push(`${rel}: ${problems.join("・")}`);
+        else allowed.push(`${rel} のスレッド返信1か所`);
       }
     }
   };
-  for (const dir of ["app", "lib", "components"]) {
+  for (const dir of ["app", "lib", "components", "scripts"]) {
     if (fs.existsSync(path.join(process.cwd(), dir))) walk(path.join(process.cwd(), dir));
   }
   const routes = fs.readdirSync(path.join(process.cwd(), "app", "api"));
   for (const r of routes) if (/send|post|mail|notify|slack/i.test(r)) hits.push(`app/api/${r}: send-like route`);
-  return hits;
+  return { hits, allowed };
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +306,8 @@ async function main() {
   const names = new Map(employees().map((e) => [e.id, e.name]));
   const actIds = new Set(activities().map((a) => a.id));
   const startTotal = totalUsd();
-  const sendHits = scanForSend();
+  const { hits: sendHits, allowed: sendAllowed } = scanForSend();
+  const sendOk = sendAllowed.length ? `スレッド返信以外の送信なし（許可：${sendAllowed.join("、")}）` : "送信の処理・ルートなし";
   const checks: Check[] = [];
   const rows: Array<Record<string, unknown>> = [];
   const results = new Map<string, ProposalResult | null>();
@@ -273,7 +335,7 @@ async function main() {
     const altOk = r.nominated_employee_id ? alts.some((id) => exp.ids.includes(id)) : null;
 
     checks.push({ name: `${r.id} 根拠idが実在`, pass: !!result && badEvidence.length === 0 && badCards.length === 0, detail: [...badEvidence, ...badCards].join(", ") || `${evidenceIds.length}件すべて実在` });
-    checks.push({ name: `${r.id} 送信なし`, pass: sendHits.length === 0, detail: sendHits.join(" / ") || "送信の処理・ルートなし" });
+    checks.push({ name: `${r.id} 送信なし`, pass: sendHits.length === 0, detail: sendHits.join(" / ") || sendOk });
     checks.push({ name: `${r.id} 想定候補が上位3人`, pass: anyHit, detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
     const conds = result?.candidates.filter((c) => c.confidence === "conditional") ?? [];
     const noCaveat = conds.filter((c) => !c.caveat?.trim()).map((c) => c.employee_id);

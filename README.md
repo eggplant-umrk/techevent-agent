@@ -78,6 +78,35 @@ http://localhost:3000 を開く。APIキーはサーバー側だけで使い、�
 - APIを使わずに画面を見るときは http://localhost:3000/?mock（保存済みの結果で受信箱に「準備済み」の依頼が並びます）
 - 受信箱のテスト（APIなし）：`npm run test:inbox`
 
+#### Slackから依頼を受け付ける（練習用ワークスペース専用）
+
+依頼チャンネルへの新しい投稿を受信箱に入れ、準備ができたら同じスレッドに候補を返すボットです。Socket Mode なので外部公開URLはいりません。投稿するのは、依頼が来たチャンネルのスレッドへの返信だけです。
+
+1. 練習用ワークスペースに Slack アプリを作る
+   - Socket Mode をオンにし、App-Level Token（`connections:write`）を作る → `SLACK_APP_TOKEN`（xapp-）
+   - Bot Token Scopes：`channels:history`・`chat:write`（非公開チャンネルなら `groups:history` も）
+   - Event Subscriptions の bot events：`message.channels`（非公開チャンネルなら `message.groups`）
+   - ワークスペースにインストールし、Bot User OAuth Token → `SLACK_BOT_TOKEN`（xoxb-）
+   - 依頼チャンネルにボットを招待し、チャンネルid（C…）→ `SLACK_REQUEST_CHANNEL`
+2. `.env` に上の3つを書く（名前は `.env.example`）。トークンの値は表示・コミットしない。ボットが呼ぶ窓口は既定で `http://127.0.0.1:3000`（dev サーバーは 127.0.0.1 だけで待ち受けるため。Windows では `localhost` が ::1 に向くことがあるので、`INBOX_BASE_URL` を変えるときも 127.0.0.1 で書く）
+3. ターミナルを2つ開いて、それぞれで起動する
+
+```bash
+npm run dev
+```
+
+```bash
+npm run slack
+```
+
+起動すると、接続先のワークスペース名を表示します。練習用であることを確かめてください。本番では `SLACK_ALLOWED_TEAM_ID`（練習用ワークスペースの team id）を必ず設定してください。ほかのワークスペースでは起動しなくなります。
+
+Slack なしで確かめるとき（トークン不要。仮の受信箱サーバーで、拾う・無視する投稿と返信の内容を確かめる）：
+
+```bash
+npm run slack:dry-run
+```
+
 ネタ帳（data/cards.json）はコミット済みなので、すぐに使えます。新しい活動を読ませるときは画面の「ネタ帳を更新」を押すか、コマンドで：
 
 ```bash
@@ -90,7 +119,7 @@ npm run notebook -- pending
 
 2段で評価します（APIクレジットを使います。全件で約$0.75）。
 
-1. 結合テスト（コードで判定、90%未満で失敗）：根拠idの実在・送信なし・想定候補が上位3人に入るか・代わりの提案・ネタ帳のカード化（未発信20件中15件以上）・書き戻し後に提案が変わるか
+1. 結合テスト（コードで判定、90%未満で失敗）：根拠idの実在・送信は依頼が来たSlackスレッドへの返信1か所だけ・想定候補が上位3人に入るか・代わりの提案・ネタ帳のカード化（未発信20件中15件以上）・書き戻し後に提案が変わるか
 2. テーマ案の質：LLMで採点し、v0.1（before）との差を記録
 
 想定候補は `data/README.md` から評価スクリプトだけが読みます。

@@ -6,7 +6,7 @@ import { MAX_STEPS, TODAY } from "./config";
 import { activities, employeeById, schedules, type SpeakingRequest } from "./data";
 import { alternativePitch } from "./heavy";
 import { buildSystemPrompt } from "./prompt";
-import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type SubmitInput } from "./tools";
+import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type Confidence, type SubmitInput } from "./tools";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 import { getCardById, type Card } from "./cards";
 
@@ -38,6 +38,10 @@ export interface CandidateCard {
   evidence: Array<{ id: string; type: string; date: string; title: string; where: string | null }>;
   cautions: string[];
   is_alternative_to_nominee: boolean;
+  /** "strong" = confident pick; "conditional" = usable pick with a stated catch. Strong ones come first. */
+  confidence: Confidence;
+  /** One sentence on what is holding a conditional pick back. Always non-empty for conditional, null for strong. */
+  caveat: string | null;
   card_id: string | null;
   /** Snapshot of the notebook card at proposal time (null if the agent proposed someone without a card). */
   card: Card | null;
@@ -137,11 +141,20 @@ function validateSubmit(input: SubmitInput, seen: Set<string>): string[] {
   const n = Array.isArray(input.candidates) ? input.candidates.length : 0;
   if (n > 3) errs.push("候補は3人までにしてください");
   if (n < 3 && (!input.no_fit || input.no_fit.reasons.length === 0)) {
-    errs.push("候補が3人に満たないときは no_fit に「見つからない理由」と「次に確認すべきこと」を書いてください");
+    errs.push(
+      "候補が3人に満たないときは no_fit に「見つからない理由」と「次に確認すべきこと」を書いてください。条件付きの候補（confidence=conditional と caveat）で3人まで埋められないか、先に考えてください",
+    );
   }
   const acts = new Map(activities().map((a) => [a.id, a]));
   const ids = new Set<string>();
+  let seenConditional = false;
   for (const c of input.candidates ?? []) {
+    if (c.confidence !== "strong" && c.confidence !== "conditional") errs.push(`${c.employee_id} の confidence は strong か conditional です`);
+    if (c.confidence === "conditional") {
+      seenConditional = true;
+      if (!c.caveat?.trim()) errs.push(`${c.employee_id} は条件付きの候補なので、caveat に何が引っかかるかを1文で書いてください`);
+    }
+    if (c.confidence === "strong" && seenConditional) errs.push("自信のある候補（strong）を、条件付きの候補（conditional）より先に並べてください");
     if (!employeeById(c.employee_id)) errs.push(`${c.employee_id} は社員一覧にいません`);
     if (ids.has(c.employee_id)) errs.push(`${c.employee_id} が重複しています`);
     ids.add(c.employee_id);
@@ -208,6 +221,8 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
           .map((a) => ({ id: a.id, type: a.type, date: a.date, title: a.title, where: a.channel ?? a.repo })),
         cautions,
         is_alternative_to_nominee: c.is_alternative_to_nominee,
+        confidence: c.confidence,
+        caveat: c.confidence === "conditional" ? c.caveat!.trim() : null,
         card_id: c.card_id,
         card: c.card_id ? getCardById(c.card_id) ?? null : null,
       };
@@ -237,7 +252,7 @@ export async function runAgent(
   const messages: Anthropic.MessageParam[] = [
     {
       role: "user",
-      content: `次の登壇依頼に対して、ネタ帳から候補を最大3人提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
+      content: `次の登壇依頼に対して、ネタ帳から候補を3人まで提案してください。\n\n${JSON.stringify(requestForAgent(request), null, 2)}`,
     },
   ];
   const seen = new Set<string>();

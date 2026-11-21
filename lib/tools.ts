@@ -91,7 +91,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
   {
     name: SUBMIT_TOOL,
     description:
-      "最終回答。合う候補を最大3人、おすすめ順に出す。これを呼んだら作業は終わり。合う人が3人いなければ無理に埋めず、no_fit に見つからない理由と次に確認すべきことを書く。根拠の取り組みIDは、この調査でカードや検索結果から実際に見たものだけを書く。",
+      "最終回答。候補を3人まで、おすすめ順に出す。これを呼んだら作業は終わり。自信のある候補（confidence=strong）を先に並べ、足りない分は条件付きの候補（confidence=conditional）として、何が引っかかるかを caveat に書いて3人まで埋める。本当に誰もいないときだけ候補を空にして no_fit を書く。根拠の取り組みIDは、この調査でカードや検索結果から実際に見たものだけを書く。",
     strict: true,
     input_schema: {
       type: "object",
@@ -109,7 +109,8 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
         },
         no_fit: {
           type: ["object", "null"],
-          description: "候補が3人に満たないときだけ書く。3人そろえばnull",
+          description:
+            "候補が3人に満たないときだけ書く（条件付きの候補を含めても3人に届かない、または誰もいないとき）。3人そろえばnull",
           properties: {
             reasons: { type: "array", items: { type: "string" }, description: "合う候補が見つからない理由" },
             next_checks: { type: "array", items: { type: "string" }, description: "技術広報が次に確認すべきこと" },
@@ -140,8 +141,28 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
                 type: "boolean",
                 description: "指名された人の代わり（または共同登壇）として推す人ならtrue",
               },
+              confidence: {
+                type: "string",
+                enum: ["strong", "conditional"],
+                description: "strong：テーマに合い、断られる3つの理由にも大きな引っかかりがない。conditional：候補にはなるが条件つき",
+              },
+              caveat: {
+                type: ["string", "null"],
+                description:
+                  "conditional のとき必須。何が引っかかるかを1文で（例：忙しさ5で準備時間が取れるか要確認／テーマが少しずれる（障害対応ではなくオンコール改善）／根拠が1件だけ）。strong ならnull",
+              },
             },
-            required: ["employee_id", "card_id", "theme", "reason", "evidence_activity_ids", "cautions", "is_alternative_to_nominee"],
+            required: [
+              "employee_id",
+              "card_id",
+              "theme",
+              "reason",
+              "evidence_activity_ids",
+              "cautions",
+              "is_alternative_to_nominee",
+              "confidence",
+              "caveat",
+            ],
             additionalProperties: false,
           },
         },
@@ -151,6 +172,9 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
     },
   },
 ];
+
+/** strong: a confident pick. conditional: a usable pick with a stated catch (caveat). */
+export type Confidence = "strong" | "conditional";
 
 export interface SubmitInput {
   request_pattern: "open_slot" | "theme_specified" | "named_speaker";
@@ -166,6 +190,8 @@ export interface SubmitInput {
     evidence_activity_ids: string[];
     cautions: string[];
     is_alternative_to_nominee: boolean;
+    confidence: Confidence;
+    caveat: string | null;
   }>;
 }
 

@@ -3,7 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { MAX_STEPS, TODAY } from "./config";
-import { activities, employeeById, schedules, type SpeakingRequest } from "./data";
+import { activities, employeeById, requests, schedules, type SpeakingRequest } from "./data";
+import { dateProblems } from "./dates";
 import { alternativePitch } from "./heavy";
 import { buildSystemPrompt } from "./prompt";
 import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type Confidence, type SubmitInput } from "./tools";
@@ -140,8 +141,26 @@ function collectSeenIds(name: string, result: unknown, seen: Set<string>) {
   }
 }
 
-function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null): string[] {
+/** Dates in cautions / caveat must agree with this request's event date (see lib/dates.ts). */
+export function cautionDateProblems(
+  request: SpeakingRequest,
+  candidates: Array<{ employee_id: string; cautions: string[]; caveat: string | null }>,
+): string[] {
+  const others = requests()
+    .filter((r) => r.id !== request.id)
+    .map((r) => r.event?.date ?? "");
   const errs: string[] = [];
+  for (const c of candidates) {
+    for (const t of [...(c.cautions ?? []), c.caveat ?? ""]) {
+      for (const p of dateProblems(t, request.event?.date, others)) errs.push(`${c.employee_id} の注意点：${p}`);
+    }
+  }
+  return errs;
+}
+
+function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null, request: SpeakingRequest): string[] {
+  const errs: string[] = [];
+  errs.push(...cautionDateProblems(request, input.candidates ?? []));
   const n = Array.isArray(input.candidates) ? input.candidates.length : 0;
   if (nomineeId && !(input.candidates ?? []).some((c) => c.employee_id === nomineeId)) {
     errs.push(
@@ -322,7 +341,7 @@ export async function runAgent(
       emit({ type: "tool_call", id: t.id, name: t.name, input: t.input });
       if (t.name === SUBMIT_TOOL) {
         const input = t.input as SubmitInput;
-        const errs = validateSubmit(input, seen, request.nominated_employee_id ?? null);
+        const errs = validateSubmit(input, seen, request.nominated_employee_id ?? null, request);
         if (errs.length) {
           emit({ type: "retry", message: errs.join("／") });
           emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: "差し戻し：" + errs.join("／") });

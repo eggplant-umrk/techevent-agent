@@ -8,6 +8,8 @@ import type {
   Card,
   CardPatch,
   DraftBody,
+  EventDetail,
+  EventListItem,
   InboxDetail,
   InboxListItem,
   ModelChoice,
@@ -16,6 +18,7 @@ import type {
   OutcomeBody,
   OutreachDraft,
   SpeakingRequest,
+  SurveyEvent,
 } from "./types";
 
 export interface DraftResponse {
@@ -46,6 +49,14 @@ export interface Api {
   inboxDetail(id: string): Promise<InboxDetail>;
   /** 開いた印を付ける */
   inboxOpen(id: string): Promise<void>;
+  /** 過去イベントの一覧（新しい順） */
+  events(): Promise<EventListItem[]>;
+  /** イベントの詳細（数字はコードで計算済み） */
+  eventDetail(id: string): Promise<EventDetail>;
+  /** アンケートを分析してカードに書き戻す（作業ログを流す） */
+  analyzeEvent(id: string, onEvent: (e: SurveyEvent) => void): Promise<void>;
+  /** イベント後の反応の提案を採用／見送り */
+  resolveReaction(cardId: string, reactionId: string, accept: boolean): Promise<void>;
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -103,6 +114,12 @@ export const realApi: Api = {
   inboxDetail: async (id) => json(await fetch(`/api/inbox/${encodeURIComponent(id)}/detail`)),
   inboxOpen: async (id) => {
     await json(await post(`/api/inbox/${encodeURIComponent(id)}/open`));
+  },
+  events: async () => (await json<{ events: EventListItem[] }>(await fetch("/api/events"))).events,
+  eventDetail: async (id) => json(await fetch(`/api/events/${encodeURIComponent(id)}`)),
+  analyzeEvent: async (id, onEvent) => readNdjson(await post(`/api/events/${encodeURIComponent(id)}/analyze`), onEvent),
+  resolveReaction: async (card_id, reaction_id, accept) => {
+    await json(await post("/api/cards/reactions", { card_id, reaction_id, accept }));
   },
 };
 

@@ -9,6 +9,11 @@ export type { OutreachDraft } from "@/lib/heavy";
 export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
 export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
+export type { Reaction } from "@/lib/cards";
+export type { EventAnalysis, EventListItem, SurveyEvent, TalkAnalysis, TalkStats } from "@/lib/surveys";
+import type { eventDetail } from "@/lib/surveys";
+/** GET /api/events/{id} の形 */
+export type EventDetail = NonNullable<ReturnType<typeof eventDetail>>;
 
 /** One card as GET /api/cards returns it (card + joined employee, evidence, publication records). */
 export type NotebookCard = Card & {

@@ -13,13 +13,17 @@ export function CardDetail({
   onClose,
   onSave,
   onResolve,
+  onResolveReaction,
 }: {
   card: NotebookCard;
   focusEvidence: string | null;
   onClose: () => void;
   onSave: (patch: CardPatch) => Promise<void>;
   onResolve: (theme: string, accept: boolean) => Promise<void>;
+  /** イベント後の反応の提案（反応のまとめ・需要あり）を採用／見送り */
+  onResolveReaction: (reactionId: string, accept: boolean) => Promise<void>;
 }) {
+  const reactions = (card.reactions ?? []).filter((r) => r.status !== "dismissed");
   const ref = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -156,6 +160,53 @@ export function CardDetail({
                       却下
                     </button>
                   </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {reactions.length > 0 && (
+          <section className="block" aria-labelledby="cd-reactions">
+            <h3 id="cd-reactions" className="h3">
+              イベントの反応
+            </h3>
+            <ul className="pending-list">
+              {reactions.map((r) => (
+                <li key={r.id}>
+                  <span className="reaction">
+                    {r.status === "pending" && <Tag tone="warn">提案</Tag>}{" "}
+                    {r.kind === "demand" ? (
+                      <>
+                        <span className="strong">需要あり：</span>「{r.text}」を聞きたいという声
+                      </>
+                    ) : (
+                      <span className="strong">{r.text}</span>
+                    )}
+                    <br />
+                    <span className="meta">
+                      {r.event_date}「{r.event_title}」
+                      {r.kind === "reception" && r.count !== null && `・回答${r.count}件・平均${r.average?.toFixed(1)}`}
+                    </span>
+                    {r.kind === "reception" && (r.hits.length > 0 || r.stumbles.length > 0) && (
+                      <span className="meta">
+                        <br />
+                        {r.hits.length > 0 && `刺さった点：${r.hits.join("、")}`}
+                        {r.hits.length > 0 && r.stumbles.length > 0 && "／"}
+                        {r.stumbles.length > 0 && `つまずき：${r.stumbles.join("、")}`}
+                      </span>
+                    )}
+                  </span>
+                  {r.status === "pending" && (
+                    <span className="btn-row">
+                      <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(() => onResolveReaction(r.id, true))}>
+                        採用
+                      </button>
+                      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => run(() => onResolveReaction(r.id, false))}>
+                        見送り
+                      </button>
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

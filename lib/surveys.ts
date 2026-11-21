@@ -522,6 +522,6 @@ export function eventDetail(eventId: string) {
       };
     }),
     answers: surveys().filter((s) => s.event_id === eventId),
-    analysis: loadAnalyses()[eventId] ?? null,
+    analysis: (loadAnalyses()[eventId] as EventAnalysis | undefined) ?? null,
   };
 }

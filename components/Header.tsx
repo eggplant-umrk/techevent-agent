@@ -3,7 +3,11 @@
 import type { ModelChoice } from "@/app/_client/types";
 import { usd } from "./labels";
 
+export type View = "requests" | "events";
+
 export function Header({
+  view,
+  onView,
   debug,
   runUsd,
   totalUsd,
@@ -13,6 +17,8 @@ export function Header({
   onUpdate,
   mock,
 }: {
+  view: View;
+  onView: (v: View) => void;
   /** ?debug in the URL: show cost and models (not for everyday use). */
   debug: boolean;
   runUsd: number;
@@ -36,6 +42,14 @@ export function Header({
         <span className="brand-name">ネタ帳Agent</span>
         {mock && <span className="meta">（モック）</span>}
       </div>
+      <nav aria-label="画面の切り替え" className="nav">
+        <button type="button" className="nav-item" aria-current={view === "requests" ? "page" : undefined} onClick={() => onView("requests")}>
+          依頼
+        </button>
+        <button type="button" className="nav-item" aria-current={view === "events" ? "page" : undefined} onClick={() => onView("events")}>
+          イベント
+        </button>
+      </nav>
       <div className="header-right">
         {debug && (
           <span className="meta debug-cost">

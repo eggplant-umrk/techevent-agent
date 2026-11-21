@@ -474,5 +474,200 @@
     "created_at": "2026-11-21T05:27:32.778Z",
     "updated_at": "2026-11-21T05:27:32.778Z",
     "edited_fields": []
+  },
+  {
+    "card_id": "card-e010-01",
+    "employee_id": "e010",
+    "summary": "勤怠管理をスマホで完結させるiOS／Androidアプリ「バクラク勤怠」を提供開始した。打刻（ウィジェットからも可）、打刻漏れの修正、残業・有休の確認、承認者の承認までを手元でこなせる。月末にまとめて起きがちな修正作業を減らし、従業員と承認者の負担を軽くすることをねらっている。",
+    "themes": [
+      "月末の修正作業を減らすために、打刻漏れの修正と承認をスマホの動線にどう組み込んだか",
+      "ウィジェットからの打刻など、毎日の短い操作を速くするモバイルUIの工夫",
+      "従業員と承認者という立場の違う利用者を1つのアプリで支える画面設計"
+    ],
+    "evidence_activity_ids": [
+      "rel001"
+    ],
+    "format": "lt",
+    "format_reason": "機能の範囲ははっきりしているが、リリースノートの中身は主な機能の紹介が中心で、5〜10分で要点を伝えるのにちょうどよい厚さだから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-21",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.790Z",
+    "updated_at": "2026-11-21T10:02:54.790Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e028-01",
+    "employee_id": "e028",
+    "summary": "これまでSlack前提だった社内問い合わせ対応のAIを、ブラウザからも使えるウェブ版として出した。あわせて質問数やAIの回答数の推移を見られるダッシュボードを追加し、AIが答えられなかった質問からマニュアルの不足を見つけて更新につなげる流れを作った。",
+    "themes": [
+      "AIが答えられなかった質問をマニュアル改善につなげる、本番運用での改善サイクルの設計",
+      "社内問い合わせAIの評価に使う指標の選び方とダッシュボードへの見せ方",
+      "Slack前提のAIエージェントをウェブ版に広げるときの設計判断"
+    ],
+    "evidence_activity_ids": [
+      "rel002"
+    ],
+    "format": "talk",
+    "format_reason": "利用チャネルの拡大、分析機能、改善サイクルという複数の論点があり、AIエージェントの本番運用と評価という今の時流にも合うので、20分以上で深く話せるから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-09-16",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.817Z",
+    "updated_at": "2026-11-21T10:02:54.817Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e017-02",
+    "employee_id": "e017",
+    "summary": "導入時の初期設定を、ステップ形式のガイドと、組織図や役職表をアップロードすると取り込み形式に変換するエージェントで支援する機能を出した。設定項目の多さと、マスタの手作業での取り込みが導入時の負担になっていた。仕様の見直しのため、現在は提供を一時停止している。",
+    "themes": [
+      "組織図や役職表といった形式の決まっていない資料を、取り込み形式に変換するエージェントの作り方",
+      "ステップ形式のガイドとエージェントを組み合わせた、導入時の支援の設計",
+      "AIエージェント機能をいったん止めて仕様を見直すという判断"
+    ],
+    "evidence_activity_ids": [
+      "rel005"
+    ],
+    "format": "blog",
+    "format_reason": "現在は提供を一時停止しているので、登壇で大きく取り上げるより、話す範囲を社内で確かめたうえでブログで丁寧に書くほうが扱いやすいから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-08-20",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.843Z",
+    "updated_at": "2026-11-21T10:02:54.843Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e002-02",
+    "employee_id": "e002",
+    "summary": "送付したあとに誤りが見つかった請求書などを、元の書類と紐づけたまま新しい版に差し替えられる機能を提供開始した。発行側と受け取る側の両方が最新版と修正の履歴を確かめられ、差し戻しから再確認までをサービス上で完結できる。",
+    "themes": [
+      "元の書類と紐づけたまま差し替えるための、版管理と履歴の設計",
+      "発行側と受け取る側の両方に最新版を正しく見せるための工夫",
+      "差し戻しから再確認までをサービス上で完結させる業務フローの設計"
+    ],
+    "evidence_activity_ids": [
+      "rel006"
+    ],
+    "format": "blog",
+    "format_reason": "1つの機能に絞った内容で、版管理の設計の考え方を図とあわせて文章で説明するのに向いているから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-05-21",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.864Z",
+    "updated_at": "2026-11-21T10:02:54.864Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e011-02",
+    "employee_id": "e011",
+    "summary": "請求書・経費・法人カードに貯まった支出データから、具体的な削減アクションと削減額の見込みを示すエージェントと、チャットで分析の深掘りやレポート作成を頼めるエージェントをバクラクインテリジェンスに加えた。支出の異常を見つけるだけでなく、次の一手まで短い時間で考えられるようにすることをねらっている。",
+    "themes": [
+      "複数の支出データをまたいで削減アクションを示すエージェントの設計",
+      "異常を見つけるだけでなく次の一手を提案するところまで、AIに任せる範囲の決め方",
+      "対話型分析エージェントの回答の質をどう確かめるか"
+    ],
+    "evidence_activity_ids": [
+      "rel008"
+    ],
+    "format": "talk",
+    "format_reason": "性格の違う2つのエージェントと複数のデータを扱う話で、AIエージェントの本番運用という時流にも合い、20分以上話せる厚さがあるから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-05-13",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.888Z",
+    "updated_at": "2026-11-21T10:02:54.888Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e005-02",
+    "employee_id": "e005",
+    "summary": "経費精算で確定した立替経費の支払データと勤怠の情報を、給与計算にワンクリックで取り込めるようにした。経理と給与の担当者の間で行っていたCSVの出力・受け渡し・手入力と、その確認の手間をなくした。",
+    "themes": [
+      "経費精算・勤怠・給与という3つのサービスをつなぐ連携の設計",
+      "部署をまたぐCSVの受け渡しという課題をどう見つけたか",
+      "ワンクリックで取り込んでも安心できる、データの整合性の確かめ方"
+    ],
+    "evidence_activity_ids": [
+      "rel009"
+    ],
+    "format": "lt",
+    "format_reason": "既存の機能どうしの連携という焦点の絞られた話で、5〜10分で課題と解決をまとめて伝えやすいから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-04-03",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.911Z",
+    "updated_at": "2026-11-21T10:02:54.911Z",
+    "reactions": []
+  },
+  {
+    "card_id": "card-e018-02",
+    "employee_id": "e018",
+    "summary": "店舗や拠点ごとに形式の違うExcel・CSVのシフト表を、アップロードするだけでAIが勤務予定の取り込み形式に変換する「AIシフト変換機能」を提供開始した。手作業での形式変換と従業員の紐づけが管理者の負担で、入力ミスの原因にもなっていた。",
+    "themes": [
+      "形式がばらばらなシフト表をAIで変換するときの工夫",
+      "従業員の紐づけで、AIに任せる範囲と管理者が確かめる範囲の分け方",
+      "入力ミスを減らすための、変換結果の見せ方"
+    ],
+    "evidence_activity_ids": [
+      "rel010"
+    ],
+    "format": "lt",
+    "format_reason": "1つの課題にAIで応えた分かりやすい機能で、デモも交えて5〜10分で伝えやすい厚さだから。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-03-04",
+    "announcement_activity_ids": [],
+    "evidence_request_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "edited_fields": [],
+    "created_at": "2026-11-21T10:02:54.934Z",
+    "updated_at": "2026-11-21T10:02:54.934Z"
   }
 ]

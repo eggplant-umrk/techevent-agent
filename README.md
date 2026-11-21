@@ -153,6 +153,19 @@ npx tsx scripts/analyze_surveys.ts all
 
 `DATA_SOURCE` を消すと架空データに戻ります。評価（`npm run eval`）は常に架空データで動きます。
 
+#### リリースノート（チームのネタ）
+
+バクラクの公開リリース10件（`data/sources/release_notes.json`、要約は自分の言葉、担当の割り当ては架空）を材料に足しています。ネタ帳の更新とは別に、次でカードにします（カードになっていないものだけ）：
+
+```bash
+npm run release:cards -- --dry-run
+npm run release:cards
+```
+
+- 1つ目は API を使わず、読むリリースノートと担当者・候補だけを出します。2つ目は API を使います（10件で約$0.1）
+- 担当者が分かるものはその人のカードに、分からないものは推測で付けずに「担当者未定のネタ」（`data/unassigned_cards.json`）になります。一覧は `GET /api/unassigned-cards`、割り当ては `POST /api/unassigned-cards/assign`（`{ "card_id": "card-team-01", "employee_id": "e011" }`）。割り当てたカードは確認済みになります
+- テスト（APIなし）：`npm run test:release`
+
 #### デモ用：本人を31人目として入れる
 
 デモで開発者本人を架空の会社の一員として候補に出すときは、`.env` に `DEMO_PERSON=on` を書いて `npm run dev` します。

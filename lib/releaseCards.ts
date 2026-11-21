@@ -113,7 +113,9 @@ function instructions(): string {
 - 言葉が少し重なるだけ、別の製品の話、一般的な話なら選ばない（employee_id は null）。少しでも迷えば null。推測で人に付けない
 - 担当者が決まっているもの・候補がないものは、employee_id を null、根拠は空配列にする
 
-summary・themes・format_reason は技術広報が読む文です。${PLAIN_TEXT_RULE}。`;
+summary・themes・format_reason は技術広報が読む文です。${PLAIN_TEXT_RULE}。
+
+渡されたリリースノートすべてについて、${SUBMIT} を1回だけ呼んで提出してください。文章だけで答えないでください。`;
 }
 
 function noteText(p: PendingNote): string {
@@ -276,7 +278,7 @@ export async function updateReleaseCards(emit: (e: ReleaseEvent) => void): Promi
       max_tokens: 8000,
       system: instructions(),
       tools: [SUBMIT_DEF],
-      tool_choice: { type: "tool", name: SUBMIT },
+      // このモデルはツールの強制（tool_choice: tool / any）に対応していないので、指示文で submit_release_cards を呼ばせる
       messages,
     });
     recordUsage(runId, "release_cards", res.model, res.usage);

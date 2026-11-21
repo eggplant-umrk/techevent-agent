@@ -8,6 +8,7 @@ import { pendingReleaseNotes, updateReleaseCards, type ReleaseEvent } from "../l
 const dry = process.argv.includes("--dry-run");
 if (!dry) process.loadEnvFile(".env");
 delete process.env.DATA_SOURCE; // 架空の会社のデータで動かす
+delete process.env.DEMO_PERSON; // デモ用の本人のカードのファイルには触らない
 
 const pending = pendingReleaseNotes();
 console.log(`カードになっていないリリースノート：${pending.length}件`);

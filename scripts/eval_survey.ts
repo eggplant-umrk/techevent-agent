@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { ProposalResult } from "../lib/agent";
 import { loadCards, patchCard } from "../lib/cards";
+import { dataFile } from "../lib/dataSource";
 import { events, type SpeakingRequest } from "../lib/data";
 import { surveys } from "../lib/surveyCsv";
 import {
@@ -32,7 +33,6 @@ export interface SurveyCheck {
 export const SURVEY_EVENT = "ev019";
 export const SURVEY_REQUEST = "req002";
 const SAVED = path.join(process.cwd(), "docs", "survey_latest.json");
-const CARDS = path.join(process.cwd(), "data", "cards.json");
 
 export function loadSavedAnalyses(): { at: string; analyses: Record<string, EventAnalysis> } | null {
   if (!fs.existsSync(SAVED)) return null;
@@ -41,6 +41,8 @@ export function loadSavedAnalyses(): { at: string; analyses: Record<string, Even
 
 /** cards.json を元に戻す約束つきで fn を実行する */
 export async function withCardsRestored<T>(fn: () => Promise<T> | T): Promise<T> {
+  // ネタ帳の保存先は DATA_SOURCE で変わるので、そのときの保存先を元に戻す
+  const CARDS = dataFile("cards.json");
   const original = fs.readFileSync(CARDS);
   try {
     return await fn();

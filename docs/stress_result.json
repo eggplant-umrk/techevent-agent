@@ -1,0 +1,242 @@
+{
+  "runs": [
+    {
+      "at": "2026-11-21T09:01:47.175Z",
+      "targets": [
+        "e013"
+      ],
+      "spent_usd": 0.05494599999999994,
+      "per": [
+        {
+          "employee_id": "e013",
+          "name": "早乙女 蓮",
+          "cards": [
+            {
+              "card_id": "card-e013-01",
+              "theme": "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：モデル切り替え判断を1週間から1日に",
+              "evidence": 22,
+              "on_topic": 22,
+              "noise_evidence": [],
+              "kind": "topic"
+            }
+          ],
+          "noise_cards": 0,
+          "noise_in_evidence": 0,
+          "found_topic": true,
+          "duplicate_topic_cards": 0,
+          "signal_covered": "15/15",
+          "activities": 50,
+          "activity_chars": 2321,
+          "seconds": 12.7,
+          "usd": 0.054946,
+          "log": [
+            "新しく作ったカード card-e013-01（未発信）：LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：モデル切り替え判断を1週間から1日に"
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "card_id": "card-e013-01",
+          "employee_id": "e013",
+          "summary": "AIエージェントのプロンプトやツール定義を変えたときに、過去の正解ケース200件で挙動を自動評価する仕組みをCIに組み込んだ。判定LLMのブレは3回判定の多数決で抑え、ブレたケースは人が見直す運用で、人手評価との一致率は80〜87%、CIでの実行時間は12〜15分。新しいモデルへの切り替え判断が手動確認の1週間から1日に縮まり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。評価コストの月額見積もりも設計ドキュメントにまとめている。",
+          "themes": [
+            "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：モデル切り替え判断を1週間から1日に",
+            "判定LLMのブレとどう付き合うか：3回多数決と人の見直し、人手評価との一致率の測り方",
+            "失敗ログから正解ケースを育てる評価基盤の運用と月額コストの見積もり方"
+          ],
+          "evidence_activity_ids": [
+            "st0001",
+            "st0015",
+            "st0005",
+            "st0010",
+            "st0022",
+            "st0009",
+            "st0020",
+            "st0004",
+            "st0014",
+            "st0007",
+            "st0017",
+            "st0021",
+            "st0012",
+            "st0006",
+            "st0019",
+            "st0011",
+            "st0002",
+            "st0003",
+            "st0013",
+            "st0008",
+            "st0016",
+            "st0018"
+          ],
+          "format": "blog",
+          "format_reason": "設計ドキュメントと数字がそろっていて書き起こしやすく、登壇経験がない本人の最初の発信として始めやすいため、反応を見てから登壇につなげるのがよい。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-16",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:01:47.163Z",
+          "updated_at": "2026-11-21T09:01:47.163Z",
+          "reactions": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-21T09:02:20.213Z",
+      "targets": [
+        "e015",
+        "e024"
+      ],
+      "spent_usd": 0.07669440000000005,
+      "per": [
+        {
+          "employee_id": "e015",
+          "name": "芹沢 葵",
+          "cards": [
+            {
+              "card_id": "card-e015-01",
+              "theme": "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるまをどう止めたか",
+              "evidence": 13,
+              "on_topic": 13,
+              "noise_evidence": [],
+              "kind": "topic"
+            }
+          ],
+          "noise_cards": 0,
+          "noise_in_evidence": 0,
+          "found_topic": true,
+          "duplicate_topic_cards": 0,
+          "signal_covered": "9/9",
+          "activities": 30,
+          "activity_chars": 1425,
+          "seconds": 11.3,
+          "usd": 0.031817200000000004,
+          "log": [
+            "新しく作ったカード card-e015-01（未発信）：月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるまをどう止めたか"
+          ]
+        },
+        {
+          "employee_id": "e024",
+          "name": "織部 隼人",
+          "cards": [
+            {
+              "card_id": "card-e024-01",
+              "theme": "脆弱性アラートを月400件から50件へ：SBOMと到達可能性判定による自動トリアージ",
+              "evidence": 21,
+              "on_topic": 21,
+              "noise_evidence": [],
+              "kind": "topic"
+            }
+          ],
+          "noise_cards": 0,
+          "noise_in_evidence": 0,
+          "found_topic": true,
+          "duplicate_topic_cards": 0,
+          "signal_covered": "14/18",
+          "activities": 60,
+          "activity_chars": 2651,
+          "seconds": 13.8,
+          "usd": 0.0448772,
+          "log": [
+            "新しく作ったカード card-e024-01（未発信）：脆弱性アラートを月400件から50件へ：SBOMと到達可能性判定による自動トリアージ"
+          ]
+        }
+      ],
+      "cards": [
+        {
+          "card_id": "card-e015-01",
+          "employee_id": "e015",
+          "summary": "9月末の決済バッチが4時間遅延した障害について、ポストモーテムを書きました。原因はロック競合で、リトライが雪だるま式に増えていたことです。再発防止としてバッチを分割し、処理単位にキーを付けてリトライしても二重に処理されないようにしました（冪等化）。本番に入れた後は月末の処理時間が平均で約4割短くなり（投稿によって35〜41%と数字が違う）、11月の月末バッチも遅延なく終わっています。",
+          "themes": [
+            "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるまをどう止めたか",
+            "分割と冪等キーで決済バッチを「何度リトライしても安全」にする",
+            "他チームが参考にしたくなるポストモーテムの書き方と、再発防止の進み具合の追い方"
+          ],
+          "evidence_activity_ids": [
+            "st0051",
+            "st0057",
+            "st0053",
+            "st0063",
+            "st0062",
+            "st0052",
+            "st0059",
+            "st0055",
+            "st0056",
+            "st0054",
+            "st0058",
+            "st0060",
+            "st0061"
+          ],
+          "format": "blog",
+          "format_reason": "ポストモーテムのドキュメントにタイムライン・原因・対策がすでにまとまっていてブログにしやすく、本人は登壇したことがないので、まず書いて出すのがよい（処理時間の短縮率は投稿によって35〜41%とばらつくため、出す前に本人に正しい数字を確認する）。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-16",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:02:06.424Z",
+          "updated_at": "2026-11-21T09:02:06.424Z",
+          "reactions": []
+        },
+        {
+          "card_id": "card-e024-01",
+          "employee_id": "e024",
+          "summary": "全リポジトリでSBOMを生成し、依存ライブラリの脆弱性アラートを「実際に呼ばれるコードかどうか」（到達可能性）で自動で振り分ける仕組みを作り、全社に展開した。開発チームに届くアラートは月400件から50件程度に減り、対応が必要なのは全体の12〜15%に絞れている。判定は5言語まで対応し、判定ロジックを社内固有の設定と分けてOSSとして切り出す方針もまとめている。",
+          "themes": [
+            "脆弱性アラートを月400件から50件へ：SBOMと到達可能性判定による自動トリアージ",
+            "「本当に呼ばれるか」で脆弱性を振り分ける：到達可能性判定を5言語に広げた工夫と誤判定の扱い",
+            "社内のセキュリティ自動化をOSSにする：社内固有の設定を切り離す設計"
+          ],
+          "evidence_activity_ids": [
+            "st0081",
+            "st0082",
+            "st0105",
+            "st0103",
+            "st0106",
+            "st0095",
+            "st0087",
+            "st0083",
+            "st0091",
+            "st0094",
+            "st0086",
+            "st0098",
+            "st0090",
+            "st0100",
+            "st0104",
+            "st0089",
+            "st0101",
+            "st0097",
+            "st0093",
+            "st0102",
+            "st0085"
+          ],
+          "format": "blog",
+          "format_reason": "課題・仕組み・数字がそろった今が旬のテーマだが、本人は登壇経験がなく投稿ごとに数字が少しずつ違うため、まずブログで数字と経緯を整理し、OSS公開に合わせて登壇につなげるのがよい。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-19",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:02:20.201Z",
+          "updated_at": "2026-11-21T09:02:20.201Z",
+          "reactions": []
+        }
+      ]
+    }
+  ]
+}

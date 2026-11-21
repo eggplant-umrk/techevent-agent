@@ -3,6 +3,7 @@
 import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import {
   busynessFor,
   busyText,
@@ -351,6 +352,127 @@ async function main() {
     check("iCal でない中身（HTML のエラーページなど）は読み込みに失敗として扱う", calendarStatus().includes("失敗") && uses("e031") && !busynessFor("e031", TODAY).known, calendarStatus());
     delete process.env.CALENDAR_ICS_URL;
     delete process.env.DEMO_PERSON;
+  }
+
+  // ---- 読めたカレンダーを保存し、30分は取りに行かない・断られたら保存したものを使う（Google には取りに行かない：fetch を差し替える） ----
+  {
+    const bz = await import("../lib/busyness");
+    const realFetch = globalThis.fetch;
+    let calls = 0;
+    let mode: "ok" | "429" | "slow" = "ok";
+    globalThis.fetch = (async () => {
+      calls++;
+      if (mode === "429") return new Response("Too Many Requests", { status: 429 });
+      if (mode === "slow") await new Promise((r) => setTimeout(r, 50));
+      return new Response(icsText, { status: 200, headers: { "content-type": "text/calendar" } });
+    }) as typeof fetch;
+    const URL_A = "https://calendar.example.invalid/private-aaaa/basic.ics";
+    const URL_B = "https://calendar.example.invalid/private-bbbb/basic.ics";
+    const file = bz.calendarCacheFile();
+    const ageFile = (min: number) => {
+      const v = JSON.parse(fs.readFileSync(file, "utf-8"));
+      v.fetched_at = new Date(Date.now() - min * 60_000).toISOString();
+      fs.writeFileSync(file, JSON.stringify(v));
+    };
+    const origErr = console.error;
+    const errors: string[] = [];
+    console.error = (...a: unknown[]) => void errors.push(a.join(" "));
+    try {
+      process.env.DATA_SOURCE = "github";
+      process.env.CALENDAR_ICS_URL = URL_A;
+      bz.clearCalendarCache({ files: true });
+
+      await bz.loadCalendarIfConfigured();
+      const saved = fs.existsSync(file) ? fs.readFileSync(file, "utf-8") : "";
+      check("読めたカレンダーを実行時のデータの置き場（calendar_cache.json）に保存する", calls === 1 && saved.length > 0 && path.dirname(file) === path.resolve(process.env.DATA_RUNTIME_DIR!), `${calls}回`);
+      check("保存するのは開始・終了・終日と読んだ時刻だけ（URL・タイトル・場所・参加者は保存しない）", !saved.includes("calendar.example") && !saved.includes("private-") && !/架空|会議室|mailto|SUMMARY|LOCATION|ATTENDEE/.test(saved) && (JSON.parse(saved).slots as object[]).every((s) => Object.keys(s).sort().join(",") === "all_day,end,start"));
+      check(".gitignore に保存先（data/runtime/）が入っている", /^data\/runtime\/$/m.test(fs.readFileSync(".gitignore", "utf-8")));
+
+      await bz.loadCalendarIfConfigured();
+      bz.clearCalendarCache(); // サーバーを起動し直したのと同じ（メモリだけ忘れる）
+      await bz.loadCalendarIfConfigured();
+      const fresh = bz.busynessFor("e001", TODAY);
+      check("前に読んでから30分たつまでは取りに行かない（起動し直しても保存したものを使う）", calls === 1 && fresh.known && fresh.busy_minutes === 900 && !fresh.calendar_as_of, `${calls}回`);
+      check("新しいカレンダーのときは「少し前」の表示を出さない", !bz.busyText(fresh).includes("少し前"), bz.busyText(fresh));
+
+      ageFile(31);
+      bz.clearCalendarCache();
+      await bz.loadCalendarIfConfigured();
+      check("30分たったら取りに行く", calls === 2, `${calls}回`);
+
+      ageFile(45);
+      bz.clearCalendarCache();
+      mode = "429";
+      errors.length = 0;
+      await bz.loadCalendarIfConfigured();
+      const stale = bz.busynessFor("e001", TODAY);
+      check("取りに行って 429 で断られたら、保存した最後のカレンダーで計算する", calls === 3 && stale.known && stale.busy_minutes === 900 && !!stale.calendar_as_of, `${calls}回・${bz.busyText(stale)}`);
+      check("そのときは「少し前のカレンダー」と読んだ時刻を小さく添える", /（少し前のカレンダー：(\d{1,2}\/\d{1,2} )?\d{1,2}:\d{2} に読んだもの）$/.test(bz.busyText(stale)), bz.busyText(stale));
+      check("読んだ時刻は日本時間：今日なら「7:41」、前の日なら「11/21 18:05」", bz.readTimeText("2026-11-21T22:41:00Z", "2026-11-22") === "7:41" && bz.readTimeText("2026-11-21T09:05:00Z", "2026-11-22") === "11/21 18:05");
+      check("Agent に渡す短い形には添えない（数字と区分だけ）", !bz.busyForAgent(stale).includes("少し前"), bz.busyForAgent(stale));
+      check("ログは 429 と「保存したものを使う」だけ（URL は出さない）", errors.some((e) => e.includes("HTTP 429") && e.includes("保存した")) && !errors.join("").includes("calendar.example"), errors.at(-1));
+      check("状態の確認（diag）でも、少し前のカレンダーを使っていると分かる", bz.calendarStatus().includes("少し前"), bz.calendarStatus());
+      check("空いていそうな日も、保存したものの範囲まで探せる", bz.knownUntilFor("e001") !== null && bz.slotsFor("e001") !== null);
+
+      await bz.loadCalendarIfConfigured();
+      check("断られたあと10分は取りに行き直さない", calls === 3, `${calls}回`);
+
+      // 保存したものがなく、取りにも行けないときだけ「予定は不明」
+      bz.clearCalendarCache({ files: true });
+      await bz.loadCalendarIfConfigured();
+      const none = bz.busynessFor("e001", TODAY);
+      check("保存したものがなく、断られたら「予定は不明」", calls === 4 && !none.known && bz.busyText(none) === "予定は不明", `${calls}回`);
+
+      // URL を差し替えたら、前の URL で保存したものは使わない
+      mode = "ok";
+      bz.clearCalendarCache({ files: true });
+      await bz.loadCalendarIfConfigured();
+      process.env.CALENDAR_ICS_URL = URL_B;
+      mode = "429";
+      bz.clearCalendarCache();
+      await bz.loadCalendarIfConfigured();
+      check("URL を差し替えたら、前の URL のカレンダーは使わない（「予定は不明」）", calls === 6 && !bz.busynessFor("e001", TODAY).known, `${calls}回`);
+
+      // 同時に呼ばれても、取りに行くのは1回
+      mode = "slow";
+      bz.clearCalendarCache({ files: true });
+      const before = calls;
+      await Promise.all([bz.loadCalendarIfConfigured(), bz.loadCalendarIfConfigured(), bz.loadCalendarIfConfigured()]);
+      check("同時にいくつ呼ばれても、取りに行くのは1回", calls - before === 1, `${calls - before}回`);
+
+      // 保存したものが壊れていても止まらない（取りに行く）
+      fs.writeFileSync(file, "{壊れた");
+      bz.clearCalendarCache();
+      mode = "ok";
+      await bz.loadCalendarIfConfigured();
+      check("保存したものが壊れていたら、ないものとして取りに行く", bz.busynessFor("e001", TODAY).known && calls - before === 2);
+
+      // reset:demo は保存したカレンダーを残す（--calendar で片付ける）
+      const rt = fs.mkdtempSync(path.join(path.dirname(process.env.DATA_RUNTIME_DIR!), "techevent-reset-"));
+      fs.writeFileSync(path.join(rt, "calendar_cache.json"), "{}");
+      fs.writeFileSync(path.join(rt, "cards.json"), "{}");
+      fs.mkdirSync(path.join(rt, "github"));
+      fs.writeFileSync(path.join(rt, "github", "inbox.json"), "[]");
+      const runReset = (...args: string[]) =>
+        spawnSync(process.execPath, [path.join("node_modules", "tsx", "dist", "cli.mjs"), path.join("scripts", "reset_demo.ts"), "--delete", ...args], {
+          encoding: "utf-8",
+          env: { ...process.env, DATA_RUNTIME_DIR: rt },
+          timeout: 30000,
+        });
+      const r1 = runReset();
+      check("reset:demo は保存したカレンダーを残し、ほかの実行時のデータは片付ける", r1.status === 0 && fs.existsSync(path.join(rt, "calendar_cache.json")) && !fs.existsSync(path.join(rt, "cards.json")) && !fs.existsSync(path.join(rt, "github")) && r1.stdout.includes("保存したカレンダー"), r1.stdout.trim().split("\n").at(-1));
+      const r2 = runReset();
+      check("残っているのが保存したカレンダーだけなら「片付けるものはありません」", r2.status === 0 && r2.stdout.includes("片付けるものはありませんでした"));
+      const r3 = runReset("--calendar");
+      check("reset:demo --calendar で、保存したカレンダーも片付ける", r3.status === 0 && !fs.existsSync(path.join(rt, "calendar_cache.json")));
+      fs.rmSync(rt, { recursive: true, force: true });
+    } finally {
+      globalThis.fetch = realFetch;
+      console.error = origErr;
+      delete process.env.CALENDAR_ICS_URL;
+      delete process.env.DATA_SOURCE;
+      bz.clearCalendarCache({ files: true });
+    }
   }
 
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");

@@ -7,7 +7,7 @@
 // トークンは .env からこのプロセスにだけ読み込む。値は表示・ログ出力しない。
 import { App, LogLevel, webApi } from "@slack/bolt";
 import { readSlackSources, reportLines, sourceChannels } from "./slack/sources";
-import { type BotConfig, handleRequest, makeSeen, type MessageEventLike, type NotifyKind, notifyText, shouldHandle, type SlackLike, THREAD_TEXT, type ThreadKind } from "./slack/core";
+import { type BotConfig, handleRequest, makeSeen, type MessageEventLike, type NotifyKind, notifyText, presentInboxUrlProblem, shouldHandle, type SlackLike, THREAD_TEXT, type ThreadKind } from "./slack/core";
 
 try {
   process.loadEnvFile(".env");
@@ -66,6 +66,11 @@ const notifyChannel = process.env.SLACK_NOTIFY_CHANNEL?.trim() || null;
 if (notifyChannel && !/^[CG][A-Z0-9]+$/.test(notifyChannel)) fail(".env の SLACK_NOTIFY_CHANNEL の形が違います（技術広報だけの非公開チャンネルの id。C または G で始まる英数字）");
 const allowedTeam = process.env.SLACK_ALLOWED_TEAM_ID?.trim() || null;
 const inboxBaseUrl = process.env.INBOX_BASE_URL?.trim() || "http://127.0.0.1:3000";
+// 発表用（この端末）にだけつなぐ。見せる用（合言葉を全員に公開する npm run start:share）には Slack をつながない
+{
+  const problem = presentInboxUrlProblem(inboxBaseUrl);
+  if (problem) fail(problem);
+}
 
 const log = (line: string) => console.log(`[slack] ${new Date().toLocaleTimeString("ja-JP")} ${line}`);
 

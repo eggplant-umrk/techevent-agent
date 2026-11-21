@@ -6,6 +6,7 @@
     "dev": "node scripts/serve.mjs dev",
     "build": "next build",
     "start": "node scripts/serve.mjs start",
+    "start:share": "node scripts/serve.mjs start --share",
     "typecheck": "tsc --noEmit",
     "eval": "tsx scripts/eval.ts",
     "notebook": "tsx scripts/notebook.ts",
@@ -17,6 +18,7 @@
     "test:loop": "tsx scripts/test_notebook_loop.ts",
     "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",
+    "reset:share": "tsx scripts/reset_demo.ts --share",
     "usage": "tsx scripts/usage_report.ts",
     "test:sources": "tsx scripts/test_more_sources.ts",
     "slack:sources": "tsx scripts/slack-bot.ts --read-sources",
@@ -36,7 +38,8 @@
     "test:stage": "tsx scripts/test_stage.ts",
     "test:datesuggest": "tsx scripts/test_date_suggest.ts",
     "test:security": "tsx scripts/test_security.ts",
-    "test:replyfacts": "tsx scripts/test_reply_facts.ts"
+    "test:replyfacts": "tsx scripts/test_reply_facts.ts",
+    "test:hardening": "tsx scripts/test_share_hardening.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

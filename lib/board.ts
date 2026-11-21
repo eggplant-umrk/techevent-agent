@@ -63,6 +63,27 @@ export function markSampleOpened(requestId: string) {
 
 // ---- 下書き（声かけ文と主催者への返事） ----------------------------------------------------
 const draftKey = (requestId: string, employeeId: string) => `${requestId}:${employeeId}`;
+/**
+ * 下書きに使う候補（/api/draft）。ブラウザから来た候補の文は使わず、保存済みの候補（受信箱・サンプルの依頼の結果）から employee_id で引き直す。
+ * 保存済みの結果がない依頼（その場で書いた依頼文など）は、ブラウザから来た値を長さで切り、根拠は実在する活動の id だけにする
+ */
+export function draftCandidate(
+  body: { request_id?: string; candidate?: { employee_id?: unknown; theme?: unknown; reason?: unknown; evidence_activity_ids?: unknown } },
+  activityIds: Set<string>,
+): { employee_id: string; theme: string; reason: string; evidence_activity_ids: string[]; from: "saved" | "trimmed" } | null {
+  const employeeId = typeof body.candidate?.employee_id === "string" ? body.candidate.employee_id : "";
+  if (!employeeId) return null;
+  // その場で書いた依頼文（custom…）には保存済みの結果がない
+  if (body.request_id && !body.request_id.startsWith("custom")) {
+    const saved = boardDetail(body.request_id)?.result?.candidates.find((c) => c.employee_id === employeeId);
+    if (!saved) return null; // 保存済みの候補にいない人の下書きは作らない
+    return { employee_id: saved.employee_id, theme: saved.theme, reason: saved.reason, evidence_activity_ids: saved.evidence.map((e) => e.id), from: "saved" };
+  }
+  const str = (v: unknown, n: number) => (typeof v === "string" ? v.slice(0, n) : "");
+  const ids = Array.isArray(body.candidate?.evidence_activity_ids) ? body.candidate!.evidence_activity_ids.filter((x): x is string => typeof x === "string" && activityIds.has(x)).slice(0, 10) : [];
+  return { employee_id: employeeId, theme: str(body.candidate?.theme, 120), reason: str(body.candidate?.reason, 400), evidence_activity_ids: ids, from: "trimmed" };
+}
+
 export function saveDraft(requestId: string, employeeId: string, draft: OutreachDraft) {
   const all = readJson<Record<string, OutreachDraft & { saved_at: string }>>(DRAFT_FILE(), {});
   all[draftKey(requestId, employeeId)] = { ...draft, saved_at: nowJst() };

@@ -1,12 +1,13 @@
 import { runAgent, type AgentEvent } from "@/lib/agent";
 import { resolveRequest } from "@/lib/requests";
 import { saveSampleProposal } from "@/lib/board";
+import { slotted } from "@/lib/apiSlots";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export async function POST(req: Request) {
+async function handlePost(req: Request) {
   const body = (await req.json()) as { request_id?: string; custom_text?: string };
   const request = resolveRequest(body);
   if (!request) return Response.json({ error: "依頼が見つかりません" }, { status: 400 });
@@ -37,3 +38,6 @@ export async function POST(req: Request) {
     headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
+
+// API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
+export const POST = slotted(handlePost);

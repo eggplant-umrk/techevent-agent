@@ -37,6 +37,7 @@ async function main() {
   check("lan で合言葉が空なら、起動を止める理由がある", !!shareConfigProblem()?.includes("ACCESS_CODE"));
   check("lan で合言葉が空なら、どの窓口も使えない（503）", !req({}).ok && (req({}) as { status: number }).status === 503);
   process.env.ACCESS_CODE = "sakura-2026";
+  process.env.SHARE_BUDGET_USD = "5"; // lan では上限も必須（scripts/test_share_hardening.ts）
   const lan = (p: Partial<Parameters<typeof checkRequest>[0]>) => req({ host: "192.168.1.20:3000", ...p });
   const noCode = lan({});
   check("lan：合言葉なしの /api は弾く（401）", !noCode.ok && noCode.status === 401);
@@ -80,15 +81,16 @@ async function main() {
   // ---- 起動の止め方（scripts/serve.mjs）：.env のない場所で、設定を環境変数で渡す
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "serve-test-"));
   const serve = path.join(process.cwd(), "scripts", "serve.mjs");
-  const run = (env: Record<string, string>) => spawnSync(process.execPath, [serve, "dev"], { cwd: tmp, env: { ...process.env, ...env }, encoding: "utf-8", timeout: 10000 });
-  const s1 = run({ SHARE_MODE: "lan", ACCESS_CODE: "" });
-  check("起動：lan で合言葉が空なら止める", s1.status === 1 && s1.stderr.includes("ACCESS_CODE"));
+  const run = (env: Record<string, string>, args: string[] = ["dev"]) =>
+    spawnSync(process.execPath, [serve, ...args, "--print-config"], { cwd: tmp, env: { ...process.env, ...env }, encoding: "utf-8", timeout: 10000 });
+  const s1 = run({ ACCESS_CODE: "", SHARE_BUDGET_USD: "5" }, ["start", "--share"]);
+  check("起動：見せる用（start:share）で合言葉が空なら止める", s1.status === 1 && s1.stderr.includes("ACCESS_CODE"));
   const s2 = run({ BIND_HOST: "0.0.0.0" });
-  check("起動：既定のまま localhost 以外で待ち受けようとしたら止める", s2.status === 1 && s2.stderr.includes("SHARE_MODE=lan"));
+  check("起動：発表用で localhost 以外に待ち受けようとしたら止める（見せる用は start:share で別に立てる）", s2.status === 1 && s2.stderr.includes("start:share"));
   fs.rmSync(tmp, { recursive: true, force: true });
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf-8")) as { scripts: Record<string, string> };
   check("package.json の dev と start は serve.mjs（BIND_HOST、既定 127.0.0.1）を通す", pkg.scripts.dev.includes("serve.mjs dev") && pkg.scripts.start.includes("serve.mjs start"));
-  check("serve.mjs の既定の待ち受け先は 127.0.0.1", /: "127\.0\.0\.1"/.test(fs.readFileSync(serve, "utf-8")));
+  check("serve.mjs の発表用の既定の待ち受け先は 127.0.0.1", /\|\| "127\.0\.0\.1"/.test(fs.readFileSync(serve, "utf-8")));
 
   // ---- API 代の上限
   process.env.SHARE_BUDGET_USD = "5";

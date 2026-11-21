@@ -101,7 +101,7 @@ export async function handleRequest(e: Required<Pick<MessageEventLike, "channel"
   try {
     const res = await fetch(new URL("/api/inbox", cfg.inboxBaseUrl), {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...shareHeaders() },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: e.text, source: "slack", meta: { channel: e.channel, ts: e.ts, user: e.user, permalink } }),
     });
     if (!res.ok) throw new Error(`POST /api/inbox ${res.status}`);
@@ -120,7 +120,7 @@ export async function handleRequest(e: Required<Pick<MessageEventLike, "channel"
   while (Date.now() < until) {
     await sleep(cfg.pollIntervalMs);
     try {
-      const res = await fetch(new URL(`/api/inbox/${encodeURIComponent(id)}`, cfg.inboxBaseUrl), { headers: shareHeaders() });
+      const res = await fetch(new URL(`/api/inbox/${encodeURIComponent(id)}`, cfg.inboxBaseUrl));
       if (!res.ok) continue; // 一時的な失敗は次の確認まで待つ
       last = (await res.json()) as InboxItem;
     } catch {
@@ -147,8 +147,20 @@ export function makeSeen(limit = 500) {
   };
 }
 
-/** 窓口を別の端末に見せる設定（SHARE_MODE=lan）のときは、合言葉をヘッダーで送る（値はログに出さない） */
-function shareHeaders(): Record<string, string> {
-  const code = (process.env.ACCESS_CODE ?? "").trim();
-  return (process.env.SHARE_MODE ?? "").trim().toLowerCase() === "lan" && code ? { "X-Access-Code": code } : {};
+/**
+ * ボットがつなぐ窓口は、発表用（この端末の 127.0.0.1:3000 など）だけ。見せる用（npm run start:share、合言葉を全員に公開する）には
+ * Slack をつながない。問題があれば理由を返す（なければ null）
+ */
+export function presentInboxUrlProblem(url: string, sharePort = (process.env.SHARE_PORT ?? "").trim() || "3100"): string | null {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return `INBOX_BASE_URL（${url}）の形が正しくありません`;
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return "INBOX_BASE_URL は http:// か https:// で書いてください";
+  if (!["127.0.0.1", "localhost", "[::1]"].includes(u.hostname)) return `INBOX_BASE_URL は発表用（この端末の 127.0.0.1）にしてください（今は ${u.hostname}）。見せる用には Slack をつなぎません`;
+  const port = u.port || (u.protocol === "https:" ? "443" : "80");
+  if (port === sharePort) return `INBOX_BASE_URL のポート ${port} は見せる用です。発表用（既定 3000）にしてください`;
+  return null;
 }

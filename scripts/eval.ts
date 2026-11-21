@@ -205,11 +205,23 @@ async function main() {
   const target = args.find((a) => !a.startsWith("--")) ?? "";
   const reportIdx = args.indexOf("--report");
   const reportPath = reportIdx >= 0 ? args[reportIdx + 1] : undefined;
+  // --offline: no API calls. Re-check the saved results (docs/eval_after.json) with the current
+  //            validators, data and code (send scan). The write-back test and stage 2 are skipped.
+  // --no-quality: run stage 1 for real but skip the LLM scoring (stage 2).
+  const offline = args.includes("--offline");
+  const noQuality = offline || args.includes("--no-quality");
+  const saved = offline
+    ? (JSON.parse(fs.readFileSync(path.join(process.cwd(), "docs", "eval_after.json"), "utf-8")) as {
+        at: string;
+        rows: Array<{ request_id: string; result: ProposalResult | null; run_usd: number; steps: number }>;
+      })
+    : null;
+  if (saved) console.log(`オフライン：${saved.at} の保存結果を、今のコード・データ・検証で判定し直します（APIは使いません）`);
   const all = requests();
   const full = target === "all";
   const targets = full ? all : all.filter((r) => target.split(",").includes(r.id));
   if (targets.length === 0) {
-    console.error("使い方: npm run eval -- req001 | req001,req004 | all [--report docs/eval_after.md]");
+    console.error("使い方: npm run eval -- req001 | req001,req004 | all [--report docs/eval_after.md] [--no-quality] [--offline]");
     process.exit(1);
   }
   const expected = loadExpected();
@@ -224,7 +236,10 @@ async function main() {
   // ---- stage 1: per request
   for (const r of targets) {
     console.log(`\n=== ${r.id} (${r.pattern}) ${r.event?.title}`);
-    const { result, usd, steps } = await propose(r);
+    const savedRow = saved?.rows.find((x) => x.request_id === r.id);
+    const { result, usd, steps } = saved
+      ? { result: savedRow?.result ?? null, usd: 0, steps: savedRow?.steps ?? 0 }
+      : await propose(r);
     results.set(r.id, result);
     const top3 = result?.candidates.map((c) => c.employee_id) ?? [];
     const exp = expected[r.id] ?? { ids: [] };
@@ -285,7 +300,9 @@ async function main() {
     // ---- write-back: decline on the top card, run the same request again, then undo
     const before = results.get(WRITEBACK_REQUEST);
     const top = before?.candidates[0];
-    if (top?.card_id) {
+    if (offline) {
+      console.log("\n（オフラインのため書き戻しテストは省略）");
+    } else if (top?.card_id) {
       const req = all.find((x) => x.id === WRITEBACK_REQUEST)!;
       const testId = `${WRITEBACK_REQUEST}`;
       console.log(`\n=== 書き戻しテスト：${top.name}（${top.card_id}）に「辞退：忙しい」を記録して ${WRITEBACK_REQUEST} をもう一度`);
@@ -316,7 +333,7 @@ async function main() {
 
   // ---- stage 2: LLM judge, before vs after
   let quality: Array<Record<string, unknown>> | null = null;
-  if (full) {
+  if (full && !noQuality) {
     console.log(`\n=== 段階2 テーマ案の質（LLM採点、before と after を同じ審査で採点）`);
     const beforeFile = path.join(process.cwd(), "docs", "eval_before.json");
     const before = JSON.parse(fs.readFileSync(beforeFile, "utf-8")) as { rows: Array<{ request_id: string; result: ProposalResult }> };
@@ -339,7 +356,12 @@ async function main() {
   const spent = totalUsd() - startTotal;
   console.log(`\n今回の評価で使った金額: $${spent.toFixed(3)}／累計: $${totalUsd().toFixed(3)}`);
 
-  const out = { at: new Date().toISOString(), version: "v0.2", spent_usd: spent, pass_rate: rate, checks, rows, coverage, writeback, quality };
+  const out = { at: new Date().toISOString(), version: "v0.2", mode: offline ? "offline" : noQuality ? "stage1" : "full", spent_usd: spent, pass_rate: rate, checks, rows, coverage, writeback, quality };
+  if (offline && reportPath) {
+    console.error("--offline では --report を使えません（保存結果を上書きしないため）");
+    process.exitCode = 1;
+    return;
+  }
   const dir = path.join(process.cwd(), "eval-results");
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, `eval-v02-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);

@@ -1,7 +1,7 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
 import Anthropic from "@anthropic-ai/sdk";
 import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
-import { talkTag, withoutTalkTagRepeats, type TalkTag } from "./talkTag";
+import { blogToLt, talkTag, withoutTalkTagRepeats, type TalkTag } from "./talkTag";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { getClient } from "./anthropic";
@@ -38,6 +38,8 @@ export interface CandidateCard {
   role: string;
   /** 今後2週間の予定の埋まり具合を言葉で（例：今後2週間は勤務時間の7割が予定で埋まっている／予定は不明）。lib/busyness.ts で計算 */
   busy_text: string;
+  /** ブログ済みで未登壇のカードから出た候補（ブログをLTにできる）。lib/talkTag.ts の blogToLt */
+  blog_to_lt: boolean;
   /** 登壇経験の印（初登壇／半年以内に登壇／登壇経験あり）。lib/talkTag.ts でコードが付ける。順位には使わない */
   talk_tag: TalkTag;
   past_talk_count: number;
@@ -303,6 +305,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
         role: e.role,
         busy_text: busyText(busynessFor(e.id)),
         talk_tag: talkTag(e),
+        blog_to_lt: blogToLt(c.card_id ? getCardById(c.card_id) : null),
         past_talk_count: e.past_talk_count,
         last_talk_date: e.last_talk_date,
         theme: c.theme,

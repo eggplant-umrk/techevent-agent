@@ -35,3 +35,9 @@ export function repeatsTalkTag(caution: string): boolean {
 export function withoutTalkTagRepeats(cautions: string[]): string[] {
   return cautions.filter((c) => !repeatsTalkTag(c));
 }
+
+/** ブログ済みで、まだ登壇していないカード：ブログ記事をもとに LT にできる（コードでの印） */
+export function blogToLt(card: { publication_status: string } | null | undefined): boolean {
+  return card?.publication_status === "blogged";
+}
+export const BLOG_TO_LT_NOTE = "ブログ済みで未登壇。記事をもとにLT（5〜10分）にできる";

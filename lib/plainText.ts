@@ -36,6 +36,7 @@ const FIELD_NAMES = [
   "theme_specified",
   "named_speaker",
   "format_reason",
+  "blog_to_lt",
 ];
 const TOOL_NAMES = [
   "search_cards",
@@ -56,7 +57,7 @@ const RULES: Array<{ re: RegExp; label: string }> = [
   { re: /\bstrong\b/gi, label: "内部の値" },
   { re: /\b(true|false|null)\b/gi, label: "内部の値" },
   { re: /\bcard-e\d{3}-[\w]+\b/gi, label: "カードのid" },
-  { re: /\b(act|req|pub|rel)\d{3}\b/gi, label: "内部のid" },
+  { re: /\b(act|req|pub|rel|blg|slk)\d{3}\b/gi, label: "内部のid" },
   { re: /\bcard-team-\d+\b/gi, label: "カードのid" },
   { re: /\be\d{3}\b/gi, label: "社員のid" },
   { re: /[a-z_]+\s*=\s*[\w"]+/gi, label: "項目=値の書き方" },

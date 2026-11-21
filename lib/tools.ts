@@ -1,5 +1,6 @@
 // Agent tools over data/*.json. Results are kept short (top 10, 200-char bodies).
 import type Anthropic from "@anthropic-ai/sdk";
+import { BLOG_TO_LT_NOTE, blogToLt } from "./talkTag";
 import { busyForAgent, busynessFor, slotsFor, usesIcs } from "./busyness";
 import { activities, employeeById, employees, events, published, schedules } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
@@ -26,7 +27,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
         since: { type: "string", description: "この日付以降（YYYY-MM-DD）。省略可" },
         type: {
           type: "string",
-          enum: ["slack_post", "github_pr", "design_doc", "weekly_report", "release_note"],
+          enum: ["slack_post", "github_pr", "design_doc", "weekly_report", "release_note", "blog", "slack"],
           description: "種類で絞る。省略可",
         },
       },
@@ -500,6 +501,7 @@ export function searchCards(input: Input) {
       published_ids: c.published_ids,
       format: c.format,
       publication_status: c.publication_status,
+      ...(blogToLt(c) ? { blog_to_lt: BLOG_TO_LT_NOTE } : {}),
       reviewed: c.reviewed,
       latest_activity_date: c.latest_activity_date,
       outreach: outreachSummary(c),
@@ -518,6 +520,7 @@ export function getCard(input: Input) {
   const e = employeeById(c.employee_id);
   return {
     ...c,
+    ...(blogToLt(c) ? { blog_to_lt: BLOG_TO_LT_NOTE } : {}),
     // イベント後の反応は、採用済みのものだけを文で渡す（提案中・見送りは渡さない）
     reactions: reactionLines(c),
     employee: e ? `${e.id} ${e.name}｜${e.business_unit}｜${busyForAgent(busynessFor(e.id))}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}` : c.employee_id,

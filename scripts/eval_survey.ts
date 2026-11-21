@@ -23,7 +23,6 @@ import {
   talkRecordProblems,
   inputOf,
   sentencesOf,
-  talkStats,
   validateAnalysis,
   writeBack,
   type EventAnalysis,
@@ -100,18 +99,6 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
 
   // 画面に出す数字（保存した数字・画面の窓口が返す数字）がコードの計算と一致
   const mismatch: string[] = [];
-  for (const a of list) {
-    const now = talkStats(a.event_id, all);
-    const screen = eventDetail(a.event_id)?.talks.map((t) => t.stats).filter(Boolean) ?? [];
-    for (const t of a.talks) {
-      const want = now.find((s) => s.speaker_id === t.speaker_id);
-      const rows = all.filter((s) => s.event_id === a.event_id && s.talk_speaker_id === t.speaker_id && s.rating !== null);
-      const avg = Math.round((rows.reduce((x, r) => x + r.rating!, 0) / rows.length) * 10) / 10;
-      if (!want || JSON.stringify(want) !== JSON.stringify(t.stats)) mismatch.push(`${a.event_id} ${t.speaker_id} 保存した数字`);
-      if (!want || want.average !== avg) mismatch.push(`${a.event_id} ${t.speaker_id} 計算`);
-      if (!screen.some((s) => JSON.stringify(s) === JSON.stringify(want))) mismatch.push(`${a.event_id} ${t.speaker_id} 画面`);
-    }
-  }
   // イベント単位の集計（画面用の窓口）も、CSV から数え直した値と一致すること
   for (const a of list) {
     const o = eventDetail(a.event_id)?.overview;
@@ -121,12 +108,17 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
     if (!o || o.stats.answers !== rows.length || (o.stats.overall_rating?.average ?? null) !== avg || JSON.stringify(o.stats) !== JSON.stringify(eventStats(a.event_id, all)))
       mismatch.push(`${a.event_id} イベント単位の集計`);
   }
-  checks.push({ name: "アンケート：画面の数字がコードの計算と一致", pass: mismatch.length === 0, detail: mismatch.join(" / ") || `${list.length}イベントの集計・${list.reduce((n, a) => n + a.talks.length, 0)}登壇の件数が一致` });
+  checks.push({ name: "アンケート：画面の数字がコードの計算と一致", pass: mismatch.length === 0, detail: mismatch.join(" / ") || `${list.length}イベントの集計（回答数・全体の満足度）が一致` });
 
-  // 画面用の窓口（イベント単位の集計）に、登壇者ごとの評価が入っていない（古い項目は移行中のため対象外）
+  // 画面用の窓口に、登壇者ごとの評価が入っていない（窓口全体を見る。登壇者は名前とタイトルだけ）
   const leaks = list.flatMap((a) => {
-    const o = eventDetail(a.event_id)?.overview;
-    return o ? overviewProblems(o).map((e) => `${a.event_id} ${e}`) : [`${a.event_id} イベント単位の集計がない`];
+    const d = eventDetail(a.event_id);
+    if (!d?.overview) return [`${a.event_id} イベント単位の集計がない`];
+    const out = overviewProblems(d.overview).map((e) => `${a.event_id} ${e}`);
+    const keys = Object.keys(d).sort().join(",");
+    if (keys !== "event,overview,source,speakers") out.push(`${a.event_id} 窓口に古い項目が残っている（${keys}）`);
+    if (d.speakers.some((sp) => Object.keys(sp).sort().join(",") !== "business_unit,name,title")) out.push(`${a.event_id} 登壇者に名前・タイトル以外が入っている`);
+    return out;
   });
   checks.push({ name: "アンケート：画面用の窓口（イベント単位の集計）に登壇者ごとの評価が出ない", pass: leaks.length === 0, detail: leaks.slice(0, 5).join(" / ") || "点数・不満・良い点はイベント単位だけ。だれの登壇かは出さない" });
 

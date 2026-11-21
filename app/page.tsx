@@ -583,7 +583,6 @@ export default function Home() {
           <ArchiveView
             detail={archiveDetail}
             api={api}
-            onOpenCard={(id) => openCard(id)}
             onChanged={() => {
               void loadCards();
               void loadArchive();

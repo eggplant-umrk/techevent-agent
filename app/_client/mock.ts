@@ -7,6 +7,7 @@
 // - 人の情報を直すのも手元だけ（data/people.json には書かない）。アーカイブは読むだけなので GET をそのまま使う。
 import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
+import { analysisOverview as overviewOf } from "@/lib/surveyOverview";
 
 /** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
 const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
@@ -575,7 +576,9 @@ export function mockApi(real: Api): Api {
     },
     async eventDetail(id) {
       const d = await real.eventDetail(id);
-      return { ...d, analysis: analyzed.get(id) ?? null };
+      // 再生した分析は手元だけ：イベント単位の集計（overview）の形にして見せる
+      const a = analyzed.get(id);
+      return { ...d, overview: { ...d.overview, analysis: a ? overviewOf(a) : null } };
     },
     async analyzeEvent(id, onEvent) {
       const f = POSTEVENT[id];
@@ -587,8 +590,8 @@ export function mockApi(real: Api): Api {
         await emit({ type: "error", message: "このイベントには保存済みの分析結果がありません（モックでは再生できません）" }, 200);
         return;
       }
-      const answers = f.analysis.talks.reduce((a, t) => a + t.stats.count, 0);
-      await emit({ type: "start", run_id: "mock-survey", model: f.analysis.model, event_id: id, talks: f.analysis.talks.length, answers, sentences: f.analysis.labels.length, excluded: f.analysis.talks.reduce((a, t) => a + t.stats.excluded, 0) }, 100);
+      const st = (await real.eventDetail(id)).overview.stats;
+      await emit({ type: "start", run_id: "mock-survey", model: f.analysis.model, event_id: id, talks: st.talks, answers: st.answers, sentences: f.analysis.labels.length, excluded: st.excluded }, 100);
       await emit({ type: "step", n: 1, max: 3 }, 1500);
       total += f.analysis.run_usd;
       await emit({ type: "usage", run_usd: f.analysis.run_usd, total_usd: total }, 100);

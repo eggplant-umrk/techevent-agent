@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
 import { talkTag, withoutTalkTagRepeats, type TalkTag } from "./talkTag";
 import { randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { getClient } from "./anthropic";
 import { MAX_CANDIDATES, MAX_STEPS } from "./config";
 import { activities, employeeById, requests, schedules, type SpeakingRequest } from "./data";
@@ -425,6 +426,16 @@ export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) =>
   return { submitted: null, steps: Math.min(step, MAX_STEPS) };
 }
 
+const pitchLater = new AsyncLocalStorage<true>();
+/**
+ * 受信箱の準備で使う：この中で動く runAgent は、代わりの人を推す文（指名の依頼だけ・重いモデル）を作らずに返す。
+ * 受信箱は候補ができた時点で「準備済み」にし、そのあと裏でこの文を作る（lib/inbox.ts の prepare）。
+ */
+export function withPitchLater<T>(fn: () => T): T {
+  return pitchLater.run(true, fn);
+}
+export const pitchDeferred = () => pitchLater.getStore() === true;
+
 export async function runAgent(
   request: SpeakingRequest,
   emit: (e: AgentEvent) => void,
@@ -471,7 +482,7 @@ export async function runAgent(
 
   // Named-speaker requests: the heavy model writes why to propose the alternative.
   const alts = result.candidates.filter((c) => c.is_alternative_to_nominee);
-  if (opts.withAlternativePitch !== false && request.nominated_employee_id && alts.length) {
+  if (opts.withAlternativePitch !== false && !pitchDeferred() && request.nominated_employee_id && alts.length) {
     try {
       const pitch = await alternativePitch(runId, request, result.nominee_assessment, alts);
       result.alternative_pitch = pitch.value;

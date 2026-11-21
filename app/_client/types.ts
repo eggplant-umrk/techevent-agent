@@ -10,7 +10,7 @@ export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
 export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
 export type { Reaction } from "@/lib/cards";
-export type { EventAnalysis, EventListItem, NegativeItem, PositiveTheme, SurveyEvent, TalkAnalysis, TalkStats } from "@/lib/surveys";
+export type { EventAnalysis, EventListItem, NegativeItem, PositiveTheme, SurveyEvent, TalkAnalysis } from "@/lib/surveys";
 export type { ColumnInfo, ColumnRole } from "@/lib/surveyCsv";
 import type { SurveyImport } from "@/lib/surveyCsv";
 /** POST /api/events/{id}/import の返り値（回答そのものは返さない） */

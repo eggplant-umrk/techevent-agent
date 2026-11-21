@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
-import type { AgentEvent, ProposalResult } from "./agent";
+import { withPitchLater, type AgentEvent, type ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
@@ -46,9 +46,29 @@ export interface InboxItem {
   /** 作業ログ（画面の「Agentがやったこと」を再現するため） */
   events: AgentEvent[];
   run_usd: number;
+  /**
+   * 代わりの人を推す文（指名の依頼で、代わりの候補がいるときだけ）。候補ができた時点で「準備済み」にし、この文は裏で作る。
+   * pending＝作っている／ready＝できた（result.alternative_pitch）／error＝作れなかった／null・なし＝作らない依頼
+   */
+  pitch_status?: PitchStatus | null;
 }
 
+export type PitchStatus = "pending" | "ready" | "error";
+
 export type Runner = (request: SpeakingRequest, emit: (e: AgentEvent) => void) => Promise<ProposalResult | null>;
+
+/** 代わりの人を推す文を作る（既定は lib/heavy.ts の alternativePitch。テストでは差し替える） */
+export type Pitcher = (
+  runId: string,
+  request: SpeakingRequest,
+  nomineeAssessment: string | null,
+  alternatives: Array<{ employee_id: string; theme: string; reason: string }>,
+) => Promise<{ value: string; model: string; fellBack: boolean }>;
+
+const defaultPitcher: Pitcher = async (...args) => (await import("./heavy")).alternativePitch(...args);
+
+/** 代わりの人を推す文を作っている途中のまま、これより長く経ったものは作れなかったとみなす（サーバーの再起動など） */
+const PITCH_STALE_MS = 5 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
 // 保存
@@ -75,6 +95,9 @@ function update(id: string, fn: (it: InboxItem) => InboxItem) {
 function withStale(it: InboxItem): InboxItem {
   if (it.status === "processing" && Date.now() - Date.parse(it.started_at) > STALE_MS) {
     return { ...it, status: "error", error: "候補づくりが途中で止まりました（サーバーの再起動など）。もう一度探してください。" };
+  }
+  if (it.pitch_status === "pending" && it.finished_at && Date.now() - Date.parse(it.finished_at) > PITCH_STALE_MS) {
+    return { ...it, pitch_status: "error" };
   }
   return it;
 }
@@ -231,12 +254,15 @@ export function registerInbox(input: InboxInput): InboxItem {
 /**
  * 候補づくり。終わったら結果と作業ログを保存する（テストから待てるように Promise を返す）。
  * extractor があれば、先に依頼文から指名を読み取って既存の依頼の形に入れる。
+ * 指名の依頼で代わりの候補がいるときは、候補ができた時点で「準備済み」にしてから、代わりの人を推す文を作る
+ * （Promise はその文ができてから終わる。状態は pitch_status）。
  */
-export async function prepare(id: string, runner: Runner, extractor?: IntakeExtractor): Promise<void> {
+export async function prepare(id: string, runner: Runner, extractor?: IntakeExtractor, pitcher: Pitcher = defaultPitcher): Promise<void> {
   let it = getInboxItem(id);
   if (!it) return;
   const events: AgentEvent[] = [];
   let runUsd = 0;
+  let pitchJob: { request: SpeakingRequest; result: ProposalResult } | null = null;
   try {
     if (extractor && !it.nominee) {
       const { nominee, intake } = await readIntake(it.text, it.received_at, extractor, id);
@@ -245,13 +271,20 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
     }
     const note = it.nominee?.note ?? null;
     const undecided = undecidedNote(it.intake);
-    const raw = await runner(inboxRequest(it), (e) => {
-      events.push(e);
-      if (e.type === "done") runUsd = e.run_usd;
-    });
+    const request = inboxRequest(it);
+    // 代わりの人を推す文は、この中では作らない（準備済みにしてから下で作る）
+    const raw = await withPitchLater(() =>
+      runner(request, (e) => {
+        events.push(e);
+        if (e.type === "done") runUsd = e.run_usd;
+      }),
+    );
     const result = raw ? addNomineeNote(addNomineeNote(raw, note), undecided) : null;
     runUsd += usageOfRun(id); // 指名の読み取りの分（依頼の id で記録している）
     const failed = events.find((e): e is Extract<AgentEvent, { type: "error" }> => e.type === "error");
+    const needsPitch =
+      !!result && !!request.nominated_employee_id && !result.alternative_pitch && result.candidates.some((c) => c.is_alternative_to_nominee);
+    if (needsPitch) pitchJob = { request, result: result! };
     update(id, (x) => ({
       ...x,
       status: result ? "ready" : "error",
@@ -260,6 +293,7 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       events,
       run_usd: runUsd,
       finished_at: new Date().toISOString(),
+      pitch_status: needsPitch ? "pending" : null,
     }));
   } catch (err) {
     update(id, (x) => ({
@@ -269,6 +303,32 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       events,
       run_usd: runUsd,
       finished_at: new Date().toISOString(),
+    }));
+  }
+  if (pitchJob) await makePitch(id, pitchJob.request, pitchJob.result, pitcher);
+}
+
+/** 準備済みにしたあとで、代わりの人を推す文を作って保存する。作れなくても候補はそのまま（pitch_status だけ error） */
+async function makePitch(id: string, request: SpeakingRequest, result: ProposalResult, pitcher: Pitcher) {
+  const alts = result.candidates.filter((c) => c.is_alternative_to_nominee);
+  const before = usageOfRun(result.run_id);
+  try {
+    const pitch = await pitcher(result.run_id, request, result.nominee_assessment, alts);
+    const cost = usageOfRun(result.run_id) - before;
+    update(id, (x) => ({
+      ...x,
+      result: x.result ? { ...x.result, alternative_pitch: pitch.value } : x.result,
+      events: [...x.events, { type: "alternative_pitch", text: pitch.value, model: pitch.model, fell_back: pitch.fellBack }],
+      run_usd: x.run_usd + cost,
+      pitch_status: "ready",
+    }));
+  } catch (e) {
+    const cost = usageOfRun(result.run_id) - before;
+    update(id, (x) => ({
+      ...x,
+      events: [...x.events, { type: "error", message: `代わりの人を推す理由を作れませんでした：${e instanceof Error ? e.message : String(e)}` }],
+      run_usd: x.run_usd + cost,
+      pitch_status: "error",
     }));
   }
 }
@@ -335,6 +395,8 @@ export interface InboxDetail extends InboxListItem {
   result: ProposalResult | null;
   events: AgentEvent[];
   run_usd: number;
+  /** 代わりの人を推す文の状態（pending のあいだは result.alternative_pitch がまだない）。作らない依頼は null */
+  pitch_status?: PitchStatus | null;
 }
 
 export function detailView(it: InboxItem): InboxDetail {
@@ -349,5 +411,6 @@ export function detailView(it: InboxItem): InboxDetail {
     result: it.result,
     events: it.events,
     run_usd: it.run_usd,
+    pitch_status: it.pitch_status ?? null,
   };
 }

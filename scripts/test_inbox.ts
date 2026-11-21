@@ -91,6 +91,7 @@ async function main() {
       return { ...req004, request_id: request.id };
     },
     async () => "笹倉さん",
+    async () => ({ value: "（テスト）", model: "test", fellBack: false }), // 代わりの人を推す文は API を使わずに作る
   );
   check("読み取った指名が既存の依頼の形に入って Agent に渡る", seenNominee.id === "e002", String(seenNominee.id));
   check("指名を受信箱に残す", inbox.getInboxItem(named.id)?.nominee?.employee_id === "e002");

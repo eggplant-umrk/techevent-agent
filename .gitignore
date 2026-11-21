@@ -79,3 +79,9 @@ data/inbox.json
 data/survey_analysis.json
 data/survey_imports/
 data/talk_records.json
+
+# ===== Local outputs (not part of the app) =====
+# next dev が自動で作る Next.js の注意書き（消しても作り直される）
+AGENTS.md
+# Claude のセッションが置いた作業ファイル（デモ用の架空カレンダーなど）
+Claude outputs/

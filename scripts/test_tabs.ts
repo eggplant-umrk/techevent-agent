@@ -81,7 +81,10 @@ async function main() {
   const { surveyVoices, isSurveyTheme } = await import("../lib/surveyOverview");
   const { events } = await import("../lib/data");
   const { loadCards } = await import("../lib/cards");
-  const fx = JSON.parse(fs.readFileSync(path.join(process.cwd(), "app", "_client", "postevent.json"), "utf-8")) as Record<string, { analysis: import("../lib/surveys").EventAnalysis }>;
+  // 声を作る元は保存済みの分析結果（docs/survey_latest.json）。?mock の postevent.json には登壇者ごとの項目を入れないので、声だけを持つ
+  const { loadSavedAnalyses } = await import("./eval_survey");
+  const fx = Object.fromEntries(Object.entries(loadSavedAnalyses()?.analyses ?? {}).map(([k, a]) => [k, { analysis: a }]));
+  const mockFx = JSON.parse(fs.readFileSync(path.join(process.cwd(), "app", "_client", "postevent.json"), "utf-8")) as Record<string, { voices: Array<{ text: string; count: number }> }>;
   const cardsForVoices = loadCards().map((c) => ({ card_id: c.card_id, employee_id: c.employee_id, name: employees().find((e) => e.id === c.employee_id)?.name ?? c.employee_id }));
   const voices = surveyVoices(Object.values(fx).map((f) => f.analysis), events(), cardsForVoices);
   const allNext = Object.values(fx).flatMap((f) => f.analysis.talks.flatMap((t) => t.next_themes));
@@ -97,6 +100,12 @@ async function main() {
   check("本人にカードがなく、重なる人もいない声だけ「まだ話せる人がいない」", noOne.every((o) => voices.find((v) => v.text === o.text && !v.match)) && voices.filter((v) => !v.match).length === new Set(noOne.map((o) => o.text)).size, `${voices.filter((v) => !v.match).length}件`);
   check("どの登壇への声かは出さない", voices.every((v) => Object.keys(v).sort().join(",") === "count,event_date,event_id,event_title,match,sample,text" && (!v.match || Object.keys(v.match).sort().join(",") === "card_id,employee_id,name")));
   check("新しいイベントが先", voices.every((v, i) => i === 0 || voices[i - 1].event_date >= v.event_date));
+  const mockJson = JSON.stringify(mockFx);
+  check(
+    "?mock の postevent.json：登壇者ごとの項目を持たず、声は保存済みの分析結果と同じ（文と件数）",
+    !/"(speaker_id|talk_speaker_id|talks|labels|talk_rating|talk_average|summary|content_issue|content_complaints|good_themes|content_fact)"/.test(mockJson) &&
+      Object.values(mockFx).flatMap((f) => f.voices).reduce((n, v) => n + v.count, 0) === voices.reduce((n, v) => n + v.count, 0),
+  );
   // 本番の画面：分析結果のファイルがなければ、保存済みの分析結果（架空のアンケート）で補う
   {
     const prev = process.env.SURVEY_ANALYSIS_FILE;

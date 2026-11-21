@@ -199,7 +199,7 @@
       },
       {
         "type": "thinking",
-        "text": "Named speaker pattern, with nominee e012 百瀬 as the person in question. The conversation mentions \"春ごろ\" and \"オンライン開催,\" but the extracted items say the schedule and format are still undecided, so I'll stick with those and not infer anything, perhaps noting the gap. Next I'm searching the cards and pulling up the employee record.\n\n"
+        "text": "考えています"
       },
       {
         "type": "tool_call",
@@ -261,7 +261,7 @@
       },
       {
         "type": "thinking",
-        "text": "The article the user mentioned, from 百瀬さん, doesn't show up in the records: the published count is 0 and the card is unpublished, so I should flag that it needs checking. Next I'll look for other candidates and possible co-speakers among the frontend cards.\n\n"
+        "text": "考えています"
       },
       {
         "type": "tool_call",
@@ -308,7 +308,7 @@
       },
       {
         "type": "thinking",
-        "text": "e012 looks strong, though I don't know its schedule yet. e017 (柚木, accessibility) fits the frontend event, and I'm considering it as an alternative or a joint option. For a third pick, e019 (朝比奈, chat UI streaming) or e010 (猪瀬) might work, so I'll look up the activities next.\n\n"
+        "text": "考えています"
       },
       {
         "type": "tool_call",
@@ -341,7 +341,7 @@
       },
       {
         "type": "thinking",
-        "text": "There's no substantive third item to weigh, so I'll check the e017 card quickly. I already have the summary, and there's no outreach yet, so I'll look up the e017 employee record to understand their intent and pull the card for evidence.\n\n"
+        "text": "考えています"
       },
       {
         "type": "tool_call",
@@ -388,7 +388,7 @@
       },
       {
         "type": "thinking",
-        "text": "Only two candidates have actual evidence, so I'll submit those two with a no-fit result for the third. For 百瀬 the theme is undetermined and the schedule too, though the nominee's work and the workload of 2 are clear. The \"記事\" mismatch matters since there's no published record, so a strong rating with caution seems right. I also need to flag that the host mentioned \"春ごろ・オンライン\" in the conversation while the extracted data says 未定, so I won't infer anything and will note it as a caution.\n\nI'm settling the 百瀬 case: the schedule is still undetermined, so I'll just ask for confirmation once a date is set.\n\n"
+        "text": "考えています"
       },
       {
         "type": "tool_call",

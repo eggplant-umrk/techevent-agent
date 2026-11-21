@@ -44,7 +44,7 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
     try {
       await api.analyzeEvent(id, (e: SurveyEvent) => {
         if (e.type === "start") setLog([{ text: `${e.talks}つの登壇・${e.answers}件の回答（感想${e.sentences}文、空欄${e.excluded}件は除外）を読んでいます`, tone: "info" }]);
-        if (e.type === "rejected") setLog((l) => [...l, { text: `読み取り結果を差し戻して直してもらっています（${e.errors.length}件）`, tone: "warn" }]);
+        if (e.type === "rejected") setLog((l) => [...l, { text: `読み取り結果を差し戻して直してもらっています（${e.count}件）`, tone: "warn" }]);
         if (e.type === "writeback") setLog((l) => [...l, { text: e.message, tone: "ok" }]);
         if (e.type === "error") setLog((l) => [...l, { text: e.message, tone: "error" }]);
       });

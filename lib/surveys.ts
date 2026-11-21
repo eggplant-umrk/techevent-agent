@@ -208,15 +208,26 @@ const SAMPLE_FILE = () => path.join(process.cwd(), "docs", "survey_latest.json")
 export function loadAnalyses(): Record<string, EventAnalysis> {
   const f = FILE();
   const saved = fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>) : {};
-  if (process.env.SURVEY_ANALYSIS_FILE) return saved;
+  if (process.env.SURVEY_ANALYSIS_FILE) return withoutStale(saved);
   const sf = SAMPLE_FILE();
   if (!fs.existsSync(sf)) return saved;
   const sample = (JSON.parse(fs.readFileSync(sf, "utf-8")) as { analyses?: Record<string, EventAnalysis> }).analyses ?? {};
   const marked = Object.fromEntries(Object.entries(sample).map(([k, a]) => [k, { ...a, sample: true }]));
-  return { ...marked, ...saved };
+  return withoutStale({ ...marked, ...saved });
+}
+
+/** CSV を取り込み直したイベントの、取り込みより前の分析は使わない（古い回答の分析を出さない） */
+function withoutStale(all: Record<string, EventAnalysis>): Record<string, EventAnalysis> {
+  return Object.fromEntries(
+    Object.entries(all).filter(([id, a]) => {
+      const at = loadImport(id)?.imported_at;
+      return !at || !a.analyzed_at || a.analyzed_at >= at;
+    }),
+  );
 }
 function saveAnalysis(a: EventAnalysis) {
-  const all = loadAnalyses();
+  const f = FILE();
+  const all = fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>) : {};
   all[a.event_id] = a;
   fs.writeFileSync(FILE(), JSON.stringify(all, null, 2) + "\n", "utf-8");
 }
@@ -224,11 +235,13 @@ function saveAnalysis(a: EventAnalysis) {
 /** 数を書いた文（件数・平均・割合）。数字は画面がコードで出すので、Agent の文には書かせない */
 const NUMBER_CLAIM = /[0-9０-９]+(?:[.．][0-9０-９]+)?\s*(?:件|人|名|点|%|％|割)|平均/;
 
-/** 攻撃の文の中身（8文字以上の一部）が text に入っていないか */
-function quotesAny(text: string, sources: string[]): boolean {
-  const t = text.replace(/\s/g, "");
+/** 不満・攻撃の原文（8文字以上の一部）が text に入っていないか。句読点を除いて7文字以下の短い原文は、全文が入っているかで見る */
+export function quotesAny(text: string, sources: string[]): boolean {
+  const t = text.replace(/[。！？!?、\s]/g, "");
   return sources.some((s) => {
     const x = s.replace(/[。！？!?、\s]/g, "");
+    if (!x) return false;
+    if (x.length <= 7) return t.includes(x);
     for (let i = 0; i + 8 <= x.length; i++) if (t.includes(x.slice(i, i + 8))) return true;
     return false;
   });
@@ -518,9 +531,20 @@ function speakerCard(speakerId: string, cards: Card[]): Card | undefined {
 }
 
 /** 同じidの反応は、見送り・採用済みならそのまま、提案中なら新しい内容に置き換える */
+/** 「需要あり」の id：イベント＋カード＋テーマ文から作る（分析し直しても同じ id になり、見送った提案が戻らない） */
+export function demandId(eventId: string, cardId: string, text: string): string {
+  const t = text.normalize("NFKC").replace(/\s+/g, "");
+  let h = 2166136261;
+  for (let i = 0; i < t.length; i++) h = Math.imul(h ^ t.charCodeAt(i), 16777619) >>> 0;
+  return `dm-${eventId}-${cardId}-${h.toString(36)}`;
+}
+
 function upsertReaction(list: Reaction[], r: Reaction): Reaction[] {
   const prev = list.find((x) => x.id === r.id);
   if (prev && prev.status !== "pending") return list;
+  // 前の形の id（登壇者と並び順から作っていた）で、同じイベント・同じテーマ文を見送り・採用していれば戻さない
+  const decided = list.find((x) => x.kind === r.kind && x.event_id === r.event_id && x.text === r.text && x.status !== "pending");
+  if (decided) return list;
   return [...list.filter((x) => x.id !== r.id), r];
 }
 
@@ -592,19 +616,19 @@ export function writeBack(ev: EventRecord, a: Pick<EventAnalysis, "talks" | "pos
       const ownThemes = t.next_themes.filter((n) => !n.overlaps_card_id).map((n) => n.text);
       let added: string[] = [];
       patchCard(card.card_id, (c) => {
-        const known = new Set([...c.themes, ...c.pending_themes]);
+        const known = new Set([...c.themes, ...c.pending_themes, ...(c.rejected_themes ?? [])]);
         added = ownThemes.filter((x) => x && !known.has(x));
         return { ...c, pending_themes: [...c.pending_themes, ...added] };
       });
       lines.push(`${name}さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）`);
       if (added.length) lines.push(`${name}さんのカードにテーマ案（未確認）を提案「${added.join("」「")}」`);
     }
-    t.next_themes.forEach((n, i) => {
+    t.next_themes.forEach((n) => {
       if (!n.overlaps_card_id) return;
       const target = loadCards().find((c) => c.card_id === n.overlaps_card_id);
       if (!target) return;
       const demand: Reaction = {
-        id: `dm-${ev.id}-${t.speaker_id}-${i + 1}`,
+        id: demandId(ev.id, target.card_id, n.text),
         kind: "demand",
         status: "pending",
         event_id: ev.id,
@@ -677,6 +701,27 @@ export function resolveReaction(cardId: string, reactionId: string, accept: bool
   return { ok: true, card: card ?? undefined };
 }
 
+/** 登壇者の評価の言い方（点数・満足度・アンケートの件数や反応）。理由・注意点・作業ログに書かない */
+export const SPEAKER_EVAL_WORDS = /満足度|点数|平均\s*[0-9０-９]|評価が(?:高|低|良|悪)|好評|不評|アンケートの?(?:結果|反応|評価|点)|[0-9０-９]+\s*件の(?:回答|感想)|回答\s*[0-9０-９]+\s*件|反応が(?:良|よ|悪|上々|いま)|ウケ(?:が|た|ていた)/;
+
+/**
+ * 登壇者の評価が、Agent の書いた文（理由・注意点・要約・作業ログ）に出ていないか（コードで判定）。
+ * - Agent に渡した登壇者の記録（まとめ・内容への不満の事実・良かった点のテーマ）の文と8文字以上重なる
+ * - 点数・満足度・アンケートの件数や反応の言い方がある
+ * 問題を文で返す（where は場所の名前）
+ */
+export function speakerEvaluationProblems(items: Array<{ where: string; text: string | null | undefined }>, records: TalkRecord[] = loadTalkRecords()): string[] {
+  const sources = records.flatMap((r) => [r.summary, r.content_fact ?? "", ...r.good_themes.map((t) => t.replace(/（\d+件）$/, ""))]).filter((t) => t.trim().length >= 4);
+  const out: string[] = [];
+  for (const { where, text } of items) {
+    if (!text?.trim()) continue;
+    if (sources.length && quotesAny(text, sources)) out.push(`${where} に登壇者の記録（内部の参考）の文が入っています`);
+    const m = text.match(SPEAKER_EVAL_WORDS);
+    if (m) out.push(`${where} に登壇者の評価の言い方（「${m[0]}」）が入っています`);
+  }
+  return out;
+}
+
 /** 提案（get_card・search_cards）に渡す文：カードの採用済みの「需要あり」と、登壇者の記録（内部・判断の参考だけ）。
  *  画面用の窓口・Slack・下書きには出さない（Agent への受け渡し専用） */
 export function reactionLines(c: Card): string[] {
@@ -698,11 +743,26 @@ export function reactionLines(c: Card): string[] {
 export type SurveyEvent =
   | { type: "start"; run_id: string; model: string; event_id: string; talks: number; answers: number; sentences: number; excluded: number }
   | { type: "step"; n: number; max: number }
-  | { type: "rejected"; errors: string[] }
+  /** 差し戻した件数だけ（中身は登壇者ごとの評価に触れるので、画面には出さない） */
+  | { type: "rejected"; count: number }
   | { type: "writeback"; message: string }
   | { type: "usage"; run_usd: number; total_usd: number }
   | { type: "error"; message: string }
-  | { type: "done"; analysis: EventAnalysis; run_usd: number; total_usd: number };
+  /** 画面に返すのはイベント単位の集計（analysisOverview）だけ。登壇者ごとの評価は入れない */
+  | { type: "done"; overview: NonNullable<EventOverview["analysis"]>; run_usd: number; total_usd: number };
+
+/** 登壇者ごとの評価に当たる項目の名前（画面用の窓口・ストリームに出さない） */
+export const PER_SPEAKER_KEYS = ["speaker_id", "speaker_ids", "talk_speaker_id", "card_id", "talk_rating", "talk_average", "summary", "content_issue", "content_complaints", "good_themes", "content_fact"];
+
+/** ストリームの1件に、登壇者ごとの評価が入っていないか。done はイベント単位の集計の検査（overviewProblems）も掛ける */
+export function streamProblems(e: SurveyEvent, eventId: string): string[] {
+  const json = JSON.stringify(e);
+  const out = PER_SPEAKER_KEYS.filter((k) => json.includes(`"${k}"`)).map((k) => `作業ログに登壇者ごとの項目（${k}）が入っています`);
+  // 登壇ごとの分析（talks の配列）と、文ごとの分類（labels の配列）も出さない（start の talks は登壇の数なので別）
+  for (const k of ["talks", "labels"]) if (json.includes(`"${k}":[`)) out.push(`作業ログに登壇者ごとの項目（${k}）が入っています`);
+  if (e.type === "done") out.push(...overviewProblems({ stats: eventStats(eventId), analysis: e.overview }));
+  return out;
+}
 
 /** Agent の代わりに入力を返す関数（テスト用）。本番は Claude を呼ぶ */
 export type Analyzer = (system: string, message: string, previous: Anthropic.MessageParam[]) => Promise<{
@@ -732,9 +792,15 @@ export function claudeAnalyzer(runId: string): Analyzer {
 
 export async function analyzeEvent(
   eventId: string,
-  emit: (e: SurveyEvent) => void,
-  opts: { runId?: string; analyzer?: Analyzer } = {},
+  emitRaw: (e: SurveyEvent) => void,
+  opts: { runId?: string; analyzer?: Analyzer; onRejectedErrors?: (errors: string[]) => void } = {},
 ): Promise<EventAnalysis | null> {
+  // ストリームに出す前に、登壇者ごとの評価が入っていないかを検査する。入っていたら中身を出さずに止める
+  const emit = (e: SurveyEvent) => {
+    const problems = streamProblems(e, eventId);
+    if (problems.length) emitRaw({ type: "error", message: "登壇者ごとの評価が入りそうだったので、この結果は表示していません（記録は内部に残しています）" });
+    else emitRaw(e);
+  };
   const ev = events().find((e) => e.id === eventId);
   if (!ev) {
     emit({ type: "error", message: "そのイベントは見つかりません" });
@@ -777,7 +843,8 @@ export async function analyzeEvent(
       accepted = out.input;
       break;
     }
-    emit({ type: "rejected", errors });
+    opts.onRejectedErrors?.(errors);
+    emit({ type: "rejected", count: errors.length });
     if (!messages.length) messages.push({ role: "user", content: message });
     messages.push({ role: "assistant", content: out.content });
     messages.push({
@@ -795,7 +862,7 @@ export async function analyzeEvent(
   for (const w of writebacks) emit({ type: "writeback", message: w });
   const analysis: EventAnalysis = { ...built, analyzed_at: nowIso(), model, run_usd: runUsd(runId), writebacks };
   saveAnalysis(analysis);
-  emit({ type: "done", analysis, run_usd: analysis.run_usd, total_usd: totalUsd() });
+  emit({ type: "done", overview: analysisOverview(analysis), run_usd: analysis.run_usd, total_usd: totalUsd() });
   return analysis;
 }
 
@@ -857,7 +924,7 @@ export function eventOverview(eventId: string): EventOverview | null {
 export function overviewProblems(o: EventOverview): string[] {
   const out: string[] = [];
   const json = JSON.stringify(o);
-  for (const key of ["speaker_id", "speaker_ids", "talk_speaker_id", "card_id", "talk_rating", "talk_average", "summary", "content_issue", "content_complaints", "good_themes", "content_fact"])
+  for (const key of PER_SPEAKER_KEYS)
     if (json.includes(`"${key}"`)) out.push(`イベント単位の集計に登壇者ごとの項目（${key}）が入っています`);
   for (const e of employees()) if (json.includes(e.name) || json.includes(e.id + '"')) out.push(`イベント単位の集計に社員（${e.name}）が出ています`);
   return out;

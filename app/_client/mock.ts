@@ -7,7 +7,6 @@
 // - 人の情報を直すのも手元だけ（data/people.json には書かない）。アーカイブは読むだけなので GET をそのまま使う。
 import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
-import { analysisOverview as overviewOf, surveyVoices } from "@/lib/surveyOverview";
 import { recordsFor, requestState } from "@/lib/requestStage";
 import { eventUrlsIn } from "@/lib/eventUrls";
 
@@ -19,7 +18,7 @@ import venueFixtures from "./venues.json";
 import xconvFixture from "./xconv.json";
 import type {
   AgentEvent,
-  EventAnalysis,
+  EventDetail,
   Reaction,
   SurveyEvent,
   BlogIdea,
@@ -42,8 +41,18 @@ import type {
 type Fixture = { result: Proposal; run_usd: number };
 
 /** アンケート分析の保存済みの結果（scripts/update_postevent_mock.ts が本番の分析結果から作る）。
+ *  登壇者ごとの項目は入れない：overview はイベント単位の集計、voices は次に聞きたいテーマと話せそうな人のカードだけ。
  *  cards：その分析でカードに書き戻した反応と、テーマ案（未確認）に足したもの */
-type PostEventFixture = { analysis: EventAnalysis; cards: Record<string, { reactions: Reaction[]; pending_themes_added: string[] }> };
+type Overview = NonNullable<EventDetail["overview"]["analysis"]>;
+type PostEventFixture = {
+  overview: Overview;
+  voices: Array<{ text: string; count: number; match_card_id: string | null }>;
+  model: string;
+  run_usd: number;
+  sentences: number;
+  writebacks: string[];
+  cards: Record<string, { reactions: Reaction[]; pending_themes_added: string[] }>;
+};
 const POSTEVENT = postevent as unknown as Record<string, PostEventFixture>;
 /** Saved eval results can predate newer candidate fields; fill the defaults so the screens get the current shape. */
 const FIXTURES: Record<string, Fixture> = Object.fromEntries(
@@ -192,7 +201,7 @@ export function mockApi(real: Api): Api {
   /** Cards created in memory when a candidate without a card is approved (same rule as /api/outcome). */
   const created: NotebookCard[] = [];
   /** モックで分析を再生したイベント */
-  const analyzed = new Map<string, EventAnalysis>();
+  const analyzed = new Map<string, Overview>();
 
   // 受信箱（手元だけ）
   type MockItem = Omit<BoardListItem, "state" | "event_date">;
@@ -271,7 +280,7 @@ export function mockApi(real: Api): Api {
     const push = (e: AgentEvent, ms = 450) => ev.push([e, ms]);
     push({ type: "start", run_id: result.run_id, loop_model: "claude-opus-5-5", heavy_model: "claude-fable-5-2", switched: false, total_usd: total, switch_usd: 150 }, 100);
     push({ type: "step", n: 1, max: 15 });
-    push({ type: "thinking", text: "まずネタ帳から、依頼のテーマに近いカードと未発信のカードを探します。" });
+    push({ type: "thinking", text: "考えています" });
     push({ type: "tool_call", id: "t1", name: "search_cards", input: { query: result.candidates[0]?.theme.slice(0, 16) ?? "Rust 組み込み" } });
     push({ type: "tool_result", id: "t1", name: "search_cards", ok: true, summary: result.candidates.length ? `${result.candidates.length + 4}枚が見つかりました` : "0枚" });
     if (!result.candidates.length) {
@@ -657,7 +666,16 @@ export function mockApi(real: Api): Api {
         .map(apply)
         .sort((a, b) => (a.latest_activity_date < b.latest_activity_date ? 1 : -1))
         .map((c) => ({ card_id: c.card_id, employee_id: c.employee_id, name: c.employee?.name ?? c.employee_id, themes: [...c.themes, ...c.pending_themes] }));
-      return surveyVoices(Object.values(POSTEVENT).map((f) => ({ ...f.analysis, sample: true })), evs, cards);
+      return Object.entries(POSTEVENT)
+        .flatMap(([eventId, f]) => {
+          const ev = evs.find((e) => e.id === eventId);
+          if (!ev) return [];
+          return f.voices.map((v) => {
+            const c = cards.find((x) => x.card_id === v.match_card_id);
+            return { text: v.text, count: v.count, event_id: ev.id, event_title: ev.title, event_date: ev.date, sample: true, match: c ? { card_id: c.card_id, employee_id: c.employee_id, name: c.name } : null };
+          });
+        })
+        .sort((x, y) => (x.event_date === y.event_date ? y.count - x.count : x.event_date < y.event_date ? 1 : -1));
     },
     async archiveDetail(kind, id) {
       return real.archiveDetail(kind, id);
@@ -678,7 +696,7 @@ export function mockApi(real: Api): Api {
       const d = await real.eventDetail(id);
       // 再生した分析は手元だけ：イベント単位の集計（overview）の形にして見せる
       const a = analyzed.get(id);
-      return { ...d, overview: { ...d.overview, analysis: a ? overviewOf({ ...a, sample: true }) : null } };
+      return { ...d, overview: { ...d.overview, analysis: a ?? null } };
     },
     async analyzeEvent(id, onEvent) {
       const f = POSTEVENT[id];
@@ -691,10 +709,10 @@ export function mockApi(real: Api): Api {
         return;
       }
       const st = (await real.eventDetail(id)).overview.stats;
-      await emit({ type: "start", run_id: "mock-survey", model: f.analysis.model, event_id: id, talks: st.talks, answers: st.answers, sentences: f.analysis.labels.length, excluded: st.excluded }, 100);
+      await emit({ type: "start", run_id: "mock-survey", model: f.model, event_id: id, talks: st.talks, answers: st.answers, sentences: f.sentences, excluded: st.excluded }, 100);
       await emit({ type: "step", n: 1, max: 3 }, 1500);
-      total += f.analysis.run_usd;
-      await emit({ type: "usage", run_usd: f.analysis.run_usd, total_usd: total }, 100);
+      total += f.run_usd;
+      await emit({ type: "usage", run_usd: f.run_usd, total_usd: total }, 100);
       if (!lastCards.length) await this.cards();
       for (const [cardId, c] of Object.entries(f.cards)) {
         if (!lastCards.some((x) => x.card_id === cardId)) continue;
@@ -707,9 +725,9 @@ export function mockApi(real: Api): Api {
           };
         });
       }
-      for (const w of f.analysis.writebacks) await emit({ type: "writeback", message: w }, 250);
-      analyzed.set(id, f.analysis);
-      await emit({ type: "done", analysis: f.analysis, run_usd: f.analysis.run_usd, total_usd: total }, 100);
+      for (const w of f.writebacks) await emit({ type: "writeback", message: w }, 250);
+      analyzed.set(id, f.overview);
+      await emit({ type: "done", overview: f.overview, run_usd: f.run_usd, total_usd: total }, 100);
     },
     async importSurvey(id, csv) {
       // モックでは Agent に聞かず、保存もしない（列の読み取り結果を見せるだけ）

@@ -417,7 +417,8 @@ export function detailView(it: InboxItem): InboxDetail {
     nominee_name: nomineeName,
     intake: it.intake ?? null,
     result: it.result,
-    events: it.events,
+    // 考えた内容は画面に出さない（前に保存した作業ログに中身が残っていても「考えています」にする）
+    events: it.events.map((e) => (e.type === "thinking" ? { ...e, text: "考えています" } : e)),
     run_usd: it.run_usd,
     pitch_status: it.pitch_status ?? null,
     date_suggestions: it.date_suggestions ?? null,

@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 127.0.0.1",
+    "dev": "node scripts/serve.mjs dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/serve.mjs start",
     "typecheck": "tsc --noEmit",
     "eval": "tsx scripts/eval.ts",
     "notebook": "tsx scripts/notebook.ts",
@@ -29,7 +29,8 @@
     "test:xconv": "tsx scripts/test_xconv.ts",
     "test:notebook": "tsx scripts/test_notebook_prep.ts",
     "test:stage": "tsx scripts/test_stage.ts",
-    "test:datesuggest": "tsx scripts/test_date_suggest.ts"
+    "test:datesuggest": "tsx scripts/test_date_suggest.ts",
+    "test:security": "tsx scripts/test_security.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

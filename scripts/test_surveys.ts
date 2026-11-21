@@ -30,11 +30,15 @@ import {
   resolveReaction,
   sentencesOf,
   validateAnalysis,
+  demandId,
+  streamProblems,
+  quotesAny,
   type AnalysisInput,
   type Analyzer,
   type SurveyEvent,
 } from "../lib/surveys";
 import { getCard } from "../lib/tools";
+import { resolvePendingTheme } from "../lib/cards";
 
 const CARDS = path.join(process.cwd(), "data", "cards.json");
 const original = fs.readFileSync(CARDS);
@@ -207,6 +211,22 @@ async function main() {
     wrong.sentences.pop();
     const a = await analyzeEvent("ev020", (e) => log.push(e), { analyzer: fake([wrong, fakeInput("ev020")]) });
     check("1回目は差し戻し、2回目で通る", !!a && log.filter((e) => e.type === "rejected").length === 1);
+    const doneEv = log.find((e) => e.type === "done");
+    check(
+      "画面に返す done はイベント単位の集計だけ（登壇者ごとの評価・分析の全体を返さない）",
+      !!doneEv && "overview" in doneEv && !("analysis" in doneEv) && !/"(speaker_id|talk_speaker_id|summary|content_issue|content_fact|good_themes|talk_average)"/.test(JSON.stringify(log)),
+    );
+    check("差し戻しは件数だけ（中身は画面に出さない）", log.filter((e) => e.type === "rejected").every((e) => Object.keys(e).sort().join(",") === "count,type"));
+    check("ストリームのどの行も、登壇者ごとの評価の検査に通る", log.every((e) => streamProblems(e, "ev020").length === 0));
+    const leakDone = { type: "done", overview: { ...(doneEv as { overview: object }).overview, talks: [{ speaker_id: "e004", summary: "x" }] }, run_usd: 0, total_usd: 0 } as unknown as SurveyEvent;
+    check("done に登壇者ごとの項目が混ざれば、ストリームの検査で止まる", streamProblems(leakDone, "ev020").length > 0);
+    {
+      const relay: SurveyEvent[] = [];
+      const leaking: Analyzer = async () => ({ input: fakeInput("ev020"), content: [], tool_use_id: "t", model: "test" });
+      // 送り出す直前に検査されることを、emit の側で確かめる（中身が混ざった done は error に差し替わる）
+      await analyzeEvent("ev020", (e) => relay.push(e), { analyzer: leaking });
+      check("通常の分析では error に差し替わらない", !relay.some((e) => e.type === "error"));
+    }
     if (!a) throw new Error("分析できませんでした");
     const badIds = a.labels.filter((l) => l.polarity === "bad").map((l) => l.id);
     const shownIds = [...a.negatives.operation, ...a.negatives.content].flatMap((n) => n.sentence_ids);
@@ -264,6 +284,39 @@ async function main() {
     );
     const dm2 = loadCards().find((c) => c.card_id === "card-e023-01")!.reactions!.find((r) => r.id === dm!.id);
     check("採用済みの需要ありは再分析で戻さない", dm2?.status === "adopted");
+
+    // ---- 需要ありの id はイベント＋カード＋テーマ文から作る。見送った提案と却下したテーマ案は再分析で戻さない
+    check("需要ありの id はイベント＋カード＋テーマ文から作る（並び順によらない）", dm!.id === demandId("ev020", "card-e023-01", dm!.text) && demandId("ev020", "card-e023-01", ` ${dm!.text}`) === dm!.id);
+    patchCard("card-e023-01", (c) => ({
+      ...c,
+      // 前の形の id（登壇者と並び順から作っていた）で見送った記録を再現する
+      reactions: (c.reactions ?? []).map((r) => (r.id === dm!.id ? { ...r, id: "dm-ev020-e004-9", status: "dismissed" as const } : r)),
+    }));
+    await analyzeEvent("ev020", () => undefined, { analyzer: fake([fakeInput("ev020")]) });
+    const sameText = (loadCards().find((c) => c.card_id === "card-e023-01")!.reactions ?? []).filter((r) => r.kind === "demand" && r.event_id === "ev020" && r.text === dm!.text);
+    check("見送った需要ありは、再分析で提案中に戻らない（前の形の id でも）", sameText.length === 1 && sameText[0].status === "dismissed", sameText.map((r) => `${r.id}:${r.status}`).join(" "));
+    const e4 = loadCards().find((c) => c.card_id === "card-e004-01")!;
+    const rejectTheme = e4.pending_themes[0];
+    if (rejectTheme) {
+      resolvePendingTheme("card-e004-01", rejectTheme, false);
+      await analyzeEvent("ev020", () => undefined, { analyzer: fake([fakeInput("ev020")]) });
+      const e4b = loadCards().find((c) => c.card_id === "card-e004-01")!;
+      check("却下したテーマ案は記録に残り、再分析で戻らない", !e4b.pending_themes.includes(rejectTheme) && (e4b.rejected_themes ?? []).includes(rejectTheme), rejectTheme);
+    } else check("却下したテーマ案は記録に残り、再分析で戻らない（テーマ案がなく確かめられない）", false);
+
+    // ---- CSV を取り込み直したら、そのイベントの古い分析は使わない
+    check("（前提）分析した結果が画面の集計に出ている", !!eventOverview("ev020")!.analysis);
+    const imp2 = loadImport("ev020")!;
+    saveImport({ ...imp2, source: "upload", imported_at: new Date(Date.now() + 1000).toISOString() });
+    check("CSV を取り込み直すと、古い分析は画面の集計に出ない", eventOverview("ev020")!.analysis === null);
+    await new Promise((r) => setTimeout(r, 1100));
+    await analyzeEvent("ev020", () => undefined, { analyzer: fake([fakeInput("ev020")]) });
+    check("分析し直すと、また出る", !!eventOverview("ev020")!.analysis);
+
+    // ---- 不満・攻撃の原文の写り込み：短い文（句読点を除いて7文字以下）は全文一致で見る
+    check("短い原文（「つまらなかった。」）がそのまま入っていれば見つける", quotesAny("前回はつまらなかったとの声", ["つまらなかった。"]));
+    check("短い原文の一部だけ（「つまら」）なら見つけない", !quotesAny("つまらない冗談はなし", ["つまらなかった。"]));
+    check("長い原文は今までどおり8文字の重なりで見る", quotesAny("前提知識が多くて途中から難しい", ["前提知識が多くて、途中からついていけませんでした。"]));
   } finally {
     fs.writeFileSync(CARDS, original);
     fs.rmSync(TMP, { recursive: true, force: true });

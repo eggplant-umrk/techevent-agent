@@ -38,10 +38,10 @@ async function main() {
       const ev = events().find((e) => e.id === id)!;
       console.log(`\n=== ${id} ${ev.title}`);
       const a = await analyzeEvent(id, (e) => {
-        if (e.type === "rejected") console.log(`  差し戻し：${e.errors.join(" / ")}`);
+        if (e.type === "rejected") console.log(`  差し戻し：${e.count}件`);
         if (e.type === "writeback") console.log(`  ${e.message}`);
         if (e.type === "error") console.log(`  エラー：${e.message}`);
-      }, { runId });
+      }, { runId, onRejectedErrors: (errs) => console.log(`  差し戻しの中身（手元だけ）：${errs.join(" / ")}`) });
       if (a) {
         out[id] = a;
         console.log(`  $${a.run_usd.toFixed(3)}（ここまで $${runUsd(runId).toFixed(3)}）`);

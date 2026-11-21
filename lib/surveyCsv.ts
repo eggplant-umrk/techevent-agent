@@ -80,7 +80,8 @@ export function parseCsv(text: string): string[][] {
 // 列の意味（質問文のキーワード）。個人情報を先に見る
 // ---------------------------------------------------------------------------
 const KEYWORDS: Array<[ColumnRole, RegExp]> = [
-  ["personal", /メール|e-?mail|お名前|氏名|名前|フルネーム|電話|会社名|勤務先|住所|連絡先/i],
+  // 個人を特定できる列。英語の見出し（Name・Company など）、所属・会社、X・Twitter などのアカウントも
+  ["personal", /メール|e-?mail|mail\s*address|お名前|氏名|名前|なまえ|フルネーム|ニックネーム|\bname\b|電話|\bphone\b|\btel\b|会社|勤務先|所属|\bcompany\b|\borgani[sz]ation\b|住所|連絡先|アカウント|account|ユーザー名|user\s*name|twitter|(?:^|[^a-z])x\s*(?:[（(][^)）]*[)）])?\s*の?\s*(?:アカウント|id|ユーザー|account|handle)|^\s*x\s*$|sns|github|linkedin|facebook|instagram|connpass/i],
   ["timestamp", /タイムスタンプ|timestamp|回答日時/i],
   ["talk", /どの登壇|どの発表|どのセッション|登壇者|セッション名|発表者/],
   ["rating", /満足度|満足|評価|点数|おすすめ度/],
@@ -93,7 +94,7 @@ export function detectColumns(headers: string[]): ColumnInfo[] {
   // 満足度は「全体」と「登壇ごと」を1列ずつまで持てる
   const taken = new Set<string>();
   return headers.map((h, index) => {
-    const hit = KEYWORDS.find(([, re]) => re.test(h));
+    const hit = KEYWORDS.find(([, re]) => re.test(h.normalize("NFKC")));
     if (!hit) return { index, header: h, role: "unread" as const, by: "none" as const };
     const [role] = hit;
     const scope = role === "rating" ? ratingScope(h) : undefined;
@@ -104,16 +105,23 @@ export function detectColumns(headers: string[]): ColumnInfo[] {
   });
 }
 
-/** 個人情報らしい文字（メール・電話番号）を伏せる。原文を直してよいのはここだけ */
+/**
+ * 個人情報らしい文字（メール・電話番号・SNS のアカウント）を伏せる。原文を直してよいのはここだけ。
+ * 先に NFKC でそろえる（全角の＠や数字、全角の空白・かっこも同じに扱う）。電話番号は空白・ハイフン・かっこ区切りも、+81 も見る
+ */
 export function scrubPersonal(text: string): string {
-  return text
-    .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "［メールアドレスを削除］")
-    .replace(/0\d{1,4}-?\d{1,4}-?\d{3,4}/g, "［電話番号を削除］");
+  const scrubbed = text
+    .normalize("NFKC")
+    .replace(/[\w.+-]+\s*@\s*[\w-]+(\s*\.\s*[\w-]+)+/g, "［メールアドレスを削除］")
+    .replace(/(?:\+\s*81[\s-]*\(?\s*0?\s*\)?|\(\s*0\d{0,4}\s*\)|0)[\d\s()-]{8,15}\d/g, (m) => (m.replace(/\D/g, "").length >= 9 ? "［電話番号を削除］" : m))
+    .replace(/(^|[^\w@])@[A-Za-z0-9_]{2,15}\b/g, "$1［アカウントを削除］");
+  // 伏せるものがなければ、原文のまま（全角・半角もそろえない）
+  return scrubbed.includes("を削除］") ? scrubbed : text;
 }
 
 const ROLE_VALUES: ColumnRole[] = ["talk", "rating", "comment", "want_next", "role", "personal", "unread"];
 
-/** 決まらない列の意味を Agent に聞く。渡すのは質問文と、個人情報を伏せた見本の値（3件・40文字まで）だけ */
+/** 決まらない列の意味を Agent に聞く。渡すのは質問文（見出し）だけで、回答の値（見本）は送らない（個人情報が混ざりうるため） */
 export type ColumnAsker = (cols: Array<{ index: number; header: string; samples: string[] }>) => Promise<Array<{ index: number; role: ColumnRole }>>;
 
 export function claudeColumnAsker(runId: string): ColumnAsker {
@@ -147,7 +155,7 @@ export function claudeColumnAsker(runId: string): ColumnAsker {
           },
         },
       ],
-      messages: [{ role: "user", content: cols.map((c) => `列${c.index}：「${c.header}」 見本：${c.samples.map((x) => `「${x}」`).join("、") || "（空）"}`).join("\n") }],
+      messages: [{ role: "user", content: `回答の値は送っていません。質問文（列の見出し）だけで決めてください。\n${cols.map((c) => `列${c.index}：「${scrubPersonal(c.header)}」`).join("\n")}` }],
     });
     recordUsage(runId, "survey", res.model, res.usage);
     const use = res.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
@@ -192,10 +200,8 @@ export async function importSurveyCsv(
       unknown.map((c) => ({
         index: c.index,
         header: c.header,
-        samples: body
-          .map((r) => scrubPersonal((r[c.index] ?? "").trim()).slice(0, 40))
-          .filter(Boolean)
-          .slice(0, 3),
+        // 見本の値は送らない（質問文だけで聞く）
+        samples: [],
       })),
     );
     const taken = new Set(columns.filter((c) => c.role !== "unread" && c.role !== "personal").map((c) => c.role));

@@ -41,6 +41,8 @@ export interface Card {
   evidence_request_ids: string[];
   /** Theme ideas the agent proposed for a reviewed card. Shown as 未確認 until accepted or rejected. */
   pending_themes: string[];
+  /** 技術広報が却下したテーマ案。再分析やネタ帳の更新で、同じ案をもう一度出さない */
+  rejected_themes?: string[];
   outreach_history: OutreachEntry[];
   /** true once 技術広報 edited the card in the UI. Proposals prefer reviewed cards; the agent never overwrites their text. */
   reviewed: boolean;
@@ -297,7 +299,7 @@ export function upsertCard(rawInput: CardInput): UpsertOutcome {
   };
 
   if (prev.reviewed) {
-    const known = new Set([...prev.themes, ...prev.pending_themes]);
+    const known = new Set([...prev.themes, ...prev.pending_themes, ...(prev.rejected_themes ?? [])]);
     const newIdeas = clean(input.themes).filter((th) => !known.has(th));
     const card: Card = { ...prev, ...facts, pending_themes: [...prev.pending_themes, ...newIdeas] };
     cards[i] = card;
@@ -339,6 +341,7 @@ export function resolvePendingTheme(cardId: string, theme: string, accept: boole
     ...prev,
     themes: accept ? [...prev.themes, theme] : prev.themes,
     pending_themes: prev.pending_themes.filter((x) => x !== theme),
+    rejected_themes: accept ? prev.rejected_themes : [...new Set([...(prev.rejected_themes ?? []), theme])],
     updated_at: now(),
   };
   cards[i] = card;

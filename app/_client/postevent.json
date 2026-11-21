@@ -1,265 +1,17 @@
 {
   "ev019": {
-    "analysis": {
-      "event_id": "ev019",
-      "labels": [
-        {
-          "id": "ev019-r2#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r3#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r4#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r8#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r12#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r16#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r17#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r19#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r19#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r20#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r21#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r21#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r22#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r22#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r23#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r24#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r24#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r25#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r27#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r27#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r28#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r31#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r33#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r33#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r34#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r37#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r7#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r9#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r9#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r10#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r13#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r14#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r15#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r18#1",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev019-r26#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r32#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r35#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r35#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev019-r36#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        }
-      ],
+    "overview": {
+      "analyzed_at": "2026-11-21T08:20:00.906Z",
+      "sample": true,
       "negatives": {
         "operation": [
           {
             "text": "会場が寒かったです。",
-            "sentence_ids": [
-              "ev019-r21#2",
-              "ev019-r24#2"
-            ],
-            "speaker_ids": [
-              "e003"
-            ],
             "count": 2,
             "attack": false
           },
           {
             "text": "配信の音声が途中で途切れました。",
-            "sentence_ids": [
-              "ev019-r18#1"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": false
           }
@@ -267,52 +19,21 @@
         "content": [
           {
             "text": "少し抽象的で、具体的な構成図があるとよかったです。",
-            "sentence_ids": [
-              "ev019-r7#1",
-              "ev019-r9#2",
-              "ev019-r35#2",
-              "ev019-r36#1"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 4,
             "attack": false
           },
           {
             "text": "ツール呼び出しの制限のかけ方をもう少し詳しく知りたかったです。",
-            "sentence_ids": [
-              "ev019-r17#1",
-              "ev019-r19#2",
-              "ev019-r24#1"
-            ],
-            "speaker_ids": [
-              "e003"
-            ],
             "count": 3,
             "attack": false
           },
           {
             "text": "後半は駆け足で、メモが追いつきませんでした。",
-            "sentence_ids": [
-              "ev019-r27#2",
-              "ev019-r28#1",
-              "ev019-r33#2"
-            ],
-            "speaker_ids": [
-              "e003"
-            ],
             "count": 3,
             "attack": false
           },
           {
             "text": "ただ後半は駆け足で、メモが追いつきませんでした。",
-            "sentence_ids": [
-              "ev019-r22#2"
-            ],
-            "speaker_ids": [
-              "e003"
-            ],
             "count": 1,
             "attack": false
           }
@@ -320,245 +41,125 @@
       },
       "positives": [
         {
-          "speaker_id": null,
           "theme": "懇親会・食事・受付が好評で、次回も参加したい",
           "count": 6,
-          "sentence_ids": [
-            "ev019-r2#1",
-            "ev019-r31#1",
-            "ev019-r23#1",
-            "ev019-r37#1",
-            "ev019-r34#1",
-            "ev019-r10#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev019-r2#1",
-              "text": "次回も参加したいです。"
-            },
-            {
-              "id": "ev019-r34#1",
-              "text": "懇親会も楽しかったです。"
-            }
+            "次回も参加したいです。",
+            "懇親会も楽しかったです。"
           ]
         },
         {
-          "speaker_id": "e003",
           "theme": "ガードレールの具体例が多く、すぐ自分のチームで試せる",
           "count": 5,
-          "sentence_ids": [
-            "ev019-r4#1",
-            "ev019-r16#1",
-            "ev019-r19#1",
-            "ev019-r20#1",
-            "ev019-r21#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev019-r4#1",
-              "text": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした。"
-            }
+            "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした。"
           ]
         },
         {
-          "speaker_id": "e001",
           "theme": "アーキテクチャ選定の判断軸が整理されていて参考になった",
           "count": 4,
-          "sentence_ids": [
-            "ev019-r9#1",
-            "ev019-r13#1",
-            "ev019-r14#1",
-            "ev019-r32#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev019-r9#1",
-              "text": "アーキテクチャ選定の判断軸が整理されていて参考になりました。"
-            }
+            "アーキテクチャ選定の判断軸が整理されていて参考になりました。"
           ]
         },
         {
-          "speaker_id": "e003",
           "theme": "本番で起きた失敗の話がリアルで参考になった",
           "count": 3,
-          "sentence_ids": [
-            "ev019-r8#1",
-            "ev019-r27#1",
-            "ev019-r33#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev019-r8#1",
-              "text": "本番で起きた失敗の話がリアルで一番参考になりました。"
-            }
+            "本番で起きた失敗の話がリアルで一番参考になりました。"
           ]
         },
         {
-          "speaker_id": "e003",
           "theme": "内容全体への高い評価と続編への期待",
           "count": 3,
-          "sentence_ids": [
-            "ev019-r3#1",
-            "ev019-r12#1",
-            "ev019-r22#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev019-r3#1",
-              "text": "続編があればぜひ聞きたいです。"
-            },
-            {
-              "id": "ev019-r22#1",
-              "text": "内容はとても良かったです。"
-            }
+            "続編があればぜひ聞きたいです。",
+            "内容はとても良かったです。"
           ]
         },
         {
-          "speaker_id": "e001",
           "theme": "社内で合意を取った過程の話が面白い",
           "count": 3,
-          "sentence_ids": [
-            "ev019-r15#1",
-            "ev019-r26#1",
-            "ev019-r35#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev019-r15#1",
-              "text": "社内でどう合意を取ったかの話が面白かったです。"
-            }
+            "社内でどう合意を取ったかの話が面白かったです。"
           ]
         },
         {
-          "speaker_id": "e003",
           "theme": "人の確認をどこに入れるかの判断基準が分かりやすい",
           "count": 1,
-          "sentence_ids": [
-            "ev019-r25#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev019-r25#1",
-              "text": "人の確認をどこに入れるかの判断基準が分かりやすかったです。"
-            }
+            "人の確認をどこに入れるかの判断基準が分かりやすかったです。"
           ]
         }
       ],
-      "talks": [
+      "next_themes": [
         {
-          "speaker_id": "e003",
-          "summary": "ガードレールの具体例の多さと本番での失敗談のリアルさが特に評価され、すぐ試せる実践的な内容として続編を望む声が多い",
-          "content_issue": "後半のペース配分とツール呼び出し制限の掘り下げ",
-          "content_complaints": 7,
-          "next_themes": [
-            {
-              "text": "ガードレールの続編：本番で起きた失敗と直し方",
-              "response_ids": [
-                "ev019-r2",
-                "ev019-r8",
-                "ev019-r11",
-                "ev019-r12",
-                "ev019-r20",
-                "ev019-r27",
-                "ev019-r29",
-                "ev019-r33",
-                "ev019-r34"
-              ],
-              "overlaps_card_id": null
-            },
-            {
-              "text": "エージェントの回帰テストをCIで回す方法",
-              "response_ids": [
-                "ev019-r17",
-                "ev019-r21",
-                "ev019-r23",
-                "ev019-r25",
-                "ev019-r28",
-                "ev019-r37"
-              ],
-              "overlaps_card_id": "card-e013-01"
-            },
-            {
-              "text": "LLMの出力を自動で評価する仕組み",
-              "response_ids": [
-                "ev019-r22"
-              ],
-              "overlaps_card_id": "card-e013-01"
-            }
-          ],
-          "stats": {
-            "event_id": "ev019",
-            "speaker_id": "e003",
-            "count": 22,
-            "average": 4.6,
-            "distribution": [
-              0,
-              0,
-              1,
-              6,
-              15
-            ],
-            "with_comment": 20,
-            "excluded": 0,
-            "with_want_next": 16,
-            "highlight": "high"
-          }
+          "text": "ガードレールの続編：本番で起きた失敗と直し方",
+          "count": 9,
+          "demand": false
         },
         {
-          "speaker_id": "e001",
-          "summary": "アーキテクチャ選定の判断軸の整理と社内で合意を取った過程が参考になったと評価されている",
-          "content_issue": "具体例（構成図）の不足",
-          "content_complaints": 4,
-          "next_themes": [
-            {
-              "text": "実際の構成図とコストの内訳",
-              "response_ids": [
-                "ev019-r7",
-                "ev019-r13",
-                "ev019-r18",
-                "ev019-r26",
-                "ev019-r35",
-                "ev019-r36"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev019",
-            "speaker_id": "e001",
-            "count": 14,
-            "average": 3.4,
-            "distribution": [
-              0,
-              1,
-              6,
-              7,
-              0
-            ],
-            "with_comment": 11,
-            "excluded": 3,
-            "with_want_next": 6,
-            "highlight": null
-          }
+          "text": "エージェントの回帰テストをCIで回す方法",
+          "count": 6,
+          "demand": true
+        },
+        {
+          "text": "実際の構成図とコストの内訳",
+          "count": 6,
+          "demand": false
+        },
+        {
+          "text": "LLMの出力を自動で評価する仕組み",
+          "count": 1,
+          "demand": true
         }
-      ],
-      "analyzed_at": "2026-11-21T08:20:00.906Z",
-      "model": "claude-opus-5-5",
-      "run_usd": 0.189476,
-      "writebacks": [
-        "久住 拓真さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "久住 拓真さんのカードにテーマ案（未確認）を提案「ガードレールの続編：本番で起きた失敗と直し方」",
-        "早乙女 蓮さんのカードに「需要あり」を提案「エージェントの回帰テストをCIで回す方法」",
-        "早乙女 蓮さんのカードに「需要あり」を提案「LLMの出力を自動で評価する仕組み」",
-        "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "青柳 恭平さんのカードにテーマ案（未確認）を提案「実際の構成図とコストの内訳」"
       ]
     },
+    "voices": [
+      {
+        "text": "ガードレールの続編：本番で起きた失敗と直し方",
+        "count": 9,
+        "match_card_id": "card-e003-01"
+      },
+      {
+        "text": "エージェントの回帰テストをCIで回す方法",
+        "count": 6,
+        "match_card_id": "card-e013-01"
+      },
+      {
+        "text": "実際の構成図とコストの内訳",
+        "count": 6,
+        "match_card_id": "card-e001-01"
+      },
+      {
+        "text": "LLMの出力を自動で評価する仕組み",
+        "count": 1,
+        "match_card_id": "card-e013-01"
+      }
+    ],
+    "model": "claude-opus-5-5",
+    "run_usd": 0.189476,
+    "sentences": 39,
+    "writebacks": [
+      "久住 拓真さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "久住 拓真さんのカードにテーマ案（未確認）を提案「ガードレールの続編：本番で起きた失敗と直し方」",
+      "早乙女 蓮さんのカードに「需要あり」を提案「エージェントの回帰テストをCIで回す方法」",
+      "早乙女 蓮さんのカードに「需要あり」を提案「LLMの出力を自動で評価する仕組み」",
+      "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "青柳 恭平さんのカードにテーマ案（未確認）を提案「実際の構成図とコストの内訳」"
+    ],
     "cards": {
       "card-e013-01": {
         "reactions": [
           {
-            "id": "dm-ev019-e003-2",
+            "id": "dm-ev019-card-e013-01-itpgds",
             "kind": "demand",
             "status": "pending",
             "event_id": "ev019",
@@ -578,10 +179,10 @@
               "ev019-r37"
             ],
             "from_speaker_id": "e003",
-            "added_at": "2026-11-21T08:47:59.328Z"
+            "added_at": "2026-11-21T14:00:09.987Z"
           },
           {
-            "id": "dm-ev019-e003-3",
+            "id": "dm-ev019-card-e013-01-ra5muf",
             "kind": "demand",
             "status": "pending",
             "event_id": "ev019",
@@ -596,7 +197,7 @@
               "ev019-r22"
             ],
             "from_speaker_id": "e003",
-            "added_at": "2026-11-21T08:47:59.331Z"
+            "added_at": "2026-11-21T14:00:09.995Z"
           }
         ],
         "pending_themes_added": []
@@ -616,176 +217,13 @@
     }
   },
   "ev020": {
-    "analysis": {
-      "event_id": "ev020",
-      "labels": [
-        {
-          "id": "ev020-r6#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r6#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r7#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r8#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r11#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r12#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r16#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r17#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev020-r18#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r19#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": true
-        },
-        {
-          "id": "ev020-r22#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r23#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r26#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r31#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev020-r33#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r2#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r4#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev020-r5#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r10#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r14#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev020-r14#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev020-r15#1",
-          "polarity": "other",
-          "topic": null,
-          "attack": false
-        },
-        {
-          "id": "ev020-r21#1",
-          "polarity": "other",
-          "topic": null,
-          "attack": false
-        },
-        {
-          "id": "ev020-r28#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev020-r30#1",
-          "polarity": "other",
-          "topic": null,
-          "attack": false
-        },
-        {
-          "id": "ev020-r32#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        }
-      ],
+    "overview": {
+      "analyzed_at": "2026-11-21T08:20:49.953Z",
+      "sample": true,
       "negatives": {
         "operation": [
           {
             "text": "開始が15分ほど遅れたのが残念でした。",
-            "sentence_ids": [
-              "ev020-r14#2"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": false
           }
@@ -793,67 +231,31 @@
         "content": [
           {
             "text": "話すのが速くて追いつけませんでした。",
-            "sentence_ids": [
-              "ev020-r6#2"
-            ],
-            "speaker_ids": [
-              "e004"
-            ],
             "count": 1,
             "attack": false
           },
           {
             "text": "前提知識が多くて、途中からついていけませんでした。",
-            "sentence_ids": [
-              "ev020-r7#1"
-            ],
-            "speaker_ids": [
-              "e004"
-            ],
             "count": 1,
             "attack": false
           },
           {
             "text": "前提知識が多く、金融の用語も分からず難しかったです。",
-            "sentence_ids": [
-              "ev020-r16#1"
-            ],
-            "speaker_ids": [
-              "e004"
-            ],
             "count": 1,
             "attack": false
           },
           {
             "text": "説明が下手すぎて、聞く価値がありませんでした。",
-            "sentence_ids": [
-              "ev020-r19#1"
-            ],
-            "speaker_ids": [
-              "e004"
-            ],
             "count": 1,
             "attack": true
           },
           {
             "text": "整合性の考え方は参考になりましたが、前提知識が多くて難しかったです。",
-            "sentence_ids": [
-              "ev020-r22#1"
-            ],
-            "speaker_ids": [
-              "e004"
-            ],
             "count": 1,
             "attack": false
           },
           {
             "text": "スライドの文字が小さくて読めませんでした。",
-            "sentence_ids": [
-              "ev020-r23#1"
-            ],
-            "speaker_ids": [
-              "e004"
-            ],
             "count": 1,
             "attack": false
           }
@@ -861,174 +263,85 @@
       },
       "positives": [
         {
-          "speaker_id": "e004",
           "theme": "データ整合性を守るための考え方が参考になった",
           "count": 5,
-          "sentence_ids": [
-            "ev020-r6#1",
-            "ev020-r8#1",
-            "ev020-r11#1",
-            "ev020-r18#1",
-            "ev020-r26#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev020-r6#1",
-              "text": "整合性をどう守るかの考え方は参考になりました。"
-            }
+            "整合性をどう守るかの考え方は参考になりました。"
           ]
         },
         {
-          "speaker_id": "e001",
           "theme": "金融とSaaSの差を整理した説明が分かりやすい",
           "count": 5,
-          "sentence_ids": [
-            "ev020-r2#1",
-            "ev020-r5#1",
-            "ev020-r10#1",
-            "ev020-r14#1",
-            "ev020-r32#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev020-r2#1",
-              "text": "SaaSと金融の違いの整理が分かりやすかったです。"
-            },
-            {
-              "id": "ev020-r14#1",
-              "text": "話は分かりやすかったです。"
-            }
+            "SaaSと金融の違いの整理が分かりやすかったです。",
+            "話は分かりやすかったです。"
           ]
         },
         {
-          "speaker_id": null,
           "theme": "懇親会・受付などイベント全体の満足と次回参加の意向",
           "count": 4,
-          "sentence_ids": [
-            "ev020-r17#1",
-            "ev020-r28#1",
-            "ev020-r4#1",
-            "ev020-r31#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev020-r17#1",
-              "text": "懇親会も楽しかったです。"
-            },
-            {
-              "id": "ev020-r4#1",
-              "text": "受付がスムーズでした。"
-            }
+            "懇親会も楽しかったです。",
+            "受付がスムーズでした。"
           ]
         },
         {
-          "speaker_id": "e004",
           "theme": "二重記帳の図解が分かりやすい",
           "count": 2,
-          "sentence_ids": [
-            "ev020-r12#1",
-            "ev020-r33#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev020-r12#1",
-              "text": "二重記帳の図が分かりやすかったです。"
-            }
+            "二重記帳の図が分かりやすかったです。"
           ]
         }
       ],
-      "talks": [
+      "next_themes": [
         {
-          "speaker_id": "e004",
-          "summary": "整合性を守る設計の考え方と二重記帳の図解が好評な一方、難易度や聞き取りやすさに課題の声も",
-          "content_issue": "前提知識の多さ・話速・文字サイズ",
-          "content_complaints": 5,
-          "next_themes": [
-            {
-              "text": "改ざん検知ができる監査ログの設計",
-              "response_ids": [
-                "ev020-r7",
-                "ev020-r13",
-                "ev020-r17",
-                "ev020-r18",
-                "ev020-r26"
-              ],
-              "overlaps_card_id": "card-e023-01"
-            },
-            {
-              "text": "金融システムのデータ整合性の基礎編",
-              "response_ids": [
-                "ev020-r16",
-                "ev020-r22",
-                "ev020-r31",
-                "ev020-r33"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev020",
-            "speaker_id": "e004",
-            "count": 19,
-            "average": 2.8,
-            "distribution": [
-              1,
-              6,
-              8,
-              3,
-              1
-            ],
-            "with_comment": 14,
-            "excluded": 4,
-            "with_want_next": 9,
-            "highlight": "low"
-          }
+          "text": "改ざん検知ができる監査ログの設計",
+          "count": 5,
+          "demand": true
         },
         {
-          "speaker_id": "e001",
-          "summary": "金融とSaaSの差を整理した説明が好評で、規制まわりの話への関心も高い",
-          "content_issue": null,
-          "content_complaints": 0,
-          "next_themes": [
-            {
-              "text": "金融規制に沿ったシステム設計の事例",
-              "response_ids": [
-                "ev020-r5",
-                "ev020-r27"
-              ],
-              "overlaps_card_id": "card-e023-01"
-            }
-          ],
-          "stats": {
-            "event_id": "ev020",
-            "speaker_id": "e001",
-            "count": 13,
-            "average": 3.8,
-            "distribution": [
-              0,
-              0,
-              4,
-              7,
-              2
-            ],
-            "with_comment": 10,
-            "excluded": 2,
-            "with_want_next": 2,
-            "highlight": null
-          }
+          "text": "金融システムのデータ整合性の基礎編",
+          "count": 4,
+          "demand": false
+        },
+        {
+          "text": "金融規制に沿ったシステム設計の事例",
+          "count": 2,
+          "demand": true
         }
-      ],
-      "analyzed_at": "2026-11-21T08:20:49.953Z",
-      "model": "claude-opus-5-5",
-      "run_usd": 0.090295,
-      "writebacks": [
-        "相良 美帆さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "相良 美帆さんのカードにテーマ案（未確認）を提案「金融システムのデータ整合性の基礎編」",
-        "氷室 圭さんのカードに「需要あり」を提案「改ざん検知ができる監査ログの設計」",
-        "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "氷室 圭さんのカードに「需要あり」を提案「金融規制に沿ったシステム設計の事例」"
       ]
     },
+    "voices": [
+      {
+        "text": "改ざん検知ができる監査ログの設計",
+        "count": 5,
+        "match_card_id": "card-e023-01"
+      },
+      {
+        "text": "金融システムのデータ整合性の基礎編",
+        "count": 4,
+        "match_card_id": "card-e004-01"
+      },
+      {
+        "text": "金融規制に沿ったシステム設計の事例",
+        "count": 2,
+        "match_card_id": "card-e023-01"
+      }
+    ],
+    "model": "claude-opus-5-5",
+    "run_usd": 0.090295,
+    "sentences": 26,
+    "writebacks": [
+      "相良 美帆さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "相良 美帆さんのカードにテーマ案（未確認）を提案「金融システムのデータ整合性の基礎編」",
+      "氷室 圭さんのカードに「需要あり」を提案「改ざん検知ができる監査ログの設計」",
+      "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "氷室 圭さんのカードに「需要あり」を提案「金融規制に沿ったシステム設計の事例」"
+    ],
     "cards": {
       "card-e004-01": {
         "reactions": [],
@@ -1039,7 +352,7 @@
       "card-e023-01": {
         "reactions": [
           {
-            "id": "dm-ev020-e004-1",
+            "id": "dm-ev020-card-e023-01-hj9mmp",
             "kind": "demand",
             "status": "pending",
             "event_id": "ev020",
@@ -1058,10 +371,10 @@
               "ev020-r26"
             ],
             "from_speaker_id": "e004",
-            "added_at": "2026-11-21T08:47:59.349Z"
+            "added_at": "2026-11-21T14:00:10.051Z"
           },
           {
-            "id": "dm-ev020-e001-1",
+            "id": "dm-ev020-card-e023-01-ars0bf",
             "kind": "demand",
             "status": "pending",
             "event_id": "ev020",
@@ -1077,7 +390,7 @@
               "ev020-r27"
             ],
             "from_speaker_id": "e001",
-            "added_at": "2026-11-21T08:47:59.356Z"
+            "added_at": "2026-11-21T14:00:10.063Z"
           }
         ],
         "pending_themes_added": []
@@ -1085,157 +398,18 @@
     }
   },
   "ev017": {
-    "analysis": {
-      "event_id": "ev017",
-      "labels": [
-        {
-          "id": "ev017-r2#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r11#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev017-r14#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r15#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev017-r16#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r17#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r17#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev017-r22#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r26#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r3#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r5#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r5#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev017-r9#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r10#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r12#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r13#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r24#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r25#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r25#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r27#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev017-r28#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        }
-      ],
+    "overview": {
+      "analyzed_at": "2026-11-21T08:21:18.178Z",
+      "sample": true,
       "negatives": {
         "operation": [
           {
             "text": "資料が事前に共有されていなかったので、手元で追えませんでした。",
-            "sentence_ids": [
-              "ev017-r17#2"
-            ],
-            "speaker_ids": [
-              "e002"
-            ],
             "count": 1,
             "attack": false
           },
           {
             "text": "ただ会場が寒くて集中しにくかったです。",
-            "sentence_ids": [
-              "ev017-r5#2"
-            ],
-            "speaker_ids": [
-              "e005"
-            ],
             "count": 1,
             "attack": false
           }
@@ -1243,13 +417,6 @@
         "content": [
           {
             "text": "E2Eテストが不安定な問題にどう向き合っているのかが分からなかったです。",
-            "sentence_ids": [
-              "ev017-r10#1",
-              "ev017-r25#2"
-            ],
-            "speaker_ids": [
-              "e005"
-            ],
             "count": 2,
             "attack": false
           }
@@ -1257,186 +424,93 @@
       },
       "positives": [
         {
-          "speaker_id": "e005",
           "theme": "テスト自動化の効果を数字で示していて説得力がある",
           "count": 6,
-          "sentence_ids": [
-            "ev017-r3#1",
-            "ev017-r5#1",
-            "ev017-r9#1",
-            "ev017-r12#1",
-            "ev017-r13#1",
-            "ev017-r24#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev017-r3#1",
-              "text": "テスト自動化の効果を数字で出していて説得力がありました。"
-            },
-            {
-              "id": "ev017-r5#1",
-              "text": "数字の出し方は参考になりました。"
-            }
+            "テスト自動化の効果を数字で出していて説得力がありました。",
+            "数字の出し方は参考になりました。"
           ]
         },
         {
-          "speaker_id": "e002",
           "theme": "型の導入をチームに浸透させた進め方が参考になる",
           "count": 4,
-          "sentence_ids": [
-            "ev017-r2#1",
-            "ev017-r14#1",
-            "ev017-r22#1",
-            "ev017-r26#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev017-r2#1",
-              "text": "チームへの広め方が参考になりました。"
-            }
+            "チームへの広め方が参考になりました。"
           ]
         },
         {
-          "speaker_id": null,
           "theme": "受付・懇親会などイベント全体の満足",
           "count": 3,
-          "sentence_ids": [
-            "ev017-r11#1",
-            "ev017-r15#1",
-            "ev017-r28#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev017-r15#1",
-              "text": "懇親会も楽しかったです。"
-            },
-            {
-              "id": "ev017-r28#1",
-              "text": "次回も参加したいです。"
-            }
+            "懇親会も楽しかったです。",
+            "次回も参加したいです。"
           ]
         },
         {
-          "speaker_id": "e002",
           "theme": "型を導入する順序の話が実践的",
           "count": 2,
-          "sentence_ids": [
-            "ev017-r16#1",
-            "ev017-r17#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev017-r16#1",
-              "text": "型を入れる順番の話が実践的でした。"
-            }
+            "型を入れる順番の話が実践的でした。"
           ]
         },
         {
-          "speaker_id": "e005",
           "theme": "自社で費用対効果を説明するときに使えそう",
           "count": 2,
-          "sentence_ids": [
-            "ev017-r25#1",
-            "ev017-r27#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev017-r25#1",
-              "text": "自分の会社でも費用対効果の説明に使えそうです。"
-            }
+            "自分の会社でも費用対効果の説明に使えそうです。"
           ]
         }
       ],
-      "talks": [
+      "next_themes": [
         {
-          "speaker_id": "e002",
-          "summary": "型をチームへ浸透させた進め方と導入の順序が実践の参考になったと好評",
-          "content_issue": null,
-          "content_complaints": 0,
-          "next_themes": [
-            {
-              "text": "型の導入をチームに浸透させた具体的な進め方",
-              "response_ids": [
-                "ev017-r20",
-                "ev017-r26"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev017",
-            "speaker_id": "e002",
-            "count": 12,
-            "average": 3.4,
-            "distribution": [
-              0,
-              0,
-              7,
-              5,
-              0
-            ],
-            "with_comment": 8,
-            "excluded": 3,
-            "with_want_next": 2,
-            "highlight": null
-          }
+          "text": "flakyなE2Eテストの原因をどう切り分けるか",
+          "count": 6,
+          "demand": true
         },
         {
-          "speaker_id": "e005",
-          "summary": "自動化の効果を定量的に示した点に納得感があり、自社での説明にも活かせるとの声",
-          "content_issue": "flakyなE2Eへの対処が未説明",
-          "content_complaints": 2,
-          "next_themes": [
-            {
-              "text": "flakyなE2Eテストの原因をどう切り分けるか",
-              "response_ids": [
-                "ev017-r6",
-                "ev017-r8",
-                "ev017-r10",
-                "ev017-r21",
-                "ev017-r24",
-                "ev017-r25"
-              ],
-              "overlaps_card_id": "card-e020-01"
-            },
-            {
-              "text": "テストの費用対効果をどう測るか",
-              "response_ids": [
-                "ev017-r3"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev017",
-            "speaker_id": "e005",
-            "count": 15,
-            "average": 4,
-            "distribution": [
-              0,
-              0,
-              3,
-              9,
-              3
-            ],
-            "with_comment": 10,
-            "excluded": 2,
-            "with_want_next": 7,
-            "highlight": null
-          }
+          "text": "型の導入をチームに浸透させた具体的な進め方",
+          "count": 2,
+          "demand": false
+        },
+        {
+          "text": "テストの費用対効果をどう測るか",
+          "count": 1,
+          "demand": false
         }
-      ],
-      "analyzed_at": "2026-11-21T08:21:18.178Z",
-      "model": "claude-opus-5-5",
-      "run_usd": 0.055822199999999995,
-      "writebacks": [
-        "笹倉 由紀さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "笹倉 由紀さんのカードにテーマ案（未確認）を提案「型の導入をチームに浸透させた具体的な進め方」",
-        "千早 航さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "千早 航さんのカードにテーマ案（未確認）を提案「テストの費用対効果をどう測るか」",
-        "篠宮 悠さんのカードに「需要あり」を提案「flakyなE2Eテストの原因をどう切り分けるか」"
       ]
     },
+    "voices": [
+      {
+        "text": "flakyなE2Eテストの原因をどう切り分けるか",
+        "count": 6,
+        "match_card_id": "card-e020-01"
+      },
+      {
+        "text": "型の導入をチームに浸透させた具体的な進め方",
+        "count": 2,
+        "match_card_id": "card-e002-01"
+      },
+      {
+        "text": "テストの費用対効果をどう測るか",
+        "count": 1,
+        "match_card_id": "card-e005-01"
+      }
+    ],
+    "model": "claude-opus-5-5",
+    "run_usd": 0.055822199999999995,
+    "sentences": 21,
+    "writebacks": [
+      "笹倉 由紀さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "笹倉 由紀さんのカードにテーマ案（未確認）を提案「型の導入をチームに浸透させた具体的な進め方」",
+      "千早 航さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "千早 航さんのカードにテーマ案（未確認）を提案「テストの費用対効果をどう測るか」",
+      "篠宮 悠さんのカードに「需要あり」を提案「flakyなE2Eテストの原因をどう切り分けるか」"
+    ],
     "cards": {
       "card-e002-01": {
         "reactions": [],
@@ -1453,7 +527,7 @@
       "card-e020-01": {
         "reactions": [
           {
-            "id": "dm-ev017-e005-1",
+            "id": "dm-ev017-card-e020-01-2gxa6d",
             "kind": "demand",
             "status": "pending",
             "event_id": "ev017",
@@ -1473,7 +547,7 @@
               "ev017-r25"
             ],
             "from_speaker_id": "e005",
-            "added_at": "2026-11-21T08:47:59.374Z"
+            "added_at": "2026-11-21T14:00:10.115Z"
           }
         ],
         "pending_themes_added": []
@@ -1481,182 +555,13 @@
     }
   },
   "ev018": {
-    "analysis": {
-      "event_id": "ev018",
-      "labels": [
-        {
-          "id": "ev018-r8#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r9#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r9#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r10#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r13#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev018-r14#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r14#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r16#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r17#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r18#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r18#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r20#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r23#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r25#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev018-r4#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r4#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r5#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r5#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev018-r7#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r11#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev018-r12#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r19#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev018-r21#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r21#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r22#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r22#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev018-r24#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        }
-      ],
+    "overview": {
+      "analyzed_at": "2026-11-21T08:21:39.756Z",
+      "sample": true,
       "negatives": {
         "operation": [
           {
             "text": "会場が寒かったです。",
-            "sentence_ids": [
-              "ev018-r5#2"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": false
           }
@@ -1664,29 +569,11 @@
         "content": [
           {
             "text": "もう少し具体的な事例がほしかったです。",
-            "sentence_ids": [
-              "ev018-r4#2",
-              "ev018-r7#1",
-              "ev018-r12#1",
-              "ev018-r21#2",
-              "ev018-r22#2"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 5,
             "attack": false
           },
           {
             "text": "夜間対応の負担をどう減らしているのかも知りたかったです。",
-            "sentence_ids": [
-              "ev018-r9#2",
-              "ev018-r14#2",
-              "ev018-r18#2"
-            ],
-            "speaker_ids": [
-              "e002"
-            ],
             "count": 3,
             "attack": false
           }
@@ -1694,171 +581,80 @@
       },
       "positives": [
         {
-          "speaker_id": "e002",
           "theme": "振り返りの進め方を自チームでも取り入れたい",
           "count": 5,
-          "sentence_ids": [
-            "ev018-r9#1",
-            "ev018-r10#1",
-            "ev018-r14#1",
-            "ev018-r17#1",
-            "ev018-r20#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev018-r9#1",
-              "text": "振り返りの回し方をそのまま真似したいです。"
-            }
+            "振り返りの回し方をそのまま真似したいです。"
           ]
         },
         {
-          "speaker_id": "e001",
           "theme": "判断軸の全体像が把握できた",
           "count": 5,
-          "sentence_ids": [
-            "ev018-r4#1",
-            "ev018-r5#1",
-            "ev018-r21#1",
-            "ev018-r22#1",
-            "ev018-r24#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev018-r4#1",
-              "text": "全体像はつかめました。"
-            }
+            "全体像はつかめました。"
           ]
         },
         {
-          "speaker_id": "e002",
           "theme": "マネージャーとしての苦労話への共感",
           "count": 4,
-          "sentence_ids": [
-            "ev018-r8#1",
-            "ev018-r16#1",
-            "ev018-r18#1",
-            "ev018-r23#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev018-r8#1",
-              "text": "EMの悩みがリアルで共感しました。"
-            }
+            "EMの悩みがリアルで共感しました。"
           ]
         },
         {
-          "speaker_id": null,
           "theme": "受付の対応が円滑だった",
           "count": 2,
-          "sentence_ids": [
-            "ev018-r25#1",
-            "ev018-r19#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev018-r25#1",
-              "text": "受付がスムーズでした。"
-            }
+            "受付がスムーズでした。"
           ]
         },
         {
-          "speaker_id": null,
           "theme": "次回の参加意向",
           "count": 2,
-          "sentence_ids": [
-            "ev018-r13#1",
-            "ev018-r11#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev018-r13#1",
-              "text": "次回も参加したいです。"
-            }
+            "次回も参加したいです。"
           ]
         }
       ],
-      "talks": [
+      "next_themes": [
         {
-          "speaker_id": "e002",
-          "summary": "マネージャーとしての苦労に共感が集まり、チームの振り返り運用を自分たちでも試したいという反応が多かった",
-          "content_issue": "深夜の対応負荷を減らす工夫が未紹介",
-          "content_complaints": 3,
-          "next_themes": [
-            {
-              "text": "深夜のオンコール呼び出しを削減した取り組み",
-              "response_ids": [
-                "ev018-r2",
-                "ev018-r9",
-                "ev018-r10",
-                "ev018-r16",
-                "ev018-r17",
-                "ev018-r23"
-              ],
-              "overlaps_card_id": "card-e016-01"
-            },
-            {
-              "text": "チーム振り返りのその後を語る続編",
-              "response_ids": [
-                "ev018-r3",
-                "ev018-r14",
-                "ev018-r20"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev018",
-            "speaker_id": "e002",
-            "count": 14,
-            "average": 3.7,
-            "distribution": [
-              0,
-              0,
-              6,
-              6,
-              2
-            ],
-            "with_comment": 11,
-            "excluded": 1,
-            "with_want_next": 9,
-            "highlight": null
-          }
+          "text": "深夜のオンコール呼び出しを削減した取り組み",
+          "count": 6,
+          "demand": true
         },
         {
-          "speaker_id": "e001",
-          "summary": "選定の判断軸の大枠は伝わったという声が多い一方、実例による裏付けを求める反応も目立った",
-          "content_issue": "実例による裏付けの不足",
-          "content_complaints": 5,
-          "next_themes": [],
-          "stats": {
-            "event_id": "ev018",
-            "speaker_id": "e001",
-            "count": 10,
-            "average": 3.3,
-            "distribution": [
-              0,
-              2,
-              4,
-              3,
-              1
-            ],
-            "with_comment": 9,
-            "excluded": 1,
-            "with_want_next": 0,
-            "highlight": "low"
-          }
+          "text": "チーム振り返りのその後を語る続編",
+          "count": 3,
+          "demand": false
         }
-      ],
-      "analyzed_at": "2026-11-21T08:21:39.756Z",
-      "model": "claude-opus-5-5",
-      "run_usd": 0.11720039999999998,
-      "writebacks": [
-        "笹倉 由紀さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "笹倉 由紀さんのカードにテーマ案（未確認）を提案「チーム振り返りのその後を語る続編」",
-        "鳴海 慎さんのカードに「需要あり」を提案「深夜のオンコール呼び出しを削減した取り組み」",
-        "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）"
       ]
     },
+    "voices": [
+      {
+        "text": "深夜のオンコール呼び出しを削減した取り組み",
+        "count": 6,
+        "match_card_id": "card-e016-01"
+      },
+      {
+        "text": "チーム振り返りのその後を語る続編",
+        "count": 3,
+        "match_card_id": "card-e002-01"
+      }
+    ],
+    "model": "claude-opus-5-5",
+    "run_usd": 0.11720039999999998,
+    "sentences": 27,
+    "writebacks": [
+      "笹倉 由紀さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "笹倉 由紀さんのカードにテーマ案（未確認）を提案「チーム振り返りのその後を語る続編」",
+      "鳴海 慎さんのカードに「需要あり」を提案「深夜のオンコール呼び出しを削減した取り組み」",
+      "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）"
+    ],
     "cards": {
       "card-e002-01": {
         "reactions": [],
@@ -1869,7 +665,7 @@
       "card-e016-01": {
         "reactions": [
           {
-            "id": "dm-ev018-e002-1",
+            "id": "dm-ev018-card-e016-01-7ia9h",
             "kind": "demand",
             "status": "pending",
             "event_id": "ev018",
@@ -1889,7 +685,7 @@
               "ev018-r23"
             ],
             "from_speaker_id": "e002",
-            "added_at": "2026-11-21T08:47:59.388Z"
+            "added_at": "2026-11-21T14:00:10.150Z"
           }
         ],
         "pending_themes_added": []
@@ -1897,207 +693,18 @@
     }
   },
   "ev015": {
-    "analysis": {
-      "event_id": "ev015",
-      "labels": [
-        {
-          "id": "ev015-r6#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r7#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r9#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r10#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r11#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r13#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r16#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r17#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r19#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r20#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r22#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r23#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r24#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r26#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r27#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r29#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r30#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r4#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r8#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r8#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r8#3",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r12#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r14#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r15#1",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r18#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r21#1",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r25#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev015-r28#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev015-r31#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        }
-      ],
+    "overview": {
+      "analyzed_at": "2026-11-21T08:22:13.773Z",
+      "sample": true,
       "negatives": {
         "operation": [
           {
             "text": "時間が足りなさそうで、最後が駆け足でした。",
-            "sentence_ids": [
-              "ev015-r8#2",
-              "ev015-r15#1",
-              "ev015-r21#1"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 3,
             "attack": false
           },
           {
             "text": "会場が寒かったです。",
-            "sentence_ids": [
-              "ev015-r8#3"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": false
           }
@@ -2105,13 +712,6 @@
         "content": [
           {
             "text": "前提が少し難しく、最初の10分は理解が追いつきませんでした。",
-            "sentence_ids": [
-              "ev015-r7#1",
-              "ev015-r13#1"
-            ],
-            "speaker_ids": [
-              "e003"
-            ],
             "count": 2,
             "attack": false
           }
@@ -2119,163 +719,63 @@
       },
       "positives": [
         {
-          "speaker_id": "e003",
           "theme": "失敗談が参考になり、続編を望む声が多い",
           "count": 6,
-          "sentence_ids": [
-            "ev015-r6#1",
-            "ev015-r10#1",
-            "ev015-r17#1",
-            "ev015-r20#1",
-            "ev015-r24#1",
-            "ev015-r27#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev015-r27#1",
-              "text": "失敗談が多くて参考になりました、続きが聞きたいです。"
-            },
-            {
-              "id": "ev015-r6#1",
-              "text": "続編を希望します。"
-            }
+            "失敗談が多くて参考になりました、続きが聞きたいです。",
+            "続編を希望します。"
           ]
         },
         {
-          "speaker_id": "e001",
           "theme": "設計判断の選択肢をきれいに整理している",
           "count": 6,
-          "sentence_ids": [
-            "ev015-r4#1",
-            "ev015-r8#1",
-            "ev015-r12#1",
-            "ev015-r18#1",
-            "ev015-r28#1",
-            "ev015-r31#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev015-r4#1",
-              "text": "設計の選択肢が整理されていました。"
-            }
+            "設計の選択肢が整理されていました。"
           ]
         },
         {
-          "speaker_id": null,
           "theme": "受付の対応・懇親会・食事",
           "count": 6,
-          "sentence_ids": [
-            "ev015-r9#1",
-            "ev015-r11#1",
-            "ev015-r16#1",
-            "ev015-r22#1",
-            "ev015-r14#1",
-            "ev015-r25#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev015-r9#1",
-              "text": "受付がスムーズでした。"
-            },
-            {
-              "id": "ev015-r16#1",
-              "text": "懇親会も楽しかったです。"
-            }
+            "受付がスムーズでした。",
+            "懇親会も楽しかったです。"
           ]
         },
         {
-          "speaker_id": "e003",
           "theme": "エージェント間の役割分担を具体的に説明していて分かりやすい",
           "count": 5,
-          "sentence_ids": [
-            "ev015-r19#1",
-            "ev015-r23#1",
-            "ev015-r26#1",
-            "ev015-r29#1",
-            "ev015-r30#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev015-r19#1",
-              "text": "エージェント同士の役割分担の話が具体的で分かりやすかったです。"
-            }
+            "エージェント同士の役割分担の話が具体的で分かりやすかったです。"
           ]
         }
       ],
-      "talks": [
+      "next_themes": [
         {
-          "speaker_id": "e003",
-          "summary": "役割分担の具体性と失敗談が好評で、続編を望む声が多い。冒頭はやや難しかったとの声も",
-          "content_issue": "冒頭で求められる前提知識の多さ",
-          "content_complaints": 2,
-          "next_themes": [
-            {
-              "text": "マルチエージェントを本番運用したときの失敗事例とその対策（続編）",
-              "response_ids": [
-                "ev015-r7",
-                "ev015-r11",
-                "ev015-r13",
-                "ev015-r16",
-                "ev015-r19",
-                "ev015-r22",
-                "ev015-r23",
-                "ev015-r29"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev015",
-            "speaker_id": "e003",
-            "count": 18,
-            "average": 4.7,
-            "distribution": [
-              0,
-              0,
-              0,
-              5,
-              13
-            ],
-            "with_comment": 17,
-            "excluded": 1,
-            "with_want_next": 8,
-            "highlight": "high"
-          }
-        },
-        {
-          "speaker_id": "e001",
-          "summary": "設計判断の選択肢を整理して示した構成が評価された。時間配分には課題が残った",
-          "content_issue": null,
-          "content_complaints": 0,
-          "next_themes": [],
-          "stats": {
-            "event_id": "ev015",
-            "speaker_id": "e001",
-            "count": 12,
-            "average": 3.8,
-            "distribution": [
-              0,
-              0,
-              4,
-              6,
-              2
-            ],
-            "with_comment": 10,
-            "excluded": 2,
-            "with_want_next": 0,
-            "highlight": null
-          }
+          "text": "マルチエージェントを本番運用したときの失敗事例とその対策（続編）",
+          "count": 8,
+          "demand": false
         }
-      ],
-      "analyzed_at": "2026-11-21T08:22:13.773Z",
-      "model": "claude-opus-5-5",
-      "run_usd": 0.0606262,
-      "writebacks": [
-        "久住 拓真さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "久住 拓真さんのカードにテーマ案（未確認）を提案「マルチエージェントを本番運用したときの失敗事例とその対策（続編）」",
-        "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）"
       ]
     },
+    "voices": [
+      {
+        "text": "マルチエージェントを本番運用したときの失敗事例とその対策（続編）",
+        "count": 8,
+        "match_card_id": "card-e003-01"
+      }
+    ],
+    "model": "claude-opus-5-5",
+    "run_usd": 0.0606262,
+    "sentences": 29,
+    "writebacks": [
+      "久住 拓真さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "久住 拓真さんのカードにテーマ案（未確認）を提案「マルチエージェントを本番運用したときの失敗事例とその対策（続編）」",
+      "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）"
+    ],
     "cards": {
       "card-e003-01": {
         "reactions": [],
@@ -2286,187 +786,18 @@
     }
   },
   "ev016": {
-    "analysis": {
-      "event_id": "ev016",
-      "labels": [
-        {
-          "id": "ev016-r2#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r4#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r5#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r6#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev016-r7#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r8#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r8#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev016-r9#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r9#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r10#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev016-r11#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev016-r12#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r13#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r14#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r15#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r16#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r18#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r19#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r19#2",
-          "polarity": "bad",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev016-r20#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r21#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r22#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r22#2",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r23#1",
-          "polarity": "good",
-          "topic": "operation",
-          "attack": false
-        },
-        {
-          "id": "ev016-r24#1",
-          "polarity": "good",
-          "topic": "content",
-          "attack": false
-        },
-        {
-          "id": "ev016-r25#1",
-          "polarity": "bad",
-          "topic": "content",
-          "attack": true
-        }
-      ],
+    "overview": {
+      "analyzed_at": "2026-11-21T08:22:30.537Z",
+      "sample": true,
       "negatives": {
         "operation": [
           {
             "text": "後ろの席だとマイクの音が聞き取りにくかったです。",
-            "sentence_ids": [
-              "ev016-r8#2"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": false
           },
           {
             "text": "スライドを共有してほしいです。",
-            "sentence_ids": [
-              "ev016-r19#2"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": false
           }
@@ -2474,24 +805,11 @@
         "content": [
           {
             "text": "話が広く浅くて、持ち帰れるものが少なかったです。",
-            "sentence_ids": [
-              "ev016-r9#2",
-              "ev016-r22#2"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 2,
             "attack": false
           },
           {
             "text": "登壇者にやる気が感じられず、不快でした。",
-            "sentence_ids": [
-              "ev016-r25#1"
-            ],
-            "speaker_ids": [
-              "e001"
-            ],
             "count": 1,
             "attack": true
           }
@@ -2499,100 +817,45 @@
       },
       "positives": [
         {
-          "speaker_id": "e001",
           "theme": "生成AIを導入するときの進め方が参考になった",
           "count": 17,
-          "sentence_ids": [
-            "ev016-r2#1",
-            "ev016-r4#1",
-            "ev016-r5#1",
-            "ev016-r7#1",
-            "ev016-r8#1",
-            "ev016-r9#1",
-            "ev016-r12#1",
-            "ev016-r13#1",
-            "ev016-r14#1",
-            "ev016-r15#1",
-            "ev016-r16#1",
-            "ev016-r18#1",
-            "ev016-r19#1",
-            "ev016-r20#1",
-            "ev016-r21#1",
-            "ev016-r22#1",
-            "ev016-r24#1"
-          ],
+          "scope": "talk",
           "representatives": [
-            {
-              "id": "ev016-r2#1",
-              "text": "生成AIの導入の進め方が参考になりました。"
-            }
+            "生成AIの導入の進め方が参考になりました。"
           ]
         },
         {
-          "speaker_id": null,
           "theme": "受付・軽食・また参加したいという声など、イベント全体の満足",
           "count": 4,
-          "sentence_ids": [
-            "ev016-r6#1",
-            "ev016-r10#1",
-            "ev016-r11#1",
-            "ev016-r23#1"
-          ],
+          "scope": "event",
           "representatives": [
-            {
-              "id": "ev016-r10#1",
-              "text": "受付がスムーズでした。"
-            },
-            {
-              "id": "ev016-r11#1",
-              "text": "次回も参加したいです。"
-            }
+            "受付がスムーズでした。",
+            "次回も参加したいです。"
           ]
         }
       ],
-      "talks": [
+      "next_themes": [
         {
-          "speaker_id": "e001",
-          "summary": "生成AI導入の段取りは多くの人に役立ったと評価された。一方で、もっと深く掘り下げてほしいという声も一部にあった",
-          "content_issue": "扱う範囲が広く掘り下げが不足",
-          "content_complaints": 2,
-          "next_themes": [
-            {
-              "text": "生成AIを社内に導入したときの失敗事例",
-              "response_ids": [
-                "ev016-r5",
-                "ev016-r6"
-              ],
-              "overlaps_card_id": null
-            }
-          ],
-          "stats": {
-            "event_id": "ev016",
-            "speaker_id": "e001",
-            "count": 24,
-            "average": 3.8,
-            "distribution": [
-              0,
-              2,
-              6,
-              11,
-              5
-            ],
-            "with_comment": 22,
-            "excluded": 2,
-            "with_want_next": 2,
-            "highlight": null
-          }
+          "text": "生成AIを社内に導入したときの失敗事例",
+          "count": 2,
+          "demand": false
         }
-      ],
-      "analyzed_at": "2026-11-21T08:22:30.537Z",
-      "model": "claude-opus-5-5",
-      "run_usd": 0.10519239999999999,
-      "writebacks": [
-        "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
-        "青柳 恭平さんのカードにテーマ案（未確認）を提案「生成AIを社内に導入したときの失敗事例」"
       ]
     },
+    "voices": [
+      {
+        "text": "生成AIを社内に導入したときの失敗事例",
+        "count": 2,
+        "match_card_id": "card-e001-01"
+      }
+    ],
+    "model": "claude-opus-5-5",
+    "run_usd": 0.10519239999999999,
+    "sentences": 26,
+    "writebacks": [
+      "青柳 恭平さんの反応を、候補を出すときの参考として記録（内部・画面には出さない）",
+      "青柳 恭平さんのカードにテーマ案（未確認）を提案「生成AIを社内に導入したときの失敗事例」"
+    ],
     "cards": {
       "card-e001-01": {
         "reactions": [],

@@ -15,6 +15,7 @@ import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type Confidence, type SubmitI
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 import { getCardById, type Card } from "./cards";
 import { getPerson, ngHits, peopleNotesForAgent } from "./people";
+import { speakerEvaluationProblems } from "./surveys";
 
 export type AgentEvent =
   | { type: "start"; run_id: string; loop_model: string; heavy_model: string; switched: boolean; total_usd: number; switch_usd: number }
@@ -79,6 +80,11 @@ function systemPrompt() {
   // Built once per process so the bytes never change between steps.
   return (SYSTEM_PROMPT_CACHE.text ??= buildSystemPrompt());
 }
+
+/** 作業ログに出す、考えている途中の印（考えた内容は出さない） */
+export const THINKING_NOTE = "考えています";
+/** 作業ログの文に登壇者の評価が入っていたときの代わりの文 */
+export const HIDDEN_TEXT_NOTE = "（登壇の反応に触れた文のため、作業ログには表示していません）";
 
 export function requestForAgent(r: SpeakingRequest) {
   // Only fields a real request would carry. note_for_demo is already stripped by data.requests().
@@ -177,7 +183,12 @@ export function userFacingTextProblems(p: {
   alternative_pitch?: string | null;
   candidates: Array<{ employee_id: string; theme: string; reason: string; cautions: string[]; caveat: string | null }>;
 }): string[] {
-  return internalTermProblems([
+  return internalTermProblems(userFacingItems(p));
+}
+
+/** 技術広報が読む文（理由・注意点・要約など）の一覧 */
+export function userFacingItems(p: Parameters<typeof userFacingTextProblems>[0]): Array<{ where: string; text: string | null | undefined }> {
+  return [
     { where: "summary", text: p.summary },
     { where: "nominee_assessment", text: p.nominee_assessment },
     ...(p.learnings_applied ?? []).map((t) => ({ where: "learnings_applied", text: t })),
@@ -190,7 +201,7 @@ export function userFacingTextProblems(p: {
       { where: `${c.employee_id} の caveat`, text: c.caveat },
       ...(c.cautions ?? []).map((t) => ({ where: `${c.employee_id} の cautions`, text: t })),
     ]),
-  ]);
+  ];
 }
 
 /**
@@ -216,6 +227,13 @@ export function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId:
   const errs: string[] = [];
   errs.push(...cautionDateProblems(request, input.candidates ?? []));
   errs.push(...personRuleProblems(input.candidates ?? []));
+  const evals = speakerEvaluationProblems(userFacingItems(input));
+  if (evals.length) {
+    errs.push(
+      ...evals,
+      "登壇の反応（アンケート）は判断の参考だけにして、理由・注意点・要約には書かないでください。点数・満足度・回答の件数・反応の良し悪しも書かず、取り組みの中身で理由を書き直してください",
+    );
+  }
   const plain = userFacingTextProblems(input);
   if (plain.length) {
     errs.push(
@@ -363,7 +381,8 @@ export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) =>
       tools: spec.tools,
       messages,
       cache_control: { type: "ephemeral" }, // auto-caches the growing conversation prefix
-      thinking: { type: "adaptive", display: "summarized" },
+      // 考えた内容は返させない（画面にも保存にも出さない）。作業ログには「考えています」だけを出す
+      thinking: { type: "adaptive", display: "omitted" },
       output_config: { effort: "medium" },
     });
     const u = recordUsage(spec.runId, "loop", res.model, res.usage);
@@ -377,8 +396,9 @@ export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) =>
     });
 
     for (const b of res.content) {
-      if (b.type === "thinking" && b.thinking.trim()) emit({ type: "thinking", text: b.thinking });
-      if (b.type === "text" && b.text.trim()) emit({ type: "text", text: b.text });
+      if (b.type === "thinking") emit({ type: "thinking", text: THINKING_NOTE });
+      if (b.type === "text" && b.text.trim())
+        emit({ type: "text", text: speakerEvaluationProblems([{ where: "作業ログ", text: b.text }]).length ? HIDDEN_TEXT_NOTE : b.text });
     }
 
     if (res.stop_reason === "refusal") {

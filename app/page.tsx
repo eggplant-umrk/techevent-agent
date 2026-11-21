@@ -445,7 +445,8 @@ export default function Home() {
           setLog((l) => [...l, { kind: "note", tone: "warn", text: `累計が$${e.switch_usd}を超えたため、ループを ${e.loop_model}、重い仕事を ${e.heavy_model} に切り替えています` }]);
         break;
       case "thinking":
-        if (e.text.trim()) setLog((l) => [...l, { kind: "thinking", text: e.text.trim() }]);
+        // 考えた内容は出さない（「考えています」だけ。前に保存した作業ログに中身があっても出さない）
+        setLog((l) => (l.at(-1)?.kind === "thinking" ? l : [...l, { kind: "thinking", text: "考えています" }]));
         break;
       case "tool_call":
         setLog((l) => [...l, { kind: "tool", id: e.id, name: e.name, input: e.input }]);

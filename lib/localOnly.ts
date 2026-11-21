@@ -10,6 +10,8 @@ function hostname(hostHeader: string): string {
 }
 
 export function isLocalRequest(req: Request): boolean {
+  // 別の端末に見せる設定（SHARE_MODE=lan）では、入口（proxy.ts）が合言葉と Origin を確かめ済み
+  if ((process.env.SHARE_MODE ?? "").trim().toLowerCase() === "lan") return true;
   const host = req.headers.get("host");
   if (!host || !LOOPBACK.has(hostname(host))) return false;
   const xff = req.headers.get("x-forwarded-for");

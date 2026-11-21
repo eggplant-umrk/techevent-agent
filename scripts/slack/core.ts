@@ -101,7 +101,7 @@ export async function handleRequest(e: Required<Pick<MessageEventLike, "channel"
   try {
     const res = await fetch(new URL("/api/inbox", cfg.inboxBaseUrl), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...shareHeaders() },
       body: JSON.stringify({ text: e.text, source: "slack", meta: { channel: e.channel, ts: e.ts, user: e.user, permalink } }),
     });
     if (!res.ok) throw new Error(`POST /api/inbox ${res.status}`);
@@ -120,7 +120,7 @@ export async function handleRequest(e: Required<Pick<MessageEventLike, "channel"
   while (Date.now() < until) {
     await sleep(cfg.pollIntervalMs);
     try {
-      const res = await fetch(new URL(`/api/inbox/${encodeURIComponent(id)}`, cfg.inboxBaseUrl));
+      const res = await fetch(new URL(`/api/inbox/${encodeURIComponent(id)}`, cfg.inboxBaseUrl), { headers: shareHeaders() });
       if (!res.ok) continue; // 一時的な失敗は次の確認まで待つ
       last = (await res.json()) as InboxItem;
     } catch {
@@ -145,4 +145,10 @@ export function makeSeen(limit = 500) {
     if (seen.size > limit) seen.delete(seen.values().next().value as string);
     return true;
   };
+}
+
+/** 窓口を別の端末に見せる設定（SHARE_MODE=lan）のときは、合言葉をヘッダーで送る（値はログに出さない） */
+function shareHeaders(): Record<string, string> {
+  const code = (process.env.ACCESS_CODE ?? "").trim();
+  return (process.env.SHARE_MODE ?? "").trim().toLowerCase() === "lan" && code ? { "X-Access-Code": code } : {};
 }

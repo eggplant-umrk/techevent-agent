@@ -21,11 +21,22 @@ import { getClient } from "../lib/anthropic";
 import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
+import { getInboxItem, prepare, registerInbox, type InboxItem } from "../lib/inbox";
+import { extractNomineeWithAgent } from "../lib/nominee";
 
 process.loadEnvFile(".env");
 
 const PASS_RATE = 0.9;
 const WRITEBACK_REQUEST = "req003";
+
+/** 受信箱経由の指名あり依頼。req004 と同じ内容を、構造化された項目なしの本文だけで送る */
+const INBOX_CASE = {
+  based_on: "req004",
+  nominee: "e002",
+  text:
+    "【登壇のご相談】Web Performance Night 2027 Winter（2027-01-28 開催、渋谷、セッション20分、聴衆はフロントエンドエンジニア約100名）\n" +
+    "layerx.go のアーカイブで笹倉さんのお話を拝見しました。大規模SaaSの初期表示改善について、ぜひ笹倉さんにご登壇いただきたいです。12/5までにお返事いただけると助かります。",
+};
 
 // ---------------------------------------------------------------------------
 // Answer key (README only)
@@ -217,11 +228,17 @@ async function main() {
       })
     : null;
   if (saved) console.log(`オフライン：${saved.at} の保存結果を、今のコード・データ・検証で判定し直します（APIは使いません）`);
+  // --from-inbox <id>: data/inbox.json の1件（画面の「手で追加」などで実際に流したもの）を、APIを使わずに受信箱の項目で判定する
+  const fromIdx = args.indexOf("--from-inbox");
+  const fromInbox = fromIdx >= 0 ? args[fromIdx + 1] : undefined;
   const all = requests();
   const full = target === "all";
+  const wantInbox = full || target.split(",").includes("inbox") || !!fromInbox;
   const targets = full ? all : all.filter((r) => target.split(",").includes(r.id));
-  if (targets.length === 0) {
-    console.error("使い方: npm run eval -- req001 | req001,req004 | all [--report docs/eval_after.md] [--no-quality] [--offline]");
+  if (targets.length === 0 && !wantInbox) {
+    console.error(
+      "使い方: npm run eval -- req001 | req001,req004 | inbox | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
+    );
     process.exit(1);
   }
   const expected = loadExpected();
@@ -298,6 +315,74 @@ async function main() {
     rows.push({ request_id: r.id, pattern: r.pattern, top3, expected: exp.ids, primary: exp.primary, any_hit: anyHit, primary_hit: primaryHit, alternatives: alts, alternative_ok: altOk, run_usd: usd, steps, result });
   }
 
+  // ---- 受信箱経由の指名あり依頼（依頼文から指名を読み取り、社員データで確かめ、既存の流れで候補を出す）
+  let inboxCaseOut: Record<string, unknown> | null = null;
+  if (wantInbox) {
+    const savedCase = (saved as unknown as { inbox_case?: { item: InboxItem; source: string } } | null)?.inbox_case;
+    let item: InboxItem | undefined;
+    let source = "";
+    if (fromInbox) {
+      item = getInboxItem(fromInbox);
+      source = `受信箱の実データ（${fromInbox}）`;
+    } else if (offline) {
+      item = savedCase?.item;
+      source = savedCase ? `保存結果（${savedCase.source}）` : "";
+    } else {
+      // 本物の Agent で流す。書き込みは一時ファイルにして data/inbox.json には触らない
+      const tmp = path.join(process.cwd(), "eval-results", `inbox-eval-${Date.now()}.json`);
+      fs.mkdirSync(path.dirname(tmp), { recursive: true });
+      const prevFile = process.env.INBOX_FILE;
+      process.env.INBOX_FILE = tmp;
+      try {
+        console.log(`\n=== 受信箱経由の指名あり依頼（${INBOX_CASE.based_on} と同じ内容を本文だけで）`);
+        const reg = registerInbox({ text: INBOX_CASE.text, source: "manual" });
+        await prepare(
+          reg.id,
+          (request, emit) =>
+            runAgent(request, (e) => {
+              const s = progress(e);
+              if (s) console.log(s);
+              emit(e);
+            }),
+          extractNomineeWithAgent,
+        );
+        item = getInboxItem(reg.id);
+        source = "評価スクリプトで実行";
+      } finally {
+        if (prevFile === undefined) delete process.env.INBOX_FILE;
+        else process.env.INBOX_FILE = prevFile;
+        fs.rmSync(tmp, { force: true });
+      }
+    }
+    if (!item) {
+      checks.push({ name: "受信箱経由の指名あり依頼", pass: false, detail: fromInbox ? `受信箱に ${fromInbox} がない` : "保存結果がない（一度 APIありで流してください）" });
+    } else {
+      const res = item.result;
+      const exp = expected[INBOX_CASE.based_on] ?? { ids: [] };
+      const top3 = res?.candidates.map((c) => c.employee_id) ?? [];
+      const nominee = res?.candidates.find((c) => c.employee_id === INBOX_CASE.nominee);
+      const evIds = res?.candidates.flatMap((c) => c.evidence.map((e) => e.id)) ?? [];
+      const plainErrs = res ? userFacingTextProblems(res) : ["結果なし"];
+      checks.push({ name: "受信箱：準備済みになる", pass: item.status === "ready" && !!res, detail: item.status + (item.error ? `（${item.error}）` : "") });
+      checks.push({
+        name: "受信箱：依頼文から指名を読み取り、社員データで確かめる",
+        pass: item.nominee?.employee_id === INBOX_CASE.nominee,
+        detail: `読み取り「${item.nominee?.name ?? "なし"}」→ ${item.nominee?.employee_id ?? "指名なし"}${item.nominee?.note ? `（${item.nominee.note}）` : ""}`,
+      });
+      checks.push({
+        name: "受信箱：指名された本人が候補にいる",
+        pass: !!nominee && nominee.is_nominee && nominee.evidence_request_id === item.id,
+        detail: nominee ? `${nominee.rank}位・${nominee.confidence}${nominee.caveat ? `：${nominee.caveat}` : ""}` : `${INBOX_CASE.nominee} が候補にいない`,
+      });
+      checks.push({ name: "受信箱：想定候補が上位3人", pass: exp.ids.some((id) => top3.includes(id)), detail: `top3=${top3.join(",")} 想定=${exp.ids.join(",")}` });
+      checks.push({ name: "受信箱：根拠idが実在", pass: evIds.every((id) => actIds.has(id)), detail: `${evIds.length}件` });
+      checks.push({ name: "受信箱：使う人向けの文に内部の言葉がない", pass: plainErrs.length === 0, detail: plainErrs.join(" / ") || "なし" });
+      checks.push({ name: "受信箱：送信なし", pass: sendHits.length === 0, detail: sendHits.join(" / ") || "送信の処理・ルートなし" });
+      console.log(`  受信箱（${source}）：指名 ${item.nominee?.employee_id ?? "なし"}／top3 ${top3.map((id) => `${id} ${names.get(id)}`).join(" / ")}`);
+      inboxCaseOut = { source: source || "不明", item };
+    }
+  }
+
   let coverage: { covered: number; total: number; missing: string[] } | null = null;
   let writeback: Record<string, unknown> | null = null;
 
@@ -368,7 +453,26 @@ async function main() {
   const spent = totalUsd() - startTotal;
   console.log(`\n今回の評価で使った金額: $${spent.toFixed(3)}／累計: $${totalUsd().toFixed(3)}`);
 
-  const out = { at: new Date().toISOString(), version: "v0.2", mode: offline ? "offline" : noQuality ? "stage1" : "full", spent_usd: spent, pass_rate: rate, checks, rows, coverage, writeback, quality };
+  const out = {
+    at: new Date().toISOString(),
+    version: "v0.3",
+    mode: offline ? "offline" : fromInbox ? "from-inbox" : noQuality ? "stage1" : "full",
+    spent_usd: spent,
+    pass_rate: rate,
+    checks,
+    rows,
+    coverage,
+    writeback,
+    quality,
+    inbox_case: inboxCaseOut,
+  };
+  // 受信箱の実データで判定したら、その結果を最新の結果に足しておく（--offline でも判定できるように）
+  if (fromInbox && inboxCaseOut) {
+    const latestFile = path.join(process.cwd(), "docs", "eval_latest.json");
+    const latest = JSON.parse(fs.readFileSync(latestFile, "utf-8"));
+    fs.writeFileSync(latestFile, JSON.stringify({ ...latest, inbox_case: inboxCaseOut }, null, 2));
+    console.log("受信箱の結果を docs/eval_latest.json に足しました");
+  }
   if (offline && reportPath) {
     console.error("--offline では --report を使えません（保存結果を上書きしないため）");
     process.exitCode = 1;

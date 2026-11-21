@@ -254,6 +254,7 @@ export function mockApi(real: Api): Api {
       return {
         ...it,
         text: inboxTexts.get(id) ?? requests.find((r) => r.id === id)?.message ?? it.title,
+        nominee_name: fixture?.result.candidates.find((c) => c.is_nominee)?.name ?? null,
         result,
         events: result ? eventsFor(result, id, runUsd).map(([e]) => e) : [],
         run_usd: result ? runUsd : 0,

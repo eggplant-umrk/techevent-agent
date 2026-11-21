@@ -606,6 +606,139 @@ schedules = [
 ]
 dump("schedules.json", schedules)
 
+# ---------------------------------------------------------------------------
+# surveys — post-event questionnaires (v0.4). Anonymous: no names, companies or emails.
+# Own RNG and written last, so every earlier file stays byte-identical.
+# One row = one answer about one talk: {id, event_id, talk_speaker_id, rating, comment, want_next, role}
+# ---------------------------------------------------------------------------
+srng = random.Random(20261201)
+ROLES = ["バックエンドエンジニア", "フロントエンドエンジニア", "SRE", "QAエンジニア", "EM", "PdM", "MLエンジニア", "学生", None, None]
+NOISE_COMMENTS = ["", "", "", "特になし", "会場が少し寒かったです", "ピザがおいしかったです", "懇親会も楽しかったです",
+                  "受付がスムーズでした", "次回も参加したいです", "配信の音声が途中で聞きづらかった"]
+
+# (event_id, speaker_id, n_answers, rating weights 1..5, comments, want_next)
+# comments / want_next: list of (text, weight). "" in want_next = left blank.
+SURVEY_SPEC = [
+    ("ev019", "e003", 22, [0, 0, 1, 5, 16], [
+        ("ガードレールの具体例が多く、すぐ自分のチームで試せそうでした", 5),
+        ("本番で起きた失敗の話がリアルで一番参考になりました", 4),
+        ("続編があればぜひ聞きたいです", 5),
+        ("人の確認をどこに入れるかの判断基準が分かりやすかった", 3),
+        ("ツール呼び出しの制限のかけ方をもう少し詳しく知りたい", 2),
+    ], [
+        ("ガードレールの続編：本番で起きた失敗と直し方", 6),
+        ("エージェントの回帰テストをCIで回す方法", 4),
+        ("LLMの出力を自動で評価する仕組み", 2),
+        ("", 6),
+    ]),
+    ("ev019", "e001", 14, [0, 1, 4, 7, 2], [
+        ("アーキテクチャ選定の判断軸が整理されていて参考になった", 4),
+        ("少し抽象的で、具体的な構成図があるとよかった", 3),
+        ("社内でどう合意を取ったかの話が面白かった", 2),
+    ], [
+        ("実際の構成図とコストの内訳", 2),
+        ("", 8),
+    ]),
+    ("ev020", "e004", 19, [1, 5, 8, 4, 1], [
+        ("前提知識が多くて、途中からついていけませんでした", 6),
+        ("金融の用語が分からず難しかったです", 4),
+        ("整合性をどう守るかの考え方は参考になりました", 4),
+        ("入門編から聞きたいです", 2),
+        ("二重記帳の図が分かりやすかった", 1),
+    ], [
+        ("改ざんを検知できる監査ログの作り方", 5),
+        ("金融システムの整合性の入門編", 4),
+        ("", 6),
+    ]),
+    ("ev020", "e001", 13, [0, 0, 3, 7, 3], [
+        ("SaaSと金融の違いの整理が分かりやすかった", 4),
+        ("規制対応の話をもっと聞きたい", 2),
+    ], [
+        ("金融規制に合わせた設計の実例", 2),
+        ("", 7),
+    ]),
+    ("ev017", "e005", 15, [0, 0, 2, 9, 4], [
+        ("テスト自動化の効果を数字で出していて説得力があった", 5),
+        ("自分の会社でも費用対効果の説明に使えそうです", 3),
+        ("E2Eテストが不安定な問題にはどう向き合っているのか気になった", 3),
+    ], [
+        ("flakyなE2Eテストの原因の切り分け方", 5),
+        ("テストの費用対効果の測り方", 2),
+        ("", 5),
+    ]),
+    ("ev017", "e002", 12, [0, 1, 3, 6, 2], [
+        ("型を入れる順番の話が実践的でした", 3),
+        ("チームへの広め方が参考になった", 3),
+    ], [
+        ("型の導入をチームに広めた進め方", 2),
+        ("", 7),
+    ]),
+    ("ev018", "e002", 14, [0, 0, 3, 8, 3], [
+        ("振り返りの回し方をそのまま真似したいです", 4),
+        ("EMの悩みがリアルで共感しました", 3),
+        ("夜間対応の負担をどう減らしているのかも知りたかった", 3),
+    ], [
+        ("夜間のオンコール呼び出しを減らした話", 5),
+        ("振り返りの続編", 2),
+        ("", 5),
+    ]),
+    ("ev018", "e001", 10, [0, 1, 4, 4, 1], [
+        ("全体像はつかめた", 2),
+        ("もう少し具体的な事例がほしかった", 3),
+    ], [
+        ("", 8),
+    ]),
+    ("ev015", "e003", 18, [0, 0, 1, 5, 12], [
+        ("エージェント同士の役割分担の話が具体的で分かりやすかった", 5),
+        ("失敗談が多くて参考になった、続きが聞きたい", 4),
+        ("続編を希望します", 3),
+    ], [
+        ("マルチエージェントの続編：本番での失敗と対策", 5),
+        ("", 6),
+    ]),
+    ("ev015", "e001", 12, [0, 1, 3, 6, 2], [
+        ("設計の選択肢が整理されていた", 3),
+        ("時間が足りなさそうだった", 2),
+    ], [
+        ("", 8),
+    ]),
+    ("ev016", "e001", 24, [0, 2, 6, 12, 4], [
+        ("生成AIの導入の進め方が参考になった", 4),
+        ("スライドを共有してほしいです", 3),
+    ], [
+        ("生成AIの社内導入の失敗談", 2),
+        ("", 12),
+    ]),
+]
+
+
+def weighted(pairs):
+    texts = [t for t, _ in pairs]
+    weights = [w for _, w in pairs]
+    return srng.choices(texts, weights=weights, k=1)[0]
+
+
+surveys = []
+for ev_id, speaker, n, rw, comments, wants in SURVEY_SPEC:
+    for _ in range(n):
+        rating = srng.choices([1, 2, 3, 4, 5], weights=rw, k=1)[0]
+        # about a third of free comments are noise or blank
+        comment = srng.choice(NOISE_COMMENTS) if srng.random() < 0.33 else weighted(comments)
+        want = weighted(wants)
+        role = srng.choice(ROLES)
+        surveys.append({
+            "event_id": ev_id,
+            "talk_speaker_id": speaker,
+            "rating": rating,
+            "comment": comment,
+            "want_next": want or None,
+            "role": role,
+        })
+srng.shuffle(surveys)
+surveys.sort(key=lambda s: s["event_id"])  # answers of one event stay together; order inside is shuffled
+surveys = [{"id": f"s{i:04d}", **s} for i, s in enumerate(surveys, 1)]
+dump("surveys.json", surveys)
+
 # answer key for README (printed, not written to JSON)
 print("GEMS")
 for aid, a, th in gem_answer:

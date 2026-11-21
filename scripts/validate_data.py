@@ -91,6 +91,23 @@ for c in data.get("cards.json", []):
         check(rid in req_by_id and req_by_id[rid].get("nominated_employee_id") == c["employee_id"], f"{c['card_id']} bad request id {rid}")
     check(bool(c["evidence_activity_ids"] or c["published_ids"] or c.get("evidence_request_ids")), f"{c['card_id']} has no evidence")
 
+# surveys (v0.4): answers about one talk at a past event, anonymous
+ev_by_id = {v["id"]: v for v in evs}
+svs = data.get("surveys.json", [])
+check(len({s["id"] for s in svs}) == len(svs), "duplicate ids in surveys")
+per_event = Counter(s["event_id"] for s in svs)
+check(5 <= len(per_event) <= 6, f"surveys cover {len(per_event)} events (want 5-6)")
+for ev_id, n in per_event.items():
+    check(20 <= n <= 40, f"surveys {ev_id} has {n} answers (want 20-40)")
+for s in svs:
+    ev = ev_by_id.get(s["event_id"])
+    check(ev is not None, f"survey {s['id']} unknown event {s['event_id']}")
+    check(ev is not None and s["talk_speaker_id"] in ev["speaker_ids"], f"survey {s['id']} speaker {s['talk_speaker_id']} did not talk at {s['event_id']}")
+    check(s["rating"] in (1, 2, 3, 4, 5), f"survey {s['id']} rating {s['rating']}")
+    check(set(s) == {"id", "event_id", "talk_speaker_id", "rating", "comment", "want_next", "role"}, f"survey {s['id']} fields {sorted(s)}")
+    text = f"{s['comment']} {s['want_next'] or ''}"
+    check("@" not in text and not any(e["name"] in text or e["name"].split()[0] in text for e in emps), f"survey {s['id']} has a name or email")
+
 print(f"employees={len(emps)} activities={len(acts)} {dict(types)} events={len(evs)} requests={len(reqs)} rules={len(rules)}")
 print(f"top5 talk share={top5_share:.0%}  attendance rate range="
       f"{min(v['attendance_rate'] for v in evs)}-{max(v['attendance_rate'] for v in evs)}")

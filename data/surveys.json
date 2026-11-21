@@ -1,0 +1,1559 @@
+[
+  {
+    "id": "s0001",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "時間が足りなさそうだった",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0002",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "設計の選択肢が整理されていた",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0003",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "配信の音声が途中で聞きづらかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "学生"
+  },
+  {
+    "id": "s0004",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 2,
+    "comment": "時間が足りなさそうだった",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0005",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "失敗談が多くて参考になった、続きが聞きたい",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": null
+  },
+  {
+    "id": "s0006",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "時間が足りなさそうだった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0007",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "次回も参加したいです",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0008",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "エージェント同士の役割分担の話が具体的で分かりやすかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "学生"
+  },
+  {
+    "id": "s0009",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "設計の選択肢が整理されていた",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0010",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "EM"
+  },
+  {
+    "id": "s0011",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "エージェント同士の役割分担の話が具体的で分かりやすかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0012",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "時間が足りなさそうだった",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0013",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "エージェント同士の役割分担の話が具体的で分かりやすかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0014",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "エージェント同士の役割分担の話が具体的で分かりやすかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": null
+  },
+  {
+    "id": "s0015",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "設計の選択肢が整理されていた",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0016",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "会場が少し寒かったです",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "SRE"
+  },
+  {
+    "id": "s0017",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 4,
+    "comment": "続編を希望します",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0018",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0019",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "設計の選択肢が整理されていた",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0020",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "設計の選択肢が整理されていた",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0021",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 4,
+    "comment": "続編を希望します",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0022",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "受付がスムーズでした",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0023",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 4,
+    "comment": "配信の音声が途中で聞きづらかった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0024",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 3,
+    "comment": "失敗談が多くて参考になった、続きが聞きたい",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": null
+  },
+  {
+    "id": "s0025",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "特になし",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0026",
+    "event_id": "ev015",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "懇親会も楽しかったです",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0027",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "エージェント同士の役割分担の話が具体的で分かりやすかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0028",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "エージェント同士の役割分担の話が具体的で分かりやすかった",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0029",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "受付がスムーズでした",
+    "want_next": "マルチエージェントの続編：本番での失敗と対策",
+    "role": null
+  },
+  {
+    "id": "s0030",
+    "event_id": "ev015",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "会場が少し寒かったです",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0031",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0032",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0033",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "スライドを共有してほしいです",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0034",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "スライドを共有してほしいです",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0035",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 2,
+    "comment": "スライドを共有してほしいです",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0036",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": "生成AIの社内導入の失敗談",
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0037",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "配信の音声が途中で聞きづらかった",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0038",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0039",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": "生成AIの社内導入の失敗談",
+    "role": null
+  },
+  {
+    "id": "s0040",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "スライドを共有してほしいです",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0041",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "特になし",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0042",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": "生成AIの社内導入の失敗談",
+    "role": "SRE"
+  },
+  {
+    "id": "s0043",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0044",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "スライドを共有してほしいです",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0045",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0046",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "配信の音声が途中で聞きづらかった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0047",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": "生成AIの社内導入の失敗談",
+    "role": "学生"
+  },
+  {
+    "id": "s0048",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0049",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 2,
+    "comment": "スライドを共有してほしいです",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0050",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0051",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0052",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0053",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "生成AIの導入の進め方が参考になった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0054",
+    "event_id": "ev016",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "懇親会も楽しかったです",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0055",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 3,
+    "comment": "型を入れる順番の話が実践的でした",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0056",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "懇親会も楽しかったです",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0057",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "チームへの広め方が参考になった",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0058",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "E2Eテストが不安定な問題にはどう向き合っているのか気になった",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": null
+  },
+  {
+    "id": "s0059",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 5,
+    "comment": "型を入れる順番の話が実践的でした",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0060",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 5,
+    "comment": "テスト自動化の効果を数字で出していて説得力があった",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": "PdM"
+  },
+  {
+    "id": "s0061",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "チームへの広め方が参考になった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0062",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "型を入れる順番の話が実践的でした",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0063",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "テスト自動化の効果を数字で出していて説得力があった",
+    "want_next": "テストの費用対効果の測り方",
+    "role": null
+  },
+  {
+    "id": "s0064",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0065",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 5,
+    "comment": "テスト自動化の効果を数字で出していて説得力があった",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0066",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "テスト自動化の効果を数字で出していて説得力があった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0067",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0068",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "テスト自動化の効果を数字で出していて説得力があった",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": "EM"
+  },
+  {
+    "id": "s0069",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "テスト自動化の効果を数字で出していて説得力があった",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0070",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "受付がスムーズでした",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0071",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "E2Eテストが不安定な問題にはどう向き合っているのか気になった",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0072",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "会場が少し寒かったです",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": null
+  },
+  {
+    "id": "s0073",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "自分の会社でも費用対効果の説明に使えそうです",
+    "want_next": "flakyなE2Eテストの原因の切り分け方",
+    "role": null
+  },
+  {
+    "id": "s0074",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "受付がスムーズでした",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0075",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 5,
+    "comment": "型を入れる順番の話が実践的でした",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0076",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 3,
+    "comment": "チームへの広め方が参考になった",
+    "want_next": "型の導入をチームに広めた進め方",
+    "role": null
+  },
+  {
+    "id": "s0077",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0078",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "",
+    "want_next": "型の導入をチームに広めた進め方",
+    "role": "PdM"
+  },
+  {
+    "id": "s0079",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "チームへの広め方が参考になった",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0080",
+    "event_id": "ev017",
+    "talk_speaker_id": "e005",
+    "rating": 4,
+    "comment": "自分の会社でも費用対効果の説明に使えそうです",
+    "want_next": "テストの費用対効果の測り方",
+    "role": "学生"
+  },
+  {
+    "id": "s0081",
+    "event_id": "ev017",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "型を入れる順番の話が実践的でした",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0082",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "全体像はつかめた",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0083",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0084",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0085",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 5,
+    "comment": "夜間対応の負担をどう減らしているのかも知りたかった",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0086",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0087",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0088",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "夜間対応の負担をどう減らしているのかも知りたかった",
+    "want_next": "振り返りの続編",
+    "role": "SRE"
+  },
+  {
+    "id": "s0089",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 5,
+    "comment": "次回も参加したいです",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": null
+  },
+  {
+    "id": "s0090",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0091",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0092",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 2,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0093",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0094",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 3,
+    "comment": "特になし",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0095",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 3,
+    "comment": "",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0096",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "振り返りの回し方をそのまま真似したいです",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0097",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 5,
+    "comment": "夜間対応の負担をどう減らしているのかも知りたかった",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0098",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "全体像はつかめた",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0099",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 5,
+    "comment": "振り返りの回し方をそのまま真似したいです",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0100",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "全体像はつかめた",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0101",
+    "event_id": "ev018",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "もう少し具体的な事例がほしかった",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0102",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "EMの悩みがリアルで共感しました",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0103",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": null
+  },
+  {
+    "id": "s0104",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "懇親会も楽しかったです",
+    "want_next": "夜間のオンコール呼び出しを減らした話",
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0105",
+    "event_id": "ev018",
+    "talk_speaker_id": "e002",
+    "rating": 4,
+    "comment": "EMの悩みがリアルで共感しました",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0106",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "アーキテクチャ選定の判断軸が整理されていて参考になった",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0107",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした",
+    "want_next": "LLMの出力を自動で評価する仕組み",
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0108",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "続編があればぜひ聞きたいです",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "EM"
+  },
+  {
+    "id": "s0109",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "アーキテクチャ選定の判断軸が整理されていて参考になった",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0110",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "ツール呼び出しの制限のかけ方をもう少し詳しく知りたい",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": null
+  },
+  {
+    "id": "s0111",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "少し抽象的で、具体的な構成図があるとよかった",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0112",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "アーキテクチャ選定の判断軸が整理されていて参考になった",
+    "want_next": "実際の構成図とコストの内訳",
+    "role": "EM"
+  },
+  {
+    "id": "s0113",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "続編があればぜひ聞きたいです",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0114",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "受付がスムーズでした",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0115",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0116",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "人の確認をどこに入れるかの判断基準が分かりやすかった",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": null
+  },
+  {
+    "id": "s0117",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "学生"
+  },
+  {
+    "id": "s0118",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0119",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "懇親会も楽しかったです",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0120",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 4,
+    "comment": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0121",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "続編があればぜひ聞きたいです",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "EM"
+  },
+  {
+    "id": "s0122",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "社内でどう合意を取ったかの話が面白かった",
+    "want_next": "実際の構成図とコストの内訳",
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0123",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0124",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0125",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "社内でどう合意を取ったかの話が面白かった",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0126",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 4,
+    "comment": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0127",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "本番で起きた失敗の話がリアルで一番参考になりました",
+    "want_next": "エージェントの回帰テストをCIで回す方法",
+    "role": null
+  },
+  {
+    "id": "s0128",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "少し抽象的で、具体的な構成図があるとよかった",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0129",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "続編があればぜひ聞きたいです",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0130",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "続編があればぜひ聞きたいです",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "SRE"
+  },
+  {
+    "id": "s0131",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0132",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 2,
+    "comment": "少し抽象的で、具体的な構成図があるとよかった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0133",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "本番で起きた失敗の話がリアルで一番参考になりました",
+    "want_next": "エージェントの回帰テストをCIで回す方法",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0134",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "ツール呼び出しの制限のかけ方をもう少し詳しく知りたい",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0135",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0136",
+    "event_id": "ev019",
+    "talk_speaker_id": "e003",
+    "rating": 5,
+    "comment": "ガードレールの具体例が多く、すぐ自分のチームで試せそうでした",
+    "want_next": "ガードレールの続編：本番で起きた失敗と直し方",
+    "role": null
+  },
+  {
+    "id": "s0137",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0138",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "社内でどう合意を取ったかの話が面白かった",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0139",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "少し抽象的で、具体的な構成図があるとよかった",
+    "want_next": null,
+    "role": "EM"
+  },
+  {
+    "id": "s0140",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "少し抽象的で、具体的な構成図があるとよかった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0141",
+    "event_id": "ev019",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "懇親会も楽しかったです",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0142",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0143",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0144",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "ピザがおいしかったです",
+    "want_next": "金融システムの整合性の入門編",
+    "role": "PdM"
+  },
+  {
+    "id": "s0145",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 4,
+    "comment": "前提知識が多くて、途中からついていけませんでした",
+    "want_next": "改ざんを検知できる監査ログの作り方",
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0146",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0147",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": "金融規制に合わせた設計の実例",
+    "role": "学生"
+  },
+  {
+    "id": "s0148",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 4,
+    "comment": "特になし",
+    "want_next": "改ざんを検知できる監査ログの作り方",
+    "role": "EM"
+  },
+  {
+    "id": "s0149",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 3,
+    "comment": "整合性をどう守るかの考え方は参考になりました",
+    "want_next": "金融システムの整合性の入門編",
+    "role": null
+  },
+  {
+    "id": "s0150",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "懇親会も楽しかったです",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0151",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "前提知識が多くて、途中からついていけませんでした",
+    "want_next": "改ざんを検知できる監査ログの作り方",
+    "role": "PdM"
+  },
+  {
+    "id": "s0152",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0153",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 3,
+    "comment": "金融の用語が分からず難しかったです",
+    "want_next": "改ざんを検知できる監査ログの作り方",
+    "role": "SRE"
+  },
+  {
+    "id": "s0154",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": "金融規制に合わせた設計の実例",
+    "role": null
+  },
+  {
+    "id": "s0155",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "入門編から聞きたいです",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0156",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 3,
+    "comment": "整合性をどう守るかの考え方は参考になりました",
+    "want_next": null,
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0157",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": "金融規制に合わせた設計の実例",
+    "role": null
+  },
+  {
+    "id": "s0158",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0159",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 4,
+    "comment": "前提知識が多くて、途中からついていけませんでした",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0160",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 3,
+    "comment": "金融の用語が分からず難しかったです",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0161",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "規制対応の話をもっと聞きたい",
+    "want_next": null,
+    "role": "フロントエンドエンジニア"
+  },
+  {
+    "id": "s0162",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0163",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 4,
+    "comment": "整合性をどう守るかの考え方は参考になりました",
+    "want_next": null,
+    "role": "バックエンドエンジニア"
+  },
+  {
+    "id": "s0164",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 5,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": null
+  },
+  {
+    "id": "s0165",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "整合性をどう守るかの考え方は参考になりました",
+    "want_next": "金融システムの整合性の入門編",
+    "role": "SRE"
+  },
+  {
+    "id": "s0166",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "前提知識が多くて、途中からついていけませんでした",
+    "want_next": "金融システムの整合性の入門編",
+    "role": "MLエンジニア"
+  },
+  {
+    "id": "s0167",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 2,
+    "comment": "前提知識が多くて、途中からついていけませんでした",
+    "want_next": "改ざんを検知できる監査ログの作り方",
+    "role": null
+  },
+  {
+    "id": "s0168",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 3,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": "SRE"
+  },
+  {
+    "id": "s0169",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 4,
+    "comment": "配信の音声が途中で聞きづらかった",
+    "want_next": null,
+    "role": "学生"
+  },
+  {
+    "id": "s0170",
+    "event_id": "ev020",
+    "talk_speaker_id": "e001",
+    "rating": 4,
+    "comment": "SaaSと金融の違いの整理が分かりやすかった",
+    "want_next": null,
+    "role": "QAエンジニア"
+  },
+  {
+    "id": "s0171",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 3,
+    "comment": "整合性をどう守るかの考え方は参考になりました",
+    "want_next": "改ざんを検知できる監査ログの作り方",
+    "role": "SRE"
+  },
+  {
+    "id": "s0172",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 3,
+    "comment": "",
+    "want_next": null,
+    "role": "PdM"
+  },
+  {
+    "id": "s0173",
+    "event_id": "ev020",
+    "talk_speaker_id": "e004",
+    "rating": 4,
+    "comment": "前提知識が多くて、途中からついていけませんでした",
+    "want_next": null,
+    "role": null
+  }
+]

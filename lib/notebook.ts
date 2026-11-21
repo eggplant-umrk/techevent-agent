@@ -152,6 +152,8 @@ export function pendingEmployees(): string[] {
 export async function updateNotebook(
   targets: string[] | "pending",
   emit: (e: NotebookEvent) => void,
+  /** テスト用：API の代わりに決まった応答を返す client を渡せる（scripts/test_notebook_loop.ts） */
+  opts: { client?: Pick<Anthropic, "messages"> } = {},
 ): Promise<{ run_id: string; run_usd: number }> {
   const runId = randomUUID();
   const { loop: model } = chooseModels();
@@ -187,7 +189,7 @@ export async function updateNotebook(
     emit({ type: "done", run_usd: 0, total_usd: totalUsd(), created: 0, updated: 0, kept: 0 });
     return { run_id: runId, run_usd: 0 };
   }
-  const client = estimate > 0 ? getClient() : null;
+  const client = estimate > 0 ? (opts.client ?? getClient()) : null;
   const system: Anthropic.TextBlockParam[] = [{ type: "text", text: systemText, cache_control: { type: "ephemeral" } }];
   let created = 0;
   let updated = 0;
@@ -217,6 +219,8 @@ export async function updateNotebook(
     const messages: Anthropic.MessageParam[] = [{ role: "user", content: msg.text }];
     let wroteAny = false;
     let finished = false;
+    /** 一度でも差し戻したか。差し戻しのあと直した提出がないまま終わったら、読んだことにしない */
+    let rejected = false;
     if (!prep.send.length) {
       emit({ type: "no_card", employee_id: employeeId, note: "新しく渡す活動がありません（API は呼んでいません）" });
       finished = true;
@@ -241,8 +245,18 @@ export async function updateNotebook(
         emit({ type: "error", message: `${emp.name}：モデルが処理を断りました` });
         break;
       }
+      // 出力が途中で切れたら、ツールの呼び出しがなくても「終わり」にしない（読んでいない活動を読んだことにしない）
+      if (res.stop_reason === "max_tokens") {
+        emit({ type: "error", message: `${emp.name}：出力が途中で切れました。この人の新しい活動は次回もう一度読みます` });
+        break;
+      }
       const uses = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
       if (uses.length === 0) {
+        if (rejected) {
+          // 差し戻したのに直した提出がないまま終わった：取りこぼしがあるかもしれないので、読んだことにしない
+          emit({ type: "error", message: `${emp.name}：差し戻したカードが直されないまま終わりました。この人の新しい活動は次回もう一度読みます` });
+          break;
+        }
         const text = res.content
           .filter((b): b is Anthropic.TextBlock => b.type === "text")
           .map((b) => b.text)
@@ -250,10 +264,6 @@ export async function updateNotebook(
           .trim();
         if (!wroteAny) emit({ type: "no_card", employee_id: employeeId, note: text.slice(0, 200) || "カードなし" });
         finished = true;
-        break;
-      }
-      if (res.stop_reason === "max_tokens") {
-        emit({ type: "error", message: `${emp.name}：出力が途中で切れました` });
         break;
       }
       messages.push({ role: "assistant", content: res.content });
@@ -300,7 +310,8 @@ export async function updateNotebook(
         emit({ type: "card", action: out.action!, card_id: c.card_id, employee_id: employeeId, theme: c.themes[0], status, message });
         results.push({ type: "tool_result", tool_use_id: u.id, content: `${out.action}: ${out.card!.card_id}` });
       }
-      // Only continue the conversation if something needs fixing; otherwise this employee is done.
+      // 直すものがなければこの人は終わり。差し戻しがあれば会話を続けて直させる（直るまでは終わりにしない）
+      if (anyError) rejected = true;
       if (!anyError) {
         finished = true;
         break;

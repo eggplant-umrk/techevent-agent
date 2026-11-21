@@ -14,6 +14,8 @@
     "test:pitch": "tsx scripts/test_pitch_later.ts",
     "test:release": "tsx scripts/test_release_notes.ts",
     "test:runtime": "tsx scripts/test_runtime.ts",
+    "test:loop": "tsx scripts/test_notebook_loop.ts",
+    "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",
     "test:sources": "tsx scripts/test_more_sources.ts",
     "slack:sources": "tsx scripts/slack-bot.ts --read-sources",

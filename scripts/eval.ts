@@ -215,6 +215,14 @@ export function checkAllowedPost(src: string, core: string): string[] {
     if (!obj) problems.push(`${name} が決まった文の一覧（as const）になっていない`);
     else if (/\$\{|`/.test(obj)) problems.push(`${name} に値を埋め込んでいる`);
   }
+  // スレッドに返す決まった文：受付・失敗に加えて、依頼の文がない・同じ依頼の連投も決まった文で返す（中身を書かない）
+  const tt = core.match(/export const THREAD_TEXT = \{([\s\S]*?)\} as const;/)?.[1] ?? "";
+  for (const [kind, text] of [["no_request", "依頼の文が見つかりませんでした"], ["duplicate", "同じ依頼を受け付けています"]] as const)
+    if (!new RegExp(String.raw`\b${kind}:\s*"${text}"`).test(tt)) problems.push(`THREAD_TEXT に決まった文 ${kind}（「${text}」）がない`);
+  // 受け取りの関所：投稿ごとにワークスペースを見る・依頼の文がない投稿を止める
+  if (!/cfg\.allowedTeam && e\.team !== cfg\.allowedTeam/.test(core)) problems.push("投稿ごとにワークスペース（SLACK_ALLOWED_TEAM_ID）を見ていない");
+  if (!/hasRequestText\(slackPlainText\(text\)\)/.test(core)) problems.push("Slack の依頼に入口のチェック（hasRequestText）を通していない");
+  if (!/makeMessageHandler\(slack, cfg\)/.test(src)) problems.push("ボットが受け取りの関所（makeMessageHandler）を通していない");
   const nt = core.match(/export function notifyText\(kind: NotifyKind, link: string \| null\): string \{([\s\S]*?)\n\}/)?.[1];
   if (!nt) problems.push("notifyText(kind, link) がない");
   else if (/\$\{(?!NOTIFY_TEXT\[kind\]\}|link\}|label\})/.test(nt)) problems.push("notifyText が決まった文とリンク以外を埋め込んでいる");

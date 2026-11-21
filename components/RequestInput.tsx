@@ -2,7 +2,7 @@
 
 import type { BoardDetail, IntakeField } from "@/app/_client/types";
 import { md } from "./labels";
-import { StageTag, sourceLabel } from "./Inbox";
+import { inboxTitle, StageTag, sourceLabel } from "./Inbox";
 import { Spinner, Tag } from "./ui";
 
 /** inbox：受信箱から開いた依頼／custom：手で追加（受信箱に入る）。サンプルの依頼も受信箱に並ぶ（入口は受信箱だけ） */
@@ -89,7 +89,7 @@ export function RequestInput({
           <p className="meta inbox-marks">
             {st && <StageTag stage={st.stage} />}
             <span>
-              受信箱・{sourceLabel(inbox.source)}・{when(inbox.received_at)}
+              受信箱{inbox.source !== "sample" ? `・${sourceLabel(inbox.source)}` : ""}・{when(inbox.received_at)}
               {inbox.event_date ? `・開催 ${md(inbox.event_date)}` : ""}
             </span>
             {inbox.permalink && (
@@ -98,7 +98,7 @@ export function RequestInput({
               </a>
             )}
           </p>
-          <h3 className="req-title">{inbox.title}</h3>
+          <h3 className="req-title">{st ? inboxTitle({ title: inbox.title, state: st }) : inbox.title}</h3>
           {st && st.accepted_by.length > 0 && <p className="small strong">{st.accepted_by.map((p) => `${p.name}さん`).join("・")}が承諾</p>}
           {st && st.stage === "outreach" && <p className="small muted-strong">{st.outreach_to.map((p) => `${p.name}さん`).join("・")}に声かけ中（返事待ち）</p>}
           {st && st.stage === "declined" && <p className="small muted-strong">{st.declined_by.map((p) => `${p.name}さん`).join("・")}が辞退。次の人を選べます</p>}

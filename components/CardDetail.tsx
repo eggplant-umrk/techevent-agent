@@ -204,10 +204,10 @@ export function CardDetail({
                   </span>
                   <span className="btn-row">
                     <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(() => onResolve(t, true))}>
-                      採用
+                      話せるテーマ案に加える
                     </button>
                     <button type="button" className="btn btn-sm" disabled={busy} onClick={() => run(() => onResolve(t, false))}>
-                      却下
+                      加えない
                     </button>
                   </span>
                 </li>

@@ -12,6 +12,25 @@ const STATUS_TEXT: Record<string, string> = { open: "募集中", unknown: "締�
  * カード詳細の中の「出し先を探す」。ネタが先で、出し先（社外イベント）を探す。
  * 作業ログ → 出し先（最大3件）・ブログ案 → 選んだ出し先で本人への声かけ文の下書き（送らない）
  */
+/** 出し先の注意点：2つまで見せて、残りは「ほかN件を見る」（合う理由より目立たないように） */
+function VenueCautions({ items }: { items: string[] }) {
+  const [all, setAll] = useState(false);
+  return (
+    <div>
+      <ul className="cautions" aria-label="注意点">
+        {(all ? items : items.slice(0, 2)).map((c) => (
+          <li key={c}>{c}</li>
+        ))}
+      </ul>
+      {items.length > 2 && (
+        <button type="button" className="link small" aria-expanded={all} onClick={() => setAll((x) => !x)}>
+          {all ? "たたむ" : `注意点をほか${items.length - 2}件見る`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function VenueFinder({
   cardId,
   employeeName,
@@ -111,13 +130,7 @@ export function VenueFinder({
                   <p className="strong small">{v.theme}</p>
                   <p className="small">{v.reason}</p>
                   {v.caveat && <p className="small warn-text">引っかかる点：{v.caveat}</p>}
-                  {v.cautions.length > 0 && (
-                    <ul className="cautions" aria-label="注意点">
-                      {v.cautions.map((c) => (
-                        <li key={c}>{c}</li>
-                      ))}
-                    </ul>
-                  )}
+                  {v.cautions.length > 0 && <VenueCautions items={v.cautions} />}
                   {v.evidence.length > 0 && (
                     <p className="meta">
                       根拠：{v.evidence.map((e) => `${ACTIVITY_LABEL[e.type] ?? e.type}「${e.title}」`).join("、")}

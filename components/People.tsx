@@ -62,6 +62,7 @@ export function People({
   onUnassigned: () => void;
 }) {
   const [q, setQ] = useState("");
+  const [logOpen, setLogOpen] = useState(false);
   const [filters, setFilters] = useState<Set<Filter>>(new Set());
   const [unit, setUnit] = useState("");
 
@@ -134,12 +135,18 @@ export function People({
       {(log.length > 0 || updating) && (
         <div className="nb-section" aria-live="polite">
           <ol className="log-lines">
-            {log.map((l, i) => (
+            {/* 終わったら最後の1行（結果）にたたむ。途中の行は「詳しく見る」で開く */}
+            {(updating || logOpen ? log : log.slice(-1)).map((l, i) => (
               <li key={i} className={`log-line log-${l.tone}`}>
                 {l.text}
               </li>
             ))}
           </ol>
+          {!updating && log.length > 1 && (
+            <button type="button" className="link small" aria-expanded={logOpen} onClick={() => setLogOpen((x) => !x)}>
+              {logOpen ? "たたむ" : `詳しく見る（${log.length}行）`}
+            </button>
+          )}
           {updating && <Spinner label="活動を読んでいます…" />}
         </div>
       )}

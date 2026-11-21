@@ -392,3 +392,6 @@ textarea.input { resize: vertical; }
 @media (max-width: 860px) {
   .side { max-width: none; flex-basis: 100%; position: static; }
 }
+
+/* 声かけ文・主催者への返事の入力欄：中身に合わせて高さを伸ばす（入れ子のスクロールでページが進まないように） */
+.draft-text, .reply-text { field-sizing: content; min-height: 6em; max-height: none; }

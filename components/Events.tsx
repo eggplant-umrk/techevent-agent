@@ -227,21 +227,39 @@ function NegList({ title, items }: { title: string; items: OverviewNegative[] })
         <p className="meta">ありませんでした。</p>
       ) : (
         <ul className="neg-list">
-          {items.map((i, k) => (
-            <li key={k}>
-              <span>{i.text}</span>
-              <span className="meta">{i.count > 1 ? `　${i.count}件` : "　1件"}</span>
-              {i.attack && (
-                <>
-                  {" "}
-                  <Tag tone="warn">人を攻撃する言葉（カードには残しません）</Tag>
-                </>
-              )}
-            </li>
-          ))}
+          {items.map((i, k) =>
+            i.attack ? (
+              <AttackItem key={k} text={i.text} count={i.count} />
+            ) : (
+              <li key={k}>
+                <span>{i.text}</span>
+                <span className="meta">{i.count > 1 ? `　${i.count}件` : "　1件"}</span>
+              </li>
+            ),
+          )}
         </ul>
       )}
     </div>
+  );
+}
+
+/** 人を攻撃する言葉は、はじめは隠しておく（押したときだけ原文を出す。カードには残さない） */
+function AttackItem({ text, count }: { text: string; count: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li>
+      {open ? <span>{text}</span> : <span className="meta">（人を攻撃する言葉のため隠しています）</span>}
+      <span className="meta">{`　${count}件`}</span>{" "}
+      <button type="button" className="link" aria-expanded={open} onClick={() => setOpen((x) => !x)}>
+        {open ? "隠す" : "原文を見る"}
+      </button>
+      {open && (
+        <>
+          {" "}
+          <Tag tone="warn">人を攻撃する言葉（カードには残しません）</Tag>
+        </>
+      )}
+    </li>
   );
 }
 

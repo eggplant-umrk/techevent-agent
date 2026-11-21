@@ -29,8 +29,15 @@ function stageLine(it: BoardListItem): string {
   if (s.stage === "new") return "開いて「ネタ帳から候補を出す」を押すと、候補を準備します";
   if (s.stage === "preparing") return "Agentがネタ帳を探しています";
   if (s.stage === "error") return it.error ?? "候補を出せませんでした";
-  return it.no_fit ? "合う候補は見つかりませんでした（理由を確認できます）" : `候補：${it.candidate_names.join("・")}`;
+  if (it.no_fit) return "合う候補は見つかりませんでした（理由を確認できます）";
+  // 候補は2人まで出して「ほかN人」（名前が途中で切れないように）
+  const shown = it.candidate_names.slice(0, 2).join("・");
+  const more = it.candidate_names.length - 2;
+  return `候補：${shown}${more > 0 ? `　ほか${more}人` : ""}`;
 }
+
+/** 一覧の見出し：準備中でイベント名がまだ読めていないときは、会話の1行目ではなく「新しい依頼（読み取り中）」 */
+export const inboxTitle = (it: Pick<BoardListItem, "title" | "state">) => (it.state.stage === "preparing" ? "新しい依頼（読み取り中）" : it.title);
 
 /** 受信箱：届いた依頼（Slack・手で追加・サンプル）と、今の状態が一目で分かる。押すとその依頼の画面が開く */
 export function Inbox({
@@ -74,16 +81,23 @@ export function Inbox({
         <ul className="inbox-list">
           {items.map((it) => (
             <li key={it.id}>
-              <button type="button" className="inbox-item" aria-current={it.id === openId ? "true" : undefined} onClick={() => onOpen(it.id)}>
+              <button
+                type="button"
+                className="inbox-item"
+                aria-current={it.id === openId ? "true" : undefined}
+                aria-label={`${inboxTitle(it)}（${STAGE_LABEL[it.state.stage]}）`}
+                onClick={() => onOpen(it.id)}
+              >
                 <span className="inbox-marks">
                   {it.is_new && <Tag tone="accent">新しい</Tag>}
                   <StageTag stage={it.state.stage} />
                   <span className="meta">
-                    {sourceLabel(it.source)}・{when(it.received_at)}
+                    {it.source !== "sample" && `${sourceLabel(it.source)}・`}
+                    {when(it.received_at)}
                     {it.event_date ? `・開催 ${md(it.event_date)}` : ""}
                   </span>
                 </span>
-                <span className="strong inbox-title">{it.title}</span>
+                <span className="strong inbox-title">{inboxTitle(it)}</span>
                 <span className={`meta${it.state.stage === "accepted" ? " strong" : ""}`}>{stageLine(it)}</span>
               </button>
             </li>

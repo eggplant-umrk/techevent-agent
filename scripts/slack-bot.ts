@@ -7,7 +7,7 @@
 // トークンは .env からこのプロセスにだけ読み込む。値は表示・ログ出力しない。
 import { App, LogLevel, webApi } from "@slack/bolt";
 import { readSlackSources, reportLines, sourceChannels } from "./slack/sources";
-import { type BotConfig, handleRequest, makeSeen, type MessageEventLike, type NotifyKind, notifyText, presentInboxUrlProblem, shouldHandle, type SlackLike, THREAD_TEXT, type ThreadKind } from "./slack/core";
+import { type BotConfig, makeMessageHandler, type MessageEventLike, type NotifyKind, notifyText, presentInboxUrlProblem, type SlackLike, THREAD_TEXT, type ThreadKind } from "./slack/core";
 
 try {
   process.loadEnvFile(".env");
@@ -84,6 +84,7 @@ async function main() {
   const cfg: BotConfig = {
     channel: requestChannel,
     botUserId: String(auth.user_id),
+    allowedTeam,
     inboxBaseUrl,
     pollIntervalMs: 5_000,
     pollTimeoutMs: 5 * 60_000,
@@ -106,18 +107,14 @@ async function main() {
     notifyPrivate,
     getPermalink: async (args) => (await app.client.chat.getPermalink(args)).permalink ?? null,
   };
-  const firstTime = makeSeen();
+  // 受け取りの関所（ワークスペース・ファイルつき・依頼の文がない・同じ文の連投）は scripts/slack/core.ts の makeMessageHandler
+  const onMessage = makeMessageHandler(slack, cfg);
 
-  app.event("message", async ({ event }) => {
-    const e = event as MessageEventLike;
-    const verdict = shouldHandle(e, cfg);
-    if (!verdict.ok) return;
-    if (!firstTime(`${e.channel}:${e.ts}`)) return; // Socket Mode の再送
-    log(`依頼を受け付けました ts=${e.ts}`);
-    // 待ち時間が長いので、イベントの受け取りとは切り離して進める
-    handleRequest({ channel: e.channel!, ts: e.ts!, user: e.user!, text: e.text! }, slack, cfg).catch((err) =>
-      log(`処理に失敗しました ts=${e.ts}（${err instanceof Error ? err.message : "不明"}）`),
-    );
+  app.event("message", async ({ event, body }) => {
+    const raw = event as MessageEventLike;
+    // ワークスペースは投稿ごとに見る。イベントに team がなければ、届いたイベント全体の team_id を使う
+    const e: MessageEventLike = { ...raw, team: raw.team ?? (body as { team_id?: string }).team_id };
+    await onMessage(e).catch((err) => log(`受け取りに失敗しました ts=${e.ts}（${err instanceof Error ? err.message : "不明"}）`));
   });
 
   await app.start();

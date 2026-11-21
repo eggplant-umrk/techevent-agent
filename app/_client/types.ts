@@ -9,6 +9,17 @@ export type { OutreachDraft } from "@/lib/heavy";
 export type { NotebookEvent } from "@/lib/notebook";
 export type { ModelChoice } from "@/lib/usage";
 export type { InboxDetail, InboxListItem, InboxStatus } from "@/lib/inbox";
+export type { VenueCard, VenueEvent, VenueResult } from "@/lib/venues";
+
+/** カード → 出し先：声かけ文の下書きを頼むときの本文（イベントの情報はサーバーがデータから引き直す） */
+export interface VenueDraftBody {
+  run_id: string;
+  card_id: string;
+  event_id: string;
+  theme: string;
+  reason: string;
+  cautions: string[];
+}
 
 /** One card as GET /api/cards returns it (card + joined employee, evidence, publication records). */
 export type NotebookCard = Card & {

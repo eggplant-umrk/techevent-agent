@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CardFormat, CardPatch, NotebookCard } from "@/app/_client/types";
+import type { DraftResponse } from "@/app/_client/api";
+import type { CardFormat, CardPatch, NotebookCard, VenueDraftBody, VenueEvent } from "@/app/_client/types";
+import { VenueFinder } from "./VenueFinder";
 import { ACTIVITY_LABEL, FIELD_LABEL, FORMAT_LABEL, md, REASON_LABEL, RESULT_LABEL } from "./labels";
 import { CardMarks, ErrorLine, statusText, Tag } from "./ui";
 
@@ -13,13 +15,19 @@ export function CardDetail({
   onClose,
   onSave,
   onResolve,
+  onFindVenues,
+  onVenueDraft,
 }: {
   card: NotebookCard;
   focusEvidence: string | null;
   onClose: () => void;
   onSave: (patch: CardPatch) => Promise<void>;
   onResolve: (theme: string, accept: boolean) => Promise<void>;
+  /** カード → 出し先を探す（渡されたときだけボタンを出す） */
+  onFindVenues?: (cardId: string, onEvent: (e: VenueEvent) => void) => Promise<void>;
+  onVenueDraft?: (body: VenueDraftBody) => Promise<DraftResponse>;
 }) {
+  const [venueDirty, setVenueDirty] = useState(false);
   const ref = useRef<HTMLDialogElement>(null);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -34,8 +42,9 @@ export function CardDetail({
   const pressedOutside = useRef(false);
   /** 編集中で、元の内容から書き換えた入力があるか */
   const dirty =
-    editing &&
-    (summary !== card.summary || themes !== card.themes.join("\n") || format !== card.format || formatReason !== card.format_reason);
+    (editing &&
+      (summary !== card.summary || themes !== card.themes.join("\n") || format !== card.format || formatReason !== card.format_reason)) ||
+    venueDirty; // 出し先の声かけ文を書き換えたときも書きかけとして扱う
 
   /** クリック位置がパネルの外（::backdrop）か。<dialog> 自身が target になるので位置で判定する */
   function isOutside(ev: React.MouseEvent<HTMLDialogElement>) {
@@ -286,6 +295,16 @@ export function CardDetail({
             </ul>
           )}
         </section>
+
+        {onFindVenues && onVenueDraft && (
+          <VenueFinder
+            cardId={card.card_id}
+            employeeName={e?.name ?? card.employee_id}
+            onFind={onFindVenues}
+            onDraft={onVenueDraft}
+            onDirtyChange={setVenueDirty}
+          />
+        )}
 
         <p className="meta">
           作成 {card.created_at.slice(0, 10)}・更新 {card.updated_at.slice(0, 10)}

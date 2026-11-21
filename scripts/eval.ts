@@ -23,6 +23,9 @@ import { activities, employees, requests, type SpeakingRequest } from "../lib/da
 import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
 import { getInboxItem, prepare, registerInbox, type InboxItem } from "../lib/inbox";
 import { extractNomineeWithAgent } from "../lib/nominee";
+import { externalEventById, isClosed, themesOf } from "../lib/externalEvents";
+import { internalTermProblems } from "../lib/plainText";
+import { findVenues, type VenueEvent, type VenueResult } from "../lib/venues";
 
 // API キー（.env）を読むのは本番実行のときだけ。--offline は API を使わないので .env がなくても動く
 if (!process.argv.includes("--offline")) {
@@ -36,6 +39,15 @@ if (!process.argv.includes("--offline")) {
 
 const PASS_RATE = 0.9;
 const WRITEBACK_REQUEST = "req003";
+
+/**
+ * カード → 出し先。どちらもテーマの合う締切済みのイベントがデータにある（出さないことを確かめる）。
+ * expect：上位の出し先のテーマ・名前に、このどれかが入っていれば「テーマが合う」
+ */
+const VENUE_CASES = [
+  { card_id: "card-e024-01", label: "脆弱性の自動トリアージ（セキュリティ）", expect: ["セキュリティ", "脆弱性"] },
+  { card_id: "card-e016-01", label: "オンコール負荷の削減（SRE）", expect: ["SRE", "信頼性", "運用", "インシデント", "モニタリング", "オブザーバビリティ"] },
+];
 
 /** 受信箱経由の指名あり依頼。req004 と同じ内容を、構造化された項目なしの本文だけで送る */
 const INBOX_CASE = {
@@ -295,10 +307,11 @@ async function main() {
   const all = requests();
   const full = target === "all";
   const wantInbox = full || target.split(",").includes("inbox") || !!fromInbox;
+  const wantVenues = !fromInbox && (full || target.split(",").includes("venues"));
   const targets = full ? all : all.filter((r) => target.split(",").includes(r.id));
-  if (targets.length === 0 && !wantInbox) {
+  if (targets.length === 0 && !wantInbox && !wantVenues) {
     console.error(
-      "使い方: npm run eval -- req001 | req001,req004 | inbox | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
+      "使い方: npm run eval -- req001 | req001,req004 | inbox | venues | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
     );
     process.exit(1);
   }
@@ -445,6 +458,66 @@ async function main() {
     }
   }
 
+  // ---- カード → 出し先（ネタが先）
+  const venueCases: Array<Record<string, unknown>> = [];
+  if (wantVenues) {
+    const savedVenues = (saved as unknown as { venue_cases?: Array<{ card_id: string; result: VenueResult | null; events: VenueEvent[]; run_usd: number }> } | null)
+      ?.venue_cases;
+    for (const vc of VENUE_CASES) {
+      console.log(`\n=== カード → 出し先：${vc.label}（${vc.card_id}）`);
+      let result: VenueResult | null = null;
+      let events: VenueEvent[] = [];
+      let usd = 0;
+      if (offline) {
+        const s = savedVenues?.find((x) => x.card_id === vc.card_id);
+        result = s?.result ?? null;
+        events = s?.events ?? [];
+        usd = 0;
+        if (!s) console.log("  保存結果がありません（一度 APIありで流してください）");
+      } else {
+        result = await findVenues(vc.card_id, (e) => {
+          const s = progress(e as AgentEvent);
+          if (s) console.log(s);
+          if (e.type === "tool_call" || e.type === "tool_result" || e.type === "retry" || e.type === "step") events.push(e);
+          if (e.type === "done") usd = e.run_usd;
+        });
+      }
+      const card = loadCards().find((c) => c.card_id === vc.card_id);
+      const vs = result?.venues ?? [];
+      const closed = vs.filter((v) => {
+        const e = externalEventById(v.event_id);
+        return !e || isClosed(e);
+      });
+      const unknownIds = vs.filter((v) => !externalEventById(v.event_id)).map((v) => v.event_id);
+      const top = vs[0] ? externalEventById(vs[0].event_id) : undefined;
+      const topText = top ? `${top.name} ${themesOf(top).join(" ")}` : "";
+      const fits = !!top && vc.expect.some((k) => topText.includes(k));
+      const missingNotes = vs.filter((v) => {
+        const e = externalEventById(v.event_id);
+        if (!e) return false;
+        return (e.cfp_status === "unknown" && !v.cautions.includes("締切は公式で要確認")) || (!e.event_date && !v.cautions.includes("開催日は要確認"));
+      });
+      const badEv = vs.flatMap((v) => v.evidence.map((x) => x.id)).filter((id) => !card?.evidence_activity_ids.includes(id));
+      const plain = result
+        ? internalTermProblems([
+            { where: "summary", text: result.summary },
+            ...vs.flatMap((v) => [v.theme, v.reason, v.caveat ?? "", ...v.cautions].map((t) => ({ where: v.name, text: t }))),
+            ...(result.no_fit?.reasons ?? []).map((t) => ({ where: "no_fit", text: t })),
+          ])
+        : ["結果なし"];
+      const tag = `出し先（${vc.card_id}）`;
+      checks.push({ name: `${tag} 結果が出る`, pass: !!result && vs.length > 0, detail: result ? `${vs.length}件${result.no_fit ? "（見つからない理由あり）" : ""}` : "結果なし" });
+      checks.push({ name: `${tag} 締切済みを出さない`, pass: !!result && closed.length === 0, detail: closed.map((v) => v.name).join(",") || vs.map((v) => `${v.name}（${v.cfp_status}）`).join("、") });
+      checks.push({ name: `${tag} イベントidが実在`, pass: !!result && unknownIds.length === 0, detail: unknownIds.join(",") || vs.map((v) => v.event_id).join(",") });
+      checks.push({ name: `${tag} テーマが合う`, pass: fits, detail: top ? `1件目：${top.name}（${themesOf(top).join("・")}）` : "出し先なし" });
+      checks.push({ name: `${tag} 未確認の締切・開催日を注意点に書く`, pass: !!result && missingNotes.length === 0, detail: missingNotes.map((v) => v.name).join(",") || "すべて記載" });
+      checks.push({ name: `${tag} 根拠がカードのもとになった活動`, pass: !!result && badEv.length === 0, detail: badEv.join(",") || "すべてカードの根拠" });
+      checks.push({ name: `${tag} 内部の言葉がない`, pass: plain.length === 0, detail: plain.join(" / ") || "なし" });
+      console.log(`  ${vs.map((v) => `${v.rank}. ${v.name}[${v.confidence}]`).join(" / ") || "（出し先なし）"}${result?.blog ? `／ブログ案「${result.blog.title}」` : ""}  $${usd.toFixed(3)}`);
+      venueCases.push({ card_id: vc.card_id, result, events, run_usd: usd });
+    }
+  }
+
   let coverage: { covered: number; total: number; missing: string[] } | null = null;
   let writeback: Record<string, unknown> | null = null;
 
@@ -527,6 +600,7 @@ async function main() {
     writeback,
     quality,
     inbox_case: inboxCaseOut,
+    ...(wantVenues ? { venue_cases: venueCases } : {}),
   };
   // 受信箱の実データで判定したら、その結果を最新の結果に足しておく（--offline でも判定できるように）
   if (fromInbox && inboxCaseOut) {
@@ -534,6 +608,13 @@ async function main() {
     const latest = JSON.parse(fs.readFileSync(latestFile, "utf-8"));
     fs.writeFileSync(latestFile, JSON.stringify({ ...latest, inbox_case: inboxCaseOut }, null, 2));
     console.log("受信箱の結果を docs/eval_latest.json に足しました");
+  }
+  // 出し先だけを実際に流したときも、最新の結果に足しておく（--offline と ?mock の元データ）
+  if (wantVenues && !offline && !full && venueCases.length) {
+    const latestFile = path.join(process.cwd(), "docs", "eval_latest.json");
+    const latest = JSON.parse(fs.readFileSync(latestFile, "utf-8"));
+    fs.writeFileSync(latestFile, JSON.stringify({ ...latest, venue_cases: venueCases }, null, 2));
+    console.log("出し先の結果を docs/eval_latest.json に足しました（scripts/update_mock.ts で ?mock に反映）");
   }
   if (offline && reportPath) {
     console.error("--offline では --report を使えません（保存結果を上書きしないため）");

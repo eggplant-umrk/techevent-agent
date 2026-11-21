@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Candidate, DeclineReason, OutreachDraft, OutreachResult } from "@/app/_client/types";
 import { REASON_LABEL, RESULT_LABEL } from "./labels";
-import { CopyButton, ErrorLine, Spinner, Tag } from "./ui";
+import { CopyButton, ErrorLine, Spinner } from "./ui";
 
 /** After "この人で進める": the outreach draft (copy only, never sent) and the result buttons. */
 export function Approved({
@@ -27,26 +27,22 @@ export function Approved({
 }) {
   return (
     <>
-      <section className="surface pad-lg chosen" aria-label="進める人">
+      <section className="surface pad-lg" aria-label="進める人">
         <div className="cand-head">
-          <Tag tone="ok">承認済み</Tag>
-          <span className="cand-name">{candidate.name}</span>
+          <button type="button" className="link" onClick={onBack}>
+            ← 候補に戻る
+          </button>
+        </div>
+        <div className="cand-head">
+          <span className="cand-name">{candidate.name}さんで進める</span>
           <span className="meta">
             {candidate.business_unit}・登壇{candidate.past_talk_count}回・忙しさ{candidate.workload}
           </span>
         </div>
         <p className="cand-theme">{candidate.theme}</p>
         {candidate.confidence === "conditional" && (
-          <p className="caveat">
-            <span className="strong">条件付き・引っかかる点</span>
-            <span>{candidate.caveat?.trim() || "（理由の記載なし）"}</span>
-          </p>
+          <p className="caveat">条件付き：{candidate.caveat?.trim() || "引っかかる点の記載がありません"}</p>
         )}
-        <div className="btn-row">
-          <button type="button" className="btn btn-sm" onClick={onBack}>
-            候補一覧に戻る
-          </button>
-        </div>
       </section>
 
       {drafting && (
@@ -81,9 +77,8 @@ function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | nul
           <h3 id="draft-title" className="h3">
             声かけ文（下書き）
           </h3>
-          {edited ? <Tag tone="ok">直しました</Tag> : <Tag>下書きのまま</Tag>}
         </div>
-        <p className="notice notice-accent small">自分の言葉に直して送ってください。この画面から送ることはできません。コピーしてSlackなどに貼り付けます。</p>
+        <p className="meta">自分の言葉に直して、コピーして送ってください（ここからは送信しません）。</p>
         {note && <p className="log-line log-warn">{note}</p>}
         <label className="field">
           <span className="field-label">件名</span>
@@ -177,7 +172,7 @@ function OutcomeRecorder({ name, onRecord }: { name: string; onRecord: (r: Outre
       <h3 id="outcome-title" className="h3">
         結果の記録
       </h3>
-      <p className="small">{name}さんの返事を選ぶと、カードの打診履歴に書き戻します。次の提案はこの記録を読んで判断します。</p>
+      <p className="meta">返事をカードの打診履歴に書き戻します。</p>
       <div role="group" aria-label="返事" className="btn-row">
         <button
           type="button"
@@ -217,9 +212,8 @@ function OutcomeRecorder({ name, onRecord }: { name: string; onRecord: (r: Outre
       )}
       <ErrorLine message={error} />
       {saved.length > 0 && (
-        <p className="notice notice-ok small" role="status">
-          <Tag tone="ok">記録済み</Tag> {name}さんのカードに「{saved.join("」「")}」を書き戻しました。
-          {declined && "別の候補で進めるときは「候補一覧に戻る」から選び直せます。"}
+        <p className="ok-line small" role="status">
+          記録しました：{saved.join("、")}
         </p>
       )}
     </section>

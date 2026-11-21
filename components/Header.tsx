@@ -2,18 +2,9 @@
 
 import type { ModelChoice } from "@/app/_client/types";
 import { usd } from "./labels";
-import { Tag } from "./ui";
-
-export type View = "notebook" | "history" | "learnings";
-const VIEWS: Array<[View, string]> = [
-  ["notebook", "ネタ帳"],
-  ["history", "依頼の履歴"],
-  ["learnings", "Agentの学び"],
-];
 
 export function Header({
-  view,
-  onView,
+  debug,
   runUsd,
   totalUsd,
   models,
@@ -22,8 +13,8 @@ export function Header({
   onUpdate,
   mock,
 }: {
-  view: View;
-  onView: (v: View) => void;
+  /** ?debug in the URL: show cost and models (not for everyday use). */
+  debug: boolean;
   runUsd: number;
   totalUsd: number;
   models: ModelChoice | null;
@@ -43,20 +34,16 @@ export function Header({
           </svg>
         </span>
         <span className="brand-name">ネタ帳Agent</span>
-        {mock && <Tag tone="warn">モックデータで表示中</Tag>}
+        {mock && <span className="meta">（モック）</span>}
       </div>
-      <nav aria-label="画面の切り替え" className="nav">
-        {VIEWS.map(([v, label]) => (
-          <button key={v} type="button" className="nav-item" aria-current={view === v ? "page" : undefined} onClick={() => onView(v)}>
-            {label}
-          </button>
-        ))}
-      </nav>
       <div className="header-right">
-        <p className="cost" title={models ? `ループ：${models.loop}／重い仕事：${models.heavy}` : undefined}>
-          今回 <strong>{usd(runUsd)}</strong>・累計 <strong>{usd(totalUsd)}</strong> / $200
-        </p>
-        <button type="button" className="btn" onClick={onUpdate} disabled={updating}>
+        {debug && (
+          <span className="meta debug-cost">
+            今回 {usd(runUsd)}・累計 {usd(totalUsd)}
+            {models && `・${models.loop} / ${models.heavy}${models.switched ? "（切替中）" : ""}`}
+          </span>
+        )}
+        <button type="button" className="btn btn-sm" onClick={onUpdate} disabled={updating}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
             <path d="M21 3v5h-5" />

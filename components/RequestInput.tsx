@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import type { SpeakingRequest } from "@/app/_client/types";
 import { md, PATTERN_LABEL } from "./labels";
-import { Tag } from "./ui";
 
 export type RequestMode = "preset" | "custom";
 
@@ -17,6 +18,7 @@ export function RequestInput({
   running,
   onRun,
   compact,
+  children,
 }: {
   presets: SpeakingRequest[];
   selected: string;
@@ -29,7 +31,10 @@ export function RequestInput({
   onRun: () => void;
   /** After a run, show only the summary of the request (the picker folds away). */
   compact: boolean;
+  /** The agent's steps, shown under the request without another frame. */
+  children?: React.ReactNode;
 }) {
+  const [picking, setPicking] = useState(false);
   const current = presets.find((p) => p.id === selected);
 
   return (
@@ -50,10 +55,13 @@ export function RequestInput({
 
       {mode === "preset" ? (
         <>
-          {!compact && (
+          {(!compact || picking) && (
             <div role="group" aria-label="届いた依頼" className="req-list">
               {presets.map((p) => (
-                <button key={p.id} type="button" className="req-item" aria-pressed={p.id === selected} onClick={() => onSelect(p.id)}>
+                <button key={p.id} type="button" className="req-item" aria-pressed={p.id === selected} onClick={() => {
+                    onSelect(p.id);
+                    setPicking(false);
+                  }}>
                   <span className="meta">
                     {PATTERN_LABEL[p.pattern ?? ""] ?? p.pattern}・{md(p.event?.date)}
                   </span>
@@ -64,14 +72,18 @@ export function RequestInput({
           )}
           {current && (
             <div className="req-summary">
-              <div className="tags">
-                <Tag tone="accent">{PATTERN_LABEL[current.pattern ?? ""] ?? current.pattern}</Tag>
-                <span className="meta">
-                  {current.received_at ? `${md(current.received_at)} 受付` : ""}
-                  {current.requester?.channel ? `・${current.requester.channel}` : ""}
-                  {current.reply_deadline ? `・返事の期限 ${md(current.reply_deadline)}` : ""}
-                </span>
-              </div>
+              <p className="meta">
+                {PATTERN_LABEL[current.pattern ?? ""] ?? current.pattern}
+                {current.reply_deadline ? `・返事の期限 ${md(current.reply_deadline)}` : ""}
+                {compact && !picking && (
+                  <>
+                    {"　"}
+                    <button type="button" className="link" onClick={() => setPicking(true)}>
+                      依頼を選び直す
+                    </button>
+                  </>
+                )}
+              </p>
               <h3 className="req-title">{current.event?.title}</h3>
               <p className="small muted-strong">
                 {current.event?.date}・{current.event?.venue}
@@ -103,6 +115,7 @@ export function RequestInput({
           {running ? "ネタ帳を探しています…" : compact ? "もう一度探す" : "ネタ帳から候補を出す"}
         </button>
       </div>
+      {children}
     </section>
   );
 }

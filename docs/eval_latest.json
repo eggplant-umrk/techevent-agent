@@ -1,44 +1,44 @@
 {
-  "at": "2026-11-21T15:43:59.848Z",
+  "at": "2026-11-21T15:47:28.038Z",
   "version": "v0.3",
   "mode": "stage1",
-  "spent_usd": 0.46675660000000185,
+  "spent_usd": 0.13621700000000025,
   "pass_rate": 1,
   "checks": [
     {
-      "name": "req002 根拠idが実在",
+      "name": "req003 根拠idが実在",
       "pass": true,
-      "detail": "6件すべて実在"
+      "detail": "3件すべて実在"
     },
     {
-      "name": "req002 送信なし",
+      "name": "req003 送信なし",
       "pass": true,
       "detail": "受付の返信と非公開チャンネルへの通知のほかに送信なし（許可：scripts\\slack-bot.ts の受付の返信と非公開チャンネルへの通知（決まった文だけ））"
     },
     {
-      "name": "req002 想定候補が候補（5人まで）にいる",
+      "name": "req003 想定候補が候補（5人まで）にいる",
       "pass": true,
-      "detail": "候補=e013,e014,e001,e003 想定=e013,e014"
+      "detail": "候補=e015,e016 想定=e015,e016"
     },
     {
-      "name": "req002 候補は5人まで・自信のある候補が先・印あり",
+      "name": "req003 候補は5人まで・自信のある候補が先・印あり",
       "pass": true,
-      "detail": "4人（自信あり1・条件付き3）"
+      "detail": "2人（自信あり0・条件付き2）"
     },
     {
-      "name": "req002 条件付きの候補に引っかかる点の文がある",
+      "name": "req003 条件付きの候補に引っかかる点の文がある",
       "pass": true,
-      "detail": "条件付き3人すべて文あり"
+      "detail": "条件付き2人すべて文あり"
     },
     {
-      "name": "req002 使う人向けの文に内部の言葉がない",
+      "name": "req003 使う人向けの文に内部の言葉がない",
       "pass": true,
       "detail": "内部の項目名・値・idなし"
     },
     {
-      "name": "req002 注意点の日付が開催日と食い違わない",
+      "name": "req003 注意点の日付が開催日と食い違わない",
       "pass": true,
-      "detail": "開催日 2027-01-21 と矛盾なし"
+      "detail": "開催日 2027-02-10 と矛盾なし"
     }
   ],
   "rows": [
@@ -403,172 +403,6 @@
               "reviewed_at": null,
               "created_at": "2026-11-21T05:26:23.278Z",
               "updated_at": "2026-11-21T05:26:23.278Z",
-              "edited_fields": [],
-              "evidence_request_ids": [],
-              "reactions": []
-            }
-          }
-        ]
-      }
-    },
-    {
-      "request_id": "req003",
-      "pattern": "theme_specified",
-      "top3": [
-        "e015",
-        "e016"
-      ],
-      "expected": [
-        "e015",
-        "e016"
-      ],
-      "primary": "e015",
-      "any_hit": true,
-      "primary_hit": true,
-      "alternatives": [],
-      "alternative_ok": null,
-      "run_usd": 0.2820608,
-      "steps": 7,
-      "elapsed_ms": 71240,
-      "result": {
-        "run_id": "d492792e-ac9e-46fe-9e5b-c7ca95119867",
-        "request_id": "req003",
-        "request_pattern": "theme_specified",
-        "summary": "金融系エンジニア向けの「障害対応と振り返りの文化」がテーマで、2027年2月10日にLayerX会場で開く共催イベントの20分枠です。実際に障害の振り返りをして手を動かした人のカードを優先しました。最も合うのは決済バッチ障害のポストモーテムを書いた芹沢さんで、オンコール改善の鳴海さんをテーマが少しずれる候補として後ろに並べました。LLM基盤の運用の振り返りを書いた久住さんも検討しましたが、障害対応は記事の一部だけで、取り組みの根拠も確かめられなかったため外しました。",
-        "nominee_assessment": null,
-        "learnings_applied": [
-          "候補2人のカードはどちらも打診履歴とイベント後の反応がなく、反映できる過去の辞退・承諾や需要はありませんでした"
-        ],
-        "no_fit": null,
-        "candidates": [
-          {
-            "rank": 1,
-            "employee_id": "e015",
-            "name": "芹沢 葵",
-            "business_unit": "Fintech",
-            "role": "バックエンドエンジニア",
-            "busy_text": "今後2週間は勤務時間の9割が予定で埋まっている",
-            "talk_tag": "初登壇",
-            "blog_to_lt": false,
-            "past_talk_count": 0,
-            "last_talk_date": null,
-            "theme": "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化から学んだ振り返りの書き方",
-            "reason": "9月末の決済バッチ4時間遅延を本人がポストモーテムにまとめ、バッチの分割と冪等化で月末の処理時間をおよそ4割短くしました。他チームも参考にしたいと声が上がった事例で、金融系の参加者が聞きたい障害の振り返りそのものです。",
-            "evidence": [
-              {
-                "id": "act032",
-                "type": "design_doc",
-                "date": "2026-09-25",
-                "title": "ポストモーテム: 月末決済バッチの4時間遅延",
-                "where": "fintech/postmortems"
-              },
-              {
-                "id": "act057",
-                "type": "weekly_report",
-                "date": "2026-10-09",
-                "title": "週報 10/5-10/9 芹沢",
-                "where": "#weekly-fintech"
-              }
-            ],
-            "cautions": [
-              "実際の決済障害の事例なので、原因・影響範囲・数字をどこまで社外に出してよいかFintech事業部に確認が要ります",
-              "カードは5〜10分のLTを想定しているので、20分のセッションにするにはポストモーテムの書き方や再発防止の進め方まで広げる必要があります",
-              "今後2週間は勤務時間の9割が予定で埋まっている",
-              "ネタ帳の記録は技術広報が未確認"
-            ],
-            "is_alternative_to_nominee": false,
-            "confidence": "conditional",
-            "caveat": "テーマには一番合いますが、今後2週間は勤務時間の9割近くが予定で埋まっていて、12月10日の返答までに本人と話す時間と準備時間が取れるか確認が要ります。",
-            "is_nominee": false,
-            "evidence_request_id": null,
-            "card_id": "card-e015-01",
-            "card": {
-              "card_id": "card-e015-01",
-              "employee_id": "e015",
-              "summary": "9月末の月末決済バッチが4時間遅延した障害を振り返り、ロック競合とリトライの雪だるま化という原因を、検知から復旧までのタイムラインとともにポストモーテムにまとめた。再発防止としてバッチを分割・冪等化して本番に入れ、月末の処理時間は平均40%短くなった。ポストモーテムは他チームからも参考にしたいと声が上がっている。",
-              "themes": [
-                "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化をどう止めたか",
-                "決済バッチの分割と冪等化で月末の処理時間を平均40%短縮した話",
-                "他チームも参考にしたポストモーテムの書き方：金融バッチ障害のタイムラインと再発防止"
-              ],
-              "evidence_activity_ids": [
-                "act032",
-                "act057"
-              ],
-              "format": "lt",
-              "format_reason": "原因・対策・40%短縮という数字がそろった1本の障害事例で5〜10分に収めやすく、登壇経験0回の本人にとって最初の一歩として負担が小さいため。",
-              "publication_status": "unpublished",
-              "published_ids": [],
-              "latest_activity_date": "2026-10-09",
-              "outreach_history": [],
-              "reviewed": false,
-              "reviewed_at": null,
-              "created_at": "2026-11-21T05:12:09.564Z",
-              "updated_at": "2026-11-21T05:12:09.564Z",
-              "announcement_activity_ids": [],
-              "pending_themes": [],
-              "edited_fields": [],
-              "evidence_request_ids": [],
-              "reactions": []
-            }
-          },
-          {
-            "rank": 2,
-            "employee_id": "e016",
-            "name": "鳴海 慎",
-            "business_unit": "バクラク",
-            "role": "SRE",
-            "busy_text": "今後2週間は勤務時間の6割が予定で埋まっている",
-            "talk_tag": "初登壇",
-            "blog_to_lt": false,
-            "past_talk_count": 0,
-            "last_talk_date": null,
-            "theme": "夜間呼び出しを月14回から5回に：アラートを分類して減らしたオンコール改善",
-            "reason": "アラートを発報元と対応内容で分類してオンコール負荷を見える化し、対応不要なアラートを半分に、夜間呼び出しを月14回から5回に減らしました。障害対応の文化を運用の面から話せます。",
-            "evidence": [
-              {
-                "id": "act102",
-                "type": "design_doc",
-                "date": "2026-11-06",
-                "title": "オンコール負荷の可視化と削減",
-                "where": "bakuraku/sre-docs"
-              }
-            ],
-            "cautions": [
-              "テーマが少しずれます（障害の振り返りではなくオンコール改善）",
-              "根拠は設計ドキュメント1件だけです",
-              "金融系ではなくバクラクのSREの事例です",
-              "ネタ帳の記録は技術広報が未確認"
-            ],
-            "is_alternative_to_nominee": false,
-            "confidence": "conditional",
-            "caveat": "テーマが少しずれる（振り返りではなくオンコールとアラートの改善）うえ、根拠が1件だけです。",
-            "is_nominee": false,
-            "evidence_request_id": null,
-            "card_id": "card-e016-01",
-            "card": {
-              "card_id": "card-e016-01",
-              "employee_id": "e016",
-              "summary": "アラートを発報元と対応内容で分類してオンコール負荷を可視化し、対応不要なアラートを半分に減らした。その結果、夜間呼び出しは月14回から5回になった。可視化に使ったダッシュボードの作り方もドキュメントにまとめている。",
-              "themes": [
-                "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
-                "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方"
-              ],
-              "evidence_activity_ids": [
-                "act102"
-              ],
-              "format": "lt",
-              "format_reason": "分かりやすい数字が出ていて取り組みもまとまっており、登壇経験のない本人が最初に話すなら5〜10分のLTがちょうどよいため。",
-              "publication_status": "unpublished",
-              "published_ids": [],
-              "latest_activity_date": "2026-11-06",
-              "announcement_activity_ids": [],
-              "pending_themes": [],
-              "outreach_history": [],
-              "reviewed": false,
-              "reviewed_at": null,
-              "created_at": "2026-11-21T05:26:32.694Z",
-              "updated_at": "2026-11-21T05:26:32.694Z",
               "edited_fields": [],
               "evidence_request_ids": [],
               "reactions": []
@@ -1108,6 +942,175 @@
               "reviewed_at": null,
               "created_at": "2026-11-21T05:25:46.582Z",
               "updated_at": "2026-11-21T05:25:46.582Z",
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "request_id": "req003",
+      "pattern": "theme_specified",
+      "top3": [
+        "e015",
+        "e016"
+      ],
+      "expected": [
+        "e015",
+        "e016"
+      ],
+      "primary": "e015",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [],
+      "alternative_ok": null,
+      "run_usd": 0.136217,
+      "steps": 4,
+      "elapsed_ms": 30284,
+      "rejections": [
+        {
+          "step": 3,
+          "reasons": "e015 の reason に登壇者の評価の言い方（「平均4」）が入っています\n登壇の反応（アンケート）は判断の参考だけにして、理由・注意点・要約には書かないでください。点数・満足度・回答の件数・反応の良し悪しも書かず、取り組みの中身で理由を書き直してください"
+        }
+      ],
+      "result": {
+        "run_id": "a75f6f0c-620e-483c-93f1-7ad0e1cd71c3",
+        "request_id": "req003",
+        "request_pattern": "theme_specified",
+        "summary": "金融系エンジニア向けの「障害対応と振り返りの文化」をテーマにした共催イベント（2027年2月10日、20分のセッション）への登壇依頼と読み取りました。ネタ帳と元の投稿を障害・ポストモーテム・オンコールの言葉で探し、実際に障害の振り返りを書いた人と、障害対応の運用を改善した人を選びました。金融の決済バッチ障害のポストモーテムを書いた芹沢さんが最も合い、テーマが少しずれるオンコール改善の鳴海さんを次の候補にしています。",
+        "nominee_assessment": null,
+        "learnings_applied": [],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e015",
+            "name": "芹沢 葵",
+            "business_unit": "Fintech",
+            "role": "バックエンドエンジニア",
+            "busy_text": "今後2週間は勤務時間の9割が予定で埋まっている",
+            "talk_tag": "初登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化をどう止め、振り返りを他チームに広げたか",
+            "reason": "9月末の決済バッチ4時間遅延を自らポストモーテムにまとめ、バッチの分割と冪等化で月末の処理時間をおよそ4割短くしました。他チームからも参考にしたいと声が上がっており、金融系の聴衆と障害の振り返りという時流の両方にそのまま合います。",
+            "evidence": [
+              {
+                "id": "act032",
+                "type": "design_doc",
+                "date": "2026-09-25",
+                "title": "ポストモーテム: 月末決済バッチの4時間遅延",
+                "where": "fintech/postmortems"
+              },
+              {
+                "id": "act057",
+                "type": "weekly_report",
+                "date": "2026-10-09",
+                "title": "週報 10/5-10/9 芹沢",
+                "where": "#weekly-fintech"
+              }
+            ],
+            "cautions": [
+              "社内の決済障害の事例のため、社外に出してよい範囲（影響範囲・取引先・時刻など）の確認が要る",
+              "今後2週間は勤務時間の9割が予定で埋まっている",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "テーマには最も合いますが、今後2週間は勤務時間の9割近くが予定で埋まっていて、12月10日の返答期限までに引き受けを判断する余裕があるか確認が要ります（2月10日の前後には予定の重なりはありません）。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e015-01",
+            "card": {
+              "card_id": "card-e015-01",
+              "employee_id": "e015",
+              "summary": "9月末の月末決済バッチが4時間遅延した障害を振り返り、ロック競合とリトライの雪だるま化という原因を、検知から復旧までのタイムラインとともにポストモーテムにまとめた。再発防止としてバッチを分割・冪等化して本番に入れ、月末の処理時間は平均40%短くなった。ポストモーテムは他チームからも参考にしたいと声が上がっている。",
+              "themes": [
+                "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化をどう止めたか",
+                "決済バッチの分割と冪等化で月末の処理時間を平均40%短縮した話",
+                "他チームも参考にしたポストモーテムの書き方：金融バッチ障害のタイムラインと再発防止"
+              ],
+              "evidence_activity_ids": [
+                "act032",
+                "act057"
+              ],
+              "format": "lt",
+              "format_reason": "原因・対策・40%短縮という数字がそろった1本の障害事例で5〜10分に収めやすく、登壇経験0回の本人にとって最初の一歩として負担が小さいため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-09",
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:12:09.564Z",
+              "updated_at": "2026-11-21T05:12:09.564Z",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e016",
+            "name": "鳴海 慎",
+            "business_unit": "バクラク",
+            "role": "SRE",
+            "busy_text": "今後2週間は勤務時間の6割が予定で埋まっている",
+            "talk_tag": "初登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "夜間呼び出しを月14回から5回に：アラートを分類して障害対応の負荷を減らしたオンコール改善",
+            "reason": "アラートを発報元と対応内容で分類してオンコール負荷を見える化し、対応不要なアラートを半分にして夜間呼び出しを月14回から5回に減らしました。障害対応の文化を支える運用改善として話せます。",
+            "evidence": [
+              {
+                "id": "act102",
+                "type": "design_doc",
+                "date": "2026-11-06",
+                "title": "オンコール負荷の可視化と削減",
+                "where": "bakuraku/sre-docs"
+              }
+            ],
+            "cautions": [
+              "テーマが少しずれる（障害の振り返りではなくオンコール改善）",
+              "根拠が1件だけ",
+              "聴衆は金融系だが、事例はバクラク（金融以外）のもの",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "テーマが少しずれる（障害の振り返りではなくオンコール改善）ので、パネルで芹沢さんと組む形や、障害対応の運用側の話として位置づけられるか確認が要ります。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e016-01",
+            "card": {
+              "card_id": "card-e016-01",
+              "employee_id": "e016",
+              "summary": "アラートを発報元と対応内容で分類してオンコール負荷を可視化し、対応不要なアラートを半分に減らした。その結果、夜間呼び出しは月14回から5回になった。可視化に使ったダッシュボードの作り方もドキュメントにまとめている。",
+              "themes": [
+                "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
+                "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方"
+              ],
+              "evidence_activity_ids": [
+                "act102"
+              ],
+              "format": "lt",
+              "format_reason": "分かりやすい数字が出ていて取り組みもまとまっており、登壇経験のない本人が最初に話すなら5〜10分のLTがちょうどよいため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-11-06",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:32.694Z",
+              "updated_at": "2026-11-21T05:26:32.694Z",
               "edited_fields": [],
               "evidence_request_ids": [],
               "reactions": []

@@ -66,6 +66,7 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 
 モデルの呼び出しは最大${MAX_STEPS}回で打ち切られます。確認は必要なものに絞り、余裕をもって submit_candidates を呼んでください。
 理由は技術広報がそのまま読める1行で、注意点はコードで出せないことだけを短い文で書いてください。
+取り組みの数字を理由・注意点・要約に書くときは「平均」を付けずに書く（例：「月末の処理時間を平均40%短縮」ではなく「月末の処理時間を40%短縮」）。「平均」と数字が続くと、アンケートの点数の書き方として差し戻されます。
 ${PLAIN_TEXT_RULE}。idは evidence_activity_ids や card_id などの項目にだけ書き、文の中には書かない。`;
 
 export function buildSystemPrompt(): string {

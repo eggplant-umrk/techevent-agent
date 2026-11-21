@@ -3,6 +3,7 @@ import { getCardById } from "@/lib/cards";
 import { deadlineDate, externalEventById, isClosed, requiredCautions } from "@/lib/externalEvents";
 import { draftVenueOutreach } from "@/lib/heavy";
 import { runUsd, totalUsd } from "@/lib/usage";
+import { slotted } from "@/lib/apiSlots";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ interface Body {
   cautions?: string[];
 }
 
-export async function POST(req: Request) {
+async function handlePost(req: Request) {
   const b = (await req.json().catch(() => null)) as Body | null;
   const card = b?.card_id ? getCardById(b.card_id) : undefined;
   const ev = b?.event_id ? externalEventById(b.event_id) : undefined;
@@ -41,3 +42,6 @@ export async function POST(req: Request) {
     return Response.json({ error: err instanceof Error ? err.message : "不明なエラー" }, { status: 500 });
   }
 }
+
+// API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
+export const POST = slotted(handlePost);

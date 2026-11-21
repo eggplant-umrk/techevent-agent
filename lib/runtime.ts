@@ -81,6 +81,9 @@ export function writeCardOverlay<C>(o: CardOverlay<C>) {
 
 /** 片付ける対象（npm run reset:demo）：実行時のデータの置き場所と、もともと git の対象外だった画面の操作の記録 */
 export function resetTargets(): string[] {
+  // 置き場所を DATA_RUNTIME_DIR で分けたサーバー（見せる用など）は、画面の操作の記録もすべてその中にあるので、そこだけを片付ける
+  // （発表用の data/inbox.json などには触らない）
+  if (process.env.DATA_RUNTIME_DIR) return [runtimeRoot()];
   const d = path.join(process.cwd(), "data");
   return [runtimeRoot(), path.join(d, "inbox.json"), path.join(d, "sample_proposals.json"), path.join(d, "drafts.json"), path.join(d, "talk_records.json"), path.join(d, "people.json")];
 }

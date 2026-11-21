@@ -23,7 +23,22 @@ export function shareConfigProblem(): string | null {
   const raw = (process.env.SHARE_MODE ?? "").trim().toLowerCase();
   if (raw && raw !== "lan" && raw !== "local") return `SHARE_MODE は lan か空（既定）です（今は「${raw}」）`;
   if (shareMode() === "lan" && !accessCode()) return "SHARE_MODE=lan のときは .env に ACCESS_CODE（合言葉）を設定してください。合言葉なしでは起動しません";
+  if (shareMode() === "lan" && shareBudgetUsd() === null)
+    return "SHARE_MODE=lan のときは .env に SHARE_BUDGET_USD（見せている間の API 代の上限、例：5）を設定してください。上限なしでは起動しません";
   return null;
+}
+
+/** 見せる用（lan）では止める操作。合言葉を全員に公開するので、全員分を読み直す重い操作は使わせない */
+export const LAN_BLOCKED: Array<{ method: string; path: RegExp; reason: string }> = [
+  { method: "POST", path: /^\/api\/notebook$/, reason: "見せる用では「ネタ帳を更新」を止めています（全員分の活動を読み直す重い操作のため。発表用の画面で行います）" },
+];
+
+/** 見せる用では、API 代などを出す ?debug を外した URL（外すものがなければ null） */
+export function withoutDebug(url: URL): URL | null {
+  if (!url.searchParams.has("debug")) return null;
+  const u = new URL(url.toString());
+  u.searchParams.delete("debug");
+  return u;
 }
 
 /** cookie に入れる印（合言葉そのものは入れない） */
@@ -88,6 +103,9 @@ export function checkRequest(r: GateInput): Gate {
     const oh = originHost(r.origin);
     if (!oh || oh !== r.host.trim().toLowerCase()) return { ok: false, status: 403, error: "この画面以外からのリクエストは受け付けません" };
   }
+  // 見せる用で止める操作（合言葉の有無にかかわらず）
+  const blocked = LAN_BLOCKED.find((b) => b.method === r.method && b.path.test(r.pathname));
+  if (blocked) return { ok: false, status: 403, error: blocked.reason };
   // 合言葉の入力画面と、その送り先は合言葉なしで開ける
   if (r.pathname === ACCESS_PATH || (r.pathname === ACCESS_API && r.method === "POST")) return { ok: true };
   const authed = (!!r.cookie && safeEqual(r.cookie, accessToken())) || codeMatches(r.headerCode);

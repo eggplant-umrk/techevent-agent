@@ -35,6 +35,9 @@ export function SurveyVoices({
             </button>
           </div>
           <p className="meta">イベント後のアンケートの「今後聞いてみたい話」です。分析したイベントの分だけ並びます。</p>
+          {voices.some((v) => v.sample) && (
+            <p className="small caveat">架空のアンケートの結果を含みます（保存済みの分析結果。「架空のアンケート」の印が付いた声）。</p>
+          )}
         </div>
         {!loaded && <p className="meta pad">読み込んでいます…</p>}
         {loaded && voices.length === 0 && (
@@ -44,7 +47,7 @@ export function SurveyVoices({
           {voices.map((v, i) => (
             <li key={`${v.event_id}-${i}`} className="cand">
               <p>
-                <Tag tone="accent">アンケートの声</Tag> <span className="strong">{v.text}</span>
+                <Tag tone="accent">アンケートの声</Tag> {v.sample && <Tag>架空のアンケート</Tag>} <span className="strong">{v.text}</span>
                 <span className="meta">　{v.count}件</span>
               </p>
               <p className="meta">
@@ -60,7 +63,7 @@ export function SurveyVoices({
                   <button type="button" className="link" onClick={() => onOpenCard(v.match!.card_id)}>
                     カードを見る
                   </button>
-                  <span className="meta">（未発信のネタと重なる＝需要あり）</span>
+
                 </p>
               ) : (
                 <p className="small muted-strong">まだ話せる人がいない</p>

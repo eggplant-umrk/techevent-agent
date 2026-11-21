@@ -126,6 +126,11 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
 
       {a && (
         <>
+          {a.sample && (
+            <p className="small caveat" role="note">
+              架空のアンケートの結果です（保存済みの分析結果を表示しています。CSV を取り込んで分析し直すと、ここが置き換わります）。
+            </p>
+          )}
           <section className="surface cands" aria-labelledby="pos-title">
             <div className="cands-head">
               <h2 id="pos-title" className="h2">

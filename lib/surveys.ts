@@ -193,12 +193,27 @@ export interface EventAnalysis {
   positives: PositiveTheme[];
   talks: TalkAnalysis[];
   writebacks: string[];
+  /** 架空のアンケートの保存済み分析結果（docs/survey_latest.json）から読んだもの。画面に「架空のアンケート」と出す */
+  sample?: boolean;
 }
 
+/** 保存済みの分析結果（架空のアンケートを本番の API で分析したもの。scripts/analyze_surveys.ts が作る） */
+const SAMPLE_FILE = () => path.join(process.cwd(), "docs", "survey_latest.json");
+
+/**
+ * 分析結果。画面で分析したもの（data/survey_analysis.json）を優先し、まだ分析していないイベントは
+ * 保存済みの分析結果（架空のアンケート）で補う。API で分析し直さない。
+ * テスト（SURVEY_ANALYSIS_FILE を指定したとき）は補わない。
+ */
 export function loadAnalyses(): Record<string, EventAnalysis> {
   const f = FILE();
-  if (!fs.existsSync(f)) return {};
-  return JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>;
+  const saved = fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>) : {};
+  if (process.env.SURVEY_ANALYSIS_FILE) return saved;
+  const sf = SAMPLE_FILE();
+  if (!fs.existsSync(sf)) return saved;
+  const sample = (JSON.parse(fs.readFileSync(sf, "utf-8")) as { analyses?: Record<string, EventAnalysis> }).analyses ?? {};
+  const marked = Object.fromEntries(Object.entries(sample).map(([k, a]) => [k, { ...a, sample: true }]));
+  return { ...marked, ...saved };
 }
 function saveAnalysis(a: EventAnalysis) {
   const all = loadAnalyses();
@@ -821,6 +836,8 @@ export interface EventOverview {
   stats: EventStats;
   analysis: {
     analyzed_at: string;
+    /** 架空のアンケートの保存済み分析結果から出したもの */
+    sample: boolean;
     /** 不満：原文のまま全部。運営・会場・設備／内容に分けるだけ（だれの登壇への声かは出さない） */
     negatives: { operation: Array<{ text: string; count: number; attack: boolean }>; content: Array<{ text: string; count: number; attack: boolean }> };
     /** 良い点：テーマごと。scope は event（運営・会場など）か talk（登壇の中身） */

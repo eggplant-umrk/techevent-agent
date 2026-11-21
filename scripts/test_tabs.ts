@@ -88,10 +88,31 @@ async function main() {
   check("アンケートの声：今後聞いてみたい話がイベント名・日付・件数つきで並ぶ", voices.length > 0 && voices.every((v) => v.event_title && /^\d{4}-\d{2}-\d{2}$/.test(v.event_date) && v.count > 0), `${voices.length}件`);
   check("件数は回答の数の合計（同じ話はイベントごとにまとめる）", voices.reduce((n, v) => n + v.count, 0) === allNext.reduce((n, x) => n + x.response_ids.length, 0));
   const withMatch = voices.filter((v) => v.match);
-  check("合う人がいる声（需要あり）には、その人とカード", withMatch.length > 0 && withMatch.every((v) => cardsForVoices.some((c) => c.card_id === v.match!.card_id && c.employee_id === v.match!.employee_id)), withMatch.map((v) => `${v.text}→${v.match!.name}`).slice(0, 2).join(" / "));
-  check("合う人がいない声は match なし（画面は「まだ話せる人がいない」）", voices.some((v) => !v.match));
-  check("どの登壇への声かは出さない", voices.every((v) => Object.keys(v).sort().join(",") === "count,event_date,event_id,event_title,match,text"));
+  check("話せそうな人がいる声には、その人とカード", withMatch.length > 0 && withMatch.every((v) => cardsForVoices.some((c) => c.card_id === v.match!.card_id && c.employee_id === v.match!.employee_id)), withMatch.map((v) => `${v.text}→${v.match!.name}`).slice(0, 2).join(" / "));
+  // 別の社員と重ならない声は、登壇者本人が続編として話せる（書き戻しで本人のカードにテーマ案として入る）
+  const ownTexts = Object.values(fx).flatMap((f) => f.analysis.talks.flatMap((t) => t.next_themes.filter((n) => !n.overlaps_card_id).map((n) => ({ text: n.text.trim(), speaker: t.speaker_id }))));
+  const ownOk = ownTexts.filter((o) => cardsForVoices.some((c) => c.employee_id === o.speaker)).every((o) => voices.find((v) => v.text === o.text)?.match?.employee_id === o.speaker);
+  check("重ならない声は、登壇者本人を話せそうな人にする（本人のカードへのリンク）", ownTexts.length > 0 && ownOk);
+  const noOne = ownTexts.filter((o) => !cardsForVoices.some((c) => c.employee_id === o.speaker));
+  check("本人にカードがなく、重なる人もいない声だけ「まだ話せる人がいない」", noOne.every((o) => voices.find((v) => v.text === o.text && !v.match)) && voices.filter((v) => !v.match).length === new Set(noOne.map((o) => o.text)).size, `${voices.filter((v) => !v.match).length}件`);
+  check("どの登壇への声かは出さない", voices.every((v) => Object.keys(v).sort().join(",") === "count,event_date,event_id,event_title,match,sample,text" && (!v.match || Object.keys(v.match).sort().join(",") === "card_id,employee_id,name")));
   check("新しいイベントが先", voices.every((v, i) => i === 0 || voices[i - 1].event_date >= v.event_date));
+  // 本番の画面：分析結果のファイルがなければ、保存済みの分析結果（架空のアンケート）で補う
+  {
+    const prev = process.env.SURVEY_ANALYSIS_FILE;
+    delete process.env.SURVEY_ANALYSIS_FILE;
+    const surveys = await import("../lib/surveys");
+    const real = path.join(process.cwd(), "data", "survey_analysis.json");
+    if (!fs.existsSync(real)) {
+      const all = surveys.loadAnalyses();
+      check("分析結果のファイルがなくても、保存済みの分析結果を読む（架空のアンケートの印つき）", Object.keys(all).length >= 6 && Object.values(all).every((x) => x.sample === true));
+      const ov = surveys.eventOverview("ev019")!;
+      check("イベント画面の集計にも架空のアンケートの印", ov.analysis?.sample === true && surveys.overviewProblems(ov).length === 0, surveys.overviewProblems(ov).join(" / "));
+    } else {
+      check("（data/survey_analysis.json があるので、補う動きの確認は省略）", true);
+    }
+    if (prev !== undefined) process.env.SURVEY_ANALYSIS_FILE = prev;
+  }
   check("テーマ案がアンケート由来か（声と同じ文）", isSurveyTheme(` ${voices[0].text} `, voices) && !isSurveyTheme("関係のないテーマ", voices));
 
   fs.rmSync(tmp, { force: true });

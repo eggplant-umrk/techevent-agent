@@ -5,6 +5,7 @@ import { getClient } from "./anthropic";
 import { MAX_STEPS, TODAY } from "./config";
 import { activities, employeeById, requests, schedules, type SpeakingRequest } from "./data";
 import { dateProblems } from "./dates";
+import { internalTermProblems } from "./plainText";
 import { alternativePitch } from "./heavy";
 import { buildSystemPrompt } from "./prompt";
 import { executeTool, PROPOSAL_TOOLS, SUBMIT_TOOL, type Confidence, type SubmitInput } from "./tools";
@@ -158,9 +159,41 @@ export function cautionDateProblems(
   return errs;
 }
 
+/** 使う人向けの文（要約・理由・注意点など）に内部の項目名・値・idが入っていないか。 */
+export function userFacingTextProblems(p: {
+  summary?: string | null;
+  nominee_assessment?: string | null;
+  learnings_applied?: string[];
+  no_fit?: { reasons: string[]; next_checks: string[] } | null;
+  alternative_pitch?: string | null;
+  candidates: Array<{ employee_id: string; theme: string; reason: string; cautions: string[]; caveat: string | null }>;
+}): string[] {
+  return internalTermProblems([
+    { where: "summary", text: p.summary },
+    { where: "nominee_assessment", text: p.nominee_assessment },
+    ...(p.learnings_applied ?? []).map((t) => ({ where: "learnings_applied", text: t })),
+    ...(p.no_fit?.reasons ?? []).map((t) => ({ where: "no_fit.reasons", text: t })),
+    ...(p.no_fit?.next_checks ?? []).map((t) => ({ where: "no_fit.next_checks", text: t })),
+    { where: "代わりの人を推す理由", text: p.alternative_pitch },
+    ...(p.candidates ?? []).flatMap((c) => [
+      { where: `${c.employee_id} の theme`, text: c.theme },
+      { where: `${c.employee_id} の reason`, text: c.reason },
+      { where: `${c.employee_id} の caveat`, text: c.caveat },
+      ...(c.cautions ?? []).map((t) => ({ where: `${c.employee_id} の cautions`, text: t })),
+    ]),
+  ]);
+}
+
 function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null, request: SpeakingRequest): string[] {
   const errs: string[] = [];
   errs.push(...cautionDateProblems(request, input.candidates ?? []));
+  const plain = userFacingTextProblems(input);
+  if (plain.length) {
+    errs.push(
+      ...plain,
+      "上の文は技術広報がそのまま読みます。内部の項目名・値・id（reviewed=false、card_id、act088、e002 など）を使わず、「未確認のカード」「百瀬さんのPR」のように普通の言葉で書き直してください",
+    );
+  }
   const n = Array.isArray(input.candidates) ? input.candidates.length : 0;
   if (nomineeId && !(input.candidates ?? []).some((c) => c.employee_id === nomineeId)) {
     errs.push(

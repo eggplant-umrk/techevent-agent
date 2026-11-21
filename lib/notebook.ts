@@ -10,6 +10,7 @@ import { loadCards, upsertCard, type CardInput } from "./cards";
 import { TODAY, TRENDS } from "./config";
 import { activities, employees, published } from "./data";
 import { UPSERT_CARD_DEF } from "./tools";
+import { PLAIN_TEXT_RULE } from "./plainText";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 
 const STATE_FILE = path.join(process.cwd(), "data", "notebook_state.json");
@@ -77,7 +78,8 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 - 新しい活動が別の取り組みなら、新しいカードを作る
 - reviewed=true のカードは技術広報が確認・修正したものです。要約・テーマ案・おすすめの形は変わりません。新しい根拠や発信があるとき、または新しい活動から別のテーマ案が考えられるときだけ card_id を指定して呼ぶ。テーマ案は「新しいテーマ案（未確認）」として技術広報に提案されます
 
-upsert_card がエラーを返したら、内容を直してもう一度呼んでください。`;
+upsert_card がエラーを返したら、内容を直してもう一度呼んでください。
+summary・themes・format_reason は技術広報が読む文です。${PLAIN_TEXT_RULE}。`;
 
 function buildSystem(): string {
   const roster = employees()

@@ -4,6 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { activities, employeeById, employees, published, requests } from "./data";
+import { internalTermProblems } from "./plainText";
 
 const FILE = path.join(process.cwd(), "data", "cards.json");
 
@@ -177,6 +178,14 @@ const clean = (xs: string[]) => xs.map((s) => s.trim()).filter(Boolean);
 export function upsertCard(input: CardInput): UpsertOutcome {
   const cards = loadCards();
   const errors = validateCardInput(input, cards);
+  // Agentが書く文（技術広報が読む）に内部の項目名・idを入れない。人が画面で直す editCard には掛けない
+  errors.push(
+    ...internalTermProblems([
+      { where: "summary", text: input.summary },
+      ...(input.themes ?? []).map((t) => ({ where: "themes", text: t })),
+      { where: "format_reason", text: input.format_reason },
+    ]),
+  );
   if (errors.length) return { ok: false, errors };
   const t = now();
   const evidence = [...new Set(input.evidence_activity_ids ?? [])];

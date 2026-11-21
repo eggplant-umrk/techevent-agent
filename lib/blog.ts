@@ -6,6 +6,7 @@ import { loadCards, outreachSummary, type Card } from "./cards";
 import { TODAY, TRENDS } from "./config";
 import { activities, employeeById } from "./data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
+import { internalTerms, PLAIN_TEXT_RULE } from "./plainText";
 
 export interface BlogIdea {
   card_id: string;
@@ -60,7 +61,8 @@ export async function suggestBlogIdeas(): Promise<{ ideas: Array<BlogIdea & { ca
 - 登壇経験の少ない人を優先する（発信する人としない人の差を埋めたい）
 - 確認済みのカードを優先する
 - 最近辞退した人、忙しさ5の人は下げる
-why_easy_to_blog は1〜2文、outline は見出しを3〜4個。カードにない事実は足さない。`,
+why_easy_to_blog は1〜2文、outline は見出しを3〜4個。カードにない事実は足さない。
+card_id 以外の項目（title・why_easy_to_blog・outline）は技術広報が読む文です。${PLAIN_TEXT_RULE}。`,
     messages: [{ role: "user", content: `未発信のカード（${pool.length}枚）\n${pool.map(describe).join("\n")}` }],
     output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
   });
@@ -74,6 +76,8 @@ why_easy_to_blog は1〜2文、outline は見出しを3〜4個。カードにな
   const byId = new Map(pool.map((c) => [c.card_id, c]));
   const ideas = parsed.ideas
     .filter((i) => byId.has(i.card_id)) // drop anything not in the unpublished pool
+    // 使う人向けの文に内部の項目名・idが入ったネタは出さない
+    .filter((i) => internalTerms([i.title, i.why_easy_to_blog, ...i.outline].join("\n")).length === 0)
     .slice(0, 3)
     .map((i) => ({ ...i, card: byId.get(i.card_id)! }));
   return { ideas, run_usd: runUsd(runId), total_usd: totalUsd() };

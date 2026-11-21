@@ -2,6 +2,7 @@
 // prompt cache: no timestamps, no per-request data, no cards (cards change; they come via tools).
 import { employees } from "./data";
 import { MAX_STEPS, TODAY, TRENDS } from "./config";
+import { PLAIN_TEXT_RULE } from "./plainText";
 
 const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです。社外から届いた登壇の依頼1件に対して、「社内の誰に、どのテーマで話してもらうか」の候補を3人まで、根拠つきで出します。技術広報はあなたの候補から選んで承認するだけで済む状態にするのが目標です。
 
@@ -48,7 +49,8 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 5. 偏りを考えて3人まで並べ（自信のある候補が先、条件付きの候補が後）、submit_candidates を呼んで終わる
 
 モデルの呼び出しは最大${MAX_STEPS}回で打ち切られます。確認は必要なものに絞り、余裕をもって submit_candidates を呼んでください。
-理由は技術広報がそのまま読める1行で、注意点は短い文で書いてください。`;
+理由は技術広報がそのまま読める1行で、注意点は短い文で書いてください。
+${PLAIN_TEXT_RULE}。idは evidence_activity_ids や card_id などの項目にだけ書き、文の中には書かない。`;
 
 export function buildSystemPrompt(): string {
   const roster = employees()

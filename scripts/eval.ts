@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { cautionDateProblems, runAgent, type AgentEvent, type ProposalResult } from "../lib/agent";
+import { cautionDateProblems, runAgent, userFacingTextProblems, type AgentEvent, type ProposalResult } from "../lib/agent";
 import { getClient } from "../lib/anthropic";
 import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
@@ -265,6 +265,12 @@ async function main() {
       name: `${r.id} 条件付きの候補に引っかかる点の文がある`,
       pass: !!result && noCaveat.length === 0 && badConf.length === 0,
       detail: conds.length ? `条件付き${conds.length}人${noCaveat.length ? `、文なし: ${noCaveat.join(",")}` : "すべて文あり"}` : "条件付きの候補なし",
+    });
+    const plainErrs = result ? userFacingTextProblems(result) : ["結果なし"];
+    checks.push({
+      name: `${r.id} 使う人向けの文に内部の言葉がない`,
+      pass: plainErrs.length === 0,
+      detail: plainErrs.join(" / ") || "内部の項目名・値・idなし",
     });
     const dateErrs = result ? cautionDateProblems(r, result.candidates) : ["結果なし"];
     checks.push({

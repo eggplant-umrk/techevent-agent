@@ -6,6 +6,7 @@ import { HEAVY_FALLBACK_MODEL } from "./config";
 import { activities, employeeById, type SpeakingRequest } from "./data";
 import { chooseModels, recordUsage } from "./usage";
 import type { UsageEntry } from "./data";
+import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
 
 export interface HeavyResult<T> {
   value: T;
@@ -69,17 +70,38 @@ async function callHeavy(
   return { text: textOf(res.content), model: res.model, fellBack: true, cost };
 }
 
+/** 依頼を日本語の見出しで渡す（英語の項目名をモデルに見せないため）。 */
 function requestText(r: SpeakingRequest): string {
-  return JSON.stringify(
-    {
-      依頼元: r.requester?.organization,
-      イベント: r.event,
-      テーマ: r.theme ?? "お任せ",
-      依頼文: r.message,
-    },
-    null,
-    2,
-  );
+  const ev = r.event;
+  return [
+    `依頼元：${r.requester?.organization ?? "不明"}`,
+    ev ? `イベント：${ev.title}（${ev.date}、${ev.format}${ev.duration_min}分、${ev.online ? "オンライン" : ev.venue}）` : "イベント：不明",
+    ev ? `聴衆：${ev.audience}` : "",
+    `テーマ：${r.theme ?? "お任せ"}`,
+    `依頼文：${r.message}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/**
+ * 1回作って、使う人向けの文に内部の言葉が入っていたら、そのことを伝えて1回だけ作り直す。
+ * それでも入っていればエラーにする（そのまま見せない）。
+ */
+async function generateChecked<T>(
+  make: (extra: string) => Promise<{ value: T; model: string; fellBack: boolean; cost: number }>,
+  textsOf: (v: T) => Array<{ where: string; text: string }>,
+): Promise<HeavyResult<T>> {
+  let r = await make("");
+  let problems = internalTermProblems(textsOf(r.value));
+  let cost = r.cost;
+  if (problems.length) {
+    r = await make(`\n\n# 前回の下書きの問題\n${problems.join("\n")}\n内部の項目名やidを使わず、普通の言葉で書き直してください。`);
+    cost += r.cost;
+    problems = internalTermProblems(textsOf(r.value));
+    if (problems.length) throw new Error(`下書きに内部の言葉が残りました：${problems.join(" / ")}`);
+  }
+  return { value: r.value, model: r.model, fellBack: r.fellBack, cost_usd: cost };
 }
 
 export interface OutreachDraft {
@@ -131,7 +153,8 @@ export async function draftOutreach(
 - 断りやすさも残す（忙しければ断ってよい、共同登壇や資料づくりの手伝いもできる、など）
 - 登壇経験が少ない人には、準備の負担が小さいことを伝える
 - 構成案は持ち時間に収まるように分単位で割り振る
-- tips_for_pr には、技術広報が声をかける前に確認しておくとよいことを2〜3個`;
+- tips_for_pr には、技術広報が声をかける前に確認しておくとよいことを2〜3個
+- ${PLAIN_TEXT_RULE}`;
 
   const user = `# 依頼
 ${requestText(request)}
@@ -148,8 +171,18 @@ ${candidate.reason}
 # 根拠の取り組み
 ${evidence || "（なし）"}`;
 
-  const r = await callHeavy(runId, "draft", system, user, DRAFT_SCHEMA);
-  return { value: JSON.parse(r.text) as OutreachDraft, model: r.model, fellBack: r.fellBack, cost_usd: r.cost };
+  return generateChecked(
+    async (extra) => {
+      const r = await callHeavy(runId, "draft", system, user + extra, DRAFT_SCHEMA);
+      return { value: JSON.parse(r.text) as OutreachDraft, model: r.model, fellBack: r.fellBack, cost: r.cost };
+    },
+    (d) => [
+      { where: "件名", text: d.subject },
+      { where: "声かけ文", text: d.message },
+      ...d.lt_outline.flatMap((s) => [{ where: "構成案", text: s.heading }, ...s.points.map((p) => ({ where: "構成案", text: p }))]),
+      ...d.tips_for_pr.map((t) => ({ where: "声をかける前に", text: t })),
+    ],
+  );
 }
 
 /** For named-speaker requests: why to propose someone other than (or alongside) the nominee. */
@@ -171,7 +204,8 @@ export async function alternativePitch(
 - 依頼元の期待（なぜその人を指名したか）を尊重する
 - 代わりの人を推す理由は取り組みの中身で示す
 - 共同登壇や、指名された人がモデレーターに回る案など、角が立たない選択肢も1つ出す
-- 300〜500字、見出しなし、箇条書き可`;
+- 300〜500字、見出しなし、箇条書き可
+- ${PLAIN_TEXT_RULE}`;
   const user = `# 依頼
 ${requestText(request)}
 指名のきっかけ：${request.reference ? `${request.reference.title}` : "不明"}
@@ -182,6 +216,11 @@ ${nominee ? `${nominee.name}（${nominee.business_unit}／${nominee.role}／登�
 
 # 代わりに推す人
 ${alts}`;
-  const r = await callHeavy(runId, "alternative_pitch", system, user);
-  return { value: r.text, model: r.model, fellBack: r.fellBack, cost_usd: r.cost };
+  return generateChecked(
+    async (extra) => {
+      const r = await callHeavy(runId, "alternative_pitch", system, user + extra);
+      return { value: r.text, model: r.model, fellBack: r.fellBack, cost: r.cost };
+    },
+    (t) => [{ where: "代わりの人を推す理由", text: t }],
+  );
 }

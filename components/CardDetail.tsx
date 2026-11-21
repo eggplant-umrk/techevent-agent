@@ -5,7 +5,8 @@ import type { CardFormat, CardPatch, NotebookCard } from "@/app/_client/types";
 import { ACTIVITY_LABEL, FIELD_LABEL, FORMAT_LABEL, md, REASON_LABEL, RESULT_LABEL } from "./labels";
 import { CardMarks, ErrorLine, statusText, Tag } from "./ui";
 
-/** Card detail as a side sheet (full screen on a phone). Native <dialog>: Esc closes, focus stays inside. */
+/** Card detail as a side sheet (full screen on a phone). Native <dialog>: Esc closes, focus stays inside.
+ *  外側（暗い部分）のクリックでも閉じる。ただし書きかけの入力があるときは閉じない。 */
 export function CardDetail({
   card,
   focusEvidence,
@@ -29,6 +30,31 @@ export function CardDetail({
   const [format, setFormat] = useState<CardFormat>(card.format);
   const [formatReason, setFormatReason] = useState(card.format_reason);
   const e = card.employee;
+  // 外側（暗い部分）での押し始めを覚えておく。中で文字を選んで外で離したときに閉じないように
+  const pressedOutside = useRef(false);
+  /** 編集中で、元の内容から書き換えた入力があるか */
+  const dirty =
+    editing &&
+    (summary !== card.summary || themes !== card.themes.join("\n") || format !== card.format || formatReason !== card.format_reason);
+
+  /** クリック位置がパネルの外（::backdrop）か。<dialog> 自身が target になるので位置で判定する */
+  function isOutside(ev: React.MouseEvent<HTMLDialogElement>) {
+    const d = ref.current;
+    if (!d || ev.target !== d) return false;
+    const r = d.getBoundingClientRect();
+    return ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+  }
+
+  function onBackdropClick(ev: React.MouseEvent<HTMLDialogElement>) {
+    const outside = pressedOutside.current && isOutside(ev);
+    pressedOutside.current = false;
+    if (!outside) return;
+    if (dirty) {
+      setError("書きかけの内容があるので閉じませんでした。保存するか「やめる」を押してから閉じてください。");
+      return;
+    }
+    ref.current?.close(); // onClose が呼ばれる（Esc・×と同じ閉じ方）
+  }
 
   useEffect(() => {
     const d = ref.current;
@@ -66,7 +92,14 @@ export function CardDetail({
   }
 
   return (
-    <dialog ref={ref} className="sheet" aria-labelledby="cd-title" onClose={onClose}>
+    <dialog
+      ref={ref}
+      className="sheet"
+      aria-labelledby="cd-title"
+      onClose={onClose}
+      onMouseDown={(ev) => (pressedOutside.current = isOutside(ev))}
+      onClick={onBackdropClick}
+    >
       <div className="sheet-head">
         <div className="sheet-title">
           <h2 id="cd-title" className="h2">

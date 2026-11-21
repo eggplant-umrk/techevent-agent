@@ -3,28 +3,29 @@
 // (instructions + roster + published list) is identical across employees, so it is cached.
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { loadCards, upsertCard, type CardInput } from "./cards";
 import { TODAY, TRENDS } from "./config";
 import { activities, employees, published } from "./data";
 import { UPSERT_CARD_DEF } from "./tools";
+import { dataFile } from "./dataSource";
 import { PLAIN_TEXT_RULE } from "./plainText";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 
-const STATE_FILE = path.join(process.cwd(), "data", "notebook_state.json");
+// Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
+const STATE_FILE = () => dataFile("notebook_state.json");
 const MAX_CALLS_PER_EMPLOYEE = 3;
 
 /** employee_id -> latest activity date already read into the notebook. */
 type NotebookState = Record<string, string>;
 
 function loadState(): NotebookState {
-  if (!fs.existsSync(STATE_FILE)) return {};
-  return JSON.parse(fs.readFileSync(STATE_FILE, "utf-8")) as NotebookState;
+  if (!fs.existsSync(STATE_FILE())) return {};
+  return JSON.parse(fs.readFileSync(STATE_FILE(), "utf-8")) as NotebookState;
 }
 function saveState(s: NotebookState) {
-  fs.writeFileSync(STATE_FILE, JSON.stringify(s, null, 2) + "\n", "utf-8");
+  fs.writeFileSync(STATE_FILE(), JSON.stringify(s, null, 2) + "\n", "utf-8");
 }
 
 export type NotebookEvent =

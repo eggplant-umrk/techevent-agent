@@ -233,6 +233,14 @@ export function CardDetail({
                     <p className="meta">
                       {ev.id}
                       {ev.where && `・${ev.where}`}
+                      {ev.url && (
+                        <>
+                          {"・"}
+                          <a href={ev.url} target="_blank" rel="noopener noreferrer">
+                            元のページを開く
+                          </a>
+                        </>
+                      )}
                     </p>
                   </div>
                 )}

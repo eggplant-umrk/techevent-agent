@@ -34,6 +34,9 @@ if (!process.argv.includes("--offline")) {
   }
 }
 
+// 評価は常に架空データで行う（.env に DATA_SOURCE があっても切り替えない）
+delete process.env.DATA_SOURCE;
+
 const PASS_RATE = 0.9;
 const WRITEBACK_REQUEST = "req003";
 

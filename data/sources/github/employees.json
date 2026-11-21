@@ -1,0 +1,16 @@
+[
+  {
+    "id": "e001",
+    "name": "梅澤陸",
+    "business_unit": "個人の開発（GitHub）",
+    "role": "開発者",
+    "expertise_tags": [
+      "TypeScript",
+      "JavaScript",
+      "Dart"
+    ],
+    "past_talk_count": 0,
+    "last_talk_date": null,
+    "workload": 3
+  }
+]

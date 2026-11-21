@@ -21,7 +21,7 @@ export function GET() {
           : null,
         evidence: c.evidence_activity_ids.map((id) => {
           const a = acts.get(id);
-          return a ? { id, type: a.type, date: a.date, title: a.title, body: a.body, where: a.channel ?? a.repo } : { id, type: "", date: "", title: id, body: "", where: null };
+          return a ? { id, type: a.type, date: a.date, title: a.title, body: a.body, where: a.channel ?? a.repo, url: a.url ?? null } : { id, type: "", date: "", title: id, body: "", where: null };
         }),
         announcements: c.announcement_activity_ids.map((id) => {
           const a = acts.get(id);

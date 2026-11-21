@@ -21,7 +21,7 @@ export type NotebookCard = Card & {
     last_talk_date: string | null;
     workload: number;
   } | null;
-  evidence: Array<{ id: string; type: string; date: string; title: string; body: string; where: string | null }>;
+  evidence: Array<{ id: string; type: string; date: string; title: string; body: string; where: string | null; url?: string | null }>;
   announcements: Array<{ id: string; date: string; title: string }>;
   published: Array<{ id: string; date: string; genre: string; title: string; url: string }>;
 };

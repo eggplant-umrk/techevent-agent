@@ -219,10 +219,17 @@ export function mockApi(real: Api): Api {
     },
     async draft(body): Promise<DraftResponse> {
       await wait(900);
-      const fixtures = Object.values(FIXTURES);
+      // Look the candidate up in THIS request's fixture only. Searching every fixture by employee
+      // picked 笹倉さん's req003 entry for req004 and showed req003's dates in the draft.
+      const own = body.request_id ? FIXTURES[body.request_id]?.result.candidates.find((c) => c.employee_id === body.candidate.employee_id) : undefined;
+      const anyProfile = Object.values(FIXTURES)
+        .flatMap((f) => f.result.candidates)
+        .find((c) => c.employee_id === body.candidate.employee_id);
       const cand =
-        fixtures.flatMap((f) => f.result.candidates).find((c) => c.employee_id === body.candidate.employee_id) ??
-        ({ name: "候補", workload: 3, cautions: [], ...body.candidate } as unknown as Candidate);
+        own ??
+        (anyProfile
+          ? ({ ...anyProfile, cautions: [], caveat: null } as Candidate) // profile only; cautions belong to another request
+          : ({ name: "候補", workload: 3, cautions: [], ...body.candidate } as unknown as Candidate));
       const req = requests.find((r) => r.id === body.request_id);
       total += 0.04;
       return { draft: draftFor({ ...cand, theme: body.candidate.theme, reason: body.candidate.reason }, req), model: "claude-fable-5-2", fell_back: false, run_usd: 0.04, total_usd: total };

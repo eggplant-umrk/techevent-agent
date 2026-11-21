@@ -73,3 +73,4 @@ data/usage.json
 next-env.d.ts
 eval-results/
 .claude/
+data/inbox.json

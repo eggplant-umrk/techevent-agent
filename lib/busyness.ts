@@ -1,0 +1,232 @@
+// 忙しさを予定から計算する（AIは使わない）。
+//   「今後2週間の平日・勤務時間（10〜19時）のうち、予定で埋まっている割合」と区分、期間内の予定の一覧を返す。
+//   予定の一覧は開始・終了・終日かどうかだけ（タイトル・場所・参加者は持たない）。
+//
+// 予定の出どころ
+//   - 架空データ（既定）：data/calendar.json（時間単位の予定）＋ data/schedules.json（出張・休暇などの終日の予定）
+//   - DATA_SOURCE=github（本人）：CALENDAR_ICS_URL があればその iCal、なければ「予定は不明」（推測の数字は入れない）
+//
+// 画面からは busynessFor(id) と busyText(b) を呼ぶ。iCal を使うときは、先に loadCalendarIfConfigured() を await する。
+import fs from "node:fs";
+import { TODAY } from "./config";
+import { dataFile, dataSource } from "./dataSource";
+import { schedules } from "./data";
+import { parseIcs, type BusySlot } from "./ics";
+
+export type { BusySlot } from "./ics";
+
+export const WINDOW_DAYS = 14;
+export const WORK_START_HOUR = 10;
+export const WORK_END_HOUR = 19;
+export type BusyLevel = "余裕あり" | "普通" | "詰まっている";
+
+export type Busyness =
+  | {
+      known: true;
+      /** 0〜1 */
+      ratio: number;
+      percent: number;
+      level: BusyLevel;
+      busy_minutes: number;
+      work_minutes: number;
+      from: string;
+      to: string;
+      slots: BusySlot[];
+    }
+  | { known: false; from: string; to: string; slots: [] };
+
+const JST = 9 * 3600_000;
+const DAY = 86_400_000;
+
+function dayStartMs(date: string): number {
+  const [y, m, d] = date.split("-").map(Number);
+  return Date.UTC(y, m - 1, d) - JST;
+}
+function dateOf(ms: number): string {
+  return new Date(ms + JST).toISOString().slice(0, 10);
+}
+function slotRange(s: BusySlot): [number, number] {
+  return s.all_day
+    ? [dayStartMs(s.start), dayStartMs(s.end)]
+    : [Date.parse(s.start), Date.parse(s.end)];
+}
+
+/** 区分の境目：4割未満は余裕あり、6割以上は詰まっている。 */
+export function levelOf(ratio: number): BusyLevel {
+  if (ratio < 0.4) return "余裕あり";
+  if (ratio < 0.6) return "普通";
+  return "詰まっている";
+}
+
+/** 期間（today から14日）の、計算の対象になる日付の範囲。 */
+export function windowOf(today = TODAY): {
+  from: string;
+  to: string;
+  fromMs: number;
+  toMs: number;
+} {
+  const fromMs = dayStartMs(today);
+  const toMs = fromMs + WINDOW_DAYS * DAY;
+  return { from: today, to: dateOf(toMs - DAY), fromMs, toMs };
+}
+
+/** 予定の一覧から、今後2週間の平日・勤務時間がどれだけ埋まっているかを計算する。 */
+export function computeBusyness(
+  slots: BusySlot[],
+  today = TODAY,
+): Busyness & { known: true } {
+  const w = windowOf(today);
+  const ranges = slots
+    .map(slotRange)
+    .filter(([a, b]) => b > a && a < w.toMs && b > w.fromMs);
+  let busy = 0;
+  let work = 0;
+  for (let t = w.fromMs; t < w.toMs; t += DAY) {
+    const dow = new Date(t + JST).getUTCDay();
+    if (dow === 0 || dow === 6) continue; // 週末は数えない
+    const ws = t + WORK_START_HOUR * 3600_000;
+    const we = t + WORK_END_HOUR * 3600_000;
+    work += we - ws;
+    // その日の勤務時間に切り取って、重なりをまとめてから足す
+    const clipped = ranges
+      .map(([a, b]) => [Math.max(a, ws), Math.min(b, we)] as [number, number])
+      .filter(([a, b]) => b > a)
+      .sort((x, y) => x[0] - y[0]);
+    let curA = -1;
+    let curB = -1;
+    for (const [a, b] of clipped) {
+      if (a > curB) {
+        if (curB > curA) busy += curB - curA;
+        curA = a;
+        curB = b;
+      } else curB = Math.max(curB, b);
+    }
+    if (curB > curA) busy += curB - curA;
+  }
+  const ratio = work ? busy / work : 0;
+  const inWindow = slots
+    .filter((s) => {
+      const [a, b] = slotRange(s);
+      return a < w.toMs && b > w.fromMs;
+    })
+    .map((s) => ({ start: s.start, end: s.end, all_day: s.all_day }))
+    .sort((a, b) => slotRange(a)[0] - slotRange(b)[0]);
+  return {
+    known: true,
+    ratio,
+    percent: Math.round(ratio * 100),
+    level: levelOf(ratio),
+    busy_minutes: Math.round(busy / 60_000),
+    work_minutes: Math.round(work / 60_000),
+    from: w.from,
+    to: w.to,
+    slots: inWindow,
+  };
+}
+
+export function unknownBusyness(today = TODAY): Busyness {
+  const w = windowOf(today);
+  return { known: false, from: w.from, to: w.to, slots: [] };
+}
+
+// ---- 予定の出どころ ---------------------------------------------------------------
+
+interface CalendarEntry extends BusySlot {
+  employee_id: string;
+}
+
+let calendarCache: {
+  file: string;
+  mtime: number;
+  byId: Map<string, BusySlot[]>;
+} | null = null;
+
+/** 架空データの予定（data/calendar.json）。ファイルがなければ null（＝予定は不明）。 */
+function fictionalCalendar(): Map<string, BusySlot[]> | null {
+  const file = dataFile("calendar.json");
+  if (!fs.existsSync(file)) return null;
+  const mtime = fs.statSync(file).mtimeMs;
+  if (calendarCache?.file !== file || calendarCache.mtime !== mtime) {
+    const byId = new Map<string, BusySlot[]>();
+    for (const c of JSON.parse(
+      fs.readFileSync(file, "utf-8"),
+    ) as CalendarEntry[]) {
+      const list = byId.get(c.employee_id) ?? [];
+      list.push({ start: c.start, end: c.end, all_day: c.all_day });
+      byId.set(c.employee_id, list);
+    }
+    calendarCache = { file, mtime, byId };
+  }
+  return calendarCache.byId;
+}
+
+/** 出張・休暇などの終日の予定（schedules.json の to は含む日なので、終わりは翌日にする）。 */
+function scheduleSlots(employeeId: string): BusySlot[] {
+  return schedules()
+    .filter((s) => s.employee_id === employeeId)
+    .map((s) => ({
+      start: s.from,
+      end: dateOf(dayStartMs(s.to) + DAY),
+      all_day: true,
+    }));
+}
+
+// iCal（CALENDAR_ICS_URL）。URL は秘密：表示・ログ・保存しない。
+const ICS_TTL_MS = 10 * 60_000;
+let icsCache: { at: number; slots: BusySlot[] | null } | null = null;
+
+/** iCal の設定があるときだけ読み込む（10分は読み直さない）。失敗したら「予定は不明」になる。 */
+export async function loadCalendarIfConfigured(): Promise<void> {
+  const url = process.env.CALENDAR_ICS_URL?.trim();
+  if (!url || dataSource() !== "github") return;
+  if (icsCache && Date.now() - icsCache.at < ICS_TTL_MS) return;
+  try {
+    const res = await fetch(url, { headers: { Accept: "text/calendar" } });
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const w = windowOf();
+    icsCache = {
+      at: Date.now(),
+      slots: parseIcs(await res.text(), new Date(w.fromMs), new Date(w.toMs)),
+    };
+  } catch (e) {
+    // URL は出さない
+    console.error(
+      `カレンダー（CALENDAR_ICS_URL）を読めませんでした：${e instanceof Error ? e.message.replace(/https?:\/\/\S+/g, "（URL）") : "不明なエラー"}`,
+    );
+    icsCache = { at: Date.now(), slots: null };
+  }
+}
+
+/** 予定の一覧。分からなければ null。 */
+export function slotsFor(employeeId: string): BusySlot[] | null {
+  if (dataSource() === "github") {
+    // 本人の予定は iCal だけ（架空の schedules・calendar は使わない）
+    return process.env.CALENDAR_ICS_URL?.trim() && icsCache?.slots
+      ? icsCache.slots
+      : null;
+  }
+  const cal = fictionalCalendar();
+  if (!cal) return null;
+  return [...(cal.get(employeeId) ?? []), ...scheduleSlots(employeeId)];
+}
+
+export function busynessFor(employeeId: string, today = TODAY): Busyness {
+  const slots = slotsFor(employeeId);
+  return slots ? computeBusyness(slots, today) : unknownBusyness(today);
+}
+
+// ---- 言葉にする ---------------------------------------------------------------------
+
+/** 使う人（技術広報）向けの言い方。「忙しさ5」のような段階は出さない。 */
+export function busyText(b: Busyness): string {
+  if (!b.known) return "予定は不明";
+  const tenths = Math.round(b.ratio * 10);
+  if (tenths === 0) return "今後2週間は予定がほとんど入っていない";
+  if (tenths >= 10) return "今後2週間は勤務時間がほぼ予定で埋まっている";
+  return `今後2週間は勤務時間の${tenths}割が予定で埋まっている`;
+}
+
+/** Agent に渡す短い形（数字と区分）。 */
+export function busyForAgent(b: Busyness): string {
+  return b.known ? `予定の埋まり${b.percent}%（${b.level}）` : "予定は不明";
+}

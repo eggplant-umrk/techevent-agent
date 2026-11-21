@@ -58,7 +58,7 @@ function CandidateRow({
         {c.is_nominee && <span className="nominee">指名</span>}
         {c.is_alternative_to_nominee && <span className="nominee">指名の代わり</span>}
         <span className="meta">
-          {c.business_unit}・登壇{c.past_talk_count}回・忙しさ{c.workload}
+          {c.business_unit}・登壇{c.past_talk_count}回・{c.busy_text}
         </span>
         {conditional && <Tag tone="warn">条件付き</Tag>}
       </div>

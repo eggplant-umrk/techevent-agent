@@ -11,6 +11,7 @@
     "notebook": "tsx scripts/notebook.ts",
     "import:github": "tsx scripts/import_github.ts",
     "test:inbox": "tsx scripts/test_inbox.ts",
+    "test:busyness": "tsx scripts/test_busyness.ts",
     "slack": "tsx scripts/slack-bot.ts",
     "slack:mock-inbox": "tsx scripts/slack/mock-inbox.ts",
     "slack:dry-run": "tsx scripts/slack/dry-run.ts",

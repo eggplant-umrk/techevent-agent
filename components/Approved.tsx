@@ -36,7 +36,7 @@ export function Approved({
         <div className="cand-head">
           <span className="cand-name">{candidate.name}さんで進める</span>
           <span className="meta">
-            {candidate.business_unit}・登壇{candidate.past_talk_count}回・忙しさ{candidate.workload}
+            {candidate.business_unit}・登壇{candidate.past_talk_count}回・{candidate.busy_text}
           </span>
         </div>
         <p className="cand-theme">{candidate.theme}</p>

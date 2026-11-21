@@ -34,7 +34,7 @@ function view(id: string): InboxItem | null {
       candidates: [
         { name: "織部 隼人", confidence: "strong", reason_short: "脆弱性アラートを月400件→50件に減らした本人" },
         { name: "百瀬 結衣", confidence: "strong", reason_short: "初期表示の改善を数字で話せる" },
-        { name: "早乙女 蓮", confidence: "conditional", reason_short: "テーマは合うが忙しさ4で準備時間の確認が必要" },
+        { name: "早乙女 蓮", confidence: "conditional", reason_short: "テーマは合うが、今後2週間は勤務時間の5割が予定で埋まっていて準備時間の確認が必要" },
       ],
     },
   };

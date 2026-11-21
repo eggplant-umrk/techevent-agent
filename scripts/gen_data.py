@@ -606,6 +606,54 @@ schedules = [
 ]
 dump("schedules.json", schedules)
 
+# ---------------------------------------------------------------------------
+# calendar — hour-level fictional appointments, used to COMPUTE busyness
+# (lib/busyness.ts). Only start / end / all_day: no titles, places or attendees.
+# Added at the end with its own seed, so every file above stays byte-identical.
+# The fill rate loosely follows the old fictional workload so the demo keeps the
+# same story (e002・e015 are packed, e012 has room); the number shown to users is
+# what lib/busyness.ts computes from these appointments, not the old workload.
+# ---------------------------------------------------------------------------
+cal_rng = random.Random(20261122)
+CAL_FROM = date(2026, 11, 23)
+CAL_TO = date(2026, 12, 31)
+FILL = {1: 0.12, 2: 0.24, 3: 0.42, 4: 0.56, 5: 0.72}
+SLOTS = 18  # 10:00-19:00 in 30-minute slots
+calendar = []
+for e in EMP:
+    eid, busy = e[0], e[6]
+    base = FILL[busy] + cal_rng.uniform(-0.05, 0.05)
+    d = CAL_FROM
+    while d <= CAL_TO:
+        if d.weekday() < 5:
+            want = round(max(0.0, min(0.95, base + cal_rng.uniform(-0.15, 0.15))) * SLOTS)
+            taken = [False] * SLOTS
+            filled, tries = 0, 0
+            while filled < want and tries < 200:
+                tries += 1
+                length = cal_rng.choice([1, 2, 2, 3, 4])
+                start = cal_rng.randrange(0, SLOTS - length + 1)
+                if any(taken[start:start + length]) or filled + length > want + 1:
+                    continue
+                for i in range(start, start + length):
+                    taken[i] = True
+                filled += length
+            i = 0
+            while i < SLOTS:  # merge adjacent slots into one appointment
+                if not taken[i]:
+                    i += 1
+                    continue
+                j = i
+                while j < SLOTS and taken[j]:
+                    j += 1
+                def hm(k):
+                    m = 10 * 60 + k * 30
+                    return f"{m // 60:02d}:{m % 60:02d}"
+                calendar.append({"employee_id": eid, "start": f"{d}T{hm(i)}:00+09:00", "end": f"{d}T{hm(j)}:00+09:00", "all_day": False})
+                i = j
+        d += timedelta(days=1)
+dump("calendar.json", calendar)
+
 # answer key for README (printed, not written to JSON)
 print("GEMS")
 for aid, a, th in gem_answer:

@@ -316,7 +316,6 @@ async function main() {
     expertise_tags: tags,
     past_talk_count: 0,
     last_talk_date: null,
-    workload: 3, // GitHub からは分からないので中くらいにしておく
   };
 
   // 念のため：出力にメールアドレスが残っていないか

@@ -17,7 +17,6 @@
           "name": "織部 隼人",
           "business_unit": "セキュリティ",
           "role": "セキュリティエンジニア",
-          "workload": 3,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に減らした自動トリアージ",
@@ -75,7 +74,8 @@
             "updated_at": "2026-11-21T05:27:20.794Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている"
         },
         {
           "rank": 2,
@@ -83,7 +83,6 @@
           "name": "百瀬 結衣",
           "business_unit": "バクラク",
           "role": "フロントエンドエンジニア",
-          "workload": 2,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "初期JSを2.1MBから900KBへ：SaaSフロントエンドのバンドル改善でLCPを1.8秒短縮",
@@ -133,7 +132,8 @@
             "updated_at": "2026-11-21T05:26:23.278Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の2割が予定で埋まっている"
         },
         {
           "rank": 3,
@@ -141,7 +141,6 @@
           "name": "早乙女 蓮",
           "business_unit": "Ai Workforce",
           "role": "MLエンジニア",
-          "workload": 4,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "モデル切り替えの判断を1週間から1日に：AIエージェント評価基盤を本番で運用して分かったこと",
@@ -172,8 +171,7 @@
           "cautions": [
             "忙しさが4と高めです",
             "登壇は今回が初めてです",
-            "ネタ帳のカードは未確認です",
-            "忙しい（忙しさ4）"
+            "ネタ帳のカードは未確認です"
           ],
           "is_alternative_to_nominee": false,
           "confidence": "conditional",
@@ -209,7 +207,8 @@
             "pending_themes": [],
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の5割が予定で埋まっている"
         }
       ]
     },
@@ -232,7 +231,6 @@
           "name": "早乙女 蓮",
           "business_unit": "Ai Workforce",
           "role": "MLエンジニア",
-          "workload": 4,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "AIエージェントの品質をCIで担保する：LLM-as-a-judgeの回帰テスト200件と、人手評価との一致率87%までの試行錯誤",
@@ -263,8 +261,7 @@
           "cautions": [
             "忙しさ4なので準備時間を確認したい",
             "登壇は初めてなので、設計ドキュメントをもとに資料づくりを支援するとよい",
-            "ネタ帳のカードは技術広報が未確認",
-            "忙しい（忙しさ4）"
+            "ネタ帳のカードは技術広報が未確認"
           ],
           "is_alternative_to_nominee": false,
           "confidence": "strong",
@@ -300,7 +297,8 @@
             "pending_themes": [],
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の5割が予定で埋まっている"
         },
         {
           "rank": 2,
@@ -308,7 +306,6 @@
           "name": "東雲 健吾",
           "business_unit": "Ai Workforce",
           "role": "バックエンドエンジニア",
-          "workload": 3,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "プロンプト変更で壊さないために：PRに評価結果を添えるレビューと本番A/B比較",
@@ -360,7 +357,8 @@
             "updated_at": "2026-11-21T05:26:28.116Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている"
         },
         {
           "rank": 3,
@@ -368,7 +366,6 @@
           "name": "鷹野 未来",
           "business_unit": "CTO室",
           "role": "エンジニアリングマネージャー",
-          "workload": 4,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "社内向けAIエージェントの効果をどう測るか：オンボーディングでの試験導入と5名の反応",
@@ -387,7 +384,7 @@
             "根拠はSlack投稿1件だけで、効果は体感の声にとどまる",
             "登壇は初めて",
             "ネタ帳のカードは技術広報が未確認",
-            "忙しい（忙しさ4）"
+            "今後2週間は勤務時間の6割が予定で埋まっている"
           ],
           "is_alternative_to_nominee": false,
           "confidence": "conditional",
@@ -420,7 +417,8 @@
             "updated_at": "2026-11-21T05:27:32.778Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の6割が予定で埋まっている"
         }
       ]
     },
@@ -452,7 +450,6 @@
           "name": "芹沢 葵",
           "business_unit": "Fintech",
           "role": "バックエンドエンジニア",
-          "workload": 5,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "月末決済バッチ4時間遅延のポストモーテム：ロック競合とリトライの雪だるま化をどう止め、振り返りを他チームに広げたか",
@@ -478,7 +475,7 @@
             "登壇経験はありません（カードでは短いLT向きとしています）",
             "カードは未確認です",
             "2月10日の前後に予定の重なりはありません",
-            "忙しい（忙しさ5）"
+            "今後2週間は勤務時間の9割が予定で埋まっている"
           ],
           "is_alternative_to_nominee": false,
           "confidence": "conditional",
@@ -513,7 +510,8 @@
             "pending_themes": [],
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の9割が予定で埋まっている"
         },
         {
           "rank": 2,
@@ -521,7 +519,6 @@
           "name": "鳴海 慎",
           "business_unit": "バクラク",
           "role": "SRE",
-          "workload": 4,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "夜間呼び出しを月14回から5回に：アラートの分類で進めたオンコール改善と障害対応の負荷削減",
@@ -539,8 +536,7 @@
             "忙しさは4で要注意です",
             "根拠は11月6日の設計ドキュメント1件です",
             "バクラクの事例なので、金融系の聞き手には少し遠いかもしれません",
-            "2月10日の前後に予定の重なりはありません",
-            "忙しい（忙しさ4）"
+            "2月10日の前後に予定の重なりはありません"
           ],
           "is_alternative_to_nominee": false,
           "confidence": "conditional",
@@ -573,7 +569,8 @@
             "updated_at": "2026-11-21T05:26:32.694Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の6割が予定で埋まっている"
         }
       ]
     },
@@ -596,7 +593,6 @@
           "name": "百瀬 結衣",
           "business_unit": "バクラク",
           "role": "フロントエンドエンジニア",
-          "workload": 2,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "初期JSを2.1MBから900KBへ：大規模SaaSでLCPを1.8秒縮めたバンドル改善",
@@ -646,7 +642,8 @@
             "updated_at": "2026-11-21T05:26:23.278Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の2割が予定で埋まっている"
         },
         {
           "rank": 2,
@@ -654,7 +651,6 @@
           "name": "笹倉 由紀",
           "business_unit": "バクラク",
           "role": "エンジニアリングマネージャー",
-          "workload": 5,
           "past_talk_count": 12,
           "last_talk_date": "2026-10-09",
           "theme": "大規模SaaSのフロントエンド性能改善を支えるチームと開発プロセス",
@@ -665,8 +661,8 @@
             "忙しさは5段階で最大の5",
             "最後の登壇は2026年10月9日で、登壇が多い人",
             "最近登壇した（2026-10-09）",
-            "忙しい（忙しさ5）",
-            "予定が重なる（オフサイト 2027-01-27〜2027-01-29）"
+            "予定が重なる（オフサイト 2027-01-27〜2027-01-29）",
+            "今後2週間は勤務時間の7割が予定で埋まっている"
           ],
           "is_alternative_to_nominee": false,
           "confidence": "conditional",
@@ -674,7 +670,8 @@
           "is_nominee": true,
           "evidence_request_id": "req004",
           "card_id": null,
-          "card": null
+          "card": null,
+          "busy_text": "今後2週間は勤務時間の7割が予定で埋まっている"
         },
         {
           "rank": 3,
@@ -682,7 +679,6 @@
           "name": "柚木 ほのか",
           "business_unit": "バクラク",
           "role": "デザイナー",
-          "workload": 2,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "速いだけでなく使える業務SaaSへ：申請フォームのフォーカス順とラベルの見直し",
@@ -733,7 +729,8 @@
             "updated_at": "2026-11-21T05:26:41.933Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の2割が予定で埋まっている"
         }
       ],
       "alternative_pitch": "笹倉さんへのご指名は、layerx.go #16「型とテストの話」をご覧になってのもので、主催者の期待は「実体験にもとづく大規模SaaSの話」にあると考えられます。この期待は尊重しつつ、今回は同じバクラクの百瀬 結衣さんを推すのがよさそうです。\n\n- 笹倉さんのこれまでの発信はチームづくり・開発プロセス・型とテストが中心で、フロントエンドの性能改善に取り組んだ記録は見つかっていません。\n- 百瀬さんはバクラクのWebフロントで不要な依存を消し、ルート単位でコードを分けて、初期JSを2.1MBから900KBに減らし、LCPを1.8秒縮めています。依頼テーマ「大規模SaaSの初期表示改善」にそのまま合い、数字で語れます。\n- イベント当日の2027年1月28日は、バクラク開発組織の合宿（1月27〜29日）と重なっています。笹倉さんは登壇回数も多く、いまの忙しさも最大です。\n\n角が立たない案として、百瀬さんが20分のメイン登壇を務め、笹倉さんが冒頭の紹介か質疑のモデレーターに回る共同登壇の形があります。ただし合宿と重なるため、笹倉さんが当日参加できるかは本人への確認が必要です。\n\nなお、百瀬さんは社外登壇が初めてです。笹倉さんには代案への意見とあわせて、準備の伴走をお願いできるかも相談したいところです。"
@@ -768,7 +765,6 @@
           "name": "織部 隼人",
           "business_unit": "セキュリティ",
           "role": "セキュリティエンジニア",
-          "workload": 3,
           "past_talk_count": 0,
           "last_talk_date": null,
           "theme": "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に：脆弱性管理の自動化を全社に広げるまで",
@@ -827,7 +823,8 @@
             "updated_at": "2026-11-21T05:27:20.794Z",
             "edited_fields": [],
             "evidence_request_ids": []
-          }
+          },
+          "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている"
         },
         {
           "rank": 2,
@@ -835,7 +832,6 @@
           "name": "梶 真之介",
           "business_unit": "セキュリティ",
           "role": "セキュリティエンジニア",
-          "workload": 3,
           "past_talk_count": 1,
           "last_talk_date": "2025-11-28",
           "theme": "金融サービスのクラウドセキュリティと脆弱性管理の自動化（織部さんとの共同登壇の案）",
@@ -851,7 +847,8 @@
           "is_nominee": true,
           "evidence_request_id": "req005",
           "card_id": null,
-          "card": null
+          "card": null,
+          "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている"
         }
       ],
       "alternative_pitch": "依頼元は、Fintech Engineering Meetup #4の梶さんの資料を見て「脆弱性管理の自動化」を依頼してくださっています。ただ、今回のテーマに取り組みの中身が最も合うのは織部隼人さんです。\n\n- 梶さんの状況：脆弱性管理は得意分野に入っており、忙しさや2月18日前後の予定にも問題はありません。一方、社外に出した資料は2025年12月1日の「金融サービスのクラウドセキュリティ」だけで、最近の投稿にも自動化の取り組みは見当たりません。「そのテーマなら自分ではない」と断られるおそれがあります。\n- 織部さんを推す理由：全リポジトリでSBOMを作り、到達可能性解析と組み合わせて脆弱性アラートを自動で振り分ける仕組みを全社に広げた本人です。アラートを月400件から50件に減らした実績があり、イベントの主題であるサプライチェーンセキュリティにも直結します。\n- 注意点：織部さんは登壇経験がなく、打診もまだです。\n\n角が立たない案としては、梶さんが冒頭で金融サービスのセキュリティ全体像を5分ほど話し、織部さんが本編を担う共同登壇が考えられます。\n\n梶さんには先に「このテーマは織部さんの取り組みが近いと思うが、どう思うか」と相談し、了承を得てから織部さんに打診するのがよさそうです。依頼元には、指名への感謝を伝えたうえで「自動化を実際に進めた担当者からお話しできます」と提案する形になります。"

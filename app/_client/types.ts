@@ -30,7 +30,8 @@ export type NotebookCard = Card & {
     role: string;
     past_talk_count: number;
     last_talk_date: string | null;
-    workload: number;
+    /** 今後2週間の予定の埋まり具合（言葉）。lib/busyness.ts で計算 */
+    busy_text: string;
   } | null;
   evidence: Array<{ id: string; type: string; date: string; title: string; body: string; where: string | null; url?: string | null }>;
   announcements: Array<{ id: string; date: string; title: string }>;

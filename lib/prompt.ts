@@ -1,6 +1,7 @@
 // System prompt for proposals. Everything here is identical across runs so it stays in the
 // prompt cache: no timestamps, no per-request data, no cards (cards change; they come via tools).
 import { employees } from "./data";
+import { busyForAgent, busynessFor } from "./busyness";
 import { MAX_STEPS, TODAY, TRENDS } from "./config";
 import { PLAIN_TEXT_RULE } from "./plainText";
 
@@ -23,11 +24,11 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 # 判断基準
 - テーマは、本人が実際にやった取り組みと、時流の両方から考える。今の時流：${TRENDS.join("／")}
 - 偏りを減らす。最近（おおむね半年以内）登壇した人は下げ、登壇経験の少ない人を優先する。ただしテーマに合っていない人を、経験が少ないという理由だけで推さない
-- 断られる3つの理由を先に確認する。テーマの合い具合はカードと取り組みの中身で、忙しさは workload（4以上は要注意、5はかなり厳しい）で、予定は check_schedule で見る
+- 断られる3つの理由を先に確認する。テーマの合い具合はカードと取り組みの中身で、忙しさは今後2週間の予定の埋まり具合（社員一覧や get_employee の「予定の埋まり」。勤務時間の6割以上が埋まっている「詰まっている」は要注意。「予定は不明」の人は、準備時間が取れるか本人への確認が要ると書く）で、予定は check_schedule で見る
 - 根拠にした取り組みを必ず示す。根拠のない推測で人を推さない
 - 技術広報は複数の候補から選ぶことが多い。候補は3人まで並べる
   - 自信のある候補は confidence=strong（テーマに合い、断られる3つの理由にも大きな引っかかりがない）
-  - 足りない分は条件付きの候補 confidence=conditional として3人まで埋め、何が引っかかるかを caveat に1文で書く（例：忙しさ5で準備時間が取れるか要確認／テーマが少しずれる／根拠が1件だけ／最近登壇したばかり）
+  - 足りない分は条件付きの候補 confidence=conditional として3人まで埋め、何が引っかかるかを caveat に1文で書く（例：今後2週間は勤務時間の8割が予定で埋まっていて、準備時間が取れるか要確認／テーマが少しずれる／根拠が1件だけ／最近登壇したばかり）
   - strong を先に、conditional を後に並べる
   - 本当に誰もいないときだけ、候補を空にして no_fit に「見つからない理由」と「次に確認すべきこと」を書く。条件付きでも出せる人がいれば、そちらを優先する
 - 声かけは下書きまで。送るのは人。あなたは候補を出すところまで
@@ -56,7 +57,7 @@ export function buildSystemPrompt(): string {
   const roster = employees()
     .map(
       (e) =>
-        `- ${e.id} ${e.name}｜${e.business_unit}｜${e.role}｜得意: ${e.expertise_tags.join("、")}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}｜忙しさ${e.workload}`,
+        `- ${e.id} ${e.name}｜${e.business_unit}｜${e.role}｜得意: ${e.expertise_tags.join("、")}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}｜${busyForAgent(busynessFor(e.id))}`,
     )
     .join("\n");
   return `${INSTRUCTIONS}\n\n# 社員一覧（30人）\n${roster}`;

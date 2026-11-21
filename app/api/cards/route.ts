@@ -1,11 +1,13 @@
 // GET: the notebook for the left pane. PATCH: 技術広報 edits a card (marks it 確認済み).
 import { editCard, loadCards, type Card } from "@/lib/cards";
 import { activities, employees, published } from "@/lib/data";
+import { busynessFor, busyText, loadCalendarIfConfigured } from "@/lib/busyness";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export function GET() {
+export async function GET() {
+  await loadCalendarIfConfigured(); // iCal を使う設定のときだけ
   const emps = new Map(employees().map((e) => [e.id, e]));
   const acts = new Map(activities().map((a) => [a.id, a]));
   const pubs = new Map(published().map((p) => [p.id, p]));
@@ -17,7 +19,7 @@ export function GET() {
       return {
         ...c,
         employee: e
-          ? { id: e.id, name: e.name, business_unit: e.business_unit, role: e.role, past_talk_count: e.past_talk_count, last_talk_date: e.last_talk_date, workload: e.workload }
+          ? { id: e.id, name: e.name, business_unit: e.business_unit, role: e.role, past_talk_count: e.past_talk_count, last_talk_date: e.last_talk_date, busy_text: busyText(busynessFor(e.id)) }
           : null,
         evidence: c.evidence_activity_ids.map((id) => {
           const a = acts.get(id);

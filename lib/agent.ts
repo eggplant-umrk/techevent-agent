@@ -1,5 +1,6 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
 import Anthropic from "@anthropic-ai/sdk";
+import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { MAX_STEPS, TODAY } from "./config";
@@ -32,7 +33,8 @@ export interface CandidateCard {
   name: string;
   business_unit: string;
   role: string;
-  workload: number;
+  /** 今後2週間の予定の埋まり具合を言葉で（例：今後2週間は勤務時間の7割が予定で埋まっている／予定は不明）。lib/busyness.ts で計算 */
+  busy_text: string;
   past_talk_count: number;
   last_talk_date: string | null;
   theme: string;
@@ -112,7 +114,7 @@ function summarize(name: string, result: unknown): string {
     case "list_employees":
       return `${(result as unknown[]).length}人`;
     case "get_employee":
-      return `${r.name}／忙しさ${r.workload}／登壇${r.past_talk_count}回／発信${r.published_count}件`;
+      return `${r.name}／${r.busy}／登壇${r.past_talk_count}回／発信${r.published_count}件`;
     case "get_speaking_history":
       return `${r.name}：登壇${r.past_talk_count}回、最終 ${r.last_talk_date ?? "なし"}`;
     case "check_schedule":
@@ -244,7 +246,8 @@ function systemCautions(employeeId: string, eventDate: string | undefined): stri
   if (!e) return [];
   const out: string[] = [];
   if (e.last_talk_date && daysBetween(e.last_talk_date, TODAY) <= 180) out.push(`最近登壇した（${e.last_talk_date}）`);
-  if (e.workload >= 4) out.push(`忙しい（忙しさ${e.workload}）`);
+  const busy = busynessFor(employeeId);
+  if (busy.known && busy.level === "詰まっている") out.push(busyText(busy));
   if (eventDate) {
     const hit = schedules().find((s) => s.employee_id === employeeId && s.from <= eventDate && s.to >= eventDate);
     if (hit) out.push(`予定が重なる（${hit.kind} ${hit.from}〜${hit.to}）`);
@@ -273,7 +276,7 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
         name: e.name,
         business_unit: e.business_unit,
         role: e.role,
-        workload: e.workload,
+        busy_text: busyText(busynessFor(e.id)),
         past_talk_count: e.past_talk_count,
         last_talk_date: e.last_talk_date,
         theme: c.theme,
@@ -405,6 +408,7 @@ export async function runAgent(
   emit: (e: AgentEvent) => void,
   opts: { withAlternativePitch?: boolean } = {},
 ): Promise<ProposalResult | null> {
+  await loadCalendarIfConfigured(); // iCal を使う設定のときだけ読む（社員一覧の予定の埋まりに使う）
   const runId = randomUUID();
   const models = chooseModels();
   emit({

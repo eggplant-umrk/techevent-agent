@@ -39,7 +39,8 @@ export interface Employee {
   expertise_tags: string[];
   past_talk_count: number;
   last_talk_date: string | null;
-  workload: number;
+  /** 架空データに決め打ちで書いてあった忙しさ（1〜5）。使わない（11/21〜）：忙しさは予定から計算する（lib/busyness.ts） */
+  workload?: number;
 }
 
 export interface Activity {

@@ -59,6 +59,8 @@ const RULES: Array<{ re: RegExp; label: string }> = [
   { re: /\b(act|req|pub)\d{3}\b/gi, label: "内部のid" },
   { re: /\be\d{3}\b/gi, label: "社員のid" },
   { re: /[a-z_]+\s*=\s*[\w"]+/gi, label: "項目=値の書き方" },
+  { re: /忙しさ(?:が|は|の)?\s*[1-5１-５]/g, label: "忙しさの段階" },
+  { re: /予定の埋まり\s*\d+\s*%/g, label: "予定の埋まりの数字" },
 ];
 
 /** 見つかった内部の言葉（重複なし）。空なら問題なし。 */
@@ -83,4 +85,4 @@ export function internalTermProblems(items: Array<{ where: string; text: string 
 
 /** Agentへの指示文に入れる共通の一文。 */
 export const PLAIN_TEXT_RULE =
-  "使う人（技術広報）向けの文（要約・テーマ案・理由・注意点・引っかかる点・見つからない理由・次に確認すべきこと・声かけ文など）には、内部の項目名・値・id（reviewed、confidence、card_id、strong、conditional、true/false、act001、req001、e001、card-e001-01、ツール名など）を書かない。人の名前・投稿のタイトル・日付・「確認済み／未確認」「条件付き」などの普通の言葉で書く";
+  "使う人（技術広報）向けの文（要約・テーマ案・理由・注意点・引っかかる点・見つからない理由・次に確認すべきこと・声かけ文など）には、内部の項目名・値・id（reviewed、confidence、card_id、strong、conditional、true/false、act001、req001、e001、card-e001-01、ツール名など）を書かない。人の名前・投稿のタイトル・日付・「確認済み／未確認」「条件付き」などの普通の言葉で書く。忙しさは「忙しさ5」「予定の埋まり72%」のように書かず、「今後2週間は勤務時間の7割が予定で埋まっている」「予定は不明」のような言葉で書く";

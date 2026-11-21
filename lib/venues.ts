@@ -20,6 +20,7 @@ import {
   type ExternalEvent,
 } from "./externalEvents";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
+import { busyForAgent, busynessFor, loadCalendarIfConfigured } from "./busyness";
 import { executeTool, toolDef } from "./tools";
 import { chooseModels, runUsd, totalUsd } from "./usage";
 
@@ -283,6 +284,7 @@ function summarize(name: string, out: unknown): string {
 export type VenueEvent = AgentEvent | { type: "venue_final"; result: VenueResult };
 
 export async function findVenues(cardId: string, emit: (e: VenueEvent) => void): Promise<VenueResult | null> {
+  await loadCalendarIfConfigured(); // iCal を使う設定のときだけ読む（社員一覧の予定の埋まりに使う）
   const card = getCardById(cardId);
   if (!card) throw new Error(`カード ${cardId} は存在しません`);
   const emp = employeeById(card.employee_id);
@@ -293,7 +295,7 @@ export async function findVenues(cardId: string, emit: (e: VenueEvent) => void):
   const acts = new Map(activities().map((a) => [a.id, a]));
   const cardText = {
     card_id: card.card_id,
-    employee: emp ? `${emp.id} ${emp.name}｜${emp.business_unit}｜${emp.role}｜登壇${emp.past_talk_count}回｜忙しさ${emp.workload}` : card.employee_id,
+    employee: emp ? `${emp.id} ${emp.name}｜${emp.business_unit}｜${emp.role}｜登壇${emp.past_talk_count}回｜${busyForAgent(busynessFor(emp.id))}` : card.employee_id,
     summary: card.summary,
     themes: card.themes,
     format: card.format,

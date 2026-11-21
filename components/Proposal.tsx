@@ -1,6 +1,6 @@
 "use client";
 
-import type { Candidate, Proposal as ProposalT } from "@/app/_client/types";
+import type { Candidate, DateSuggestions, Proposal as ProposalT } from "@/app/_client/types";
 import { ACTIVITY_LABEL } from "./labels";
 import { CopyButton, Tag } from "./ui";
 
@@ -11,6 +11,7 @@ export function Candidates({
   onApprove,
   onOpenCard,
   marks = {},
+  dates = null,
 }: {
   result: ProposalT;
   disabled: boolean;
@@ -18,6 +19,8 @@ export function Candidates({
   onOpenCard: (cardId: string, evidenceId?: string) => void;
   /** 依頼の状態から付ける、その人の印（声かけ中・辞退・承諾）。社員id → 印 */
   marks?: Record<string, "outreach" | "declined" | "accepted">;
+  /** 日程が未定の依頼で、候補ごとの空いていそうな日（lib/dateSuggest.ts。コードで計算） */
+  dates?: DateSuggestions | null;
 }) {
   const n = result.candidates.length;
   return (
@@ -28,9 +31,14 @@ export function Candidates({
         </h2>
         <p className="small muted-strong">{result.summary}</p>
         {result.nominee_assessment && <p className="small muted-strong">指名された人：{result.nominee_assessment}</p>}
+        {dates && (
+          <p className="meta">
+            日程が未定のため、{dates.period.label}（{dates.period.from}〜{dates.period.to}・平日 {dates.hours.start}〜{dates.hours.end}時）で、候補ごとに空いていそうな日を出しています。本人に確認する前の目安です。
+          </p>
+        )}
       </div>
       {result.candidates.map((c) => (
-        <CandidateRow key={c.employee_id} c={c} mark={marks[c.employee_id]} disabled={disabled} onApprove={() => onApprove(c)} onOpenCard={(ev) => c.card_id && onOpenCard(c.card_id, ev)} />
+        <CandidateRow key={c.employee_id} c={c} mark={marks[c.employee_id]} free={dates?.candidates.find((x) => x.employee_id === c.employee_id) ?? (dates ? null : undefined)} disabled={disabled} onApprove={() => onApprove(c)} onOpenCard={(ev) => c.card_id && onOpenCard(c.card_id, ev)} />
       ))}
       <NoFit result={result} />
     </section>
@@ -46,12 +54,15 @@ const MARK: Record<"outreach" | "declined" | "accepted", { label: string; tone: 
 function CandidateRow({
   c,
   mark,
+  free,
   onApprove,
   onOpenCard,
   disabled,
 }: {
   c: Candidate;
   mark?: "outreach" | "declined" | "accepted";
+  /** 空いていそうな日（日程が未定の依頼のときだけ。undefined なら出さない、null なら「予定は不明」） */
+  free?: DateSuggestions["candidates"][number] | null;
   onApprove: () => void;
   onOpenCard: (evidenceId?: string) => void;
   disabled: boolean;
@@ -97,6 +108,7 @@ function CandidateRow({
         ))}
         {c.evidence.length === 0 && !c.evidence_request_id && "発信済みの記録"}
       </p>
+      {free !== undefined && <FreeDates free={free} />}
       {c.cautions.length > 0 && (
         <p className="cautions meta" title={c.cautions.join("／")}>
           注意：{c.cautions.join("／")}
@@ -113,6 +125,32 @@ function CandidateRow({
         )}
       </div>
     </article>
+  );
+}
+
+const WEEK = ["日", "月", "火", "水", "木", "金", "土"];
+/** 2026-12-14 → 12/14（月） */
+export function dayLabel(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）`;
+}
+
+/** 候補の横に出す「空いていそうな日」。予定が分からない人は「予定は不明」。補足（予定が分かる範囲の外など）はそのまま出す */
+function FreeDates({ free }: { free: DateSuggestions["candidates"][number] | null }) {
+  if (!free || !free.known) {
+    return (
+      <p className="free-dates small">
+        <span className="strong">空いていそうな日：</span>予定は不明
+        {free?.note && <span className="meta">（{free.note}）</span>}
+      </p>
+    );
+  }
+  return (
+    <p className="free-dates small">
+      <span className="strong">空いていそうな日：</span>
+      {free.dates.length ? free.dates.map(dayLabel).join("・") : "この時期には見つかりませんでした"}
+      <span className="meta">（本人に確認する前の目安です{free.note ? `。${free.note}` : ""}）</span>
+    </p>
   );
 }
 

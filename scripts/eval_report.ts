@@ -58,7 +58,7 @@ const candLabel = (c: Cand & { is_nominee?: boolean }) =>
 for (const a of after.rows) {
   const b = before.rows.find((x) => x.request_id === a.request_id)!;
   const aTop = a.result?.candidates.map(candLabel).join("<br>") || "（なし）";
-  md += `| ${a.request_id} | ${a.pattern} | ${b.top3.map(nm).join("<br>")} | ${aTop}${a.result?.no_fit ? "<br>※3人未満" : ""} | ${ok(b.any_hit)} → ${ok(a.any_hit)} | ${ok(b.alternative_ok)} → ${ok(a.alternative_ok)} | ${b.steps} → ${a.steps} | $${b.run_usd.toFixed(3)} → $${a.run_usd.toFixed(3)} |\n`;
+  md += `| ${a.request_id} | ${a.pattern} | ${b.top3.map(nm).join("<br>")} | ${aTop}${a.result?.no_fit ? "<br>※0人（見つからない）" : ""} | ${ok(b.any_hit)} → ${ok(a.any_hit)} | ${ok(b.alternative_ok)} → ${ok(a.alternative_ok)} | ${b.steps} → ${a.steps} | $${b.run_usd.toFixed(3)} → $${a.run_usd.toFixed(3)} |\n`;
 }
 const bAvg = avg(before.rows.map((r) => r.run_usd));
 const aAvg = avg(after.rows.map((r) => r.run_usd));
@@ -91,7 +91,7 @@ if (after.quality) {
     md += `| ${q.request_id} | ${f2(q.before)} | ${f2(q.after)} | ${sign(q.after - q.before)} | ${f2(b1)} | ${f2(a1)} | ${sign(a1 - b1)} |\n`;
   }
   md += `| **全体** | **${f2(avg(allB))}** | **${f2(avg(allA))}** | **${sign(avg(allA) - avg(allB))}** | **${f2(avg(topB))}** | **${f2(avg(topA))}** | **${sign(avg(topA) - avg(topB))}** |\n`;
-  md += `\n候補数は before ${allB.length}人、after ${allA.length}人。after は根拠のある人だけを（条件付きも含めて）並べ、それでも足りなければ3人そろえないので、平均には「根拠の薄い2〜3位を出さなくなった」効果も入っている。1位だけを比べた列のほうが、テーマ案そのものの差に近い。\n`;
+  md += `\n候補数は before ${allB.length}人、after ${allA.length}人。after は根拠のある人だけを（条件付きも含めて）並べ、人数はそろえない（5人まで）ので、平均には「根拠の薄い2〜3位を出さなくなった」効果も入っている。1位だけを比べた列のほうが、テーマ案そのものの差に近い。\n`;
   md += `\n### 採点のコメント（after）\n`;
   for (const q of after.quality) {
     md += `\n**${q.request_id}**\n`;
@@ -106,8 +106,8 @@ if (conditional.length) {
 }
 
 const short = after.rows.filter((r) => r.result?.no_fit);
-md += `\n## 3人未満になった依頼\n`;
-if (!short.length) md += `\nなし（全件で3人そろった）\n`;
+md += `\n## 見つからない理由を返した依頼\n`;
+if (!short.length) md += `\nなし（全件で候補が出た）\n`;
 for (const a of short) {
   md += `\n**${a.request_id}**（${a.top3.length}人）\n- 見つからない理由：${a.result!.no_fit!.reasons.join("／")}\n- 次に確認すべきこと：${a.result!.no_fit!.next_checks.join("／")}\n`;
 }
@@ -133,11 +133,11 @@ if (prevEntry) {
   const named = after.rows.filter((r) => r.pattern === "named_speaker").length;
   md += `| 指名された本人が候補にいる | ${nomineeIn(prev)}/${named} | ${nomineeIn(after)}/${named} |\n`;
   md += `| 結合テスト | ${prev.checks.filter((c) => c.pass).length}/${prev.checks.length}（${Math.round(prev.pass_rate * 100)}%） | ${after.checks.filter((c) => c.pass).length}/${after.checks.length}（${Math.round(after.pass_rate * 100)}%） |\n`;
-  md += `| 想定候補が上位3人 | ${prev.rows.filter((r) => r.any_hit).length}/${prev.rows.length} | ${after.rows.filter((r) => r.any_hit).length}/${after.rows.length} |\n`;
+  md += `| 想定候補が候補にいる | ${prev.rows.filter((r) => r.any_hit).length}/${prev.rows.length} | ${after.rows.filter((r) => r.any_hit).length}/${after.rows.length} |\n`;
   md += `| 候補の数（5件の合計） | ${count(prev)} | ${count(after)} |\n`;
   const hasConf = (x: typeof after) => x.rows.some((r) => (r.result?.candidates ?? []).some((c) => c.confidence));
   md += `| うち条件付き | ${hasConf(prev) ? condCount(prev) : "—（区分なし）"} | ${condCount(after)} |\n`;
-  md += `| 3人未満の依頼 | ${shortCount(prev)} | ${shortCount(after)} |\n`;
+  md += `| 見つからない理由を返した依頼 | ${shortCount(prev)} | ${shortCount(after)} |\n`;
   md += `| テーマ案の質：全候補の平均 | ${f2(qAll(prev, "after_scores"))} | ${f2(qAll(after, "after_scores"))} |\n`;
   md += `| テーマ案の質：1位の平均 | ${f2(qTop(prev))} | ${f2(qTop(after))} |\n`;
   md += `| 1件あたりの金額 | $${avg(prev.rows.map((r) => r.run_usd)).toFixed(3)} | $${avg(after.rows.map((r) => r.run_usd)).toFixed(3)} |\n`;

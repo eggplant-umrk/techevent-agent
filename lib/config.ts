@@ -5,6 +5,9 @@
 /** The demo's "today". Fixed so the system prompt stays byte-identical (prompt cache). */
 export const TODAY = "2026-11-21";
 
+/** 候補の上限。合う人がいるだけ出す（0人なら見つからない理由を返す）。 */
+export const MAX_CANDIDATES = 5;
+
 /** Agent loop: maximum number of model calls per proposal. */
 export const MAX_STEPS = 15;
 

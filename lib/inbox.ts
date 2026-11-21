@@ -271,7 +271,8 @@ export function summaryOf(it: InboxItem): InboxSummary | undefined {
     return {
       name: c.name,
       confidence: c.confidence,
-      reason_short: plain(short) ? short : plain(c.theme) ? shorten(c.theme) : FALLBACK,
+      // 登壇経験の印を理由の前に付ける（形は変えない。Slack の返信でも理由の近くに出る）
+      reason_short: `${c.talk_tag ? `${c.talk_tag}｜` : ""}${plain(short) ? short : plain(c.theme) ? shorten(c.theme) : FALLBACK}`,
     };
   });
   const summary: InboxSummary = { candidates };

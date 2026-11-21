@@ -64,7 +64,10 @@ function CandidateRow({
       </div>
       <p className="cand-theme">{c.theme}</p>
       {conditional && <p className="caveat">{c.caveat?.trim() || "引っかかる点の記載がありません。カードで確かめてください。"}</p>}
-      <p className="cand-reason">{c.reason}</p>
+      <p className="cand-reason">
+        {c.talk_tag && <span className="meta">{c.talk_tag}・</span>}
+        {c.reason}
+      </p>
       <p className="cand-evidence meta">
         根拠：
         {c.evidence_request_id && <span>依頼 {c.evidence_request_id}（指名）</span>}

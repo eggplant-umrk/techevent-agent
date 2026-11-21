@@ -47,8 +47,8 @@ Slackボット（セッション②）が使う窓口です。**この形は変�
   "status": "ready",
   "summary": {
     "candidates": [
-      { "name": "百瀬 結衣", "confidence": "strong", "reason_short": "依存の整理とコード分割で、LCPを中央値で1.8秒縮めました。" },
-      { "name": "笹倉 由紀", "confidence": "conditional", "reason_short": "指名された本人です。" }
+      { "name": "百瀬 結衣", "confidence": "strong", "reason_short": "登壇経験あり｜依存の整理とコード分割で、LCPを中央値で1.8秒縮めました。" },
+      { "name": "笹倉 由紀", "confidence": "conditional", "reason_short": "半年以内に登壇｜指名された本人です。" }
     ],
     "no_fit": { "reasons": ["初期表示の改善を実際にやった記録は百瀬さんのPRだけでした"] }
   },
@@ -60,7 +60,7 @@ Slackボット（セッション②）が使う窓口です。**この形は変�
 | --- | --- |
 | `status` | `"processing"`（準備中）／`"ready"`（準備済み）／`"error"`（エラー） |
 | `summary` | `ready` のときだけ入ります |
-| `summary.candidates` | 候補（最大3人、おすすめ順）。`confidence` は `"strong"`（自信のある候補）か `"conditional"`（条件付きの候補）。`reason_short` は理由の先頭1文（60字まで） |
+| `summary.candidates` | 候補（0〜5人、合う人がいるだけ。自信のある候補が先）。`confidence` は `"strong"`（自信のある候補）か `"conditional"`（条件付きの候補）。`reason_short` は登壇経験の印（初登壇／半年以内に登壇／登壇経験あり）＋「｜」＋理由の先頭1文（60字まで）。0人のときは `no_fit` に見つからない理由 |
 | `summary.no_fit` | 候補が3人に満たないときだけ入ります。`reasons` は見つからない理由 |
 | `url` | 画面でこの依頼を開くURL。開くと、準備済みの候補画面がすぐ出ます（もう一度は実行しません） |
 

@@ -463,6 +463,20 @@ export default function Home() {
             await api.resolvePending(detailCard.card_id, theme, accept);
             await loadCards();
           }}
+          onFindVenues={(cardId, onEvent) =>
+            api.venues(cardId, (e) => {
+              if (e.type === "usage" || e.type === "done") {
+                setRunUsd(e.run_usd);
+                setTotalUsd(e.total_usd);
+              }
+              onEvent(e);
+            })
+          }
+          onVenueDraft={async (body) => {
+            const j = await api.venueDraft(body);
+            setTotalUsd(j.total_usd);
+            return j;
+          }}
         />
       )}
     </div>

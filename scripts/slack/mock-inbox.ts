@@ -45,7 +45,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify(body));
   };
-  const u = new URL(req.url ?? "/", `http://localhost:${port}`);
+  const u = new URL(req.url ?? "/", `http://127.0.0.1:${port}`);
   if (req.method === "POST" && u.pathname === "/api/inbox") {
     let raw = "";
     req.on("data", (c) => (raw += c));
@@ -71,4 +71,4 @@ const server = http.createServer((req, res) => {
   send(404, { error: "見つかりません" });
 });
 
-server.listen(port, () => console.log(`[mock-inbox] http://localhost:${port} で待っています`));
+server.listen(port, "127.0.0.1", () => console.log(`[mock-inbox] http://127.0.0.1:${port} で待っています`));

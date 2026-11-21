@@ -29,7 +29,7 @@ const botToken = required("SLACK_BOT_TOKEN", (v) => v.startsWith("xoxb-"), "xoxb
 const appToken = required("SLACK_APP_TOKEN", (v) => v.startsWith("xapp-"), "xapp- で始まる App-Level Token（connections:write）");
 const requestChannel = required("SLACK_REQUEST_CHANNEL", (v) => /^[CG][A-Z0-9]+$/.test(v), "依頼を拾うチャンネルの id。C で始まる英数字");
 const allowedTeam = process.env.SLACK_ALLOWED_TEAM_ID?.trim() || null;
-const inboxBaseUrl = process.env.INBOX_BASE_URL?.trim() || "http://localhost:3000";
+const inboxBaseUrl = process.env.INBOX_BASE_URL?.trim() || "http://127.0.0.1:3000";
 
 const log = (line: string) => console.log(`[slack] ${new Date().toLocaleTimeString("ja-JP")} ${line}`);
 

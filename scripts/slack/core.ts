@@ -26,7 +26,7 @@ export interface BotConfig {
   channel: string;
   /** ボット自身のユーザー id（auth.test で取得） */
   botUserId: string;
-  /** 窓口のベースURL（既定 http://localhost:3000） */
+  /** 窓口のベースURL（既定 http://127.0.0.1:3000。dev サーバーは 127.0.0.1 だけで待ち受け、Windows では localhost が ::1 に向くことがあるため） */
   inboxBaseUrl: string;
   pollIntervalMs: number;
   pollTimeoutMs: number;

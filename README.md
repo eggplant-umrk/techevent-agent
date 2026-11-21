@@ -88,7 +88,7 @@ http://localhost:3000 を開く。APIキーはサーバー側だけで使い、�
    - Event Subscriptions の bot events：`message.channels`（非公開チャンネルなら `message.groups`）
    - ワークスペースにインストールし、Bot User OAuth Token → `SLACK_BOT_TOKEN`（xoxb-）
    - 依頼チャンネルにボットを招待し、チャンネルid（C…）→ `SLACK_REQUEST_CHANNEL`
-2. `.env` に上の3つを書く（名前は `.env.example`）。トークンの値は表示・コミットしない
+2. `.env` に上の3つを書く（名前は `.env.example`）。トークンの値は表示・コミットしない。ボットが呼ぶ窓口は既定で `http://127.0.0.1:3000`（dev サーバーは 127.0.0.1 だけで待ち受けるため。Windows では `localhost` が ::1 に向くことがあるので、`INBOX_BASE_URL` を変えるときも 127.0.0.1 で書く）
 3. ターミナルを2つ開いて、それぞれで起動する
 
 ```bash

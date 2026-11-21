@@ -12,7 +12,7 @@
 //   write-back: after recording a decline on a card, the same request's proposal changes
 // Stage 2 — quality of theme ideas, scored by an LLM judge for before (v0.1) and after.
 //
-// Uses API credits. The key is read from .env into this process only.
+// Uses API credits (except --offline). The key is read from .env into this process only, and only for real runs.
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -22,7 +22,15 @@ import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
 
-process.loadEnvFile(".env");
+// API キー（.env）を読むのは本番実行のときだけ。--offline は API を使わないので .env がなくても動く
+if (!process.argv.includes("--offline")) {
+  try {
+    process.loadEnvFile(".env");
+  } catch {
+    console.error(".env がありません。APIを使う評価には .env の ANTHROPIC_API_KEY が必要です（APIなしで判定し直すなら --offline）。");
+    process.exit(1);
+  }
+}
 
 const PASS_RATE = 0.9;
 const WRITEBACK_REQUEST = "req003";

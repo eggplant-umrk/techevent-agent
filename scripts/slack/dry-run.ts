@@ -20,7 +20,7 @@ const slack: SlackLike = {
 const cfg: BotConfig = {
   channel: CH,
   botUserId: BOT,
-  inboxBaseUrl: `http://localhost:${PORT}`,
+  inboxBaseUrl: `http://127.0.0.1:${PORT}`,
   pollIntervalMs: 300,
   pollTimeoutMs: 4000,
   log: () => undefined,
@@ -40,7 +40,7 @@ async function main() {
   });
   try {
     for (let i = 0; i < 50; i++) {
-      const up = await fetch(`http://localhost:${PORT}/api/inbox/x`).then(() => true, () => false);
+      const up = await fetch(`http://127.0.0.1:${PORT}/api/inbox/x`).then(() => true, () => false);
       if (up) break;
       await new Promise((r) => setTimeout(r, 200));
     }
@@ -73,7 +73,7 @@ async function main() {
     let p = await run("12/17のLT会で話せる人を探しています", "200.1");
     check("最初に「受け付けました」をスレッドへ", p[0]?.text === "受け付けました。候補を準備しています" && p[0]?.thread_ts === "200.1");
     check("候補をスレッドへ返す", p.length === 2 && p[1].text.includes("候補が出ました（3人）") && p[1].text.includes("（条件付き）") && p[1].text.includes("（自信あり）"), p[1]?.text.split("\n")[0]);
-    check("画面へのリンクが絶対URL", p[1]?.text.includes(`<http://localhost:${PORT}/?inbox=`) ?? false);
+    check("画面へのリンクが絶対URL", p[1]?.text.includes(`<http://127.0.0.1:${PORT}/?inbox=`) ?? false);
     check("投稿先はすべて依頼のチャンネルのスレッド", p.every((x) => x.channel === CH && x.thread_ts === "200.1"));
 
     p = await run("Rustの組み込みで見つからない依頼", "201.1");
@@ -85,7 +85,7 @@ async function main() {
     p = await run("遅い依頼", "203.1");
     check("時間切れはその旨を返す", p[1]?.text.startsWith("5分たっても") ?? false);
 
-    const down = { ...cfg, inboxBaseUrl: "http://localhost:3997" };
+    const down = { ...cfg, inboxBaseUrl: "http://127.0.0.1:3997" };
     posts.length = 0;
     await handleRequest({ channel: CH, ts: "204.1", user: "U0PR", text: "窓口が止まっている" }, slack, down);
     check("窓口が止まっているときはその旨を返す", posts[1]?.text.startsWith("受信箱に入れられませんでした") ?? false);

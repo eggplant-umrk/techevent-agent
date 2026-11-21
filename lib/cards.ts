@@ -57,21 +57,27 @@ function readCardFile(file: string): Card[] {
 export function loadCards(): Card[] {
   // DEMO_PERSON=on：本人のカードは data/sources/demo-person/cards.json にあり、架空の30人のカードの後ろに足す
   const raw = [...readCardFile(FILE()), ...(demoPersonOn() ? readCardFile(demoFile("cards.json")) : [])];
-  // Cards written before these fields existed.
-  return raw.map((c) => ({
+  return raw.map(withDefaults);
+}
+
+/** Cards written before these fields existed. */
+function withDefaults(c: Card): Card {
+  return {
     ...c,
     announcement_activity_ids: c.announcement_activity_ids ?? [],
     evidence_request_ids: c.evidence_request_ids ?? [],
     pending_themes: c.pending_themes ?? [],
     edited_fields: c.edited_fields ?? [],
-  }));
+  };
 }
 
 function saveCards(cards: Card[]) {
   if (demoPersonOn()) {
-    // 本人のカードは別のファイルへ。架空の30人のファイルは中身が変わったときだけ書く
+    // 本人のカードは別のファイルへ。架空の30人のファイルは、カードの中身が変わったときだけ書く
+    // （読み込み時に補った空の項目だけの違いでは書かない）
     writeIfChanged(demoFile("cards.json"), cards.filter((c) => c.employee_id === DEMO_ID));
-    writeIfChanged(FILE(), cards.filter((c) => c.employee_id !== DEMO_ID));
+    const base = cards.filter((c) => c.employee_id !== DEMO_ID);
+    if (JSON.stringify(base) !== JSON.stringify(readCardFile(FILE()).map(withDefaults))) writeIfChanged(FILE(), base);
     return;
   }
   fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");

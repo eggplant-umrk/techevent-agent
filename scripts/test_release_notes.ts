@@ -30,6 +30,13 @@ async function main() {
   const { validateSubmit } = await import("../lib/agent");
   const { executeTool } = await import("../lib/tools");
 
+  // いつも同じ出発点にする：リリースノートから作ったカードを一時的に外す（最後に cards.json はバイトごと元に戻す）
+  const startCards = (JSON.parse(original.toString("utf-8")) as Array<{ evidence_activity_ids: string[] }>).filter(
+    (c) => !c.evidence_activity_ids.some((id) => id.startsWith("rel")),
+  );
+  fs.writeFileSync(CARDS, JSON.stringify(startCards, null, 2) + "\n");
+  check("出発点：リリースノートは10件ともまだカードになっていない", rc.pendingReleaseNotes().length === 10);
+
   // ---- 取り込み
   const notes = rn.releaseNotes();
   const acts = activities();

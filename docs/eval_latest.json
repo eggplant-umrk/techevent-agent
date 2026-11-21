@@ -1,54 +1,44 @@
 {
-  "at": "2026-11-21T15:36:08.166Z",
+  "at": "2026-11-21T15:43:59.848Z",
   "version": "v0.3",
   "mode": "stage1",
-  "spent_usd": 0.11968560000000039,
+  "spent_usd": 0.46675660000000185,
   "pass_rate": 1,
   "checks": [
     {
-      "name": "req005 根拠idが実在",
+      "name": "req002 根拠idが実在",
       "pass": true,
-      "detail": "2件すべて実在"
+      "detail": "6件すべて実在"
     },
     {
-      "name": "req005 送信なし",
+      "name": "req002 送信なし",
       "pass": true,
       "detail": "受付の返信と非公開チャンネルへの通知のほかに送信なし（許可：scripts\\slack-bot.ts の受付の返信と非公開チャンネルへの通知（決まった文だけ））"
     },
     {
-      "name": "req005 想定候補が候補（5人まで）にいる",
+      "name": "req002 想定候補が候補（5人まで）にいる",
       "pass": true,
-      "detail": "候補=e024,e007 想定=e024"
+      "detail": "候補=e013,e014,e001,e003 想定=e013,e014"
     },
     {
-      "name": "req005 候補は5人まで・自信のある候補が先・印あり",
+      "name": "req002 候補は5人まで・自信のある候補が先・印あり",
       "pass": true,
-      "detail": "2人（自信あり1・条件付き1）"
+      "detail": "4人（自信あり1・条件付き3）"
     },
     {
-      "name": "req005 条件付きの候補に引っかかる点の文がある",
+      "name": "req002 条件付きの候補に引っかかる点の文がある",
       "pass": true,
-      "detail": "条件付き1人すべて文あり"
+      "detail": "条件付き3人すべて文あり"
     },
     {
-      "name": "req005 使う人向けの文に内部の言葉がない",
+      "name": "req002 使う人向けの文に内部の言葉がない",
       "pass": true,
       "detail": "内部の項目名・値・idなし"
     },
     {
-      "name": "req005 注意点の日付が開催日と食い違わない",
+      "name": "req002 注意点の日付が開催日と食い違わない",
       "pass": true,
-      "detail": "開催日 2027-02-18 と矛盾なし"
-    },
-    {
-      "name": "req005 代わりの提案",
-      "pass": true,
-      "detail": "代わり=e024"
-    },
-    {
-      "name": "req005 指名された本人が候補にいる",
-      "pass": true,
-      "detail": "2位・conditional：テーマが本人の確認できる取り組みと少しずれるため、話せる中身があるか本人に確認が要る。難しければ、全社の自動トリアージを作った織部さんとの共同登壇（梶さんがクラウドセキュリティ全体の位置づけ、織部さんが仕組みの中身を話す）を代案にする。"
+      "detail": "開催日 2027-01-21 と矛盾なし"
     }
   ],
   "rows": [
@@ -413,283 +403,6 @@
               "reviewed_at": null,
               "created_at": "2026-11-21T05:26:23.278Z",
               "updated_at": "2026-11-21T05:26:23.278Z",
-              "edited_fields": [],
-              "evidence_request_ids": [],
-              "reactions": []
-            }
-          }
-        ]
-      }
-    },
-    {
-      "request_id": "req002",
-      "pattern": "theme_specified",
-      "top3": [
-        "e013",
-        "e001",
-        "e014",
-        "e003"
-      ],
-      "expected": [
-        "e013",
-        "e014"
-      ],
-      "primary": "e013",
-      "any_hit": true,
-      "primary_hit": true,
-      "alternatives": [],
-      "alternative_ok": null,
-      "run_usd": 0.34679020000000005,
-      "steps": 8,
-      "elapsed_ms": 78534,
-      "result": {
-        "run_id": "f92b54f1-a7fe-4345-9b12-d2837f3b132c",
-        "request_id": "req002",
-        "request_pattern": "theme_specified",
-        "summary": "「AIエージェントの品質をどう評価・担保しているか」というテーマでの依頼として、評価や品質担保に実際に手を動かした人を探しました。数字と失敗談がそろっていて当日の予定も空いている早乙女さんを最有力として先頭に置きました。そのほかに、評価を先に作る設計をブログにしている青柳さん、プロンプト変更に評価結果を添える運用を始めた東雲さん、ガードレール設計で登壇済みの久住さんを条件付きで並べています。",
-        "nominee_assessment": null,
-        "learnings_applied": [],
-        "no_fit": null,
-        "candidates": [
-          {
-            "rank": 1,
-            "employee_id": "e013",
-            "name": "早乙女 蓮",
-            "business_unit": "Ai Workforce",
-            "role": "MLエンジニア",
-            "busy_text": "今後2週間は勤務時間の5割が予定で埋まっている",
-            "talk_tag": "初登壇",
-            "blog_to_lt": false,
-            "past_talk_count": 0,
-            "last_talk_date": null,
-            "theme": "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：正解ケース200件・人手評価との一致率87%・モデル切り替え判断を1週間から1日に",
-            "reason": "本番のAIエージェントの評価基盤を自分で作り、回帰テストをCIに組み込んでいて、一致率87%や判断期間の短縮などの数字と、判定のブレをどう抑えるかで試行錯誤した話がそろっているため、依頼の「数値や失敗談」と時流の「エージェントの評価」の両方にそのまま合う。",
-            "evidence": [
-              {
-                "id": "act019",
-                "type": "github_pr",
-                "date": "2026-09-14",
-                "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
-                "where": "ai-workforce/agent-eval"
-              },
-              {
-                "id": "act050",
-                "type": "slack_post",
-                "date": "2026-10-06",
-                "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
-                "where": "#ai-workforce-dev"
-              },
-              {
-                "id": "act073",
-                "type": "design_doc",
-                "date": "2026-10-20",
-                "title": "AIエージェント評価基盤 設計ドキュメント v2",
-                "where": "ai-workforce/design-docs"
-              }
-            ],
-            "cautions": [
-              "評価ケースや判定コストの見積もりなど、設計ドキュメントの中身を社外に出してよい範囲の確認が要る",
-              "ネタ帳の記録は技術広報が未確認"
-            ],
-            "is_alternative_to_nominee": false,
-            "confidence": "strong",
-            "caveat": null,
-            "is_nominee": false,
-            "evidence_request_id": null,
-            "card_id": "card-e013-01",
-            "card": {
-              "card_id": "card-e013-01",
-              "employee_id": "e013",
-              "summary": "AIエージェントの評価基盤を作り、プロンプトやツール定義を変えたときに過去の正解ケース200件で挙動を自動評価する回帰テストをCIに組み込んだ。判定LLMのブレは3回判定の多数決で抑え、人手評価との一致率は87%。新モデルへの切り替え判断は手動確認で1週間かかっていたのが1日になり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。",
-              "themes": [
-                "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：200件の正解ケースと3回判定の多数決",
-                "モデル切り替えの判断を1週間から1日に：エージェント評価基盤を本番運用して分かったこと",
-                "判定LLMは信用できるか：人手評価との一致率87%の測り方と評価コストの見積もり"
-              ],
-              "evidence_activity_ids": [
-                "act019",
-                "act050",
-                "act073"
-              ],
-              "format": "blog",
-              "format_reason": "設計ドキュメントに評価ケースの管理・判定LLMの選定・一致率の測り方・コストの見積もりまで具体的な中身と数字がそろっていて、登壇経験のない本人がまず文章で出すのに向いているため。",
-              "publication_status": "unpublished",
-              "published_ids": [],
-              "latest_activity_date": "2026-10-20",
-              "outreach_history": [],
-              "reviewed": false,
-              "reviewed_at": null,
-              "created_at": "2026-11-21T05:12:03.817Z",
-              "updated_at": "2026-11-21T05:12:03.817Z",
-              "announcement_activity_ids": [],
-              "pending_themes": [],
-              "edited_fields": [],
-              "evidence_request_ids": [],
-              "reactions": []
-            }
-          },
-          {
-            "rank": 2,
-            "employee_id": "e001",
-            "name": "青柳 恭平",
-            "business_unit": "CTO室",
-            "role": "CTO室 エンジニア",
-            "busy_text": "今後2週間は勤務時間の7割が予定で埋まっている",
-            "talk_tag": "半年以内に登壇",
-            "blog_to_lt": true,
-            "past_talk_count": 18,
-            "last_talk_date": "2026-10-30",
-            "theme": "評価の仕組みを先に作る：モデルを替えても品質を比べられるLLMアーキテクチャ",
-            "reason": "テックブログ「LLMプロダクトのアーキテクチャ選定」（2026-09-30）で、評価の仕組みを先に作ってモデルを替えても品質を比べられるようにした設計をまとめていて、ブログ記事をもとに本番運用での品質担保の話にしやすい。",
-            "evidence": [
-              {
-                "id": "act038",
-                "type": "slack_post",
-                "date": "2026-09-30",
-                "title": "テックブログ公開: LLMプロダクトのアーキテクチャ選定",
-                "where": "#tech-pr"
-              }
-            ],
-            "cautions": [
-              "話の中心は設計の役割分担で、評価の具体的な数値はブログに少ないため、テーマが少しずれる",
-              "11月中旬の週報で、社外登壇の依頼が重なっていて他の人に回したいと書いている",
-              "今後2週間は勤務時間の7割が予定で埋まっている",
-              "予定が重なる（社外登壇 2027-01-20〜2027-01-22）",
-              "ネタ帳の記録は技術広報が未確認"
-            ],
-            "is_alternative_to_nominee": false,
-            "confidence": "conditional",
-            "caveat": "開催日を含む2027-01-20〜22に他社カンファレンスの基調講演が入っていて当日は重なるうえ、本人も登壇依頼を他の人に回したいと話している。",
-            "is_nominee": false,
-            "evidence_request_id": null,
-            "card_id": "card-e001-01",
-            "card": {
-              "card_id": "card-e001-01",
-              "employee_id": "e001",
-              "summary": "LLMを使うプロダクトの設計で、数える・絞る・照らし合わせるといった決まった処理はコードに任せ、読む・判断する・書くはモデルに任せる方針で分担を決めた。評価の仕組みを先に作り、モデルを替えても品質を比べられるようにした。選ばなかった構成とその理由も含めて、テックブログ「LLMプロダクトのアーキテクチャ選定」（2026-09-30）で公開済み。",
-              "themes": [
-                "モデルに任せること・コードで決めること ─ LLMプロダクトの役割分担の決め方",
-                "評価の仕組みを先に作る：モデルを替えても品質を比べられるLLMアーキテクチャ",
-                "選ばなかった構成から考えるLLMプロダクト設計 ─ AIエージェントの本番運用に向けて"
-              ],
-              "evidence_activity_ids": [
-                "blg007"
-              ],
-              "format": "talk",
-              "format_reason": "ブログで判断の経緯がまとまっていて、登壇経験も多い本人なら、選ばなかった構成や評価の作り方まで掘り下げる20分以上の登壇で話せる厚みがあるため。",
-              "publication_status": "blogged",
-              "published_ids": [
-                "pub036"
-              ],
-              "latest_activity_date": "2026-09-30",
-              "announcement_activity_ids": [
-                "act038"
-              ],
-              "pending_themes": [],
-              "outreach_history": [],
-              "reviewed": false,
-              "reviewed_at": null,
-              "created_at": "2026-11-21T05:25:29.533Z",
-              "updated_at": "2026-11-21T10:19:56.296Z",
-              "edited_fields": [],
-              "evidence_request_ids": [],
-              "reactions": []
-            }
-          },
-          {
-            "rank": 3,
-            "employee_id": "e014",
-            "name": "東雲 健吾",
-            "business_unit": "Ai Workforce",
-            "role": "バックエンドエンジニア",
-            "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている",
-            "talk_tag": "初登壇",
-            "blog_to_lt": false,
-            "past_talk_count": 0,
-            "last_talk_date": null,
-            "theme": "プロンプトをコードと同じようにレビューする：評価結果を添えたPRと本番A/B比較で「なんとなく変えて壊れる」をなくす",
-            "reason": "プロンプトをリポジトリで管理し、変更のPRに評価結果を添え、本番でもフラグでA/B比較できる運用を始めていて、エージェントの品質担保の運用面を話せる。",
-            "evidence": [
-              {
-                "id": "act043",
-                "type": "slack_post",
-                "date": "2026-10-01",
-                "title": "プロンプトをコードと同じようにレビューする運用を始めた",
-                "where": "#ai-workforce-dev"
-              }
-            ],
-            "cautions": [
-              "根拠が投稿1件だけで、数字が少ない",
-              "ネタ帳のカードがないため、話せる中身を本人に確かめる必要がある",
-              "早乙女さんと同じ事業部のため、組み合わせるなら話の分担を決めたい"
-            ],
-            "is_alternative_to_nominee": false,
-            "confidence": "conditional",
-            "caveat": "根拠がSlack投稿1件だけで、25分のセッションに足りる中身と数字があるかを本人に確認したい。",
-            "is_nominee": false,
-            "evidence_request_id": null,
-            "card_id": null,
-            "card": null
-          },
-          {
-            "rank": 4,
-            "employee_id": "e003",
-            "name": "久住 拓真",
-            "business_unit": "Ai Workforce",
-            "role": "MLエンジニア",
-            "busy_text": "今後2週間は勤務時間の6割が予定で埋まっている",
-            "talk_tag": "半年以内に登壇",
-            "blog_to_lt": false,
-            "past_talk_count": 10,
-            "last_talk_date": "2026-09-11",
-            "theme": "AIエージェントの本番運用で効くガードレール設計：質問が多かった論点を深掘りする",
-            "reason": "2026-09のAIエージェント設計勉強会で本番運用のガードレール設計を話して資料も公開していて、当日に質問が多かった論点を深掘りすれば、品質担保の一つの面として話せる。",
-            "evidence": [
-              {
-                "id": "act017",
-                "type": "slack_post",
-                "date": "2026-09-12",
-                "title": "AIエージェント設計勉強会#5の資料を公開しました",
-                "where": "#tech-pr"
-              }
-            ],
-            "cautions": [
-              "話の中心は評価ではなくガードレールなので、テーマが少しずれる",
-              "すでに公開した資料との違いを出す必要がある",
-              "予定が重なる（社外登壇 2027-01-21〜2027-01-21）",
-              "ネタ帳の記録は技術広報が未確認"
-            ],
-            "is_alternative_to_nominee": false,
-            "confidence": "conditional",
-            "caveat": "2027-01-21当日に別のAI勉強会での登壇が入っていて重なり、テーマも評価ではなくガードレールに寄っている。",
-            "is_nominee": false,
-            "evidence_request_id": null,
-            "card_id": "card-e003-01",
-            "card": {
-              "card_id": "card-e003-01",
-              "employee_id": "e003",
-              "summary": "AIエージェントを本番で運用するときのガードレール設計について、2026-09-11のAIエージェント設計勉強会#5で登壇し、資料「AIエージェントの本番運用とガードレール」をSpeaker Deckで公開した。当日は質問が多く、本人がその部分を追ってブログにまとめる予定と話している。",
-              "themes": [
-                "AIエージェントの本番運用で効くガードレール設計",
-                "登壇で質問が多かったガードレール設計の論点を深掘りする"
-              ],
-              "evidence_activity_ids": [],
-              "format": "blog",
-              "format_reason": "登壇はすでに済んでいて、本人が質問の多かった点を追ってブログにすると言っているので、続きのブログとして声をかけるのが自然なため。",
-              "publication_status": "talked",
-              "published_ids": [
-                "pub034"
-              ],
-              "latest_activity_date": "2026-09-12",
-              "announcement_activity_ids": [
-                "act017"
-              ],
-              "pending_themes": [],
-              "outreach_history": [],
-              "reviewed": false,
-              "reviewed_at": null,
-              "created_at": "2026-11-21T05:25:46.582Z",
-              "updated_at": "2026-11-21T05:25:46.582Z",
               "edited_fields": [],
               "evidence_request_ids": [],
               "reactions": []
@@ -1112,6 +825,295 @@
           }
         ],
         "alternative_pitch": "依頼テーマ「脆弱性管理の自動化」には、梶さんより織部 隼人さんの取り組みがそのまま合います。梶さんと織部さんの共同登壇を第一案として提案します。\n\n**先方の期待**\n- 先方は梶さんのFintech Engineering Meetup #4（2025年11月）の資料を見て指名しています。\n- 梶さんは脆弱性管理を得意分野に含み、2月18日前後に重なる予定もありません。\n- ただし、その資料は「金融サービスのクラウドセキュリティ」で、自動化そのものの話ではありません。\n- 梶さんがこのテーマで直近に手を動かした記録は見当たらず、30分話せる中身があるかは未確認です。\n\n**織部さんを推す理由**\n- 全リポジトリでSBOMを作り、到達可能性で脆弱性アラートを自動で振り分ける仕組みを自ら設計しました。\n- それを全社に広げ、開発チームに届くアラートを月400件から約50件に減らしました。\n- イベントの主題であるサプライチェーンセキュリティにも直結します。\n\n**角が立たない案**\n- 梶さんが冒頭で金融サービスの文脈と課題を話し、織部さんが仕組みと成果を話す共同登壇にします。\n- 織部さんは初登壇なので、登壇経験のある梶さんが質疑の進行を担います。\n\n**進め方**\n- 先に梶さんに相談し、このテーマで話せる材料があるかと、共同登壇の意向を聞きます。\n- 織部さんの登壇意思と予定も未確認のため、あわせて確かめます。\n- 先方には、指名への感謝と「テーマにより合う実例がある」ことを伝え、共同登壇を提案します。"
+      }
+    },
+    {
+      "request_id": "req002",
+      "pattern": "theme_specified",
+      "top3": [
+        "e013",
+        "e014",
+        "e001",
+        "e003"
+      ],
+      "expected": [
+        "e013",
+        "e014"
+      ],
+      "primary": "e013",
+      "any_hit": true,
+      "primary_hit": true,
+      "alternatives": [],
+      "alternative_ok": null,
+      "run_usd": 0.4667566000000001,
+      "steps": 8,
+      "elapsed_ms": 97191,
+      "rejections": [
+        {
+          "step": 4,
+          "reasons": "差し戻し（2件）"
+        },
+        {
+          "step": 5,
+          "reasons": "差し戻し（1件）"
+        },
+        {
+          "step": 6,
+          "reasons": "差し戻し（1件）"
+        }
+      ],
+      "result": {
+        "run_id": "1303cf16-9991-4cfb-bc35-968bc736569a",
+        "request_id": "req002",
+        "request_pattern": "theme_specified",
+        "summary": "「AIエージェントの品質をどう評価・担保しているか」というテーマ指定の25分セッション（2027年1月21日、オンライン）として読み取りました。評価の仕組みを自分で作って本番で回し、数字が出ている人を最優先にしました。早乙女さんが本命で、ほかの3人は根拠の少なさや開催日に別の予定があることが引っかかるため、条件付きとして後ろに並べています。",
+        "nominee_assessment": null,
+        "learnings_applied": [],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e013",
+            "name": "早乙女 蓮",
+            "business_unit": "Ai Workforce",
+            "role": "MLエンジニア",
+            "busy_text": "今後2週間は勤務時間の5割が予定で埋まっている",
+            "talk_tag": "初登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：200件の正解ケース、人手評価との一致率87%、モデル切り替えの判断を1週間から1日に",
+            "reason": "AIエージェントの評価基盤を自分で作って本番で回しています（正解ケース200件の回帰テスト、3回判定の多数決、人手評価との一致率87%、モデル切り替えの判断が1週間から1日に）。依頼にある具体的な数値も、判定のブレに苦労している話もあり、時流の「エージェントの評価」に真っすぐ合います。",
+            "evidence": [
+              {
+                "id": "act019",
+                "type": "github_pr",
+                "date": "2026-09-14",
+                "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
+                "where": "ai-workforce/agent-eval"
+              },
+              {
+                "id": "act050",
+                "type": "slack_post",
+                "date": "2026-10-06",
+                "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
+                "where": "#ai-workforce-dev"
+              },
+              {
+                "id": "act073",
+                "type": "design_doc",
+                "date": "2026-10-20",
+                "title": "AIエージェント評価基盤 設計ドキュメント v2",
+                "where": "ai-workforce/design-docs"
+              }
+            ],
+            "cautions": [
+              "評価基盤の構成や評価コストの見積もりを、社外にどこまで出してよいかの確認が要る",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e013-01",
+            "card": {
+              "card_id": "card-e013-01",
+              "employee_id": "e013",
+              "summary": "AIエージェントの評価基盤を作り、プロンプトやツール定義を変えたときに過去の正解ケース200件で挙動を自動評価する回帰テストをCIに組み込んだ。判定LLMのブレは3回判定の多数決で抑え、人手評価との一致率は87%。新モデルへの切り替え判断は手動確認で1週間かかっていたのが1日になり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。",
+              "themes": [
+                "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：200件の正解ケースと3回判定の多数決",
+                "モデル切り替えの判断を1週間から1日に：エージェント評価基盤を本番運用して分かったこと",
+                "判定LLMは信用できるか：人手評価との一致率87%の測り方と評価コストの見積もり"
+              ],
+              "evidence_activity_ids": [
+                "act019",
+                "act050",
+                "act073"
+              ],
+              "format": "blog",
+              "format_reason": "設計ドキュメントに評価ケースの管理・判定LLMの選定・一致率の測り方・コストの見積もりまで具体的な中身と数字がそろっていて、登壇経験のない本人がまず文章で出すのに向いているため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-20",
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:12:03.817Z",
+              "updated_at": "2026-11-21T05:12:03.817Z",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e014",
+            "name": "東雲 健吾",
+            "business_unit": "Ai Workforce",
+            "role": "バックエンドエンジニア",
+            "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている",
+            "talk_tag": "初登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "プロンプトをコードと同じようにレビューする：評価結果つきのPRと本番でのA/B比較で「なんとなく変えて壊れる」をなくす",
+            "reason": "プロンプトをリポジトリで管理し、PRに評価結果を添えてレビューし、本番ではフラグでA/B比較する運用を自分で始めています。品質を担保する運用の話として依頼に合い、同じ事業部の早乙女さんの評価基盤の話と組み合わせて共同登壇にもしやすいです。",
+            "evidence": [
+              {
+                "id": "act043",
+                "type": "slack_post",
+                "date": "2026-10-01",
+                "title": "プロンプトをコードと同じようにレビューする運用を始めた",
+                "where": "#ai-workforce-dev"
+              }
+            ],
+            "cautions": [
+              "根拠はSlackへの投稿1件だけで、まだネタ帳のカードがない",
+              "具体的な数値はまだ見当たらないので、本人に確認が要る"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "根拠が1件だけで数字も見当たらないので、単独より早乙女さんとの共同登壇が現実的です。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": null,
+            "card": null
+          },
+          {
+            "rank": 3,
+            "employee_id": "e001",
+            "name": "青柳 恭平",
+            "business_unit": "CTO室",
+            "role": "CTO室 エンジニア",
+            "busy_text": "今後2週間は勤務時間の7割が予定で埋まっている",
+            "talk_tag": "半年以内に登壇",
+            "blog_to_lt": true,
+            "past_talk_count": 18,
+            "last_talk_date": "2026-10-30",
+            "theme": "評価の仕組みを先に作る：モデルを替えても品質を比べられるLLMアーキテクチャ",
+            "reason": "テックブログ「LLMプロダクトのアーキテクチャ選定」で、評価の仕組みを先に作ってモデルを替えても品質を比べられるようにした設計を公開済みです。ブログの内容を登壇に組み直しやすいです。",
+            "evidence": [
+              {
+                "id": "act038",
+                "type": "slack_post",
+                "date": "2026-09-30",
+                "title": "テックブログ公開: LLMプロダクトのアーキテクチャ選定",
+                "where": "#tech-pr"
+              }
+            ],
+            "cautions": [
+              "話の中心は設計の分担で、評価の具体的な数値や失敗談は少ない可能性がある",
+              "今後2週間は勤務時間の7割が予定で埋まっている",
+              "予定が重なる（社外登壇 2027-01-20〜2027-01-22）",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "開催日の前後（1月20〜22日）に他社カンファレンスの基調講演が入っていて、今後2週間も予定が詰まっているため、出るのは難しいと思われます。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e001-01",
+            "card": {
+              "card_id": "card-e001-01",
+              "employee_id": "e001",
+              "summary": "LLMを使うプロダクトの設計で、数える・絞る・照らし合わせるといった決まった処理はコードに任せ、読む・判断する・書くはモデルに任せる方針で分担を決めた。評価の仕組みを先に作り、モデルを替えても品質を比べられるようにした。選ばなかった構成とその理由も含めて、テックブログ「LLMプロダクトのアーキテクチャ選定」（2026-09-30）で公開済み。",
+              "themes": [
+                "モデルに任せること・コードで決めること ─ LLMプロダクトの役割分担の決め方",
+                "評価の仕組みを先に作る：モデルを替えても品質を比べられるLLMアーキテクチャ",
+                "選ばなかった構成から考えるLLMプロダクト設計 ─ AIエージェントの本番運用に向けて"
+              ],
+              "evidence_activity_ids": [
+                "blg007"
+              ],
+              "format": "talk",
+              "format_reason": "ブログで判断の経緯がまとまっていて、登壇経験も多い本人なら、選ばなかった構成や評価の作り方まで掘り下げる20分以上の登壇で話せる厚みがあるため。",
+              "publication_status": "blogged",
+              "published_ids": [
+                "pub036"
+              ],
+              "latest_activity_date": "2026-09-30",
+              "announcement_activity_ids": [
+                "act038"
+              ],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:25:29.533Z",
+              "updated_at": "2026-11-21T10:19:56.296Z",
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          },
+          {
+            "rank": 4,
+            "employee_id": "e003",
+            "name": "久住 拓真",
+            "business_unit": "Ai Workforce",
+            "role": "MLエンジニア",
+            "busy_text": "今後2週間は勤務時間の6割が予定で埋まっている",
+            "talk_tag": "半年以内に登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 10,
+            "last_talk_date": "2026-09-11",
+            "theme": "AIエージェントの本番運用で効くガードレール設計：前回の登壇で質問が多かった論点を深掘り",
+            "reason": "AIエージェントを本番運用するためのガードレール設計を、9月の勉強会で話して資料も公開しています。品質を担保する側面から依頼に合います。",
+            "evidence": [
+              {
+                "id": "act017",
+                "type": "slack_post",
+                "date": "2026-09-12",
+                "title": "AIエージェント設計勉強会#5の資料を公開しました",
+                "where": "#tech-pr"
+              }
+            ],
+            "cautions": [
+              "テーマが少しずれる（評価ではなく、ガードレールによる品質の担保）",
+              "前回の登壇資料と内容が重ならないようにする必要がある",
+              "予定が重なる（社外登壇 2027-01-21〜2027-01-21）",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "開催日当日に別のAI勉強会での登壇が入っていて重なるうえ、テーマも評価よりガードレール寄りです。",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e003-01",
+            "card": {
+              "card_id": "card-e003-01",
+              "employee_id": "e003",
+              "summary": "AIエージェントを本番で運用するときのガードレール設計について、2026-09-11のAIエージェント設計勉強会#5で登壇し、資料「AIエージェントの本番運用とガードレール」をSpeaker Deckで公開した。当日は質問が多く、本人がその部分を追ってブログにまとめる予定と話している。",
+              "themes": [
+                "AIエージェントの本番運用で効くガードレール設計",
+                "登壇で質問が多かったガードレール設計の論点を深掘りする"
+              ],
+              "evidence_activity_ids": [],
+              "format": "blog",
+              "format_reason": "登壇はすでに済んでいて、本人が質問の多かった点を追ってブログにすると言っているので、続きのブログとして声をかけるのが自然なため。",
+              "publication_status": "talked",
+              "published_ids": [
+                "pub034"
+              ],
+              "latest_activity_date": "2026-09-12",
+              "announcement_activity_ids": [
+                "act017"
+              ],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:25:46.582Z",
+              "updated_at": "2026-11-21T05:25:46.582Z",
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          }
+        ]
       }
     }
   ],

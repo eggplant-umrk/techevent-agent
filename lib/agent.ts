@@ -462,7 +462,8 @@ export const pitchDeferred = () => pitchLater.getStore() === true;
 export async function runAgent(
   request: SpeakingRequest,
   emit: (e: AgentEvent) => void,
-  opts: { withAlternativePitch?: boolean } = {},
+  /** onRejected：評価用。差し戻しの理由を受け取る（作業ログ・画面には出さない） */
+  opts: { withAlternativePitch?: boolean; onRejected?: (reasons: string[]) => void } = {},
 ): Promise<ProposalResult | null> {
   await loadCalendarIfConfigured(); // iCal を使う設定のときだけ読む（社員一覧の予定の埋まりに使う）
   const runId = randomUUID();
@@ -490,7 +491,11 @@ export async function runAgent(
       firstMessage: `次の登壇依頼に対して、ネタ帳から、合う候補を${MAX_CANDIDATES}人まで提案してください（合う人がいるだけ）。\n\n${JSON.stringify(requestForAgent(request), null, 2)}${peopleNotesForAgent()}${pre.text}`,
       seen: pre.seen,
       submitTool: SUBMIT_TOOL,
-      validate: (input, seen) => validateSubmit(input, seen, request.nominated_employee_id ?? null, request),
+      validate: (input, seen) => {
+        const errs = validateSubmit(input, seen, request.nominated_employee_id ?? null, request);
+        if (errs.length) opts.onRejected?.(errs);
+        return errs;
+      },
       submittedSummary: (input) => `候補${input.candidates.length}人を提出`,
       runTool: (name, input, seen) => {
         const { ok, result: out } = executeTool(name, input);

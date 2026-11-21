@@ -28,6 +28,14 @@ async function main() {
   const pre1 = p.prefetchForAgent(reqs.get("req001")!);
   check("枠だけの依頼でも候補を渡す（未発信のカード）", pre1.text.includes("未発信のカードを新しい順に") && pre1.seen.length > 0);
   check("先に調べた候補は8枚まで（＋指名された本人）", (pre1.text.match(/^- card-/gm) ?? []).length <= 8);
+  // リリースノート・ブログを入れていないとき（評価と同じ）は、それらの id を根拠として見せない（ない id を根拠にして差し戻されないように）
+  process.env.RELEASE_NOTES = "off";
+  process.env.MORE_SOURCES = "off";
+  const ids = new Set((await import("../lib/data")).activities().map((a) => a.id));
+  const offAll = [...reqs.values()].map((r) => p.prefetchForAgent(r));
+  check("材料にない活動（rel・blg など）は、根拠として見せない", offAll.every((x) => x.seen.every((id) => ids.has(id)) && !/\b(rel|blg)\d{3}\b/.test(x.text)));
+  delete process.env.RELEASE_NOTES;
+  delete process.env.MORE_SOURCES;
 
   // ---- コードで出す注意点
   const r4 = reqs.get("req004")!; // 開催 2027-01-28、e002 はオフサイトと重なる

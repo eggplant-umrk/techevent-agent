@@ -56,10 +56,14 @@ export function prefetchForAgent(r: SpeakingRequest): { text: string; seen: stri
   const lines = ids
     .map((id) => getCardById(id))
     .filter((c): c is NonNullable<typeof c> => !!c)
+    // 今の材料にある根拠が1つもないカード（リリースノートやブログを入れていないときの、それだけが根拠のカードなど）は渡さない
+    .filter((c) => c.evidence_activity_ids.some((id) => acts.has(id)) || c.employee_id === r.nominated_employee_id)
     .map((c) => {
       const e = employeeById(c.employee_id);
-      seen.push(...c.evidence_activity_ids);
-      const ev = c.evidence_activity_ids.map((id) => `${id} ${clip(acts.get(id)?.title ?? "", 36)}`).join("／");
+      // 根拠は、今の材料にある活動だけを見せる（ない id を根拠に使って差し戻されないように）
+      const evIds = c.evidence_activity_ids.filter((id) => acts.has(id));
+      seen.push(...evIds);
+      const ev = evIds.map((id) => `${id} ${clip(acts.get(id)?.title ?? "", 36)}`).join("／");
       return `- ${c.card_id}｜${c.employee_id} ${e?.name ?? ""}｜${e?.business_unit ?? ""}・${e?.role ?? ""}｜登壇${e?.past_talk_count ?? 0}回｜${busyForAgent(busynessFor(c.employee_id))}｜${c.reviewed ? "確認済み" : "未確認"}・${c.publication_status}
   テーマ案：${c.themes.join(" / ")}
   要約：${clip(c.summary, 140)}

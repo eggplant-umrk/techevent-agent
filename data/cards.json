@@ -22,7 +22,9 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:11:53.281Z",
-    "updated_at": "2026-11-21T05:11:53.281Z"
+    "updated_at": "2026-11-21T05:11:53.281Z",
+    "announcement_activity_ids": [],
+    "pending_themes": []
   },
   {
     "card_id": "card-e013-01",
@@ -47,7 +49,9 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:12:03.817Z",
-    "updated_at": "2026-11-21T05:12:03.817Z"
+    "updated_at": "2026-11-21T05:12:03.817Z",
+    "announcement_activity_ids": [],
+    "pending_themes": []
   },
   {
     "card_id": "card-e015-01",
@@ -71,6 +75,384 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:12:09.564Z",
-    "updated_at": "2026-11-21T05:12:09.564Z"
+    "updated_at": "2026-11-21T05:12:09.564Z",
+    "announcement_activity_ids": [],
+    "pending_themes": []
+  },
+  {
+    "card_id": "card-e001-01",
+    "employee_id": "e001",
+    "summary": "LLMプロダクトのアーキテクチャをどう選ぶかについて、社内で議論した選定基準をテックブログ「LLMプロダクトのアーキテクチャ選定」にまとめて公開した（2026-09-30）。過去の登壇「LLMをプロダクトに入れるときの設計判断」から続く、LLMとアーキテクチャをテーマにした発信。",
+    "themes": [
+      "LLMプロダクトのアーキテクチャ選定基準 ─ 社内議論から作った判断軸",
+      "AIエージェントを本番運用する前提で考えるLLMプロダクトのアーキテクチャ"
+    ],
+    "evidence_activity_ids": [],
+    "format": "talk",
+    "format_reason": "登壇18回の経験があり、ブログにまとめた選定基準は20分以上の登壇で事例と一緒に深く話せる厚さがあるため。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub036"
+    ],
+    "latest_activity_date": "2026-09-30",
+    "announcement_activity_ids": [
+      "act038"
+    ],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:25:29.533Z",
+    "updated_at": "2026-11-21T05:25:29.533Z"
+  },
+  {
+    "card_id": "card-e002-01",
+    "employee_id": "e002",
+    "summary": "バクラクのチームで、開発プロセスを週次で振り返って見直す仕組みを運用している。その仕組みをテックブログ「開発プロセスを週次で見直す」にまとめて公開し、採用広報にも使える発信になった。",
+    "themes": [
+      "開発プロセスを週次で見直す：EMが回すチームの振り返りの仕組み",
+      "SaaS開発チームが振り返りを形だけにしないための工夫"
+    ],
+    "evidence_activity_ids": [],
+    "format": "lt",
+    "format_reason": "ブログで内容がまとまっていて、本人は登壇12回の経験があるので、記事をもとにした5〜10分のLTにすぐ組み直せるため。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub038"
+    ],
+    "latest_activity_date": "2026-10-10",
+    "announcement_activity_ids": [
+      "act059"
+    ],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:25:39.523Z",
+    "updated_at": "2026-11-21T05:25:39.523Z"
+  },
+  {
+    "card_id": "card-e003-01",
+    "employee_id": "e003",
+    "summary": "AIエージェントを本番で運用するときのガードレール設計について、2026-09-11のAIエージェント設計勉強会#5で登壇し、資料「AIエージェントの本番運用とガードレール」をSpeaker Deckで公開した。当日は質問が多く、本人がその部分を追ってブログにまとめる予定と話している。",
+    "themes": [
+      "AIエージェントの本番運用で効くガードレール設計",
+      "登壇で質問が多かったガードレール設計の論点を深掘りする"
+    ],
+    "evidence_activity_ids": [],
+    "format": "blog",
+    "format_reason": "登壇はすでに済んでいて、本人が質問の多かった点を追ってブログにすると言っているので、続きのブログとして声をかけるのが自然なため。",
+    "publication_status": "talked",
+    "published_ids": [
+      "pub034"
+    ],
+    "latest_activity_date": "2026-09-12",
+    "announcement_activity_ids": [
+      "act017"
+    ],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:25:46.582Z",
+    "updated_at": "2026-11-21T05:25:46.582Z"
+  },
+  {
+    "card_id": "card-e004-01",
+    "employee_id": "e004",
+    "summary": "layerx.go #17で、金融とSaaSのデータ整合性について登壇した。アーカイブはイベントレポートとして公開済み（2026-11-04）。",
+    "themes": [
+      "金融とSaaSでデータ整合性をどう守るか：Goで書くバックエンドの設計"
+    ],
+    "evidence_activity_ids": [],
+    "format": "talk",
+    "format_reason": "すでにlayerx.goで同じテーマを登壇しており、登壇経験も8回あるので、20分以上の登壇として他のイベントにも展開しやすいため。",
+    "publication_status": "blogged",
+    "published_ids": [
+      "pub040"
+    ],
+    "latest_activity_date": "2026-10-31",
+    "announcement_activity_ids": [
+      "act097"
+    ],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:25:55.503Z",
+    "updated_at": "2026-11-21T05:25:55.503Z"
+  },
+  {
+    "card_id": "card-e005-01",
+    "employee_id": "e005",
+    "summary": "2026-09に外部カンファレンスで「テスト自動化の投資対効果 2026」を登壇しました。2025年の同じテーマの登壇を2026年版に更新した内容です。懇親会では他社のQAエンジニアと情報交換もしています。",
+    "themes": [
+      "テスト自動化の投資対効果 2026：2025年版から何が変わったか",
+      "生成AI時代のテスト自動化の投資判断：QAの視点から"
+    ],
+    "evidence_activity_ids": [],
+    "format": "blog",
+    "format_reason": "登壇はもう済んでいて資料もあるので、登壇経験7回の本人にとって書きやすく、会場に来られなかった人にも届くブログ版で広げるのが合うためです。",
+    "publication_status": "talked",
+    "published_ids": [
+      "pub035"
+    ],
+    "latest_activity_date": "2026-09-27",
+    "announcement_activity_ids": [
+      "act036"
+    ],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:06.001Z",
+    "updated_at": "2026-11-21T05:26:06.001Z"
+  },
+  {
+    "card_id": "card-e012-01",
+    "employee_id": "e012",
+    "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+    "themes": [
+      "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+      "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+    ],
+    "evidence_activity_ids": [
+      "act088"
+    ],
+    "format": "blog",
+    "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-28",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:23.278Z",
+    "updated_at": "2026-11-21T05:26:23.278Z"
+  },
+  {
+    "card_id": "card-e014-01",
+    "employee_id": "e014",
+    "summary": "プロンプトをリポジトリで管理し、変更はPRでレビューして評価結果を添える運用を始めた。本番ではフラグで切り替えてA/B比較もできるようにし、「なんとなく変えて壊れる」ことがなくなった。",
+    "themes": [
+      "プロンプトもコードレビューする：PRに評価結果を添える運用の始め方",
+      "フラグで切り替えるプロンプトの本番A/B比較",
+      "「なんとなく変えて壊れる」をなくすLLMプロダクトのプロンプト管理"
+    ],
+    "evidence_activity_ids": [
+      "act043"
+    ],
+    "format": "lt",
+    "format_reason": "運用の仕組みは具体的で時流（AIエージェントの本番運用と評価）にも合うが、数字がまだなく登壇経験もないため、5〜10分のLTから始めるのがちょうどよい。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-01",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:28.116Z",
+    "updated_at": "2026-11-21T05:26:28.116Z"
+  },
+  {
+    "card_id": "card-e016-01",
+    "employee_id": "e016",
+    "summary": "アラートを発報元と対応内容で分類してオンコール負荷を可視化し、対応不要なアラートを半分に減らした。その結果、夜間呼び出しは月14回から5回になった。可視化に使ったダッシュボードの作り方もドキュメントにまとめている。",
+    "themes": [
+      "夜間呼び出しを月14回から5回に：アラートを発報元×対応内容で分類して減らしたオンコール改善",
+      "対応不要アラートを半減させるまで：オンコール負荷を見える化するダッシュボードの作り方"
+    ],
+    "evidence_activity_ids": [
+      "act102"
+    ],
+    "format": "lt",
+    "format_reason": "分かりやすい数字が出ていて取り組みもまとまっており、登壇経験のない本人が最初に話すなら5〜10分のLTがちょうどよいため。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-11-06",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:32.694Z",
+    "updated_at": "2026-11-21T05:26:32.694Z"
+  },
+  {
+    "card_id": "card-e017-01",
+    "employee_id": "e017",
+    "summary": "スクリーンリーダーを使う方へのインタビューをもとに、バクラクの経費申請フローのフォーカス順とラベルを見直しました。スクリーンリーダーで申請を最後まで通せるようになり、キーボードだけでも完了できるようになりました。直したときのチェックリストは、デザインシステムに入れる予定です。",
+    "themes": [
+      "スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善",
+      "業務SaaSの申請フォームをキーボードだけで完了させる：フォーカス順とラベル設計の勘所",
+      "アクセシビリティ対応をチェックリストにしてデザインシステムに組み込む"
+    ],
+    "evidence_activity_ids": [
+      "act027"
+    ],
+    "format": "blog",
+    "format_reason": "具体的な改善内容はありますが数字はまだなく、本人も登壇経験がないので、まずはインタビューから改善までの流れをブログにまとめるのが始めやすいです。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-09-22",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:41.933Z",
+    "updated_at": "2026-11-21T05:26:41.933Z"
+  },
+  {
+    "card_id": "card-e018-01",
+    "employee_id": "e018",
+    "summary": "手書き領収書のOCRで、金額の読み取り精度を78%から93%に上げた。一番効いたのは、合成データで手書き数字を増やしたこと。読み取りに失敗するパターンの分類も一通り終えている。",
+    "themes": [
+      "手書き領収書OCRの金額読み取りを78%→93%に：合成データで手書き数字を増やした話",
+      "OCRの失敗パターンを分類して精度改善の打ち手を決める"
+    ],
+    "evidence_activity_ids": [
+      "act064"
+    ],
+    "format": "lt",
+    "format_reason": "精度改善の数字と効いた施策がはっきりしていて5〜10分で伝えやすく、登壇経験0回の本人が最初に出る場としても向いているため。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-14",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:46.685Z",
+    "updated_at": "2026-11-21T05:26:46.685Z"
+  },
+  {
+    "card_id": "card-e020-01",
+    "employee_id": "e020",
+    "summary": "E2Eテストのflaky率を週次で集計する仕組みを作り、原因を分析しました。原因の6割は待ち合わせ処理の不備、残りはテストデータの共有でした。テストデータ共有への対策として、テストごとに使い捨てテナントを作る分離を入れ、CI時間+2分と引き換えにflaky率を月初比で70%減らしました。",
+    "themes": [
+      "flaky率を週次で可視化して原因を切り分けたE2Eテスト改善",
+      "テストごとの使い捨てテナントでE2Eのflakyを70%減らした話",
+      "CI時間+2分と引き換えに安定性を取る：E2Eテストデータ分離の判断"
+    ],
+    "evidence_activity_ids": [
+      "act026",
+      "act082"
+    ],
+    "format": "lt",
+    "format_reason": "計測・原因分析・対策・70%減という結果が短くまとまっていて、登壇経験のない本人が最初に話すには5〜10分のLTがちょうどよいため。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-23",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:26:54.244Z",
+    "updated_at": "2026-11-21T05:26:54.244Z"
+  },
+  {
+    "card_id": "card-e022-01",
+    "employee_id": "e022",
+    "summary": "データ基盤のSQLをdbtへ全面移行し、テストとリネージが見えるようにした。その結果、指標の定義違いによる問い合わせが減ってきている。移行手順もドキュメントにまとめた。",
+    "themes": [
+      "データ基盤のSQLをdbtへ移行した手順と進め方",
+      "dbtのテストとリネージで指標の定義違いによる問い合わせを減らす"
+    ],
+    "evidence_activity_ids": [
+      "act069"
+    ],
+    "format": "blog",
+    "format_reason": "移行手順のドキュメントがすでにあってブログにしやすく、効果を示す数字がまだなく登壇経験もないため、まずはブログが向いている。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-16",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:27:04.454Z",
+    "updated_at": "2026-11-21T05:27:04.454Z"
+  },
+  {
+    "card_id": "card-e023-01",
+    "employee_id": "e023",
+    "summary": "金融規制の要件を満たすために、ハッシュチェーンで改ざんを検知できる監査ログ基盤を設計した。書き込み性能を落とさないように処理を非同期にした工夫と、監査対応のときにログを検索する方法を設計ドキュメントにまとめている。",
+    "themes": [
+      "ハッシュチェーンで作る改ざん検知可能な監査ログ：金融規制に応える設計",
+      "書き込み性能を落とさない監査ログの非同期化の工夫",
+      "監査対応を見すえた監査ログの検索設計"
+    ],
+    "evidence_activity_ids": [
+      "act085"
+    ],
+    "format": "blog",
+    "format_reason": "設計の工夫を順序立てて説明できる内容で、まだ運用の数字がなく本人も登壇経験がないため、最初の発信としてブログが向いている。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-10-27",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:27:10.106Z",
+    "updated_at": "2026-11-21T05:27:10.106Z"
+  },
+  {
+    "card_id": "card-e024-01",
+    "employee_id": "e024",
+    "summary": "全リポジトリでSBOMを生成し、依存ライブラリの脆弱性アラートを「実際に到達可能なコードか」で自動で振り分ける仕組みを設計・全社展開した。対応が必要なアラートは全体の12%に絞り込まれ、開発チームに届くアラートは月400件から50件程度に減った。判定ロジックはOSSとして切り出すことを検討中。",
+    "themes": [
+      "SBOMと到達可能性解析で脆弱性アラートを月400件→50件に減らした自動トリアージ",
+      "「対応すべき12%」をどう見分けるか：到達可能性で脆弱性アラートを振り分ける設計と誤判定の扱い",
+      "脆弱性管理の自動化を全社展開するまで：開発チームをアラート疲れから解放する"
+    ],
+    "evidence_activity_ids": [
+      "act037",
+      "act100"
+    ],
+    "format": "lt",
+    "format_reason": "月400件→50件、12%という分かりやすい数字があり、時流のサプライチェーンセキュリティにも合うため、登壇経験がない本人の最初の一歩として5〜10分のLTで成果を伝えやすい。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-11-04",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:27:20.794Z",
+    "updated_at": "2026-11-21T05:27:20.794Z"
+  },
+  {
+    "card_id": "card-e026-01",
+    "employee_id": "e026",
+    "summary": "新入社員のオンボーディングにAIエージェントを試験導入した。エージェントは社内ドキュメントを参照して質問に答え、初週のタスクも進める。10月入社の5名で試したところ、立ち上がりまでの期間が体感で半分になったという声があった。",
+    "themes": [
+      "社内ドキュメントを参照するAIエージェントで新入社員の初週を支える：試験導入の設計と5名の反応",
+      "立ち上がり期間が体感で半分に：オンボーディング用AIエージェントの効果をどう測るか"
+    ],
+    "evidence_activity_ids": [
+      "act110"
+    ],
+    "format": "blog",
+    "format_reason": "試験導入の段階で、材料は投稿1件と体感ベースの声だけです。登壇経験もないため、まずはブログで導入の経緯と初期の反応をまとめるのが合っています。",
+    "publication_status": "unpublished",
+    "published_ids": [],
+    "latest_activity_date": "2026-11-11",
+    "announcement_activity_ids": [],
+    "pending_themes": [],
+    "outreach_history": [],
+    "reviewed": false,
+    "reviewed_at": null,
+    "created_at": "2026-11-21T05:27:32.778Z",
+    "updated_at": "2026-11-21T05:27:32.778Z"
   }
 ]

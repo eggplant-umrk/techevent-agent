@@ -22,7 +22,7 @@ import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
 import { getInboxItem, prepare, registerInbox, type InboxItem } from "../lib/inbox";
-import { extractNomineeWithAgent } from "../lib/nominee";
+import { extractIntakeWithAgent } from "../lib/intake";
 import { externalEventById, isClosed, themesOf } from "../lib/externalEvents";
 import { internalTermProblems } from "../lib/plainText";
 import { findVenues, type VenueEvent, type VenueResult } from "../lib/venues";
@@ -425,7 +425,7 @@ async function main() {
               if (s) console.log(s);
               emit(e);
             }),
-          extractNomineeWithAgent,
+          extractIntakeWithAgent,
         );
         item = getInboxItem(reg.id);
         source = "評価スクリプトで実行";

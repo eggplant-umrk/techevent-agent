@@ -326,3 +326,10 @@ textarea.input { resize: vertical; }
 /* アーカイブタブ */
 .archive-date { font-variant-numeric: tabular-nums; }
 .placeholder { border-style: dashed; background: transparent; }
+
+/* 受信箱：会話から読み取った項目（未定は印で出す） */
+.intake { margin: 8px 0; }
+.intake-row { display: contents; }
+
+/* 主催者への返事（X で返す下書き） */
+.reply-text { min-height: 96px; }

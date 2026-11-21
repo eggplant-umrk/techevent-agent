@@ -32,12 +32,14 @@ export function eventDateFromText(text: string, receivedAt: string): string | nu
 
 export const isPast = (date: string | null | undefined, today = TODAY) => !!date && date < today;
 
-export function inboxEventDate(it: Pick<InboxItem, "text" | "received_at">): string | null {
+export function inboxEventDate(it: Pick<InboxItem, "text" | "received_at"> & { intake?: InboxItem["intake"] }): string | null {
+  // 会話から1日に決まった日程を読み取れていればそれを使う（日程が未定なら受信箱に残す）
+  if (it.intake) return it.intake.date;
   return eventDateFromText(it.text, it.received_at);
 }
 
 /** 受信箱に出す依頼か（開催日が過ぎたものはアーカイブへ） */
-export function isActiveInboxItem(it: Pick<InboxItem, "text" | "received_at">, today = TODAY): boolean {
+export function isActiveInboxItem(it: Pick<InboxItem, "text" | "received_at"> & { intake?: InboxItem["intake"] }, today = TODAY): boolean {
   return !isPast(inboxEventDate(it), today);
 }
 

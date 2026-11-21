@@ -1,0 +1,668 @@
+{
+  "conversation": "x2",
+  "run_usd": 0.305,
+  "detail": {
+    "id": "inb-mock-x2",
+    "source": "manual",
+    "status": "ready",
+    "received_at": "2026-11-21T10:30:00+09:00",
+    "is_new": true,
+    "title": "フロントエンド広場",
+    "candidate_names": [
+      "百瀬 結衣",
+      "柚木 ほのか"
+    ],
+    "no_fit": false,
+    "error": null,
+    "permalink": null,
+    "text": "@frontend_hiroba\n@layerx_techpr 先日の百瀬さんの記事、めちゃくちゃ参考になりました！\n\n@layerx_techpr\nありがとうございます、本人にも伝えます！\n\n@frontend_hiroba\nもしよければ「フロントエンド広場」で百瀬さんにお話ししてもらえたりしませんか…？\n日程はまだ決まってなくて、春ごろを考えてます。オンライン開催です\n\n@frontend_hiroba\n中の人は谷口です、DMでも大丈夫です！",
+    "nominee_name": "百瀬 結衣",
+    "intake": {
+      "event_name": "フロントエンド広場",
+      "date": null,
+      "format": null,
+      "theme": null,
+      "organizer": "谷口",
+      "undecided": [
+        "date",
+        "format",
+        "theme"
+      ],
+      "reasons": {
+        "format": "会話の中でまだ決まっていません",
+        "theme": "会話の中でまだ決まっていません",
+        "date": "会話の中でまだ決まっていません"
+      }
+    },
+    "result": {
+      "run_id": "53856251-bbc1-4e63-845f-0ba18d780d47",
+      "request_id": "inb-mock-x2",
+      "request_pattern": "named_speaker",
+      "summary": "「フロントエンド広場」の谷口さんから百瀬さんへの指名依頼です。日程・形式・テーマは未定です。百瀬さんは初期表示の改善に取り組んでいてテーマとよく合い、忙しさも低いので、自信を持っておすすめできる候補として最初に並べました。共同登壇や代わりの候補として、同じバクラクでアクセシビリティ改善に取り組んだ柚木さんも挙げています。",
+      "nominee_assessment": "テーマの合い具合：とても良い。10月28日のPR「バンドル分割と依存整理で初期表示を1.8秒短縮」で、初期JSを2.1MBから900KBに減らし、LCPの中央値を1.8秒縮めています。フロントエンドのイベントにも、時流のWebパフォーマンスにも合います。忙しさは2で余裕があり、登壇は0回なので偏りを減らす点でも良いです。予定は日程が未定のため、決まってから確認が必要です。なお、主催者は「先日の百瀬さんの記事」に触れていますが、社内の発信記録には百瀬さんの記事が見当たりません。どの記事のことか確かめてください。",
+      "learnings_applied": [],
+      "no_fit": {
+        "reasons": [
+          "ネタ帳と社内の投稿を探しましたが、フロントエンドの取り組みで根拠がはっきりしているのは百瀬さんと柚木さんの2人だけでした",
+          "ほかのフロントエンドエンジニア（猪瀬さん・朝比奈さん）は、最近の投稿が週報や雑務的なPRばかりで、登壇テーマにできる取り組みが見つかりませんでした"
+        ],
+        "next_checks": []
+      },
+      "candidates": [
+        {
+          "rank": 1,
+          "employee_id": "e012",
+          "name": "百瀬 結衣",
+          "business_unit": "バクラク",
+          "role": "フロントエンドエンジニア",
+          "workload": 2,
+          "past_talk_count": 0,
+          "last_talk_date": null,
+          "theme": "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割でLCPを1.8秒短縮",
+          "reason": "指名された本人で、10月のバンドル改善で初期表示を1.8秒縮めた実績があり、時流のWebパフォーマンスとも合っています。",
+          "evidence": [
+            {
+              "id": "act088",
+              "type": "github_pr",
+              "date": "2026-10-28",
+              "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+              "where": "bakuraku/web-frontend"
+            }
+          ],
+          "cautions": [
+            "日程が未定なので、決まったら予定を確認",
+            "登壇は初めてなので、資料作りの支援があると安心",
+            "主催者の言う「記事」が社内の発信記録にないので、どの記事か確認",
+            "登壇の意向はまだ確認していません",
+            "ネタ帳のカードは未確認",
+            "日程・形式・テーマは未定です（会話の中で決まっていないか確かめられないため、推測で埋めていません）。主催者に確認してください"
+          ],
+          "is_alternative_to_nominee": false,
+          "confidence": "strong",
+          "caveat": null,
+          "is_nominee": true,
+          "evidence_request_id": "inb-mock-x2",
+          "card_id": "card-e012-01",
+          "card": {
+            "card_id": "card-e012-01",
+            "employee_id": "e012",
+            "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+            "themes": [
+              "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+              "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+            ],
+            "evidence_activity_ids": [
+              "act088"
+            ],
+            "format": "blog",
+            "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+            "publication_status": "unpublished",
+            "published_ids": [],
+            "latest_activity_date": "2026-10-28",
+            "announcement_activity_ids": [],
+            "pending_themes": [],
+            "outreach_history": [],
+            "reviewed": false,
+            "reviewed_at": null,
+            "created_at": "2026-11-21T05:26:23.278Z",
+            "updated_at": "2026-11-21T05:26:23.278Z",
+            "edited_fields": [],
+            "evidence_request_ids": []
+          }
+        },
+        {
+          "rank": 2,
+          "employee_id": "e017",
+          "name": "柚木 ほのか",
+          "business_unit": "バクラク",
+          "role": "デザイナー",
+          "workload": 2,
+          "past_talk_count": 0,
+          "last_talk_date": null,
+          "theme": "スクリーンリーダー利用者へのインタビューから始めた、業務SaaSの申請フォームのアクセシビリティ改善",
+          "reason": "9月に経費申請フローのフォーカス順とラベルを見直し、スクリーンリーダーで最後まで申請できるようにしました。時流のアクセシビリティに合い、百瀬さんとの共同登壇にも向いています。",
+          "evidence": [
+            {
+              "id": "act027",
+              "type": "slack_post",
+              "date": "2026-09-22",
+              "title": "スクリーンリーダーで経費申請を最後まで通せるようにしました",
+              "where": "#bakuraku-design"
+            }
+          ],
+          "cautions": [
+            "日程が未定なので、決まったら予定を確認",
+            "登壇は初めて",
+            "改善の効果を示す数字がまだない",
+            "ネタ帳のカードは未確認",
+            "日程・形式・テーマは未定です（会話の中で決まっていないか確かめられないため、推測で埋めていません）。主催者に確認してください"
+          ],
+          "is_alternative_to_nominee": true,
+          "confidence": "conditional",
+          "caveat": "主催者は百瀬さんを指名しているので、代わりではなく共同登壇や別枠として受けてもらえるか確認が必要です。",
+          "is_nominee": false,
+          "evidence_request_id": null,
+          "card_id": "card-e017-01",
+          "card": {
+            "card_id": "card-e017-01",
+            "employee_id": "e017",
+            "summary": "スクリーンリーダーを使う方へのインタビューをもとに、バクラクの経費申請フローのフォーカス順とラベルを見直しました。スクリーンリーダーで申請を最後まで通せるようになり、キーボードだけでも完了できるようになりました。直したときのチェックリストは、デザインシステムに入れる予定です。",
+            "themes": [
+              "スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善",
+              "業務SaaSの申請フォームをキーボードだけで完了させる：フォーカス順とラベル設計の勘所",
+              "アクセシビリティ対応をチェックリストにしてデザインシステムに組み込む"
+            ],
+            "evidence_activity_ids": [
+              "act027"
+            ],
+            "format": "blog",
+            "format_reason": "具体的な改善内容はありますが数字はまだなく、本人も登壇経験がないので、まずはインタビューから改善までの流れをブログにまとめるのが始めやすいです。",
+            "publication_status": "unpublished",
+            "published_ids": [],
+            "latest_activity_date": "2026-09-22",
+            "announcement_activity_ids": [],
+            "pending_themes": [],
+            "outreach_history": [],
+            "reviewed": false,
+            "reviewed_at": null,
+            "created_at": "2026-11-21T05:26:41.933Z",
+            "updated_at": "2026-11-21T05:26:41.933Z",
+            "edited_fields": [],
+            "evidence_request_ids": []
+          }
+        }
+      ],
+      "alternative_pitch": "谷口さんは「先日の百瀬さんの記事」を読んで指名されています。ただ、社内の発信記録に百瀬さんの記事が見当たらず、どの記事のことかは未確認です。返信の前に、まず谷口さんに確かめてください。\n\n- **柚木ほのかさんを推す理由**：スクリーンリーダー利用者へのインタビューを起点に、9月に経費申請フローのフォーカス順とラベルを見直し、スクリーンリーダーで最後まで申請できるようにしました。テーマお任せのフロントエンドイベントで、関心の高いアクセシビリティを利用者の声から話せます。\n- **百瀬さんを外す理由はない**：10月28日のPRで初期JSを2.1MBから900KBに減らし、LCPの中央値を1.8秒縮めています。テーマにもよく合い、時間の余裕もあります。\n- **角が立たない案**：交代ではなく、二人の共同登壇（「速さ」と「誰でも使える」の二本立て）として提案する。百瀬さんが聞き手に回る形もあります。\n- **百瀬さんへの相談**：指名されたことを先に伝え、柚木さんと一緒に出る案をどう思うか聞く。\n- **注意点**：日程は春ごろとだけ聞いており未定です。決まってから二人の予定を確認してください。"
+    },
+    "events": [
+      {
+        "type": "start",
+        "run_id": "53856251-bbc1-4e63-845f-0ba18d780d47",
+        "loop_model": "claude-opus-5-5",
+        "heavy_model": "claude-fable-5-2",
+        "switched": false,
+        "total_usd": 0.010444,
+        "switch_usd": 150
+      },
+      {
+        "type": "step",
+        "n": 1,
+        "max": 15
+      },
+      {
+        "type": "usage",
+        "run_usd": 0.046736,
+        "total_usd": 0.05718,
+        "cache_read": 0,
+        "input": 8300,
+        "output": 262
+      },
+      {
+        "type": "thinking",
+        "text": "Named speaker pattern, with nominee e012 百瀬 as the person in question. The conversation mentions \"春ごろ\" and \"オンライン開催,\" but the extracted items say the schedule and format are still undecided, so I'll stick with those and not infer anything, perhaps noting the gap. Next I'm searching the cards and pulling up the employee record.\n\n"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01BpW6vaYpUvPH8V6GdqL1fq",
+        "name": "search_cards",
+        "input": {
+          "query": "百瀬 Webパフォーマンス フロントエンド"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01BpW6vaYpUvPH8V6GdqL1fq",
+        "name": "search_cards",
+        "ok": true,
+        "summary": "ネタ帳 1枚ヒット／上位: 百瀬「初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割」"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01XvzkK7CQiQuS724ZADBPAA",
+        "name": "get_employee",
+        "input": {
+          "id": "e012"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01XvzkK7CQiQuS724ZADBPAA",
+        "name": "get_employee",
+        "ok": true,
+        "summary": "百瀬 結衣／忙しさ2／登壇0回／発信0件"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01VVQnjE5KyVCfXh5w9fiLxP",
+        "name": "get_published",
+        "input": {
+          "author_id": "e012"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01VVQnjE5KyVCfXh5w9fiLxP",
+        "name": "get_published",
+        "ok": true,
+        "summary": "発信済み 0件"
+      },
+      {
+        "type": "step",
+        "n": 2,
+        "max": 15
+      },
+      {
+        "type": "usage",
+        "run_usd": 0.057198200000000005,
+        "total_usd": 0.0676422,
+        "cache_read": 8296,
+        "input": 909,
+        "output": 213
+      },
+      {
+        "type": "thinking",
+        "text": "The article the user mentioned, from 百瀬さん, doesn't show up in the records: the published count is 0 and the card is unpublished, so I should flag that it needs checking. Next I'll look for other candidates and possible co-speakers among the frontend cards.\n\n"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01Fg6pYbejyZ3cnxNRoa24sQ",
+        "name": "get_card",
+        "input": {
+          "card_id": "card-e012-01"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01Fg6pYbejyZ3cnxNRoa24sQ",
+        "name": "get_card",
+        "ok": true,
+        "summary": "card-e012-01：根拠1件／打診履歴0件"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01XDaGjKrPBjijY54gqNpFak",
+        "name": "search_cards",
+        "input": {
+          "query": "React フロントエンド アクセシビリティ TypeScript UI ストリーミング"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01XDaGjKrPBjijY54gqNpFak",
+        "name": "search_cards",
+        "ok": true,
+        "summary": "ネタ帳 4枚ヒット／上位: 百瀬「初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割」、柚木「スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善」、笹倉「開発プロセスを週次で見直す：EMが回すチームの振り返りの仕組み」"
+      },
+      {
+        "type": "step",
+        "n": 3,
+        "max": 15
+      },
+      {
+        "type": "usage",
+        "run_usd": 0.0732918,
+        "total_usd": 0.0837358,
+        "cache_read": 9203,
+        "input": 2079,
+        "output": 193
+      },
+      {
+        "type": "thinking",
+        "text": "e012 looks strong, though I don't know its schedule yet. e017 (柚木, accessibility) fits the frontend event, and I'm considering it as an alternative or a joint option. For a third pick, e019 (朝比奈, chat UI streaming) or e010 (猪瀬) might work, so I'll look up the activities next.\n\n"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01VQBfoQZp36BSh4zS1T1MRw",
+        "name": "search_activities",
+        "input": {
+          "query": "フロントエンド React ストリーミング チャットUI 状態管理 パフォーマンス",
+          "since": "2026-05-01"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01VQBfoQZp36BSh4zS1T1MRw",
+        "name": "search_activities",
+        "ok": true,
+        "summary": "13件ヒット／上位: 朝比奈「ランチ会の案内」、朝比奈「Terraform: ステージングのインスタンスサイズ変更」、猪瀬「週報 11/16-11/20 猪瀬」"
+      },
+      {
+        "type": "step",
+        "n": 4,
+        "max": 15
+      },
+      {
+        "type": "usage",
+        "run_usd": 0.0859058,
+        "total_usd": 0.0963498,
+        "cache_read": 11280,
+        "input": 1420,
+        "output": 163
+      },
+      {
+        "type": "thinking",
+        "text": "There's no substantive third item to weigh, so I'll check the e017 card quickly. I already have the summary, and there's no outreach yet, so I'll look up the e017 employee record to understand their intent and pull the card for evidence.\n\n"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_014TJKicJUyhGfEmQgZFxBUm",
+        "name": "get_employee",
+        "input": {
+          "id": "e017"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_014TJKicJUyhGfEmQgZFxBUm",
+        "name": "get_employee",
+        "ok": true,
+        "summary": "柚木 ほのか／忙しさ2／登壇0回／発信0件"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01LqSEcNzKkHUokXveMtpdDa",
+        "name": "get_card",
+        "input": {
+          "card_id": "card-e017-01"
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01LqSEcNzKkHUokXveMtpdDa",
+        "name": "get_card",
+        "ok": true,
+        "summary": "card-e017-01：根拠1件／打診履歴0件"
+      },
+      {
+        "type": "step",
+        "n": 5,
+        "max": 15
+      },
+      {
+        "type": "usage",
+        "run_usd": 0.1249534,
+        "total_usd": 0.1353974,
+        "cache_read": 12698,
+        "input": 1102,
+        "output": 1550
+      },
+      {
+        "type": "thinking",
+        "text": "Only two candidates have actual evidence, so I'll submit those two with a no-fit result for the third. For 百瀬 the theme is undetermined and the schedule too, though the nominee's work and the workload of 2 are clear. The \"記事\" mismatch matters since there's no published record, so a strong rating with caution seems right. I also need to flag that the host mentioned \"春ごろ・オンライン\" in the conversation while the extracted data says 未定, so I won't infer anything and will note it as a caution.\n\nI'm settling the 百瀬 case: the schedule is still undetermined, so I'll just ask for confirmation once a date is set.\n\n"
+      },
+      {
+        "type": "tool_call",
+        "id": "toolu_01NUxssATzX8z2YKaP9Hcm9H",
+        "name": "submit_candidates",
+        "input": {
+          "request_pattern": "named_speaker",
+          "summary": "「フロントエンド広場」の谷口さんから百瀬さんへの指名依頼です。日程・形式・テーマは未定です。百瀬さんは初期表示の改善に取り組んでいてテーマとよく合い、忙しさも低いので、自信を持っておすすめできる候補として最初に並べました。共同登壇や代わりの候補として、同じバクラクでアクセシビリティ改善に取り組んだ柚木さんも挙げています。",
+          "nominee_assessment": "テーマの合い具合：とても良い。10月28日のPR「バンドル分割と依存整理で初期表示を1.8秒短縮」で、初期JSを2.1MBから900KBに減らし、LCPの中央値を1.8秒縮めています。フロントエンドのイベントにも、時流のWebパフォーマンスにも合います。忙しさは2で余裕があり、登壇は0回なので偏りを減らす点でも良いです。予定は日程が未定のため、決まってから確認が必要です。なお、主催者は「先日の百瀬さんの記事」に触れていますが、社内の発信記録には百瀬さんの記事が見当たりません。どの記事のことか確かめてください。",
+          "learnings_applied": [],
+          "no_fit": {
+            "reasons": [
+              "ネタ帳と社内の投稿を探しましたが、フロントエンドの取り組みで根拠がはっきりしているのは百瀬さんと柚木さんの2人だけでした",
+              "ほかのフロントエンドエンジニア（猪瀬さん・朝比奈さん）は、最近の投稿が週報や雑務的なPRばかりで、登壇テーマにできる取り組みが見つかりませんでした"
+            ],
+            "next_checks": []
+          },
+          "candidates": [
+            {
+              "employee_id": "e012",
+              "card_id": "card-e012-01",
+              "theme": "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割でLCPを1.8秒短縮",
+              "reason": "指名された本人で、10月のバンドル改善で初期表示を1.8秒縮めた実績があり、時流のWebパフォーマンスとも合っています。",
+              "evidence_activity_ids": [
+                "act088"
+              ],
+              "cautions": [
+                "日程が未定なので、決まったら予定を確認",
+                "登壇は初めてなので、資料作りの支援があると安心",
+                "主催者の言う「記事」が社内の発信記録にないので、どの記事か確認",
+                "登壇の意向はまだ確認していません",
+                "ネタ帳のカードは未確認"
+              ],
+              "is_alternative_to_nominee": false,
+              "confidence": "strong",
+              "caveat": null
+            },
+            {
+              "employee_id": "e017",
+              "card_id": "card-e017-01",
+              "theme": "スクリーンリーダー利用者へのインタビューから始めた、業務SaaSの申請フォームのアクセシビリティ改善",
+              "reason": "9月に経費申請フローのフォーカス順とラベルを見直し、スクリーンリーダーで最後まで申請できるようにしました。時流のアクセシビリティに合い、百瀬さんとの共同登壇にも向いています。",
+              "evidence_activity_ids": [
+                "act027"
+              ],
+              "cautions": [
+                "日程が未定なので、決まったら予定を確認",
+                "登壇は初めて",
+                "改善の効果を示す数字がまだない",
+                "ネタ帳のカードは未確認"
+              ],
+              "is_alternative_to_nominee": true,
+              "confidence": "conditional",
+              "caveat": "主催者は百瀬さんを指名しているので、代わりではなく共同登壇や別枠として受けてもらえるか確認が必要です。"
+            }
+          ]
+        }
+      },
+      {
+        "type": "tool_result",
+        "id": "toolu_01NUxssATzX8z2YKaP9Hcm9H",
+        "name": "submit_candidates",
+        "ok": true,
+        "summary": "候補2人を提出"
+      },
+      {
+        "type": "alternative_pitch",
+        "text": "谷口さんは「先日の百瀬さんの記事」を読んで指名されています。ただ、社内の発信記録に百瀬さんの記事が見当たらず、どの記事のことかは未確認です。返信の前に、まず谷口さんに確かめてください。\n\n- **柚木ほのかさんを推す理由**：スクリーンリーダー利用者へのインタビューを起点に、9月に経費申請フローのフォーカス順とラベルを見直し、スクリーンリーダーで最後まで申請できるようにしました。テーマお任せのフロントエンドイベントで、関心の高いアクセシビリティを利用者の声から話せます。\n- **百瀬さんを外す理由はない**：10月28日のPRで初期JSを2.1MBから900KBに減らし、LCPの中央値を1.8秒縮めています。テーマにもよく合い、時間の余裕もあります。\n- **角が立たない案**：交代ではなく、二人の共同登壇（「速さ」と「誰でも使える」の二本立て）として提案する。百瀬さんが聞き手に回る形もあります。\n- **百瀬さんへの相談**：指名されたことを先に伝え、柚木さんと一緒に出る案をどう思うか聞く。\n- **注意点**：日程は春ごろとだけ聞いており未定です。決まってから二人の予定を確認してください。",
+        "model": "claude-fable-5-2",
+        "fell_back": false
+      },
+      {
+        "type": "final",
+        "result": {
+          "run_id": "53856251-bbc1-4e63-845f-0ba18d780d47",
+          "request_id": "inb-mock-x2",
+          "request_pattern": "named_speaker",
+          "summary": "「フロントエンド広場」の谷口さんから百瀬さんへの指名依頼です。日程・形式・テーマは未定です。百瀬さんは初期表示の改善に取り組んでいてテーマとよく合い、忙しさも低いので、自信を持っておすすめできる候補として最初に並べました。共同登壇や代わりの候補として、同じバクラクでアクセシビリティ改善に取り組んだ柚木さんも挙げています。",
+          "nominee_assessment": "テーマの合い具合：とても良い。10月28日のPR「バンドル分割と依存整理で初期表示を1.8秒短縮」で、初期JSを2.1MBから900KBに減らし、LCPの中央値を1.8秒縮めています。フロントエンドのイベントにも、時流のWebパフォーマンスにも合います。忙しさは2で余裕があり、登壇は0回なので偏りを減らす点でも良いです。予定は日程が未定のため、決まってから確認が必要です。なお、主催者は「先日の百瀬さんの記事」に触れていますが、社内の発信記録には百瀬さんの記事が見当たりません。どの記事のことか確かめてください。",
+          "learnings_applied": [],
+          "no_fit": {
+            "reasons": [
+              "ネタ帳と社内の投稿を探しましたが、フロントエンドの取り組みで根拠がはっきりしているのは百瀬さんと柚木さんの2人だけでした",
+              "ほかのフロントエンドエンジニア（猪瀬さん・朝比奈さん）は、最近の投稿が週報や雑務的なPRばかりで、登壇テーマにできる取り組みが見つかりませんでした"
+            ],
+            "next_checks": []
+          },
+          "candidates": [
+            {
+              "rank": 1,
+              "employee_id": "e012",
+              "name": "百瀬 結衣",
+              "business_unit": "バクラク",
+              "role": "フロントエンドエンジニア",
+              "workload": 2,
+              "past_talk_count": 0,
+              "last_talk_date": null,
+              "theme": "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割でLCPを1.8秒短縮",
+              "reason": "指名された本人で、10月のバンドル改善で初期表示を1.8秒縮めた実績があり、時流のWebパフォーマンスとも合っています。",
+              "evidence": [
+                {
+                  "id": "act088",
+                  "type": "github_pr",
+                  "date": "2026-10-28",
+                  "title": "バンドル分割と依存整理で初期表示を1.8秒短縮",
+                  "where": "bakuraku/web-frontend"
+                }
+              ],
+              "cautions": [
+                "日程が未定なので、決まったら予定を確認",
+                "登壇は初めてなので、資料作りの支援があると安心",
+                "主催者の言う「記事」が社内の発信記録にないので、どの記事か確認",
+                "登壇の意向はまだ確認していません",
+                "ネタ帳のカードは未確認"
+              ],
+              "is_alternative_to_nominee": false,
+              "confidence": "strong",
+              "caveat": null,
+              "is_nominee": true,
+              "evidence_request_id": "inb-mock-x2",
+              "card_id": "card-e012-01",
+              "card": {
+                "card_id": "card-e012-01",
+                "employee_id": "e012",
+                "summary": "バクラクのWebフロントエンドで、使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコードを分割しました。初期JSは2.1MBから900KBに減り、LCPは中央値で1.8秒短くなりました。",
+                "themes": [
+                  "初期JSを2.1MBから900KBへ：不要な依存の削除とルート単位のコード分割",
+                  "LCPを1.8秒短縮したSaaSフロントエンドのバンドル改善"
+                ],
+                "evidence_activity_ids": [
+                  "act088"
+                ],
+                "format": "blog",
+                "format_reason": "はっきりした数字がある1本のPRで手順をまとめやすく、登壇経験0回の本人が最初に発信する形としてブログが合っています。",
+                "publication_status": "unpublished",
+                "published_ids": [],
+                "latest_activity_date": "2026-10-28",
+                "announcement_activity_ids": [],
+                "pending_themes": [],
+                "outreach_history": [],
+                "reviewed": false,
+                "reviewed_at": null,
+                "created_at": "2026-11-21T05:26:23.278Z",
+                "updated_at": "2026-11-21T05:26:23.278Z",
+                "edited_fields": [],
+                "evidence_request_ids": []
+              }
+            },
+            {
+              "rank": 2,
+              "employee_id": "e017",
+              "name": "柚木 ほのか",
+              "business_unit": "バクラク",
+              "role": "デザイナー",
+              "workload": 2,
+              "past_talk_count": 0,
+              "last_talk_date": null,
+              "theme": "スクリーンリーダー利用者へのインタビューから始めた、業務SaaSの申請フォームのアクセシビリティ改善",
+              "reason": "9月に経費申請フローのフォーカス順とラベルを見直し、スクリーンリーダーで最後まで申請できるようにしました。時流のアクセシビリティに合い、百瀬さんとの共同登壇にも向いています。",
+              "evidence": [
+                {
+                  "id": "act027",
+                  "type": "slack_post",
+                  "date": "2026-09-22",
+                  "title": "スクリーンリーダーで経費申請を最後まで通せるようにしました",
+                  "where": "#bakuraku-design"
+                }
+              ],
+              "cautions": [
+                "日程が未定なので、決まったら予定を確認",
+                "登壇は初めて",
+                "改善の効果を示す数字がまだない",
+                "ネタ帳のカードは未確認"
+              ],
+              "is_alternative_to_nominee": true,
+              "confidence": "conditional",
+              "caveat": "主催者は百瀬さんを指名しているので、代わりではなく共同登壇や別枠として受けてもらえるか確認が必要です。",
+              "is_nominee": false,
+              "evidence_request_id": null,
+              "card_id": "card-e017-01",
+              "card": {
+                "card_id": "card-e017-01",
+                "employee_id": "e017",
+                "summary": "スクリーンリーダーを使う方へのインタビューをもとに、バクラクの経費申請フローのフォーカス順とラベルを見直しました。スクリーンリーダーで申請を最後まで通せるようになり、キーボードだけでも完了できるようになりました。直したときのチェックリストは、デザインシステムに入れる予定です。",
+                "themes": [
+                  "スクリーンリーダー利用者へのインタビューから始めた経費申請フローのアクセシビリティ改善",
+                  "業務SaaSの申請フォームをキーボードだけで完了させる：フォーカス順とラベル設計の勘所",
+                  "アクセシビリティ対応をチェックリストにしてデザインシステムに組み込む"
+                ],
+                "evidence_activity_ids": [
+                  "act027"
+                ],
+                "format": "blog",
+                "format_reason": "具体的な改善内容はありますが数字はまだなく、本人も登壇経験がないので、まずはインタビューから改善までの流れをブログにまとめるのが始めやすいです。",
+                "publication_status": "unpublished",
+                "published_ids": [],
+                "latest_activity_date": "2026-09-22",
+                "announcement_activity_ids": [],
+                "pending_themes": [],
+                "outreach_history": [],
+                "reviewed": false,
+                "reviewed_at": null,
+                "created_at": "2026-11-21T05:26:41.933Z",
+                "updated_at": "2026-11-21T05:26:41.933Z",
+                "edited_fields": [],
+                "evidence_request_ids": []
+              }
+            }
+          ],
+          "alternative_pitch": "谷口さんは「先日の百瀬さんの記事」を読んで指名されています。ただ、社内の発信記録に百瀬さんの記事が見当たらず、どの記事のことかは未確認です。返信の前に、まず谷口さんに確かめてください。\n\n- **柚木ほのかさんを推す理由**：スクリーンリーダー利用者へのインタビューを起点に、9月に経費申請フローのフォーカス順とラベルを見直し、スクリーンリーダーで最後まで申請できるようにしました。テーマお任せのフロントエンドイベントで、関心の高いアクセシビリティを利用者の声から話せます。\n- **百瀬さんを外す理由はない**：10月28日のPRで初期JSを2.1MBから900KBに減らし、LCPの中央値を1.8秒縮めています。テーマにもよく合い、時間の余裕もあります。\n- **角が立たない案**：交代ではなく、二人の共同登壇（「速さ」と「誰でも使える」の二本立て）として提案する。百瀬さんが聞き手に回る形もあります。\n- **百瀬さんへの相談**：指名されたことを先に伝え、柚木さんと一緒に出る案をどう思うか聞く。\n- **注意点**：日程は春ごろとだけ聞いており未定です。決まってから二人の予定を確認してください。"
+        }
+      },
+      {
+        "type": "done",
+        "run_usd": 0.1935534,
+        "total_usd": 0.2039974,
+        "steps": 5
+      }
+    ],
+    "run_usd": 0.2039974
+  },
+  "draft": {
+    "subject": "「フロントエンド広場」登壇のご相談（バンドル改善のお話）",
+    "message": "百瀬さん、おつかれさまです！技術広報です。\n\nXで「フロントエンド広場」主催の谷口さんから、「百瀬さんの記事がとても参考になった」「よければイベントでお話ししてもらえないか」と、百瀬さんご指名で声をかけていただきました。\n\nそこでご相談です。10月のバンドル改善の話を、このイベントでお話ししてもらえないでしょうか。\n使っていない日付ライブラリと重複していたアイコンセットを削除し、ルート単位でコード分割して、初期JSを2.1MBから900KBに、LCPを中央値で1.8秒短縮した件です。\n数字で成果が示せて、ほかの現場でもすぐ真似できる内容なので、フロントエンドの方々に喜ばれると思っています。\n\n今わかっていることは次のとおりです。\n・オンライン開催\n・時期は春ごろの予定で、日程は未定\n・持ち時間などの発表形式とテーマも未定（主催者に確認します）\n\n準備の負担はできるだけ小さくします。\n・やったことを順番に話すだけで十分成り立つ内容です。仮に10分とした場合の構成案を下に付けました（持ち時間が決まったら調整します）\n・資料づくりや発表練習は技術広報が一緒にやります\n・一人が不安なら、共同登壇の形も相談できます\n\nまだ主催者には確約していません。忙しい時期に重なりそう、今回は気が進まない、という場合は遠慮なく断ってください。\n「日程や持ち時間が決まってから考えたい」でも大丈夫です。まずは率直な気持ちを聞かせてもらえるとうれしいです！",
+    "lt_outline": [
+      {
+        "minutes": 1,
+        "heading": "自己紹介と今日の話",
+        "points": [
+          "担当プロダクト（バクラク）と自分の役割",
+          "結論を先に：初期JSを2.1MBから900KBへ、LCPを中央値で1.8秒短縮"
+        ]
+      },
+      {
+        "minutes": 2,
+        "heading": "改善前の状況と調べ方",
+        "points": [
+          "初期表示が遅いと気づいたきっかけ",
+          "バンドルの中身をどう調べたか",
+          "何が大きかったか：使っていない日付ライブラリ、重複していたアイコンセット"
+        ]
+      },
+      {
+        "minutes": 3,
+        "heading": "不要な依存の削除",
+        "points": [
+          "使っていない日付ライブラリを消した手順",
+          "重複していたアイコンセットの整理",
+          "消してよいかの判断と、確認で気をつけたこと"
+        ]
+      },
+      {
+        "minutes": 2.5,
+        "heading": "ルート単位のコード分割",
+        "points": [
+          "どの単位で分割したかと、その理由",
+          "分割するときにつまずいた点と対処"
+        ]
+      },
+      {
+        "minutes": 1.5,
+        "heading": "結果とまとめ",
+        "points": [
+          "改善前後の数字：初期JS 2.1MB→900KB、LCP中央値 1.8秒短縮",
+          "明日から試せること：まず使っていない依存を探す",
+          "今後やりたいこと"
+        ]
+      }
+    ],
+    "tips_for_pr": [
+      "谷口さんが「参考になった」と言っている記事がどれかを確認する。バンドル改善の話と別の内容なら、テーマ案を主催者とすり合わせる。",
+      "持ち時間・発表形式・おおよその日程を谷口さんに確認する。構成案は仮に10分で組んでいるので、決まり次第調整する。",
+      "バンドル改善の数字（2.1MB→900KB、LCP 1.8秒短縮）や画面キャプチャを社外に出してよいか、百瀬さんのチームに確認する。"
+    ],
+    "organizer_reply": "谷口さん、お声がけありがとうございます！弊社の百瀬が、フロントエンドのパフォーマンス改善（初期JSの削減やコード分割など）のお話でお力になれそうです。本人に確認して、あらためてご連絡します。日程の目安や持ち時間などの発表形式、ご希望のテーマがあれば、決まり次第教えていただけると助かります。"
+  }
+}

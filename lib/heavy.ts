@@ -3,7 +3,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getClient } from "./anthropic";
 import { HEAVY_FALLBACK_MODEL } from "./config";
-import { activities, employeeById, type SpeakingRequest } from "./data";
+import { activities, employeeById, employees, type SpeakingRequest } from "./data";
+import { INTAKE_LABEL } from "./intake";
+import { fallbackOrganizerReply, ORGANIZER_REPLY_MAX, organizerReplyProblems } from "./organizerReply";
 import { chooseModels, recordUsage } from "./usage";
 import type { UsageEntry } from "./data";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
@@ -73,8 +75,9 @@ async function callHeavy(
 /** 依頼を日本語の見出しで渡す（英語の項目名をモデルに見せないため）。 */
 function requestText(r: SpeakingRequest): string {
   const ev = r.event;
+  const contact = r.requester?.contact_name || r.intake?.organizer || null;
   return [
-    `依頼元：${r.requester?.organization ?? "不明"}`,
+    `依頼元：${r.requester?.organization || r.intake?.event_name || "不明"}${contact ? `（主催者・担当：${contact}）` : ""}`,
     ev ? `イベント：${ev.title}（${ev.date}、${ev.format}${ev.duration_min}分、${ev.online ? "オンライン" : ev.venue}）` : "イベント：不明",
     ev ? `聴衆：${ev.audience}` : "",
     `テーマ：${r.theme ?? "お任せ"}`,
@@ -91,17 +94,24 @@ function requestText(r: SpeakingRequest): string {
 async function generateChecked<T>(
   make: (extra: string) => Promise<{ value: T; model: string; fellBack: boolean; cost: number }>,
   textsOf: (v: T) => Array<{ where: string; text: string }>,
+  /** 追加の検査（主催者への返事など）。作り直しても残ったら repair で直す（エラーにはしない） */
+  extra?: { problems: (v: T) => string[]; repair: (v: T, problems: string[]) => T },
 ): Promise<HeavyResult<T>> {
   let r = await make("");
   let problems = internalTermProblems(textsOf(r.value));
+  let extraProblems = extra?.problems(r.value) ?? [];
   let cost = r.cost;
-  if (problems.length) {
-    r = await make(`\n\n# 前回の下書きの問題\n${problems.join("\n")}\n内部の項目名やidを使わず、普通の言葉で書き直してください。`);
+  if (problems.length || extraProblems.length) {
+    r = await make(
+      `\n\n# 前回の下書きの問題\n${[...problems, ...extraProblems].join("\n")}\n内部の項目名やidを使わず、普通の言葉で書き直してください。`,
+    );
     cost += r.cost;
     problems = internalTermProblems(textsOf(r.value));
     if (problems.length) throw new Error(`下書きに内部の言葉が残りました：${problems.join(" / ")}`);
+    extraProblems = extra?.problems(r.value) ?? [];
   }
-  return { value: r.value, model: r.model, fellBack: r.fellBack, cost_usd: cost };
+  const value = extra && extraProblems.length ? extra.repair(r.value, extraProblems) : r.value;
+  return { value, model: r.model, fellBack: r.fellBack, cost_usd: cost };
 }
 
 export interface OutreachDraft {
@@ -109,6 +119,10 @@ export interface OutreachDraft {
   message: string;
   lt_outline: Array<{ minutes: number; heading: string; points: string[] }>;
   tips_for_pr: string[];
+  /** 主催者への返事（X で返す短い文。依頼 → 候補の承認のときだけ。送信しない） */
+  organizer_reply?: string | null;
+  /** 主催者への返事を検査で差し替えたときの説明（使う人向け） */
+  organizer_reply_note?: string | null;
 }
 
 const DRAFT_SCHEMA = {
@@ -135,6 +149,13 @@ const DRAFT_SCHEMA = {
   additionalProperties: false,
 };
 
+/** 依頼 → 候補の承認のとき：声かけ文に加えて、主催者への返事も同じ1回で作る */
+const REQUEST_DRAFT_SCHEMA = {
+  ...DRAFT_SCHEMA,
+  properties: { ...DRAFT_SCHEMA.properties, organizer_reply: { type: "string" } },
+  required: [...DRAFT_SCHEMA.required, "organizer_reply"],
+};
+
 /** draft_outreach(employee_id, theme): outreach message + talk outline. Never sent; shown for copy only. */
 export async function draftOutreach(
   runId: string,
@@ -154,10 +175,22 @@ export async function draftOutreach(
 - 登壇経験が少ない人には、準備の負担が小さいことを伝える
 - 構成案は持ち時間に収まるように分単位で割り振る
 - tips_for_pr には、技術広報が声をかける前に確認しておくとよいことを2〜3個
+- organizer_reply には、依頼をくれた主催者に X（DM・リプライ）で返す短い文を書く
+  - ${ORGANIZER_REPLY_MAX}字以内。くだけすぎない丁寧さで、X らしく短く（件名・署名なし）。主催者の名前が分かれば最初に呼びかける
+  - 「弊社の〇〇が△△のお話でお力になれそうです」のように、誰がどんなテーマで話せそうかを伝える。社内の人には「さん」を付けない
+  - 本人にはまだ確認していないので確約しない（「本人に確認して、あらためてご連絡します」）
+  - 未定の項目（日程・形式など）があれば、教えてほしいと一言添える
+  - 社内の評価に当たる情報は書かない：忙しさ・予定の埋まり具合・登壇回数や経験・アンケートの反応・ほかの候補や比較・社内の判断
 - ${PLAIN_TEXT_RULE}`;
+
+  const others = employees()
+    .filter((e) => e.id !== emp.id)
+    .map((e) => e.name);
+  const undecided = (request.intake?.undecided ?? []).map((f) => INTAKE_LABEL[f]);
 
   const user = `# 依頼
 ${requestText(request)}
+${undecided.length ? `未定の項目：${undecided.join("・")}\n` : ""}
 
 # 声をかける相手
 ${emp.name}（${emp.business_unit}／${emp.role}）／登壇${emp.past_talk_count}回／忙しさ${emp.workload}
@@ -173,7 +206,7 @@ ${evidence || "（なし）"}`;
 
   return generateChecked(
     async (extra) => {
-      const r = await callHeavy(runId, "draft", system, user + extra, DRAFT_SCHEMA);
+      const r = await callHeavy(runId, "draft", system, user + extra, REQUEST_DRAFT_SCHEMA);
       return { value: JSON.parse(r.text) as OutreachDraft, model: r.model, fellBack: r.fellBack, cost: r.cost };
     },
     (d) => [
@@ -182,7 +215,31 @@ ${evidence || "（なし）"}`;
       ...d.lt_outline.flatMap((s) => [{ where: "構成案", text: s.heading }, ...s.points.map((p) => ({ where: "構成案", text: p }))]),
       ...d.tips_for_pr.map((t) => ({ where: "声をかける前に", text: t })),
     ],
+    {
+      problems: (d) => [
+        ...internalTermProblems([{ where: "主催者への返事", text: d.organizer_reply ?? "" }]),
+        ...organizerReplyProblems(d.organizer_reply ?? "", emp.name, others),
+      ],
+      repair: (d, problems) => ({
+        ...d,
+        organizer_reply: safeOrganizerReply(request, emp.name, candidate.theme, others),
+        organizer_reply_note: `作った文に問題があったため、決まった形の文に差し替えました（${problems[0]}）`,
+      }),
+    },
   );
+}
+
+/** 主催者への返事の代わりの文。テーマを入れて検査に通らなければ、テーマなしにする */
+function safeOrganizerReply(request: SpeakingRequest, name: string, theme: string, others: string[]): string {
+  const base = {
+    name,
+    organizer: request.requester?.contact_name || request.intake?.organizer || null,
+    eventName: request.event?.title ?? request.intake?.event_name ?? null,
+    undecided: (request.intake?.undecided ?? []).map((f) => INTAKE_LABEL[f]),
+  };
+  const withTheme = fallbackOrganizerReply({ ...base, theme });
+  if (organizerReplyProblems(withTheme, name, others).length === 0) return withTheme;
+  return fallbackOrganizerReply({ ...base, theme: "" });
 }
 
 /**

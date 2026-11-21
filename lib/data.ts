@@ -86,6 +86,8 @@ export interface SpeakingRequest {
   nominated_employee_id?: string | null;
   reference?: { kind: string; title: string; url: string } | null;
   reply_deadline?: string;
+  /** 受信箱の会話から読み取った項目（lib/intake.ts。コードで確かめ済み、未定は未定のまま） */
+  intake?: import("./intake").IntakeReading;
   message: string;
 }
 

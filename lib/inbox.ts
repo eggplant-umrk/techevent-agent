@@ -6,6 +6,7 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import type { AgentEvent, ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
+import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { internalTerms } from "./plainText";
 import { runUsd as usageOfRun } from "./usage";
@@ -40,6 +41,8 @@ export interface InboxItem {
   opened_at: string | null;
   /** 依頼文から読み取った指名（読み取る前は null） */
   nominee: NomineeReading | null;
+  /** 会話から読み取った項目（イベント名・日程・形式・テーマ・主催者）。読み取る前・古い形の読み取りでは null */
+  intake?: IntakeReading | null;
   result: ProposalResult | null;
   /** 作業ログ（画面の「Agentがやったこと」を再現するため） */
   events: AgentEvent[];
@@ -100,13 +103,44 @@ export function markOpened(id: string) {
  * 指名は、依頼文から読み取って社員データで確かめた人だけを入れる（指名の検証・代わりの提案は既存のまま効く）。
  * 開催日などは本文からAgentが読み取る。
  */
-export function inboxRequest(it: Pick<InboxItem, "id" | "text" | "received_at" | "source"> & { nominee?: NomineeReading | null }): SpeakingRequest {
+export function inboxRequest(
+  it: Pick<InboxItem, "id" | "text" | "received_at" | "source"> & { nominee?: NomineeReading | null; intake?: IntakeReading | null },
+): SpeakingRequest {
+  const intake = it.intake ?? null;
   return {
     id: it.id,
     received_at: it.received_at.slice(0, 10),
-    message: it.text,
+    // 会話から読み取った項目があれば先頭に足す（未定は未定のまま渡す）。元の会話はそのまま続ける
+    message: intake ? `${intakeHeader(intake, it.nominee ?? null)}\n${it.text}` : it.text,
     nominated_employee_id: it.nominee?.employee_id ?? null,
+    ...(intake ? { intake } : {}),
   };
+}
+
+/**
+ * 依頼文（X の会話など）から項目と指名を読み取り、コードで確かめる。
+ * 読み取りが古い形（指名の名前だけ）なら指名だけ。失敗したら指名なし（理由を残す）、項目は読まなかったことにする。
+ */
+export async function readIntake(
+  text: string,
+  receivedAt: string,
+  extractor: IntakeExtractor,
+  runId: string,
+): Promise<{ nominee: NomineeReading; intake: IntakeReading | null }> {
+  try {
+    const raw = await extractor(text, runId);
+    if (raw === null || typeof raw === "string") return { nominee: resolveNominee(raw), intake: null };
+    return checkIntake(text, raw, receivedAt);
+  } catch {
+    return {
+      nominee: {
+        name: null,
+        employee_id: null,
+        note: "依頼文から指名を読み取れなかったため、指名なしとして扱いました。指名があるかは依頼文で確認してください",
+      },
+      intake: null,
+    };
+  }
 }
 
 /** 依頼文から指名を読み取り、社員データで確かめる。読み取れなければ指名なし（理由を残す） */
@@ -166,7 +200,7 @@ export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } 
 const newId = () => `inb-${Date.now().toString(36)}-${randomBytes(3).toString("hex")}`;
 
 /** 登録して、裏で候補づくりを始める。返すのは登録した1件（まだ processing） */
-export function addToInbox(input: InboxInput, runner: Runner, extractor?: NomineeExtractor): InboxItem {
+export function addToInbox(input: InboxInput, runner: Runner, extractor?: IntakeExtractor): InboxItem {
   const item = registerInbox(input);
   void prepare(item.id, runner, extractor);
   return item;
@@ -199,23 +233,24 @@ export function registerInbox(input: InboxInput): InboxItem {
  * 候補づくり。終わったら結果と作業ログを保存する（テストから待てるように Promise を返す）。
  * extractor があれば、先に依頼文から指名を読み取って既存の依頼の形に入れる。
  */
-export async function prepare(id: string, runner: Runner, extractor?: NomineeExtractor): Promise<void> {
+export async function prepare(id: string, runner: Runner, extractor?: IntakeExtractor): Promise<void> {
   let it = getInboxItem(id);
   if (!it) return;
   const events: AgentEvent[] = [];
   let runUsd = 0;
   try {
     if (extractor && !it.nominee) {
-      const nominee = await readNominee(it.text, extractor, id);
-      update(id, (x) => ({ ...x, nominee }));
-      it = { ...it, nominee };
+      const { nominee, intake } = await readIntake(it.text, it.received_at, extractor, id);
+      update(id, (x) => ({ ...x, nominee, intake }));
+      it = { ...it, nominee, intake };
     }
     const note = it.nominee?.note ?? null;
+    const undecided = undecidedNote(it.intake);
     const raw = await runner(inboxRequest(it), (e) => {
       events.push(e);
       if (e.type === "done") runUsd = e.run_usd;
     });
-    const result = raw ? addNomineeNote(raw, note) : null;
+    const result = raw ? addNomineeNote(addNomineeNote(raw, note), undecided) : null;
     runUsd += usageOfRun(id); // 指名の読み取りの分（依頼の id で記録している）
     const failed = events.find((e): e is Extract<AgentEvent, { type: "error" }> => e.type === "error");
     update(id, (x) => ({
@@ -240,7 +275,7 @@ export async function prepare(id: string, runner: Runner, extractor?: NomineeExt
 }
 
 /** もう一度探す（画面の「もう一度探す」とは別に、エラーの依頼を準備し直すとき用） */
-export function restart(id: string, runner: Runner, extractor?: NomineeExtractor) {
+export function restart(id: string, runner: Runner, extractor?: IntakeExtractor) {
   update(id, (x) => ({ ...x, status: "processing", started_at: new Date().toISOString(), finished_at: null, error: null }));
   void prepare(id, runner, extractor);
 }
@@ -311,7 +346,8 @@ export interface InboxListItem {
 }
 
 export function listView(it: InboxItem): InboxListItem {
-  const firstLine = it.text.split(/\r?\n/).find((l) => l.trim()) ?? it.text;
+  // 会話からイベント名を読み取れていればそれを、なければ本文の先頭行を出す
+  const firstLine = it.intake?.event_name ?? it.text.split(/\r?\n/).find((l) => l.trim()) ?? it.text;
   return {
     id: it.id,
     source: it.source,
@@ -330,6 +366,8 @@ export interface InboxDetail extends InboxListItem {
   text: string;
   /** 依頼文から読み取り、社員データで確かめた指名（社員の名前）。指名なし・確かめられなかったときは null */
   nominee_name: string | null;
+  /** 会話から読み取った項目（未定の項目つき）。読み取っていなければ null */
+  intake: IntakeReading | null;
   result: ProposalResult | null;
   events: AgentEvent[];
   run_usd: number;
@@ -339,5 +377,13 @@ export function detailView(it: InboxItem): InboxDetail {
   const nomineeName = it.nominee?.employee_id
     ? it.result?.candidates.find((c) => c.employee_id === it.nominee!.employee_id)?.name ?? it.nominee.name
     : null;
-  return { ...listView(it), text: it.text, nominee_name: nomineeName, result: it.result, events: it.events, run_usd: it.run_usd };
+  return {
+    ...listView(it),
+    text: it.text,
+    nominee_name: nomineeName,
+    intake: it.intake ?? null,
+    result: it.result,
+    events: it.events,
+    run_usd: it.run_usd,
+  };
 }

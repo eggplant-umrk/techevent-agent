@@ -6,7 +6,7 @@ import { runAgent } from "@/lib/agent";
 import { addToInbox, listInbox, listView, parseInboxInput } from "@/lib/inbox";
 import { isActiveInboxItem } from "@/lib/archive";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
-import { extractNomineeWithAgent } from "@/lib/nominee";
+import { extractIntakeWithAgent } from "@/lib/intake";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   const parsed = parseInboxInput(body);
   if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
   // 登録してすぐ返す。指名の読み取りと候補づくり（既存の runAgent）は裏で続く
-  const item = addToInbox(parsed.input, (request, emit) => runAgent(request, emit), extractNomineeWithAgent);
+  const item = addToInbox(parsed.input, (request, emit) => runAgent(request, emit), extractIntakeWithAgent);
   return Response.json({ id: item.id });
 }
 

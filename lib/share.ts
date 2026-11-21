@@ -116,7 +116,7 @@ export function shareBudgetUsd(): number | null {
 
 /** 見せている間の API 代（usage の記録のうち、since 以降のもの） */
 export const spentSince = (records: Array<{ at: string; cost_usd: number }>, since: string) =>
-  records.filter((e) => e.at >= since).reduce((n, e) => n + e.cost_usd, 0);
+  records.filter((e) => Date.parse(e.at) >= Date.parse(since)).reduce((n, e) => n + e.cost_usd, 0); // 日本時間（+09:00）と UTC が混ざっても時刻で比べる
 
 /** API 代の上限。超えていれば止める理由 */
 export function checkBudget(method: string, pathname: string, spent: number, budget = shareBudgetUsd()): Gate {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Candidate, DateSuggestions, Proposal as ProposalT } from "@/app/_client/types";
 import { ACTIVITY_LABEL } from "./labels";
 import { CopyButton, Tag } from "./ui";
@@ -12,6 +13,7 @@ export function Candidates({
   onOpenCard,
   marks = {},
   dates = null,
+  requestTitle = null,
 }: {
   result: ProposalT;
   disabled: boolean;
@@ -21,6 +23,8 @@ export function Candidates({
   marks?: Record<string, "outreach" | "declined" | "accepted">;
   /** 日程が未定の依頼で、候補ごとの空いていそうな日（lib/dateSuggest.ts。コードで計算） */
   dates?: DateSuggestions | null;
+  /** 依頼のイベント名（指名の根拠を「○○の依頼（指名）」と出すため。内部の id は出さない） */
+  requestTitle?: string | null;
 }) {
   const n = result.candidates.length;
   return (
@@ -38,7 +42,7 @@ export function Candidates({
         )}
       </div>
       {result.candidates.map((c) => (
-        <CandidateRow key={c.employee_id} c={c} mark={marks[c.employee_id]} free={dates?.candidates.find((x) => x.employee_id === c.employee_id) ?? (dates ? null : undefined)} disabled={disabled} onApprove={() => onApprove(c)} onOpenCard={(ev) => c.card_id && onOpenCard(c.card_id, ev)} />
+        <CandidateRow key={c.employee_id} c={c} mark={marks[c.employee_id]} free={dates?.candidates.find((x) => x.employee_id === c.employee_id) ?? (dates ? null : undefined)} requestTitle={requestTitle} disabled={disabled} onApprove={() => onApprove(c)} onOpenCard={(ev) => c.card_id && onOpenCard(c.card_id, ev)} />
       ))}
       <NoFit result={result} />
     </section>
@@ -55,6 +59,7 @@ function CandidateRow({
   c,
   mark,
   free,
+  requestTitle,
   onApprove,
   onOpenCard,
   disabled,
@@ -63,11 +68,15 @@ function CandidateRow({
   mark?: "outreach" | "declined" | "accepted";
   /** 空いていそうな日（日程が未定の依頼のときだけ。undefined なら出さない、null なら「予定は不明」） */
   free?: DateSuggestions["candidates"][number] | null;
+  requestTitle?: string | null;
   onApprove: () => void;
   onOpenCard: (evidenceId?: string) => void;
   disabled: boolean;
 }) {
   const conditional = c.confidence === "conditional";
+  const [allCautions, setAllCautions] = useState(false);
+  // 見出しの行：空の項目は区切りごと出さない（「バクラク・登壇0回・」のように「・」だけが残らないように）
+  const headLine = [c.business_unit, `登壇${c.past_talk_count}回`, c.busy_text].filter((x) => x && String(x).trim()).join("・");
   return (
     <article className="cand" aria-labelledby={`cand-${c.employee_id}`}>
       <div className="cand-head">
@@ -79,9 +88,7 @@ function CandidateRow({
         </span>
         {c.is_nominee && <span className="nominee">指名</span>}
         {c.is_alternative_to_nominee && <span className="nominee">指名の代わり</span>}
-        <span className="meta">
-          {c.business_unit}・登壇{c.past_talk_count}回・{c.busy_text}
-        </span>
+        <span className="meta">{headLine}</span>
         {conditional && <Tag tone="warn">条件付き</Tag>}
         {mark && <Tag tone={MARK[mark].tone}>{MARK[mark].label}</Tag>}
       </div>
@@ -93,16 +100,16 @@ function CandidateRow({
       </p>
       <p className="cand-evidence meta">
         根拠：
-        {c.evidence_request_id && <span>依頼 {c.evidence_request_id}（指名）</span>}
+        {c.evidence_request_id && <span>{requestTitle ? `「${requestTitle}」の依頼（指名）` : "この依頼（指名）"}</span>}
         {c.evidence.map((ev, i) => (
           <span key={ev.id}>
             {(i > 0 || c.evidence_request_id) && "、"}
             {c.card_id ? (
               <button type="button" className="link" title={ev.title} onClick={() => onOpenCard(ev.id)}>
-                {ACTIVITY_LABEL[ev.type] ?? ev.type} {ev.id}
+                {ACTIVITY_LABEL[ev.type] ?? ev.type}「{shortTitle(ev.title)}」
               </button>
             ) : (
-              `${ACTIVITY_LABEL[ev.type] ?? ev.type} ${ev.id}`
+              `${ACTIVITY_LABEL[ev.type] ?? ev.type}「${shortTitle(ev.title)}」`
             )}
           </span>
         ))}
@@ -110,9 +117,19 @@ function CandidateRow({
       </p>
       {free !== undefined && <FreeDates free={free} />}
       {c.cautions.length > 0 && (
-        <p className="cautions meta" title={c.cautions.join("／")}>
-          注意：{c.cautions.join("／")}
-        </p>
+        <div className="cautions-full meta">
+          <span>注意：</span>
+          <ul>
+            {(allCautions ? c.cautions : c.cautions.slice(0, 2)).map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+          {c.cautions.length > 2 && (
+            <button type="button" className="link" aria-expanded={allCautions} onClick={() => setAllCautions((x) => !x)}>
+              {allCautions ? "たたむ" : `ほか${c.cautions.length - 2}件を見る`}
+            </button>
+          )}
+        </div>
       )}
       <div className="btn-row">
         <button type="button" className={`btn btn-sm${mark ? "" : " btn-primary"}`} onClick={onApprove} disabled={disabled || mark === "declined"}>
@@ -127,6 +144,9 @@ function CandidateRow({
     </article>
   );
 }
+
+/** 根拠の活動のタイトル（長ければ切る） */
+const shortTitle = (t: string) => (t.length > 28 ? `${t.slice(0, 27)}…` : t);
 
 const WEEK = ["日", "月", "火", "水", "木", "金", "土"];
 /** 2026-12-14 → 12/14（月） */
@@ -156,22 +176,30 @@ function FreeDates({ free }: { free: DateSuggestions["candidates"][number] | nul
 
 /** One small box under the candidates: why nobody else, and what to check next. */
 function NoFit({ result }: { result: ProposalT }) {
-  if (!result.no_fit) return null;
+  if (!result.no_fit || (!result.no_fit.reasons.length && !result.no_fit.next_checks.length)) return null;
   const none = result.candidates.length === 0;
   return (
     <div className="nofit small">
-      <h3 className="h4">{none ? "見つからない理由" : "ほかに見つからなかった理由"}</h3>
-      <ul className="plain-list">
-        {result.no_fit.reasons.map((t, i) => (
-          <li key={i}>{t}</li>
-        ))}
-      </ul>
-      <h3 className="h4">次に確認すべきこと</h3>
-      <ul className="plain-list">
-        {result.no_fit.next_checks.map((t, i) => (
-          <li key={i}>{t}</li>
-        ))}
-      </ul>
+      {result.no_fit.reasons.length > 0 && (
+        <>
+          <h3 className="h4">{none ? "見つからない理由" : "ほかに見つからなかった理由"}</h3>
+          <ul className="plain-list">
+            {result.no_fit.reasons.map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+        </>
+      )}
+      {result.no_fit.next_checks.length > 0 && (
+        <>
+          <h3 className="h4">次に確認すべきこと</h3>
+          <ul className="plain-list">
+            {result.no_fit.next_checks.map((t, i) => (
+              <li key={i}>{t}</li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

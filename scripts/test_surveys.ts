@@ -1,6 +1,7 @@
 // アンケートの取り込み・分析・書き戻しのテスト（APIを使わない）：npm run test:surveys
 // 本物の Agent の代わりに、キーワードで文を分ける偽の analyzer を使う。
 // data/cards.json は書き戻しで変わるので、終わったらバイトごと元に戻す。分析結果と取り込みは一時ファイルに書く。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

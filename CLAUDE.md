@@ -25,6 +25,8 @@
 - 根拠：カードや提案の根拠には、実在するidだけを使う
 - 人が直したカード（確認済み）の項目は上書きしない
 - データはすべて架空。実在の人物や社内の情報を入れない（例外：data/sources/github/ と data/sources/demo-person/ は開発者本人の了承を得た公開リポジトリの取り込みと、そこから作ったカード。本人以外の人のデータは入れない。data/sources/release_notes.json は公開されているリリースのお知らせで、要約は自分の言葉、担当の割り当ては架空）
+- 本物の Slack から読んだ内容（data/sources/slack_posts.json・slack_state.json）はコミットしない（git の対象外）。公開リポジトリの GitHub から取り込んだデータは、もともと公開情報なのでコミットしてよい
+- 元のデータ（git に入っている data/ のファイル）は読むだけ。画面での操作・ネタ帳の更新の結果は data/runtime/（git の対象外）に保存して重ねる（lib/runtime.ts）。評価・テストは元のデータだけで動かす（scripts/_isolate.ts）
 
 ## API代
 - APIクレジットは月$200まで（カード未登録なので、使い切ると止まるだけ）

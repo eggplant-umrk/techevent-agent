@@ -5,11 +5,11 @@
 // - 声かけ文・主催者への返事の下書きを保存して、承諾済みの依頼を開き直したときにも出す
 // 評価用のデータ（requests.json）と結合テストの動きは変えない（ここは画面用の読み書きだけ）。
 import fs from "node:fs";
+import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
 import type { AgentEvent, ProposalResult } from "./agent";
 import { inboxEventDate } from "./archive";
 import { loadCards } from "./cards";
-import { TODAY } from "./config";
 import { employeeById, requests } from "./data";
 import type { OutreachDraft } from "./heavy";
 import { detailView, getInboxItem, listInbox, listView, type InboxDetail, type InboxListItem } from "./inbox";
@@ -48,7 +48,7 @@ export const isSampleRequest = (id: string) => requests().some((r) => r.id === i
 export function saveSampleProposal(requestId: string, result: ProposalResult, events: AgentEvent[], runUsd: number) {
   if (!isSampleRequest(requestId)) return;
   const all = loadSamples();
-  all[requestId] = { result, events, run_usd: runUsd, saved_at: new Date().toISOString(), opened_at: all[requestId]?.opened_at ?? null };
+  all[requestId] = { result, events, run_usd: runUsd, saved_at: nowJst(), opened_at: all[requestId]?.opened_at ?? null };
   writeJson(SAMPLE_FILE(), all);
 }
 
@@ -56,7 +56,7 @@ export function markSampleOpened(requestId: string) {
   const all = loadSamples();
   const s = all[requestId];
   if (!s || s.opened_at) return;
-  all[requestId] = { ...s, opened_at: new Date().toISOString() };
+  all[requestId] = { ...s, opened_at: nowJst() };
   writeJson(SAMPLE_FILE(), all);
 }
 
@@ -64,7 +64,7 @@ export function markSampleOpened(requestId: string) {
 const draftKey = (requestId: string, employeeId: string) => `${requestId}:${employeeId}`;
 export function saveDraft(requestId: string, employeeId: string, draft: OutreachDraft) {
   const all = readJson<Record<string, OutreachDraft & { saved_at: string }>>(DRAFT_FILE(), {});
-  all[draftKey(requestId, employeeId)] = { ...draft, saved_at: new Date().toISOString() };
+  all[draftKey(requestId, employeeId)] = { ...draft, saved_at: nowJst() };
   writeJson(DRAFT_FILE(), all);
 }
 export function loadDraft(requestId: string, employeeId: string): OutreachDraft | null {
@@ -95,13 +95,13 @@ export interface BoardDetail extends Omit<InboxDetail, "source"> {
 const nameOf = (id: string) => employeeById(id)?.name ?? id;
 
 function stateOf(requestId: string, base: "new" | "processing" | "ready" | "error", eventDate: string | null): RequestState {
-  return requestState(base, recordsFor(requestId, loadCards(), nameOf), eventDate, TODAY);
+  return requestState(base, recordsFor(requestId, loadCards(), nameOf), eventDate, todayJst());
 }
 
 function sampleList(): BoardListItem[] {
   const saved = loadSamples();
   return requests()
-    .filter((r) => !(r.event?.date && r.event.date < TODAY))
+    .filter((r) => !(r.event?.date && r.event.date < todayJst()))
     .map((r) => {
       const s = saved[r.id];
       const date = r.event?.date ?? null;
@@ -109,7 +109,7 @@ function sampleList(): BoardListItem[] {
         id: r.id,
         source: "sample" as const,
         status: "ready" as const,
-        received_at: `${r.received_at ?? TODAY}T09:00:00+09:00`,
+        received_at: `${r.received_at ?? todayJst()}T09:00:00+09:00`,
         is_new: !s?.opened_at,
         title: r.event?.title ?? r.id,
         candidate_names: s?.result.candidates.map((c) => c.name) ?? [],
@@ -131,7 +131,7 @@ export function boardList(): BoardListItem[] {
       return { ...v, state: stateOf(it.id, it.status, date), event_date: date };
     })
     .filter((x) => x.state.stage !== "archived");
-  return [...inbox, ...sampleList()].sort((a, b) => (a.received_at < b.received_at ? 1 : -1));
+  return [...inbox, ...sampleList()].sort((a, b) => byTimeDesc(a.received_at, b.received_at));
 }
 
 function replyFor(requestId: string, state: RequestState): BoardDetail["accepted_reply"] {
@@ -160,7 +160,7 @@ export function boardDetail(id: string): BoardDetail | null {
     id,
     source: "sample",
     status: "ready",
-    received_at: `${r.received_at ?? TODAY}T09:00:00+09:00`,
+    received_at: `${r.received_at ?? todayJst()}T09:00:00+09:00`,
     is_new: !s?.opened_at,
     title: r.event?.title ?? id,
     candidate_names: s?.result.candidates.map((c) => c.name) ?? [],

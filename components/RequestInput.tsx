@@ -34,6 +34,7 @@ export function RequestInput({
   adding,
   onAdd,
   compact,
+  mock = false,
   children,
 }: {
   mode: RequestMode;
@@ -49,6 +50,8 @@ export function RequestInput({
   onAdd: () => void;
   /** 候補を出したあとは、依頼文をたたんで要約だけにする */
   compact: boolean;
+  /** ?mock のとき：保存済みの結果を出していることを明記する */
+  mock?: boolean;
   /** The agent's steps, shown under the request without another frame. */
   children?: React.ReactNode;
 }) {
@@ -61,12 +64,21 @@ export function RequestInput({
         <h2 id="req-title" className="h2">
           依頼
         </h2>
-        <button type="button" className="chip" aria-pressed={mode === "custom"} onClick={() => onMode(mode === "custom" ? "inbox" : "custom")}>
-          手で追加
-        </button>
+        {mode !== "custom" && (
+          <button type="button" className="btn btn-sm" onClick={() => onMode("custom")}>
+            会話を貼って追加
+          </button>
+        )}
       </div>
 
-      {mode === "inbox" && !inbox && <p className="meta">左の受信箱から依頼を選んでください。新しい依頼は「手で追加」からも入れられます。</p>}
+      {mode === "inbox" && !inbox && (
+        <p className="meta">左の受信箱から依頼を選んでください。X の DM・リプライなどで届いた依頼は、右上の「会話を貼って追加」から会話をそのまま貼って入れられます。</p>
+      )}
+      {mock && (
+        <p className="small caveat" role="note">
+          モックでは保存済みの結果を出しています（貼った会話の中身は読まず、決まった例を出します）。
+        </p>
+      )}
 
       {mode === "inbox" && inbox && (
         <div className="req-summary">
@@ -121,7 +133,9 @@ export function RequestInput({
 
       {mode === "custom" && (
         <label className="field">
-          <span className="field-label">依頼文（X の DM・リプライの会話をそのまま貼れます。追加すると受信箱に入り、Agentが候補を準備します）</span>
+          <span className="field-label">
+            X の DM・リプライなどの会話を、そのまま貼ってください。イベント名・日程・形式・テーマ・指名・主催者を読み取り、受信箱に入れて候補を準備します（読み取れない項目は「未定」）
+          </span>
           <textarea
             className="input"
             rows={8}
@@ -142,11 +156,17 @@ export function RequestInput({
 
       <div className="btn-row">
         {mode === "custom" ? (
-          <button type="button" className="btn btn-primary" disabled={adding || !customText.trim()} onClick={onAdd}>
-            {adding ? "受信箱に追加しています…" : "受信箱に追加"}
-          </button>
+          <>
+            <button type="button" className="btn btn-primary" disabled={adding || !customText.trim()} onClick={onAdd}>
+              {adding ? "受信箱に追加しています…" : "受信箱に追加"}
+            </button>
+            <button type="button" className="btn" disabled={adding} onClick={() => onMode("inbox")}>
+              やめる
+            </button>
+          </>
         ) : (
-          inbox && (
+          inbox &&
+          st?.stage !== "accepted" && (
             <button type="button" className={`btn ${st?.stage === "new" ? "btn-primary" : ""}`} disabled={running || preparing} onClick={onRun}>
               {preparing ? "候補を準備しています…" : running ? "ネタ帳を探しています…" : st?.stage === "new" ? "ネタ帳から候補を出す" : "もう一度探す"}
             </button>

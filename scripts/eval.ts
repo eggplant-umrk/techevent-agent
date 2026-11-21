@@ -13,6 +13,7 @@
 // Stage 2 — quality of theme ideas, scored by an LLM judge for before (v0.1) and after.
 //
 // Uses API credits (except --offline). The key is read from .env into this process only, and only for real runs.
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";

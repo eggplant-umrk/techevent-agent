@@ -150,7 +150,12 @@ export const notebookActivities = () => activities().filter((a) => a.type !== "r
 export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");
-export const usage = () => readJson<UsageEntry[]>("usage.json", []);
+/** 金額の記録。テストでは USAGE_FILE で一時ファイルに向ける（本物の記録を汚さない） */
+export const usage = (): UsageEntry[] => {
+  const f = process.env.USAGE_FILE;
+  if (f) return fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as UsageEntry[]) : [];
+  return readJson<UsageEntry[]>("usage.json", []);
+};
 
 /** イベント後のアンケートの1回答（1行＝1つの登壇への回答）。Googleフォームの CSV から lib/surveyCsv.ts が作る。個人情報の列は入らない */
 export interface SurveyAnswer {
@@ -176,9 +181,19 @@ export function requests(): SpeakingRequest[] {
 }
 
 export function appendUsage(entry: UsageEntry) {
-  writeJson("usage.json", [...usage(), entry]);
+  const f = process.env.USAGE_FILE;
+  if (f) fs.writeFileSync(f, JSON.stringify([...usage(), entry], null, 2) + "\n", "utf-8");
+  else writeJson("usage.json", [...usage(), entry]);
 }
 
 export function employeeById(id: string): Employee | undefined {
   return employees().find((e) => e.id === id);
+}
+
+/**
+ * 依頼の開催日。サンプルの依頼は event.date、受信箱の依頼は会話から読み取ってコードで確かめた日程（intake.date）。
+ * 決まっていなければ null。日付の検証・「予定が重なる」の判定・打診の記録の開催日に使う
+ */
+export function eventDateOf(r: Pick<SpeakingRequest, "event" | "intake"> | null | undefined): string | null {
+  return r?.event?.date ?? r?.intake?.date ?? null;
 }

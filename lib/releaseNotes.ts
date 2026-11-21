@@ -11,6 +11,7 @@
 // - リリースノート自体は「発信済み」ではない（登壇やブログはまだ）
 // 架空の会社のデータだけで使う（DATA_SOURCE=github のときは入れない）。評価は RELEASE_NOTES=off で入れない。
 import fs from "node:fs";
+import { readOverlay, readReplaced, writeOverlay, writeReplaced } from "./runtime";
 import path from "node:path";
 import type { Activity } from "./data";
 import { dataSource } from "./dataSource";
@@ -73,10 +74,18 @@ function writeJson(file: string, value: unknown) {
 }
 
 export const releaseNotes = (): ReleaseNote[] => (releaseNotesOn() ? readJson<ReleaseNote[]>(NOTES_FILE(), []) : []);
-export const ownerRecords = (): Record<string, OwnerRecord> => readJson(OWNERS_FILE(), {});
-export const saveOwnerRecords = (r: Record<string, OwnerRecord>) => writeJson(OWNERS_FILE(), r);
-export const unassignedCards = (): UnassignedCard[] => (releaseNotesOn() ? readJson<UnassignedCard[]>(UNASSIGNED_FILE(), []) : []);
-export const saveUnassignedCards = (c: UnassignedCard[]) => writeJson(UNASSIGNED_FILE(), c);
+// 元のデータ（data/release_owners.json・data/unassigned_cards.json）は読むだけ。割り当てなどの結果は data/runtime/ に置く（lib/runtime.ts）。
+// テストでは RELEASE_OWNERS_FILE・UNASSIGNED_CARDS_FILE でそのファイルを直接使う
+const BASE_OWNERS = () => path.join(DATA_DIR(), "release_owners.json");
+const BASE_UNASSIGNED = () => path.join(DATA_DIR(), "unassigned_cards.json");
+export const ownerRecords = (): Record<string, OwnerRecord> =>
+  process.env.RELEASE_OWNERS_FILE ? readJson(OWNERS_FILE(), {}) : readOverlay<OwnerRecord>([BASE_OWNERS()], "release_owners.json");
+export const saveOwnerRecords = (r: Record<string, OwnerRecord>) =>
+  process.env.RELEASE_OWNERS_FILE ? writeJson(OWNERS_FILE(), r) : writeOverlay([BASE_OWNERS()], "release_owners.json", r);
+export const unassignedCards = (): UnassignedCard[] =>
+  !releaseNotesOn() ? [] : process.env.UNASSIGNED_CARDS_FILE ? readJson<UnassignedCard[]>(UNASSIGNED_FILE(), []) : readReplaced<UnassignedCard[]>(BASE_UNASSIGNED(), "unassigned_cards.json", []);
+export const saveUnassignedCards = (c: UnassignedCard[]) =>
+  process.env.UNASSIGNED_CARDS_FILE ? writeJson(UNASSIGNED_FILE(), c) : writeReplaced("unassigned_cards.json", c);
 
 /** 担当者（なければ null）。技術広報の割り当て > データの担当者 > キーワード一致＋AI の判断 */
 export function ownerOf(note: ReleaseNote, records = ownerRecords()): string | null {

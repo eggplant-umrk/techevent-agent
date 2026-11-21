@@ -1,5 +1,6 @@
 // 忙しさの計算と iCal の読み込みのテスト（APIは使わない）。
 //   npm run test:busyness
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import {

@@ -2,6 +2,7 @@
 //   npm run test:stage
 // 状態：準備中 → 候補準備済み → 声かけ中 → 承諾済み／辞退 → 開催後。判定はコード（lib/requestStage.ts）。
 // data/inbox.json・サンプルの候補・下書きは一時ファイルに書く。カード（data/cards.json）は最後に元に戻す。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -80,6 +81,13 @@ async function main() {
     check("承諾済みの依頼を開くと、主催者への返事の下書きが出る", d1.accepted_reply?.text.startsWith("ご連絡ありがとうございます") === true);
     check("一覧にも承諾済み", board.boardList().find((x) => x.id === "req004")?.state.stage === "accepted");
     check("カード側：承諾した人のカードに承諾済みの依頼", acceptedRequestIds(loadCards().find((c) => c.card_id === card2.card_id)!).includes("req004"));
+    // 承諾の取り消し（記録を1つ戻す）：画面の「承諾を取り消す」と同じ窓口
+    const { POST: undo } = await import("../app/api/outcome/undo/route");
+    const call = (body: object) => undo(new Request("http://localhost:3000/api/outcome/undo", { method: "POST", headers: { host: "localhost:3000", "content-type": "application/json" }, body: JSON.stringify(body) }));
+    const u1 = await call({ request_id: "req004", card_id: card2.card_id });
+    check("承諾を取り消すと、声かけ中に戻る", u1.status === 200 && board.boardDetail("req004")!.state.stage === "outreach");
+    const u2 = await call({ request_id: "req004", card_id: card2.card_id });
+    check("最後の記録が承諾でなければ取り消せない（声かけは戻さない）", u2.status === 400 && board.boardDetail("req004")!.state.stage === "outreach");
   } finally {
     fs.writeFileSync(cardsFile, backup);
     for (const f of [process.env.INBOX_FILE!, process.env.SAMPLE_PROPOSALS_FILE!, process.env.DRAFTS_FILE!]) fs.rmSync(f, { force: true });

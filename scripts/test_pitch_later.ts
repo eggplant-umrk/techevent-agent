@@ -1,5 +1,6 @@
 // 代わりの人を推す文を「準備済み」のあとで作るテスト（APIは使わない。受信箱は一時ファイル）。
 //   npm run test:pitch
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

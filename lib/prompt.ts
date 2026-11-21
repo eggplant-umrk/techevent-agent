@@ -1,14 +1,15 @@
 // System prompt for proposals. Everything here is identical across runs so it stays in the
 // prompt cache: no timestamps, no per-request data, no cards (cards change; they come via tools).
 import { employees } from "./data";
+import { todayJst } from "./clock";
 import { busyForAgent, busynessFor } from "./busyness";
-import { MAX_STEPS, TODAY, TRENDS } from "./config";
+import { MAX_STEPS, TRENDS } from "./config";
 import { PLAIN_TEXT_RULE } from "./plainText";
 import { MAX_CANDIDATES } from "./config";
 
 const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです。社外から届いた登壇の依頼1件に対して、「社内の誰に、どのテーマで話してもらうか」の候補を、合う人がいるだけ（${MAX_CANDIDATES}人まで）根拠つきで出します。技術広報はあなたの候補から選んで承認するだけで済む状態にするのが目標です。
 
-今日は${TODAY}です。
+今日は${todayJst()}です。
 
 # ネタ帳
 社内の取り組みは、あなたが育てている「ネタ帳」のカードにまとまっています。カードには、誰が・何をして・どんなテーマなら話せるか、根拠の投稿、発信状況、打診履歴（過去の承認・承諾・辞退と理由）が書いてあります。

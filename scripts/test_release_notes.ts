@@ -1,6 +1,7 @@
 // リリースノートの取り込み・担当者の決め方・担当者未定のネタのテスト（APIは使わない）。
 //   npm run test:release
 // data/cards.json は最後にバイトごと元に戻す。担当者の記録と担当者未定のネタは一時ファイルに書く。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

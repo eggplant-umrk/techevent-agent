@@ -6,10 +6,11 @@
 //   - 技術広報が担当者を割り当てたら、その人の普通のカードになり、確認済みとして扱う（Agent は上書きしない）
 // リリースノート自体は「発信済み」ではない（published_ids・告知は空）。根拠はリリースノートの id（公開ページの URL つき）。
 import type Anthropic from "@anthropic-ai/sdk";
+import { todayJst, nowJst } from "./clock";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { editCard, loadCards, upsertCard, type CardFormat } from "./cards";
-import { TODAY, TRENDS } from "./config";
+import { TRENDS } from "./config";
 import { activities, employeeById, employees } from "./data";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
 import {
@@ -100,7 +101,7 @@ const SUBMIT_DEF: Anthropic.Tool = {
 };
 
 function instructions(): string {
-  return `あなたはLayerXの技術広報を支えるAgentです。プロダクトのリリースノートを読み、ネタ帳の「チームのネタ」のカードの中身を書きます。今日は${TODAY}です。今の時流：${TRENDS.join("／")}
+  return `あなたはLayerXの技術広報を支えるAgentです。プロダクトのリリースノートを読み、ネタ帳の「チームのネタ」のカードの中身を書きます。今日は${todayJst()}です。今の時流：${TRENDS.join("／")}
 
 # カードの中身
 - summary：そのリリースで何を出したか、誰のどんな課題を解いたかを2〜3文で。リリースノートにない数字・事実・社内事情は足さない
@@ -201,7 +202,7 @@ export function saveReleaseItems(items: SubmitItem[], pending: PendingNote[], em
         by: "match",
         matched_activity_ids: it.owner.employee_id ? it.owner.evidence_activity_ids : [],
         reason: it.owner.reason ?? "",
-        at: new Date().toISOString(),
+        at: nowJst(),
       };
       saveOwnerRecords(records);
       if (it.owner.employee_id) {
@@ -230,7 +231,7 @@ export function saveReleaseItems(items: SubmitItem[], pending: PendingNote[], em
       emit({ type: "card", release_id: p.note.id, card_id: out.card!.card_id, employee_id: owner, by, theme: it.themes[0] });
     } else {
       const list = unassignedCards();
-      const t = new Date().toISOString();
+      const t = nowJst();
       const card: UnassignedCard = {
         card_id: nextTeamCardId(list),
         employee_id: null,
@@ -352,7 +353,7 @@ export function assignUnassigned(cardId: string, employeeId: string): { ok: bool
   if (!employees().some((e) => e.id === employeeId)) return { ok: false, errors: [`社員 ${employeeId} はいません`] };
   const records = ownerRecords();
   const before = JSON.stringify(records);
-  const t = new Date().toISOString();
+  const t = nowJst();
   for (const id of u.release_note_ids)
     records[id] = { employee_id: employeeId, by: "human", matched_activity_ids: [], reason: "技術広報が割り当てた", at: t };
   saveOwnerRecords(records);

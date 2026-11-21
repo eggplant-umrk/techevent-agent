@@ -621,6 +621,7 @@ export default function Home() {
             adding={adding}
             onAdd={addManual}
             compact={running || !!result}
+            mock={api.mock}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
           </RequestInput>
@@ -628,7 +629,14 @@ export default function Home() {
             <AcceptedView
               detail={inbox}
               reply={acceptedReply}
-              dateSentence={inbox.state.accepted_by.map((p) => dateSentenceFor(p.employee_id)).find(Boolean) ?? null}
+              onUndo={async (employeeId) => {
+                const cardId = cards.find((c) => c.employee_id === employeeId && c.outreach_history.some((h) => h.request_id === inbox.id))?.card_id;
+                if (!cardId) throw new Error("その人のカードが見つかりません");
+                await api.undoOutcome(inbox.id, cardId);
+                loadCards();
+                loadPeople();
+                await refreshInbox(inbox.id);
+              }}
               showOthers={showOthers}
               onToggleOthers={() => setShowOthers((x) => !x)}
               onOpenCard={(employeeId) => {
@@ -644,7 +652,8 @@ export default function Home() {
               onApprove={approve}
               onOpenCard={(id, ev) => openCard(id, ev ?? null)}
               marks={marks}
-              dates={mode === "inbox" ? inbox?.date_suggestions ?? null : null}
+              dates={mode === "inbox" && stage !== "accepted" ? inbox?.date_suggestions ?? null : null}
+              requestTitle={mode === "inbox" ? inbox?.title ?? null : null}
             />
           )}
           {result && pitch && (stage !== "accepted" || showOthers) && <AlternativePitch text={pitch} />}

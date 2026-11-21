@@ -98,6 +98,7 @@ async function main() {
     { at: "2026-11-22T11:00:00Z", cost_usd: 2.5 },
   ];
   check("見せている間の金額は、始めてからの記録だけ", spentSince(recs, "2026-11-22T00:00:00Z") === 5.5);
+  check("記録が日本時間（+09:00）でも時刻で比べる", spentSince([{ at: "2026-11-22T08:30:00+09:00", cost_usd: 1 }, { at: "2026-11-22T09:30:00+09:00", cost_usd: 2 }], "2026-11-22T00:00:00Z") === 2);
   const over = checkBudget("POST", "/api/agent", 5.5);
   check("上限を超えたら、API を使う操作を止める（429・理由つき）", !over.ok && over.status === 429 && over.error.includes("$5"));
   for (const p of ["/api/notebook", "/api/events/ev020/analyze", "/api/draft", "/api/inbox", "/api/venues", "/api/venues/draft", "/api/blog-ideas", "/api/events/ev020/import"])
@@ -107,8 +108,7 @@ async function main() {
   check("上限より下なら止めない", checkBudget("POST", "/api/agent", 4.99).ok);
   process.env.SHARE_STARTED_AT = "2000-01-01T00:00:00Z";
   process.env.SHARE_BUDGET_USD = "0.000001";
-  const usageFile = path.join(process.cwd(), "data", "usage.json");
-  const hasUsage = fs.existsSync(usageFile) && (JSON.parse(fs.readFileSync(usageFile, "utf-8")) as unknown[]).length > 0;
+  const hasUsage = (await import("../lib/data")).usage().length > 0;
   if (hasUsage) {
     const mod = await import(`../proxy?budget=${Date.now()}`);
     const r6 = mod.proxy(new NextRequest("http://127.0.0.1:3000/api/agent", { method: "POST", headers: { host: "127.0.0.1:3000" } }));

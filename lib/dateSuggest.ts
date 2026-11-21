@@ -1,8 +1,8 @@
 // 受信箱の依頼で日程が決まっていないとき、候補ごとに「空いていそうな日」をまとめる（AI は使わない）。
 // 期間への変換と日の選び方は lib/dateHint.ts、予定は lib/busyness.ts（架空データの calendar.json・schedules.json、本人は iCal）。
 // 主催者への返事に入れる1文（reply_sentence）は材料だけ。入れるかどうかは技術広報が選ぶ。
-import { TODAY } from "./config";
 import { knownUntilFor, loadCalendarIfConfigured, slotsFor } from "./busyness";
+import { todayJst, nowJst } from "./clock";
 import { hintToPeriod, replySentence, suggestDates, suggestHours, type Period } from "./dateHint";
 import type { IntakeReading } from "./intake";
 
@@ -36,7 +36,7 @@ export interface DateSuggestions {
 export async function buildDateSuggestions(
   intake: IntakeReading | null | undefined,
   candidates: Array<{ employee_id: string; name: string }>,
-  today = TODAY,
+  today = todayJst(),
 ): Promise<DateSuggestions | null> {
   if (!intake || intake.date || !candidates.length) return null;
   await loadCalendarIfConfigured();
@@ -50,6 +50,6 @@ export async function buildDateSuggestions(
       const s = suggestDates(slotsFor(c.employee_id), period, { knownUntil: knownUntilFor(c.employee_id), hours });
       return { employee_id: c.employee_id, name: c.name, known: s.known, dates: s.dates, note: s.note, reply_sentence: replySentence(s.dates) };
     }),
-    computed_at: new Date().toISOString(),
+    computed_at: nowJst(),
   };
 }

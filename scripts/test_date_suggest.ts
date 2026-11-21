@@ -2,6 +2,7 @@
 //   npm run test:datesuggest
 // 見るもの：日程の手がかりの確かめ／手がかり → 期間／終日の予定・夜の予定・週末・祝日（振替休日）・年末年始を除く／週をばらす／カレンダーなし・予定が分かる範囲の外／
 //           受信箱に保存されて詳細に出る／主催者への返事の1文が今の検査に通り、予定の中身や埋まり具合は検査で止まる
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

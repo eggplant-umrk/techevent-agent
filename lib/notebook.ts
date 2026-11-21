@@ -2,11 +2,13 @@
 // published items and creates / updates cards with upsert_card. The system prompt
 // (instructions + roster + published list) is identical across employees, so it is cached.
 import Anthropic from "@anthropic-ai/sdk";
+import { todayJst } from "./clock";
+import { readOverlay, writeOverlay } from "./runtime";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { loadCards, upsertCard, type CardInput } from "./cards";
-import { TODAY, TRENDS } from "./config";
+import { TRENDS } from "./config";
 import { employees, notebookActivities as activities, published } from "./data"; // リリースノートは別の流れ（lib/releaseCards.ts）で読む
 import { UPSERT_CARD_DEF } from "./tools";
 import { dataFile } from "./dataSource";
@@ -22,21 +24,13 @@ const MAX_CALLS_PER_EMPLOYEE = 3;
 /** employee_id -> latest activity date already read into the notebook. */
 type NotebookState = Record<string, string>;
 
-function readState(file: string): NotebookState {
-  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as NotebookState) : {};
-}
+// 元のデータ（data/notebook_state.json と、DEMO_PERSON=on なら本人の分）は読むだけ。更新は data/runtime/ に重ねる（lib/runtime.ts）
+const stateBases = () => [STATE_FILE(), ...(demoPersonOn() ? [demoFile("notebook_state.json")] : [])];
 function loadState(): NotebookState {
-  // DEMO_PERSON=on：本人の更新状態は data/sources/demo-person/ に分けてある
-  return { ...readState(STATE_FILE()), ...(demoPersonOn() ? readState(demoFile("notebook_state.json")) : {}) };
+  return readOverlay<string>(stateBases(), "notebook_state.json");
 }
 function saveState(s: NotebookState) {
-  if (demoPersonOn()) {
-    const { [DEMO_ID]: mine, ...rest } = s;
-    writeIfChanged(demoFile("notebook_state.json"), mine ? { [DEMO_ID]: mine } : {});
-    writeIfChanged(STATE_FILE(), rest);
-    return;
-  }
-  fs.writeFileSync(STATE_FILE(), JSON.stringify(s, null, 2) + "\n", "utf-8");
+  writeOverlay(stateBases(), "notebook_state.json", { ...loadState(), ...s });
 }
 
 export type NotebookEvent =
@@ -74,7 +68,7 @@ export type NotebookEvent =
 
 const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです。社内の取り組みを読んで「ネタ帳」のカードを作り、育てます。カードは「誰が・何をして・どんなテーマなら社外で話せる／書けるか」を1枚にまとめたものです。技術広報はこのネタ帳を見て、登壇やブログの声かけをします。
 
-今日は${TODAY}です。今の時流：${TRENDS.join("／")}
+今日は${todayJst()}です。今の時流：${TRENDS.join("／")}
 
 # 1回の仕事
 社員1人分の「前回以降の新しい活動」（PR・コミット・設計ドキュメント・Slack投稿・週報）と、その人の発信済みの記録、既存のカードの要約が渡されます。前回までの活動は既存のカードにまとめ済みなので、渡されません。雑談・重複・typo や依存の更新などは、コードで先に落としてあります。社外に出す価値のある取り組みごとにカードを作るか更新して、upsert_card を呼んでください。
@@ -118,9 +112,11 @@ function buildSystem(): string {
   return `${INSTRUCTIONS}\n\n# 社員一覧\n${roster}`;
 }
 
-let SYSTEM: string | undefined;
+// 同じ日のうちは作り直さない。日付が変わったら作り直す（指示文に今日の日付が入るため）
+let SYSTEM_CACHE: { day: string; text: string } | undefined;
+const cachedSystem = () => (SYSTEM_CACHE?.day === todayJst() ? SYSTEM_CACHE.text : (SYSTEM_CACHE = { day: todayJst(), text: buildSystem() }).text);
 /** 指示文（社員一覧つき）の文字数（見積もり用） */
-export const notebookSystemChars = () => (SYSTEM ??= buildSystem()).length;
+export const notebookSystemChars = () => cachedSystem().length;
 
 type Prepared = ReturnType<typeof prepareEmployee>;
 
@@ -156,12 +152,14 @@ export function pendingEmployees(): string[] {
 export async function updateNotebook(
   targets: string[] | "pending",
   emit: (e: NotebookEvent) => void,
+  /** テスト用：API の代わりに決まった応答を返す client を渡せる（scripts/test_notebook_loop.ts） */
+  opts: { client?: Pick<Anthropic, "messages"> } = {},
 ): Promise<{ run_id: string; run_usd: number }> {
   const runId = randomUUID();
   const { loop: model } = chooseModels();
   const ids = targets === "pending" ? pendingEmployees() : targets;
   emit({ type: "start", run_id: runId, model, targets: ids });
-  const systemText = (SYSTEM ??= buildSystem());
+  const systemText = cachedSystem();
   const state = loadState();
   const cfg = prepConfig();
 
@@ -191,7 +189,7 @@ export async function updateNotebook(
     emit({ type: "done", run_usd: 0, total_usd: totalUsd(), created: 0, updated: 0, kept: 0 });
     return { run_id: runId, run_usd: 0 };
   }
-  const client = estimate > 0 ? getClient() : null;
+  const client = estimate > 0 ? (opts.client ?? getClient()) : null;
   const system: Anthropic.TextBlockParam[] = [{ type: "text", text: systemText, cache_control: { type: "ephemeral" } }];
   let created = 0;
   let updated = 0;
@@ -221,6 +219,8 @@ export async function updateNotebook(
     const messages: Anthropic.MessageParam[] = [{ role: "user", content: msg.text }];
     let wroteAny = false;
     let finished = false;
+    /** 一度でも差し戻したか。差し戻しのあと直した提出がないまま終わったら、読んだことにしない */
+    let rejected = false;
     if (!prep.send.length) {
       emit({ type: "no_card", employee_id: employeeId, note: "新しく渡す活動がありません（API は呼んでいません）" });
       finished = true;
@@ -245,8 +245,18 @@ export async function updateNotebook(
         emit({ type: "error", message: `${emp.name}：モデルが処理を断りました` });
         break;
       }
+      // 出力が途中で切れたら、ツールの呼び出しがなくても「終わり」にしない（読んでいない活動を読んだことにしない）
+      if (res.stop_reason === "max_tokens") {
+        emit({ type: "error", message: `${emp.name}：出力が途中で切れました。この人の新しい活動は次回もう一度読みます` });
+        break;
+      }
       const uses = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
       if (uses.length === 0) {
+        if (rejected) {
+          // 差し戻したのに直した提出がないまま終わった：取りこぼしがあるかもしれないので、読んだことにしない
+          emit({ type: "error", message: `${emp.name}：差し戻したカードが直されないまま終わりました。この人の新しい活動は次回もう一度読みます` });
+          break;
+        }
         const text = res.content
           .filter((b): b is Anthropic.TextBlock => b.type === "text")
           .map((b) => b.text)
@@ -254,10 +264,6 @@ export async function updateNotebook(
           .trim();
         if (!wroteAny) emit({ type: "no_card", employee_id: employeeId, note: text.slice(0, 200) || "カードなし" });
         finished = true;
-        break;
-      }
-      if (res.stop_reason === "max_tokens") {
-        emit({ type: "error", message: `${emp.name}：出力が途中で切れました` });
         break;
       }
       messages.push({ role: "assistant", content: res.content });
@@ -304,7 +310,8 @@ export async function updateNotebook(
         emit({ type: "card", action: out.action!, card_id: c.card_id, employee_id: employeeId, theme: c.themes[0], status, message });
         results.push({ type: "tool_result", tool_use_id: u.id, content: `${out.action}: ${out.card!.card_id}` });
       }
-      // Only continue the conversation if something needs fixing; otherwise this employee is done.
+      // 直すものがなければこの人は終わり。差し戻しがあれば会話を続けて直させる（直るまでは終わりにしない）
+      if (anyError) rejected = true;
       if (!anyError) {
         finished = true;
         break;

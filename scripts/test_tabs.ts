@@ -2,6 +2,7 @@
 //   npm run test:tabs
 // 人の情報（直す・確認済み・Agent は上書きしない・意向とNGのテーマの判定）と、アーカイブ（開催日が過ぎたかの判定）。
 // data/people.json には触らない（一時ファイルに書く）。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -168,6 +169,14 @@ async function main() {
     check("イベントのサイトでない URL は使わない", !urls.some((u) => u.includes("example.com")));
     check("読み取った URL は会話の中に本当にある文字列", urls.every((u) => text.includes(u)));
     check("URL がなければ空", eventUrlsIn("日程は1/29です").length === 0);
+  }
+
+  // ---- 記事・イベントページからの戻り先：?mock と開いていた人・イベントを付けて戻す
+  {
+    const { backHref } = await import("../lib/backHref");
+    check("ブログから戻る：?mock と開いていた人", backHref({ mock: "", tab: "notebook", person: "e013" }, "notebook") === "/?mock&tab=notebook&person=e013");
+    check("イベントページから戻る：開いていたイベント", backHref({ archive: "event:ev019" }, "archive") === "/?tab=archive&archive=event%3Aev019");
+    check("?mock がなければ付けない（本番の画面に戻る）", !backHref({ tab: "notebook" }, "notebook").includes("mock"));
   }
 
   fs.rmSync(tmp, { force: true });

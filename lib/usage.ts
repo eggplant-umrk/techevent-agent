@@ -1,4 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
+import { nowJst } from "./clock";
 import { appendUsage, usage, type UsageEntry } from "./data";
 import { costUsd } from "./pricing";
 import { envConfig, SWITCH_HEAVY_MODEL, SWITCH_LOOP_MODEL } from "./config";
@@ -16,7 +17,7 @@ export function recordUsage(runId: string, purpose: UsageEntry["purpose"], model
     cacheWrite: u.cache_creation_input_tokens ?? 0,
   };
   const entry: UsageEntry = {
-    at: new Date().toISOString(),
+    at: nowJst(),
     run_id: runId,
     purpose,
     model,

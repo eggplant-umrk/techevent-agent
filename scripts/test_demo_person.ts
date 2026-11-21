@@ -1,5 +1,6 @@
 // デモ用の31人目（開発者本人、DEMO_PERSON=on）のテスト（APIは使わない・data/ に書き込まない）。
 //   npm run test:demo
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import { activities, employees } from "../lib/data";

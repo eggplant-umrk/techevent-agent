@@ -8,7 +8,7 @@
 //
 // 画面からは busynessFor(id) と busyText(b) を呼ぶ。iCal を使うときは、先に loadCalendarIfConfigured() を await する。
 import fs from "node:fs";
-import { TODAY } from "./config";
+import { todayJst } from "./clock";
 import { dataFile, dataSource } from "./dataSource";
 import { schedules } from "./data";
 import { looksLikeIcs, parseIcs, type BusySlot } from "./ics";
@@ -60,7 +60,7 @@ export function levelOf(ratio: number): BusyLevel {
 }
 
 /** 期間（today から14日）の、計算の対象になる日付の範囲。 */
-export function windowOf(today = TODAY): {
+export function windowOf(today = todayJst()): {
   from: string;
   to: string;
   fromMs: number;
@@ -74,7 +74,7 @@ export function windowOf(today = TODAY): {
 /** 予定の一覧から、今後2週間の平日・勤務時間がどれだけ埋まっているかを計算する。 */
 export function computeBusyness(
   slots: BusySlot[],
-  today = TODAY,
+  today = todayJst(),
 ): Busyness & { known: true } {
   const w = windowOf(today);
   const ranges = slots
@@ -125,7 +125,7 @@ export function computeBusyness(
   };
 }
 
-export function unknownBusyness(today = TODAY): Busyness {
+export function unknownBusyness(today = todayJst()): Busyness {
   const w = windowOf(today);
   return { known: false, from: w.from, to: w.to, slots: [] };
 }
@@ -268,7 +268,7 @@ export function knownUntilFor(employeeId: string): string | null {
   return last || null;
 }
 
-export function busynessFor(employeeId: string, today = TODAY): Busyness {
+export function busynessFor(employeeId: string, today = todayJst()): Busyness {
   const slots = slotsFor(employeeId);
   return slots ? computeBusyness(slots, today) : unknownBusyness(today);
 }

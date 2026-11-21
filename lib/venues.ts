@@ -2,12 +2,13 @@
 // 新しい仕組みは作らず、Agentのループ（runToolLoop）・候補の出し方（自信のある／条件付き）・
 // 内部の言葉の判定・日付の判定・ブログ提案・声かけ文の仕組みを使い回す。
 import type Anthropic from "@anthropic-ai/sdk";
+import { todayJst } from "./clock";
 import { BLOG_TO_LT_NOTE, blogToLt } from "./talkTag";
 import { randomUUID } from "node:crypto";
 import { runToolLoop, type AgentEvent } from "./agent";
 import { suggestBlogIdeas, type BlogIdea } from "./blog";
 import { getCardById, type Card } from "./cards";
-import { TODAY, TRENDS } from "./config";
+import { TRENDS } from "./config";
 import { activities, employeeById } from "./data";
 import { dateProblems } from "./dates";
 import {
@@ -114,7 +115,7 @@ const VENUE_TOOLS: Anthropic.Tool[] = [
 // ---------------------------------------------------------------------------
 const SYSTEM = `あなたはLayerXの技術広報を支えるAgentです。ネタ帳のカード1枚（社内の誰かの取り組み）について、社外で発表できる出し先（CFPのある技術イベント）を探します。これは「依頼が来てから人を探す」の逆向きで、ネタが先です。
 
-今日は${TODAY}です。今の時流：${TRENDS.join("／")}
+今日は${todayJst()}です。今の時流：${TRENDS.join("／")}
 
 # 進め方
 1. カードの中身（取り組み・テーマ案・根拠）と本人の状況を確かめる。get_card・get_speaking_history・get_published を必要に応じて使う
@@ -186,7 +187,7 @@ export interface VenueResult {
 // ---------------------------------------------------------------------------
 // 検証（コード）
 // ---------------------------------------------------------------------------
-export function validateVenues(input: VenueSubmit, card: Card, today = TODAY): string[] {
+export function validateVenues(input: VenueSubmit, card: Card, today = todayJst()): string[] {
   const errs: string[] = [];
   const vs = Array.isArray(input.venues) ? input.venues : [];
   if (vs.length > 3) errs.push("出し先は3件までにしてください");

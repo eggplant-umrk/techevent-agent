@@ -87,3 +87,12 @@ AGENTS.md
 Claude outputs/
 data/sample_proposals.json
 data/drafts.json
+
+# ===== 実行時のデータ（画面での操作・ネタ帳の更新の結果。元のデータに重ねて読む。lib/runtime.ts） =====
+data/runtime/
+data/runtime-backup/
+data/people.json
+
+# ===== 本物の Slack から読んだ内容（コミットしない） =====
+data/sources/slack_posts.json
+data/sources/slack_state.json

@@ -2,11 +2,14 @@
 // Every write goes through validation: evidence must be real activity ids by the card's
 // owner, and published ids must be real items by the same person. Nothing invalid is saved.
 import fs from "node:fs";
+import { resolveRequest } from "./requests";
+import { nowJst } from "./clock";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
 import { blogPublishedIds } from "./moreSources";
 import { dataFile } from "./dataSource";
-import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
+import { DEMO_ID, demoFile, demoPersonOn } from "./demoPerson";
+import { readCardOverlay, writeCardOverlay } from "./runtime";
 
 // Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
 const FILE = () => dataFile("cards.json");
@@ -82,11 +85,27 @@ function readCardFile(file: string): Card[] {
   return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as Card[]) : [];
 }
 
-export function loadCards(): Card[] {
-  // DEMO_PERSON=on：本人のカードは data/sources/demo-person/cards.json にあり、架空の30人のカードの後ろに足す
-  const raw = [...readCardFile(FILE()), ...(demoPersonOn() ? readCardFile(demoFile("cards.json")) : [])];
-  return raw.map(withDefaults);
+/** 元のデータのカード（読むだけ）。DEMO_PERSON=on なら本人の初期のカード（data/sources/demo-person/cards.json）を後ろに足す */
+export function baseCards(): Card[] {
+  return [...readCardFile(FILE()), ...(demoPersonOn() ? readCardFile(demoFile("cards.json")) : [])].map(withDefaults);
 }
+
+/**
+ * ネタ帳 = 元のデータのカードに、実行時のデータ（data/runtime/cards.json：画面での操作・ネタ帳の更新で変わったカード）を重ねたもの。
+ * 本人（e031）のカードは、本人を入れているとき（DEMO_PERSON=on）だけ出す。
+ */
+export function loadCards(): Card[] {
+  const base = baseCards();
+  const o = readCardOverlay<Card>();
+  const deleted = new Set(o.deleted);
+  const changed = new Map(o.cards.filter((c) => c.employee_id !== DEMO_ID || demoPersonOn()).map((c) => [c.card_id, withDefaults(c)]));
+  const out = base.filter((c) => !deleted.has(c.card_id)).map((c) => changed.get(c.card_id) ?? c);
+  const known = new Set(base.map((c) => c.card_id));
+  for (const c of changed.values()) if (!known.has(c.card_id)) out.push(c);
+  return out;
+}
+
+const DEFAULTED = ["announcement_activity_ids", "evidence_request_ids", "pending_themes", "edited_fields", "reactions"] as const;
 
 /** Cards written before these fields existed. */
 function withDefaults(c: Card): Card {
@@ -100,16 +119,27 @@ function withDefaults(c: Card): Card {
   };
 }
 
+/** 保存するときは、読み込みで補う空の項目を書かない */
+function withoutEmptyDefaults(c: Card): Card {
+  const out = { ...c } as Record<string, unknown>;
+  for (const k of DEFAULTED) if (Array.isArray(out[k]) && (out[k] as unknown[]).length === 0) delete out[k];
+  return out as unknown as Card;
+}
+
+/**
+ * 保存：元のデータのファイルは書かない。元のデータと中身が違うカードだけを、実行時のデータ（data/runtime/cards.json）に書く。
+ * 本人（e031）を入れていないときに保存しても、前に保存した本人のカードは消さない。
+ */
 function saveCards(cards: Card[]) {
-  if (demoPersonOn()) {
-    // 本人のカードは別のファイルへ。架空の30人のファイルは、カードの中身が変わったときだけ書く
-    // （読み込み時に補った空の項目だけの違いでは書かない）
-    writeIfChanged(demoFile("cards.json"), cards.filter((c) => c.employee_id === DEMO_ID));
-    const base = cards.filter((c) => c.employee_id !== DEMO_ID);
-    if (JSON.stringify(base) !== JSON.stringify(readCardFile(FILE()).map(withDefaults))) writeIfChanged(FILE(), base);
-    return;
-  }
-  fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");
+  const base = new Map(baseCards().map((c) => [c.card_id, JSON.stringify(c)]));
+  const ids = new Set(cards.map((c) => c.card_id));
+  const prev = readCardOverlay<Card>();
+  const hidden = demoPersonOn() ? [] : prev.cards.filter((c) => c.employee_id === DEMO_ID); // 本人を入れていないときに見えていない分
+  const changed = cards.filter((c) => base.get(c.card_id) !== JSON.stringify(withDefaults(c))).map(withoutEmptyDefaults);
+  const deleted = [...base.keys()].filter((id) => !ids.has(id));
+  // 消したカード：今の元のデータにあって、保存する一覧にないもの。今は見えていない元のデータ（本人の初期のカードなど）の分は前の記録を残す
+  const keepDeleted = prev.deleted.filter((id) => !base.has(id));
+  writeCardOverlay<Card>({ cards: [...changed, ...hidden.filter((h) => !ids.has(h.card_id))], deleted: [...new Set([...keepDeleted, ...deleted])] });
 }
 
 /** カード1枚をまとめて書き換える（lib/surveys.ts の書き戻し用）。見つからなければ null */
@@ -126,7 +156,7 @@ export function getCardById(id: string): Card | undefined {
   return loadCards().find((c) => c.card_id === id);
 }
 
-const now = () => new Date().toISOString();
+const now = () => nowJst();
 
 function nextCardId(cards: Card[], employeeId: string): string {
   const n = cards.filter((c) => c.employee_id === employeeId).length;
@@ -161,9 +191,9 @@ export function validateCardInput(input: CardInput, cards = loadCards()): string
     errs.push("根拠の activity id がありません（発信済みの取り組みなら published_ids、指名された本人なら依頼のidを入れてください）");
   }
   if (input.evidence_request_ids?.length) {
-    const reqs = new Map(requests().map((r) => [r.id, r]));
     for (const id of input.evidence_request_ids) {
-      const r = reqs.get(id);
+      // サンプルの依頼（data/requests.json）だけでなく、受信箱の依頼（inb-…）も引く
+      const r = id.startsWith("custom") ? null : resolveRequest({ request_id: id });
       if (!r) errs.push(`依頼 ${id} は存在しません`);
       else if (r.nominated_employee_id !== input.employee_id) errs.push(`依頼 ${id} は ${input.employee_id} を指名していません`);
     }
@@ -253,9 +283,9 @@ export function upsertCard(rawInput: CardInput): UpsertOutcome {
   const pubIds = [...new Set(input.published_ids ?? [])];
   const reqIds = [...new Set(input.evidence_request_ids ?? [])];
   const requestDate = () =>
-    requests()
-      .filter((r) => reqIds.includes(r.id))
-      .reduce((m, r) => ((r.received_at ?? "") > m ? r.received_at ?? "" : m), "");
+    reqIds
+      .map((id) => resolveRequest({ request_id: id }))
+      .reduce((m, r) => ((r?.received_at ?? "") > m ? r?.received_at ?? "" : m), "");
 
   if (!input.card_id) {
     const card: Card = {

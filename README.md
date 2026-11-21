@@ -74,9 +74,32 @@ npm run dev
 
 http://localhost:3000 を開く。APIキーはサーバー側だけで使い、ブラウザには出しません。サーバーは既定で `127.0.0.1` だけで待ち受け、すべての画面と `/api` で Host と Origin が localhost／127.0.0.1 かを確かめます（`proxy.ts`・`lib/share.ts`。同じ端末からだけ使える）。`npm run dev`・`npm start` は `scripts/serve.mjs` を通り、待ち受け先は `.env` の `BIND_HOST` で決まります。
 
-- 画面の一番上は受信箱です。Slack（`POST /api/inbox`、形は [docs/inbox-api.md](docs/inbox-api.md)）や「手で追加」で届いた依頼に、Agentが候補を準備しておきます
+- 画面の一番上は受信箱です。Slack（`POST /api/inbox`、形は [docs/inbox-api.md](docs/inbox-api.md)）や「会話を貼って追加」で届いた依頼に、Agentが候補を準備しておきます
 - APIを使わずに画面を見るときは http://localhost:3000/?mock（保存済みの結果で受信箱に「準備済み」の依頼が並びます）
 - 受信箱のテスト（APIなし）：`npm run test:inbox`
+
+### 本番用のビルドで見せる（メンターに触ってもらうとき）
+
+開発サーバー（`npm run dev`）の代わりに、本番用にビルドしたものを 3000 番で動かします。画面の左下に開発用の印（N の丸）が出ず、表示も速くなります。待ち受けは開発サーバーと同じく `127.0.0.1` だけです（受信箱の窓口を localhost に限るため。Slack ボットの窓口 `http://127.0.0.1:3000` もそのまま使えます）。
+
+1. 開発サーバーを止める（動かしているターミナルで Ctrl+C）。動いたままビルドすると `.next` がぶつかるので、先に止める
+2. ビルドする（API は使わない。数十秒）：
+
+   ```bash
+   npm run build
+   ```
+
+3. 起動する（`next start -H 127.0.0.1 -p 3000`）：
+
+   ```bash
+   npm run start
+   ```
+
+4. http://127.0.0.1:3000 を開く（API を使わずに見せるときは http://127.0.0.1:3000/?mock）
+
+- `.env` は起動のときに読みます。`.env` を書き換えたら、Ctrl+C で止めて `npm run start` し直す
+- コード（画面・lib/）を変えたら、`npm run build` からやり直す（本番用のビルドは自動では作り直されない）
+- 開発サーバーに戻すときは、Ctrl+C で止めて `npm run dev`
 - カード詳細の「出し先を探す」で、そのネタを出せそうな社外イベント（data/external_events.json、2026-11-21時点）とブログ案を探します。テスト（APIなし）：`npm run test:venues`
 
 #### メンターなどに別の端末から見せる（同じネットワーク）
@@ -214,6 +237,16 @@ npm run release:cards
 - 架空の社員：`data/calendar.json`（時間単位の予定）と `data/schedules.json`（出張・休暇）から計算します
 - **本番はカレンダーの iCal URL を設定します**：`.env` に `CALENDAR_ICS_URL=`（Google カレンダーなら「iCal 形式の非公開 URL」）を書きます。**この URL は秘密です**（知っている人は誰でも予定を読めます）。表示・ログ・コミット・チャットへの貼り付けをしないでください。読むのは開始・終了・終日かどうかだけで、予定のタイトル・場所・参加者は読みません。今は本人（`DATA_SOURCE=github` または `DEMO_PERSON=on` の31人目）にだけ使います
 - テスト（APIなし）：`npm run test:busyness`
+
+#### デモの前に初期状態に戻す
+
+画面で打診を記録したり、カードを直したり、ネタ帳を更新したりした結果は `data/runtime/`（git の対象外）に入り、元のデータ（git に入っている `data/` のファイル）は変わりません。デモの前に次で初期状態に戻せます（片付けたものは `data/runtime-backup/` に移ります）：
+
+```bash
+npm run reset:demo
+```
+
+本物の Slack から読んだ投稿（`data/sources/slack_posts.json`）はコミットしません。
 
 ### 評価
 

@@ -12,13 +12,13 @@
 //   運営・会場・設備の不満と良い点、人を攻撃する言葉、不満の原文は入れない。カードには書かない。
 // 全体の満足度の点数は登壇者に結びつけない（イベント単位の集計にだけ使う）。登壇ごとの点数の列があるときだけ、その点数を登壇者の参考にする。
 import { analysisOverview } from "./surveyOverview";
+import { todayJst, nowJst } from "./clock";
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { loadCards, patchCard, type Card, type Reaction } from "./cards";
-import { TODAY } from "./config";
 import { employeeById, employees, events, type EventRecord, type SurveyAnswer } from "./data";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
 import { loadImport, surveys, type ColumnInfo } from "./surveyCsv";
@@ -221,7 +221,7 @@ function withoutStale(all: Record<string, EventAnalysis>): Record<string, EventA
   return Object.fromEntries(
     Object.entries(all).filter(([id, a]) => {
       const at = loadImport(id)?.imported_at;
-      return !at || !a.analyzed_at || a.analyzed_at >= at;
+      return !at || !a.analyzed_at || Date.parse(a.analyzed_at) >= Date.parse(at); // 日本時間（+09:00）と UTC（Z）が混ざっても時刻で比べる
     }),
   );
 }
@@ -398,7 +398,7 @@ export function buildAnalysis(eventId: string, input: AnalysisInput, all: Survey
 // ---------------------------------------------------------------------------
 const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです。社外イベントのあとのアンケートの自由記述を読みます。集計（件数・平均・分布）はコードが済ませてあるので、あなたは文の意味を読む仕事だけをします。
 
-今日は${TODAY}です。
+今日は${todayJst()}です。
 
 # やること
 1. 文ごとの分類（sentences）：渡したすべての文に1回ずつ
@@ -423,7 +423,9 @@ function cardLine(c: Card) {
   return `- ${c.card_id}｜${e?.name ?? c.employee_id}（${e?.business_unit ?? ""}）｜${c.themes.join("／")}｜${c.summary.slice(0, 80)}`;
 }
 
-let SYSTEM: string | undefined;
+// 同じ日のうちは作り直さない。日付が変わったら作り直す（指示文に今日の日付が入るため）
+let SYSTEM_CACHE: { day: string; text: string } | undefined;
+const cachedSystem = () => (SYSTEM_CACHE?.day === todayJst() ? SYSTEM_CACHE.text : (SYSTEM_CACHE = { day: todayJst(), text: buildSystem() }).text);
 function buildSystem() {
   const unpublished = loadCards().filter((c) => c.publication_status === "unpublished");
   return `${INSTRUCTIONS}\n\n# 別の社員の未発信カード（重なりを探す相手）\n${unpublished.map(cardLine).join("\n")}`;
@@ -523,7 +525,7 @@ export const SUBMIT_SURVEY_DEF: Anthropic.Tool = {
 // ---------------------------------------------------------------------------
 // 書き戻し（コード）
 // ---------------------------------------------------------------------------
-const nowIso = () => new Date().toISOString();
+const nowIso = () => nowJst();
 
 /** 登壇者の、書き戻し先のカード（いちばん新しいもの） */
 function speakerCard(speakerId: string, cards: Card[]): Card | undefined {
@@ -823,7 +825,7 @@ export async function analyzeEvent(
     sentences: sentencesOf(eventId).length,
     excluded: stats.excluded,
   });
-  const system = (SYSTEM ??= buildSystem());
+  const system = cachedSystem();
   const message = eventMessage(ev);
   const messages: Anthropic.MessageParam[] = [];
   let accepted: AnalysisInput | null = null;

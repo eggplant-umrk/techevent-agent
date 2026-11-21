@@ -72,7 +72,11 @@ npm install
 npm run dev
 ```
 
-http://localhost:3000 を開く。APIキーはサーバー側だけで使い、ブラウザには出しません。
+http://localhost:3000 を開く。APIキーはサーバー側だけで使い、ブラウザには出しません。開発サーバーは `127.0.0.1` だけで待ち受けます（受信箱の窓口を localhost に限るため）。
+
+- 画面の一番上は受信箱です。Slack（`POST /api/inbox`、形は [docs/inbox-api.md](docs/inbox-api.md)）や「手で追加」で届いた依頼に、Agentが候補を準備しておきます
+- APIを使わずに画面を見るときは http://localhost:3000/?mock（保存済みの結果で受信箱に「準備済み」の依頼が並びます）
+- 受信箱のテスト（APIなし）：`npm run test:inbox`
 
 ネタ帳（data/cards.json）はコミット済みなので、すぐに使えます。新しい活動を読ませるときは画面の「ネタ帳を更新」を押すか、コマンドで：
 

@@ -9,6 +9,7 @@ import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
 import { analysisOverview as overviewOf, surveyVoices } from "@/lib/surveyOverview";
 import { recordsFor, requestState } from "@/lib/requestStage";
+import { eventUrlsIn } from "@/lib/eventUrls";
 
 /** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
 const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
@@ -370,7 +371,8 @@ export function mockApi(real: Api): Api {
       const it = inboxItems.find((x) => x.id === id);
       if (!it) throw new Error("その依頼は受信箱にありません");
       const st = withState(it);
-      const extra = { state: st.state, event_date: st.event_date, accepted_reply: acceptedReply(id, st.state) };
+      const textOf = id === X_ID ? X_FIXTURE.detail.text : inboxTexts.get(id) ?? requests.find((r) => r.id === id)?.message ?? it.title;
+      const extra = { state: st.state, event_date: st.event_date, accepted_reply: acceptedReply(id, st.state), event_urls: eventUrlsIn(textOf) };
       if (id === X_ID) {
         const result = xResult();
         return { ...X_FIXTURE.detail, ...extra, is_new: it.is_new, result, events: result ? eventsFor(result, id, X_FIXTURE.run_usd).map(([e]) => e) : [] } as BoardDetail;

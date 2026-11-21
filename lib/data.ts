@@ -71,6 +71,12 @@ export interface EventRecord {
   applications: number;
   attendees: number;
   speaker_ids: string[];
+  weekday?: string;
+  start_time?: string;
+  venue_type?: string;
+  /** イベントの告知ページ（connpass など）。架空のイベントは空 */
+  connpass_url?: string;
+  catering?: { food_servings_ordered: number; food_servings_left: number; drinks_ordered: number };
 }
 
 export interface SpeakingRequest {

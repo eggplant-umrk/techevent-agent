@@ -104,6 +104,8 @@ for i, (d, title, series, venue, vtype, cap, speakers) in enumerate(EVENTS_SPEC,
         "attendees": attendees,
         "attendance_rate": round(attendees / applications, 2),
         "speaker_ids": speakers,
+        # イベントの告知ページ（connpass など）。架空のイベントなので空。本番ではここに connpass の URL が入る
+        "connpass_url": "",
         "catering": {
             "food_servings_ordered": ordered_food,
             "food_servings_left": max(0, ordered_food - attendees - rng.randint(-3, 3)),

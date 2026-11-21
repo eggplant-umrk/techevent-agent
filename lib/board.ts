@@ -14,6 +14,7 @@ import { employeeById, requests } from "./data";
 import type { OutreachDraft } from "./heavy";
 import { detailView, getInboxItem, listInbox, listView, type InboxDetail, type InboxListItem } from "./inbox";
 import { recordsFor, requestState, type RequestState } from "./requestStage";
+import { eventUrlsIn } from "./eventUrls";
 
 const SAMPLE_FILE = () => process.env.SAMPLE_PROPOSALS_FILE || path.join(process.cwd(), "data", "sample_proposals.json");
 const DRAFT_FILE = () => process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json");
@@ -87,6 +88,8 @@ export interface BoardDetail extends Omit<InboxDetail, "source"> {
   event_date: string | null;
   /** 承諾した人への主催者への返事の下書き（保存してあれば） */
   accepted_reply: { name: string; text: string } | null;
+  /** 会話（依頼文）の中にあるイベントの告知ページの URL（connpass など。lib/eventUrls.ts でコードが取り出す） */
+  event_urls: string[];
 }
 
 const nameOf = (id: string) => employeeById(id)?.name ?? id;
@@ -145,7 +148,7 @@ export function boardDetail(id: string): BoardDetail | null {
   if (it) {
     const date = inboxEventDate(it);
     const state = stateOf(id, it.status, date);
-    return { ...detailView(it), state, event_date: date, accepted_reply: replyFor(id, state) };
+    return { ...detailView(it), state, event_date: date, accepted_reply: replyFor(id, state), event_urls: eventUrlsIn(it.text) };
   }
   const r = requests().find((x) => x.id === id);
   if (!r) return null;
@@ -174,5 +177,6 @@ export function boardDetail(id: string): BoardDetail | null {
     state,
     event_date: date,
     accepted_reply: replyFor(id, state),
+    event_urls: eventUrlsIn(r.message),
   };
 }

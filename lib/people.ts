@@ -6,6 +6,7 @@ import path from "node:path";
 import { activities, employeeById, employees, published, type Employee } from "./data";
 import { loadCards } from "./cards";
 import { talkTag, type TalkTag } from "./talkTag";
+import { isDemoPerson } from "./demoPerson";
 
 const FILE = () => process.env.PEOPLE_FILE || path.join(process.cwd(), "data", "people.json");
 
@@ -182,11 +183,21 @@ export interface PersonRow {
   past_talk_count: number;
   /** 登壇経験の印（lib/talkTag.ts。候補と同じ言い方） */
   talk_tag: TalkTag;
+  /** デモ用の本人（DEMO_PERSON=on のときだけ true。一覧の一番上に固定し「本人（デモ）」の印） */
+  is_demo: boolean;
+  /** 最近の活動の日付（並び順に使う。なければ null） */
+  latest_activity_date: string | null;
 }
 
+/**
+ * 人の一覧（社員全員）。並び順はコードで決める：
+ * デモ用の本人を一番上に固定 → 未発信のネタが多い順 → 最近の活動が新しい順 → 名前
+ */
 export function peopleRows(): PersonRow[] {
   const cards = loadCards();
-  return allPeople().map((p) => ({
+  const latest = new Map<string, string>();
+  for (const a of activities()) if (a.author_id && (latest.get(a.author_id) ?? "") < a.date) latest.set(a.author_id, a.date);
+  const rows = allPeople().map((p) => ({
     id: p.id,
     name: p.name,
     business_unit: p.business_unit,
@@ -196,7 +207,16 @@ export function peopleRows(): PersonRow[] {
     reviewed: p.reviewed,
     past_talk_count: p.past_talk_count,
     talk_tag: talkTag(p),
+    is_demo: isDemoPerson(p.id),
+    latest_activity_date: latest.get(p.id) ?? null,
   }));
+  return rows.sort(
+    (a, b) =>
+      Number(b.is_demo) - Number(a.is_demo) ||
+      b.unpublished_cards - a.unpublished_cards ||
+      (b.latest_activity_date ?? "").localeCompare(a.latest_activity_date ?? "") ||
+      a.name.localeCompare(b.name, "ja"),
+  );
 }
 
 export interface PersonDetail {

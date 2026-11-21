@@ -16,6 +16,7 @@
       "e001",
       "e002"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 50,
       "food_servings_left": 11,
@@ -38,6 +39,7 @@
     "speaker_ids": [
       "e005"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 28,
       "food_servings_left": 11,
@@ -61,6 +63,7 @@
       "e003",
       "e001"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 59,
       "food_servings_left": 15,
@@ -83,6 +86,7 @@
     "speaker_ids": [
       "e004"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 81,
       "food_servings_left": 3,
@@ -106,6 +110,7 @@
       "e004",
       "e009"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 49,
       "food_servings_left": 9,
@@ -128,6 +133,7 @@
     "speaker_ids": [
       "e003"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 51,
       "food_servings_left": 10,
@@ -151,6 +157,7 @@
       "e002",
       "e008"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 78,
       "food_servings_left": 5,
@@ -173,6 +180,7 @@
     "speaker_ids": [
       "e005"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 26,
       "food_servings_left": 0,
@@ -196,6 +204,7 @@
       "e001",
       "e002"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 46,
       "food_servings_left": 1,
@@ -219,6 +228,7 @@
       "e003",
       "e006"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 113,
       "food_servings_left": 2,
@@ -241,6 +251,7 @@
     "speaker_ids": [
       "e002"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 34,
       "food_servings_left": 0,
@@ -264,6 +275,7 @@
       "e004",
       "e007"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 107,
       "food_servings_left": 4,
@@ -287,6 +299,7 @@
       "e001",
       "e003"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 46,
       "food_servings_left": 9,
@@ -310,6 +323,7 @@
       "e005",
       "e002"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 32,
       "food_servings_left": 10,
@@ -333,6 +347,7 @@
       "e003",
       "e001"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 63,
       "food_servings_left": 11,
@@ -355,6 +370,7 @@
     "speaker_ids": [
       "e001"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 72,
       "food_servings_left": 5,
@@ -378,6 +394,7 @@
       "e002",
       "e005"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 39,
       "food_servings_left": 5,
@@ -401,6 +418,7 @@
       "e002",
       "e001"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 38,
       "food_servings_left": 12,
@@ -424,6 +442,7 @@
       "e003",
       "e001"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 103,
       "food_servings_left": 5,
@@ -447,6 +466,7 @@
       "e004",
       "e001"
     ],
+    "connpass_url": "",
     "catering": {
       "food_servings_ordered": 41,
       "food_servings_left": 2,

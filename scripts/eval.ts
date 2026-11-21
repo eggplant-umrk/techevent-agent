@@ -16,7 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { runAgent, type AgentEvent, type ProposalResult } from "../lib/agent";
+import { cautionDateProblems, runAgent, type AgentEvent, type ProposalResult } from "../lib/agent";
 import { getClient } from "../lib/anthropic";
 import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
@@ -265,6 +265,12 @@ async function main() {
       name: `${r.id} 条件付きの候補に引っかかる点の文がある`,
       pass: !!result && noCaveat.length === 0 && badConf.length === 0,
       detail: conds.length ? `条件付き${conds.length}人${noCaveat.length ? `、文なし: ${noCaveat.join(",")}` : "すべて文あり"}` : "条件付きの候補なし",
+    });
+    const dateErrs = result ? cautionDateProblems(r, result.candidates) : ["結果なし"];
+    checks.push({
+      name: `${r.id} 注意点の日付が開催日と食い違わない`,
+      pass: dateErrs.length === 0,
+      detail: dateErrs.join(" / ") || `開催日 ${r.event?.date ?? "なし"} と矛盾なし`,
     });
     if (altOk !== null) checks.push({ name: `${r.id} 代わりの提案`, pass: altOk, detail: `代わり=${alts.join(",") || "なし"}` });
     if (r.nominated_employee_id) {

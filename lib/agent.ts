@@ -42,6 +42,10 @@ export interface CandidateCard {
   confidence: Confidence;
   /** One sentence on what is holding a conditional pick back. Always non-empty for conditional, null for strong. */
   caveat: string | null;
+  /** true for the person the requester named. Always listed for named-speaker requests. */
+  is_nominee: boolean;
+  /** For the nominee: the request id, which is their evidence ("the requester asked for them"). Otherwise null. */
+  evidence_request_id: string | null;
   card_id: string | null;
   /** Snapshot of the notebook card at proposal time (null if the agent proposed someone without a card). */
   card: Card | null;
@@ -136,9 +140,14 @@ function collectSeenIds(name: string, result: unknown, seen: Set<string>) {
   }
 }
 
-function validateSubmit(input: SubmitInput, seen: Set<string>): string[] {
+function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId: string | null): string[] {
   const errs: string[] = [];
   const n = Array.isArray(input.candidates) ? input.candidates.length : 0;
+  if (nomineeId && !(input.candidates ?? []).some((c) => c.employee_id === nomineeId)) {
+    errs.push(
+      `指名の依頼なので、指名された本人（${nomineeId}）を必ず候補に入れてください。根拠は依頼そのものなので取り組みの根拠は空でよいです。忙しい・予定が重なるなら conditional にして、caveat に理由と代案（共同登壇やモデレーター役など）を書いてください`,
+    );
+  }
   if (n > 3) errs.push("候補は3人までにしてください");
   if (n < 3 && (!input.no_fit || input.no_fit.reasons.length === 0)) {
     errs.push(
@@ -162,7 +171,9 @@ function validateSubmit(input: SubmitInput, seen: Set<string>): string[] {
     if (c.card_id && !card) errs.push(`カード ${c.card_id} は存在しません`);
     if (card && card.employee_id !== c.employee_id) errs.push(`カード ${c.card_id} は ${c.employee_id} のカードではありません`);
     const publishedOnly = !!card && card.evidence_activity_ids.length === 0 && card.published_ids.length > 0;
-    if (!c.evidence_activity_ids?.length && !publishedOnly) errs.push(`${c.employee_id} の根拠の取り組みがありません`);
+    const isNominee = !!nomineeId && c.employee_id === nomineeId; // the request itself is the nominee's evidence
+    if (isNominee && c.is_alternative_to_nominee) errs.push(`${c.employee_id} は指名された本人なので is_alternative_to_nominee は false にしてください`);
+    if (!c.evidence_activity_ids?.length && !publishedOnly && !isNominee) errs.push(`${c.employee_id} の根拠の取り組みがありません`);
     for (const id of c.evidence_activity_ids ?? []) {
       if (!acts.has(id)) errs.push(`根拠 ${id} は存在しない activity id です`);
       else if (!seen.has(id)) errs.push(`${c.employee_id} の根拠 ${id} はこの調査で見ていない取り組みです。カードか検索結果で確認したIDだけを使ってください`);
@@ -223,6 +234,8 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
         is_alternative_to_nominee: c.is_alternative_to_nominee,
         confidence: c.confidence,
         caveat: c.confidence === "conditional" ? c.caveat!.trim() : null,
+        is_nominee: c.employee_id === request.nominated_employee_id,
+        evidence_request_id: c.employee_id === request.nominated_employee_id ? request.id : null,
         card_id: c.card_id,
         card: c.card_id ? getCardById(c.card_id) ?? null : null,
       };
@@ -309,7 +322,7 @@ export async function runAgent(
       emit({ type: "tool_call", id: t.id, name: t.name, input: t.input });
       if (t.name === SUBMIT_TOOL) {
         const input = t.input as SubmitInput;
-        const errs = validateSubmit(input, seen);
+        const errs = validateSubmit(input, seen, request.nominated_employee_id ?? null);
         if (errs.length) {
           emit({ type: "retry", message: errs.join("／") });
           emit({ type: "tool_result", id: t.id, name: t.name, ok: false, summary: "差し戻し：" + errs.join("／") });

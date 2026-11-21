@@ -21,6 +21,7 @@ import { getClient } from "../lib/anthropic";
 import { appendOutreach, loadCards, removeOutreach } from "../lib/cards";
 import { activities, employees, requests, type SpeakingRequest } from "../lib/data";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "../lib/usage";
+import { SURVEY_REQUEST, surveyCodeChecks, surveyLiveCheck } from "./eval_survey";
 import { getInboxItem, prepare, registerInbox, type InboxItem } from "../lib/inbox";
 import { extractNomineeWithAgent } from "../lib/nominee";
 
@@ -295,10 +296,11 @@ async function main() {
   const all = requests();
   const full = target === "all";
   const wantInbox = full || target.split(",").includes("inbox") || !!fromInbox;
+  const wantSurvey = full || target.split(",").includes("survey");
   const targets = full ? all : all.filter((r) => target.split(",").includes(r.id));
-  if (targets.length === 0 && !wantInbox) {
+  if (targets.length === 0 && !wantInbox && !wantSurvey) {
     console.error(
-      "使い方: npm run eval -- req001 | req001,req004 | inbox | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
+      "使い方: npm run eval -- req001 | req001,req004 | inbox | survey | all [--report docs/eval_after.md] [--no-quality] [--offline] [--from-inbox <受信箱のid>]",
     );
     process.exit(1);
   }
@@ -485,6 +487,19 @@ async function main() {
     }
   }
 
+  // ---- イベント後のアンケート（v0.4）。中身は scripts/eval_survey.ts
+  let surveyCase: Record<string, unknown> | null = null;
+  if (wantSurvey) {
+    checks.push(...(await surveyCodeChecks()));
+    if (offline) console.log("\n（オフラインのためアンケートの書き戻しテストは省略）");
+    else {
+      const req = all.find((x) => x.id === SURVEY_REQUEST)!;
+      const s = await surveyLiveCheck(req, results.get(SURVEY_REQUEST) ?? null, (r) => propose(r, false));
+      checks.push(s.check);
+      surveyCase = s.record;
+    }
+  }
+
   const passed = checks.filter((c) => c.pass).length;
   const rate = checks.length ? passed / checks.length : 0;
   console.log(`\n=== 段階1 結合テスト：${passed}/${checks.length}（${Math.round(rate * 100)}%）${rate >= PASS_RATE ? "合格" : "不合格"}`);
@@ -527,6 +542,7 @@ async function main() {
     writeback,
     quality,
     inbox_case: inboxCaseOut,
+    survey_case: surveyCase,
   };
   // 受信箱の実データで判定したら、その結果を最新の結果に足しておく（--offline でも判定できるように）
   if (fromInbox && inboxCaseOut) {

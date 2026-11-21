@@ -261,7 +261,14 @@ export default function Home() {
   const units = useMemo(() => [...new Set(people.map((p) => p.business_unit))].sort(), [people]);
   const personCards = useMemo(() => (personId ? cards.filter((c) => c.employee_id === personId) : []), [cards, personId]);
 
+  /** 狭い画面（一覧と詳細が縦に積まれるとき）は、選んだら詳細までスクロールする（何も起きないように見えないように） */
+  function revealPanel() {
+    if (typeof window === "undefined" || window.innerWidth > 860) return;
+    requestAnimationFrame(() => document.querySelector(".panel")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
   async function openPerson(id: string) {
+    revealPanel();
     setVoicesOpen(false);
     setUnassignedOpen(false);
     setPersonId(id);
@@ -274,6 +281,7 @@ export default function Home() {
   }
 
   async function openArchive(kind: ArchiveKind, id: string) {
+    revealPanel();
     setArchiveKey(`${kind}:${id}`);
     try {
       setArchiveDetail(await api.archiveDetail(kind, id));
@@ -405,6 +413,7 @@ export default function Home() {
   }
 
   async function openInbox(id: string) {
+    revealPanel();
     setTabState("inbox");
     setMode("inbox");
     setInboxId(id);

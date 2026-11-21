@@ -103,11 +103,11 @@ export function People({
           </div>
         </div>
         <div className="chips">
-          <button type="button" className="chip voices-chip" aria-pressed={voicesOpen} onClick={onVoices}>
-            アンケートの声 {voiceCount}件（参加者が今後聞いてみたい話）
+          <button type="button" className="chip voices-chip" aria-pressed={voicesOpen} onClick={onVoices} title="イベント後のアンケートで、参加者が今後聞いてみたい話">
+            アンケートの声 {voiceCount}件
           </button>
-          <button type="button" className="chip voices-chip" aria-pressed={unassignedOpen} onClick={onUnassigned}>
-            担当者未定のネタ {unassignedCount}件（リリースから）
+          <button type="button" className="chip voices-chip" aria-pressed={unassignedOpen} onClick={onUnassigned} title="リリースノートから作った、担当者が決まっていないネタ">
+            担当者未定のネタ {unassignedCount}件
           </button>
         </div>
         <input type="search" className="input" aria-label="人を探す" placeholder="名前・所属・得意分野で検索" value={q} onChange={(e) => setQ(e.target.value)} />

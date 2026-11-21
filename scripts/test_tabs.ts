@@ -161,6 +161,14 @@ async function main() {
     check("URL がなければ空", eventUrlsIn("日程は1/29です").length === 0);
   }
 
+  // ---- 記事・イベントページからの戻り先：?mock と開いていた人・イベントを付けて戻す
+  {
+    const { backHref } = await import("../lib/backHref");
+    check("ブログから戻る：?mock と開いていた人", backHref({ mock: "", tab: "notebook", person: "e013" }, "notebook") === "/?mock&tab=notebook&person=e013");
+    check("イベントページから戻る：開いていたイベント", backHref({ archive: "event:ev019" }, "archive") === "/?tab=archive&archive=event%3Aev019");
+    check("?mock がなければ付けない（本番の画面に戻る）", !backHref({ tab: "notebook" }, "notebook").includes("mock"));
+  }
+
   fs.rmSync(tmp, { force: true });
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
   process.exitCode = failed ? 1 : 0;

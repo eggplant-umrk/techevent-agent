@@ -53,6 +53,8 @@ export interface Api {
   blogIdeas(): Promise<{ ideas: BlogIdea[]; run_usd: number; total_usd: number }>;
   draft(body: DraftBody): Promise<DraftResponse>;
   outcome(body: OutcomeBody): Promise<Card>;
+  /** 承諾の取り消し：その依頼の最後の記録（承諾）を1つ戻す */
+  undoOutcome(requestId: string, cardId: string): Promise<void>;
   editCard(cardId: string, patch: CardPatch): Promise<void>;
   resolvePending(cardId: string, theme: string, accept: boolean): Promise<void>;
   /** 受信箱の一覧（新しい順） */
@@ -138,6 +140,9 @@ export const realApi: Api = {
   blogIdeas: async () => json(await post("/api/blog-ideas")),
   draft: async (body) => json(await post("/api/draft", body)),
   outcome: async (body) => (await json<{ card: Card }>(await post("/api/outcome", body))).card,
+  undoOutcome: async (request_id, card_id) => {
+    await json(await post("/api/outcome/undo", { request_id, card_id }));
+  },
   editCard: async (card_id, patch) => {
     await json(await fetch("/api/cards", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ card_id, patch }) }));
   },

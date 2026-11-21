@@ -12,7 +12,7 @@ const when = (iso: string) => {
   return `${d.getMonth() + 1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-export const sourceLabel = (s: BoardSource) => (s === "slack" ? "Slack" : s === "sample" ? "サンプル" : "手で追加");
+export const sourceLabel = (s: BoardSource) => (s === "slack" ? "Slack" : s === "sample" ? "サンプル" : "貼った会話");
 
 /** 依頼の状態の印（準備中・候補準備済み・声かけ中・承諾済み・辞退）。状態はコードで決めたもの */
 export function StageTag({ stage }: { stage: RequestStage }) {
@@ -69,7 +69,7 @@ export function Inbox({
       {!loaded ? (
         <p className="meta">読み込んでいます…</p>
       ) : items.length === 0 ? (
-        <p className="meta">まだ依頼はありません。Slackで届いた依頼や、右の「手で追加」から入れた依頼がここに並び、候補が自動で準備されます。</p>
+        <p className="meta">まだ依頼はありません。Slackで届いた依頼や、右上の「会話を貼って追加」から入れた依頼がここに並び、候補が自動で準備されます。</p>
       ) : (
         <ul className="inbox-list">
           {items.map((it) => (

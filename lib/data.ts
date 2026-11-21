@@ -1,6 +1,7 @@
 // Read-only access to data/*.json (plus append for learnings / usage).
 // data/README.md holds the evaluation answer key and is never read here.
 import fs from "node:fs";
+import { writeJsonAtomic } from "./fileStore";
 import path from "node:path";
 import { dataFile } from "./dataSource";
 import { demoActivities, demoEmployee, demoPersonOn } from "./demoPerson";
@@ -32,7 +33,7 @@ function readJson<T>(name: string, fallback?: T): T {
 
 function writeJson(name: string, value: unknown) {
   if (!ALLOWED.has(name)) throw new Error(`not an agent data file: ${name}`);
-  fs.writeFileSync(path.join(DATA_DIR, name), JSON.stringify(value, null, 2) + "\n", "utf-8");
+  writeJsonAtomic(path.join(DATA_DIR, name), value);
 }
 
 export interface Employee {
@@ -182,7 +183,7 @@ export function requests(): SpeakingRequest[] {
 
 export function appendUsage(entry: UsageEntry) {
   const f = process.env.USAGE_FILE;
-  if (f) fs.writeFileSync(f, JSON.stringify([...usage(), entry], null, 2) + "\n", "utf-8");
+  if (f) writeJsonAtomic(f, [...usage(), entry]);
   else writeJson("usage.json", [...usage(), entry]);
 }
 

@@ -7,6 +7,7 @@
 // 既定（未設定）では入らない。評価（scripts/eval.ts）は DEMO_PERSON を消して、今までどおり30人で動く。
 // DATA_SOURCE=github（本人だけに切り替える）とは同時に使えない。
 import fs from "node:fs";
+import { writeFileAtomic } from "./fileStore";
 import path from "node:path";
 import type { Activity, Employee } from "./data";
 import { dataSource } from "./dataSource";
@@ -63,6 +64,5 @@ export function demoFile(name: "cards.json" | "notebook_state.json" | "notebook_
 export function writeIfChanged(file: string, value: unknown) {
   const text = JSON.stringify(value, null, 2) + "\n";
   if (fs.existsSync(file) && fs.readFileSync(file, "utf-8") === text) return;
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, text, "utf-8");
+  writeFileAtomic(file, text);
 }

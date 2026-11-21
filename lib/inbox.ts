@@ -6,6 +6,7 @@ import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { withPitchLater, type AgentEvent, type ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
+import { buildDateSuggestions, type DateSuggestions } from "./dateSuggest";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
@@ -51,6 +52,8 @@ export interface InboxItem {
    * pending＝作っている／ready＝できた（result.alternative_pitch）／error＝作れなかった／null・なし＝作らない依頼
    */
   pitch_status?: PitchStatus | null;
+  /** 日程が決まっていない依頼で、候補ごとの空いていそうな日（コードで計算）。日程が決まっている・候補がいなければ null */
+  date_suggestions?: DateSuggestions | null;
 }
 
 export type PitchStatus = "pending" | "ready" | "error";
@@ -285,6 +288,8 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
     const needsPitch =
       !!result && !!request.nominated_employee_id && !result.alternative_pitch && result.candidates.some((c) => c.is_alternative_to_nominee);
     if (needsPitch) pitchJob = { request, result: result! };
+    // 日程が決まっていなければ、候補ごとの空いていそうな日（コード。失敗しても候補はそのまま）
+    const dateSuggestions = result ? await buildDateSuggestions(it.intake, result.candidates).catch(() => null) : null;
     update(id, (x) => ({
       ...x,
       status: result ? "ready" : "error",
@@ -294,6 +299,7 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
       run_usd: runUsd,
       finished_at: new Date().toISOString(),
       pitch_status: needsPitch ? "pending" : null,
+      date_suggestions: dateSuggestions,
     }));
   } catch (err) {
     update(id, (x) => ({
@@ -397,6 +403,8 @@ export interface InboxDetail extends InboxListItem {
   run_usd: number;
   /** 代わりの人を推す文の状態（pending のあいだは result.alternative_pitch がまだない）。作らない依頼は null */
   pitch_status?: PitchStatus | null;
+  /** 日程が決まっていない依頼の、候補ごとの空いていそうな日。reply_sentence は主催者への返事に入れてよい1文の材料（入れるかは技術広報が選ぶ） */
+  date_suggestions?: DateSuggestions | null;
 }
 
 export function detailView(it: InboxItem): InboxDetail {
@@ -412,5 +420,6 @@ export function detailView(it: InboxItem): InboxDetail {
     events: it.events,
     run_usd: it.run_usd,
     pitch_status: it.pitch_status ?? null,
+    date_suggestions: it.date_suggestions ?? null,
   };
 }

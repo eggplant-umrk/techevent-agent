@@ -1,6 +1,8 @@
 // 受信箱に貼られた X（DM・リプライ）の会話から、依頼の項目を読み取る。
 // - 読むのは Agent（小さな1回の呼び出し）：イベント名・日程・形式・テーマ・指名・主催者の名前と、その根拠になった会話の一節（引用）
 // - 確かめるのはコード：引用が本当に会話の中にあるか、日程が1日に決まっているか、指名が社員データに実在するか
+// - 日程が決まっていないときは「日程の手がかり」（「2月か3月」「春ごろ」など、会話にある言い回しそのまま）も読む。
+//   本当に会話にあるかはコードで確かめ、なければ捨てる。期間への変換と空いていそうな日は lib/dateHint.ts（コード）
 // - 確かめられなかった項目は「未定」にして、注意点に書く。推測で埋めない
 // X には手を出さない（読みにいかない・返信しない）。ここで扱うのは人が貼った文だけ。
 import { getClient } from "./anthropic";
@@ -21,7 +23,7 @@ export const INTAKE_FIELDS = Object.keys(INTAKE_LABEL) as IntakeField[];
 
 /** Agent が返す形。値と、その根拠になった会話の一節（書かれたとおり） */
 export type Quoted = { value: string | null; quote: string | null };
-export type RawIntake = Record<IntakeField, Quoted> & { nominee: Quoted };
+export type RawIntake = Record<IntakeField, Quoted> & { nominee: Quoted; date_hint?: Quoted | null };
 
 /** コードで確かめたあとの読み取り結果 */
 export interface IntakeReading {
@@ -31,6 +33,8 @@ export interface IntakeReading {
   format: string | null;
   theme: string | null;
   organizer: string | null;
+  /** 日程が決まっていないときの時期の手がかり（会話にある言い回しそのまま。会話の中にあることを確かめ済み）。日程が決まっている・手がかりがなければ null */
+  date_hint?: string | null;
   /** 未定（会話の中で決まっていない、または読み取りを確かめられなかった）の項目 */
   undecided: IntakeField[];
   /** 未定にした理由（項目ごと、使う人向けの文） */
@@ -68,6 +72,13 @@ export function checkDate(text: string, quote: string | null, receivedAt: string
   return { date: same < limit ? make(recvYear + 1) : same, reason: null };
 }
 
+/** 日程の手がかりの確かめ（コード）：言い回しそのものが会話の中にあるときだけ使う（20字まで）。日程が決まっていれば使わない */
+export function checkDateHint(text: string, hint: Quoted | null | undefined, date: string | null): string | null {
+  const v = hint?.value?.trim();
+  if (date || !v || v.length > 20 || !inText(text, v)) return null;
+  return v;
+}
+
 /** Agent の読み取りを確かめる（コード）。指名は社員データで照合する */
 export function checkIntake(text: string, raw: RawIntake, receivedAt: string): { intake: IntakeReading; nominee: NomineeReading } {
   const reasons: Partial<Record<IntakeField, string>> = {};
@@ -93,6 +104,7 @@ export function checkIntake(text: string, raw: RawIntake, receivedAt: string): {
   const intake: IntakeReading = {
     event_name,
     date: d.date,
+    date_hint: checkDateHint(text, raw.date_hint, d.date),
     format,
     theme,
     organizer,
@@ -122,7 +134,7 @@ export function intakeHeader(intake: IntakeReading, nominee: NomineeReading | nu
   return [
     "【会話から読み取った項目（本文と照合済み。未定の項目は推測で埋めないこと）】",
     `イベント名：${v("event_name", intake.event_name)}`,
-    `日程：${v("date", intake.date)}`,
+    `日程：${v("date", intake.date)}${!intake.date && intake.date_hint ? `（時期の手がかり：「${intake.date_hint}」）` : ""}`,
     `形式：${v("format", intake.format)}`,
     `テーマ：${v("theme", intake.theme)}`,
     `主催者の名前：${v("organizer", intake.organizer)}`,
@@ -146,8 +158,9 @@ const SCHEMA = {
     theme: QUOTED,
     organizer: QUOTED,
     nominee: QUOTED,
+    date_hint: QUOTED,
   },
-  required: ["event_name", "date", "format", "theme", "organizer", "nominee"],
+  required: ["event_name", "date", "format", "theme", "organizer", "nominee", "date_hint"],
   additionalProperties: false,
 };
 
@@ -161,13 +174,14 @@ export const extractIntakeWithAgent: IntakeExtractor = async (text, runId) => {
     model,
     max_tokens: 3000,
     system: `社外から届いた登壇の依頼を読みます。X（DM・リプライ）の会話がそのまま貼られていることが多く、複数のメッセージが続いたり、くだけた言葉だったり、日程や形式があとから決まったりします。
-次の6項目について、会話の中で「決まっている」値と、その根拠になった一節（quote）を返してください。
+次の7項目について、会話の中で「決まっている」値と、その根拠になった一節（quote）を返してください。
 - event_name：イベント名
 - date：開催日（YYYY-MM-DD）。quote には日付を含む一節をそのまま入れる
 - format：形式（LT・トーク・パネルなど、分数が分かれば添える）
 - theme：話してほしいテーマ
 - organizer：主催者側の人の名前（書かれたとおり。名前がなければ表示名やアカウント名）
 - nominee：登壇者として名前を挙げて指名している LayerX 社内の人（1人。主催者や依頼元の人は含めない）
+- date_hint：開催日が1日に決まっていないときだけ、時期の手がかりになる言い回し（「2月か3月」「春ごろ」「年明けあたり」など）。value には会話にある言い回しをそのまま（短く、言い換えない）、quote にはそれを含む一節。開催日が決まっている、または手がかりがなければ value も quote も null
 決まり：
 - quote は会話からそのまま抜き出す（言い換えない・要約しない・つなぎ合わせない）
 - あとのメッセージで変わったり決まったりしたら、いちばん新しい内容を使う

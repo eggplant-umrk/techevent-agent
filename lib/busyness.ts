@@ -174,7 +174,9 @@ function scheduleSlots(employeeId: string): BusySlot[] {
 
 // iCal（CALENDAR_ICS_URL）。URL は秘密：表示・ログ・保存しない。
 const ICS_TTL_MS = 10 * 60_000;
-let icsCache: { at: number; slots: BusySlot[] | null } | null = null;
+/** iCal を読む範囲（今日から）。忙しさは2週間で計算し、空いていそうな日（lib/dateHint.ts）はこの範囲で探す */
+export const ICS_READ_DAYS = 183;
+let icsCache: { at: number; slots: BusySlot[] | null; until: string } | null = null;
 
 /** iCal の設定があるときだけ読み込む（10分は読み直さない）。失敗したら「予定は不明」になる。 */
 export async function loadCalendarIfConfigured(): Promise<void> {
@@ -184,7 +186,7 @@ export async function loadCalendarIfConfigured(): Promise<void> {
   // ログには URL を出さない（理由・ステータス・件数だけ）
   const fail = (why: string) => {
     console.error(`カレンダー（CALENDAR_ICS_URL）を読めませんでした：${why.replace(/https?:\/\/\S+/g, "（URL）")}`);
-    icsCache = { at: Date.now(), slots: null };
+    icsCache = { at: Date.now(), slots: null, until: "" };
   };
   let res: Response;
   try {
@@ -197,10 +199,12 @@ export async function loadCalendarIfConfigured(): Promise<void> {
   if (!looksLikeIcs(text)) return fail(`HTTP ${res.status} ですが、中身が iCal ではありません（${res.headers.get("content-type") ?? "種類不明"}・${text.length}文字）`);
   try {
     const w = windowOf();
-    const slots = parseIcs(text, new Date(w.fromMs), new Date(w.toMs));
-    icsCache = { at: Date.now(), slots };
+    const readTo = w.fromMs + ICS_READ_DAYS * DAY;
+    const slots = parseIcs(text, new Date(w.fromMs), new Date(readTo));
+    icsCache = { at: Date.now(), slots, until: dateOf(readTo - DAY) };
     const events = (text.match(/BEGIN:VEVENT/g) ?? []).length;
-    console.log(`カレンダー（CALENDAR_ICS_URL）を読みました：予定${events}件のうち、今後2週間（${w.from}〜${w.to}）にかかる予定${slots.length}件`);
+    const inWindow = slots.filter((s) => slotRange(s)[0] < w.toMs).length;
+    console.log(`カレンダー（CALENDAR_ICS_URL）を読みました：予定${events}件のうち、今後2週間（${w.from}〜${w.to}）にかかる予定${inWindow}件（空いていそうな日を探すため、${icsCache.until} まで読んでいます）`);
   } catch (e) {
     fail(`読み取りに失敗（${e instanceof Error ? e.message : "不明なエラー"}）`);
   }
@@ -228,7 +232,9 @@ export function clearCalendarCache(): void {
 export function calendarStatus(): string {
   if (!process.env.CALENDAR_ICS_URL?.trim()) return "CALENDAR_ICS_URL なし";
   if (!icsCache) return "まだ読み込んでいない（DATA_SOURCE=github か DEMO_PERSON=on のときだけ読む）";
-  return icsCache.slots ? `読み込み済み：今後2週間の予定 ${icsCache.slots.length}件` : "読み込みに失敗（ログを確認）";
+  if (!icsCache.slots) return "読み込みに失敗（ログを確認）";
+  const w = windowOf();
+  return `読み込み済み：今後2週間の予定 ${icsCache.slots.filter((s) => slotRange(s)[0] < w.toMs && slotRange(s)[1] > w.fromMs).length}件（${icsCache.until} まで読んでいる）`;
 }
 
 /** 予定の一覧。分からなければ null。 */
@@ -247,6 +253,19 @@ export function slotsFor(employeeId: string): BusySlot[] | null {
   const cal = fictionalCalendar();
   if (!cal) return null;
   return [...(cal.get(employeeId) ?? []), ...scheduleSlots(employeeId)];
+}
+
+/**
+ * 予定が分かるのはいつまでか（空いていそうな日を、この日より先には出さない）。予定が分からない人は null。
+ * 架空データは data/calendar.json のいちばん遅い予定の日、iCal は読んだ範囲の最後の日。
+ */
+export function knownUntilFor(employeeId: string): string | null {
+  if (usesIcs(employeeId)) return process.env.CALENDAR_ICS_URL?.trim() && icsCache?.slots ? icsCache.until : null;
+  const cal = fictionalCalendar();
+  if (!cal) return null;
+  let last = "";
+  for (const list of cal.values()) for (const s of list) if (s.end.slice(0, 10) > last) last = s.end.slice(0, 10);
+  return last || null;
 }
 
 export function busynessFor(employeeId: string, today = TODAY): Busyness {

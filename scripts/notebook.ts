@@ -13,7 +13,7 @@ function line(e: NotebookEvent): string | null {
     case "employee":
       return `[${e.n}/${e.of}] ${e.employee_id} ${e.name}（活動${e.activity_count}件）`;
     case "card":
-      return `   ${e.action === "created" ? "新規" : e.action === "updated" ? "更新" : "確認済みのため保持"} ${e.card_id}：${e.theme}`;
+      return `   ${e.message}`;
     case "rejected":
       return `   ✗ 保存せず：${e.errors.join(" / ")}`;
     case "no_card":

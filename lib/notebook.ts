@@ -29,7 +29,16 @@ function saveState(s: NotebookState) {
 export type NotebookEvent =
   | { type: "start"; run_id: string; model: string; targets: string[] }
   | { type: "employee"; employee_id: string; name: string; activity_count: number; n: number; of: number }
-  | { type: "card"; action: "created" | "updated" | "kept_reviewed"; card_id: string; employee_id: string; theme: string }
+  | {
+      type: "card";
+      action: "created" | "updated" | "kept_reviewed";
+      card_id: string;
+      employee_id: string;
+      theme: string;
+      status: string;
+      /** Human-readable line for the work log. */
+      message: string;
+    }
   | { type: "rejected"; employee_id: string; errors: string[] }
   | { type: "no_card"; employee_id: string; note: string }
   | { type: "usage"; run_usd: number; total_usd: number }
@@ -50,6 +59,12 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 - 取り組みが別々なら別のカードにする（1人に複数枚あってよい）
 - カードにするものがなければ、upsert_card を呼ばずに「カードなし：理由」と1行で答える
 
+# 発信済みの取り組み
+- 「公開しました」「登壇しました」「資料を公開しました」のような告知の投稿は、取り組みの根拠ではなく発信の記録です。evidence_activity_ids ではなく announcement_activity_ids に入れ、対応する published_ids を必ず付ける
+- 告知の投稿がある発信済みの取り組みもカードにする。中身は published の記録（タイトル・タグ・読んでほしい人）と、本人の他の投稿から書く。告知しか材料がなければ evidence_activity_ids は空配列でよい
+- 告知の投稿だけで、既存のカードと同じ取り組みの別カードを作らない。同じ取り組みのカードがあれば、そのカードに告知と published_ids を足す
+- 告知の投稿がない古い発信（published だけにあるもの）は、カードにしなくてよい
+
 # 各項目
 - summary：何をして、どんな成果が出たか。2〜3文。数字は投稿にあるものだけ
 - themes：1〜3個。本人の取り組みから絞った具体的なタイトル。「〇〇について」のような広いテーマにしない。時流とつながるなら、その切り口も使ってよい
@@ -59,7 +74,8 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 
 # 既存のカード
 - 同じ取り組みのカードがあれば card_id を指定して更新する。新しく作り直さない
-- reviewed=true のカードは技術広報が直したものです。文面は変わりません。新しい根拠があるときだけ card_id を指定して呼ぶ
+- 新しい活動が別の取り組みなら、新しいカードを作る
+- reviewed=true のカードは技術広報が確認・修正したものです。要約・テーマ案・おすすめの形は変わりません。新しい根拠や発信があるとき、または新しい活動から別のテーマ案が考えられるときだけ card_id を指定して呼ぶ。テーマ案は「新しいテーマ案（未確認）」として技術広報に提案されます
 
 upsert_card がエラーを返したら、内容を直してもう一度呼んでください。`;
 
@@ -88,7 +104,7 @@ ${acts.map((a) => `- ${a.id}｜${a.date}｜${a.type}｜${a.channel ?? a.repo}｜
 ${pubs.map((p) => `- ${p.id}｜${p.published_at.slice(0, 10)}｜${p.genre}｜${p.title}｜タグ: ${p.tags.join("、")}`).join("\n") || "（なし）"}
 
 # 既存のカード（${cards.length}枚）
-${cards.map((c) => `- ${c.card_id}｜reviewed=${c.reviewed}｜${c.themes.join(" / ")}｜根拠 ${c.evidence_activity_ids.join(", ")}｜${c.summary}`).join("\n") || "（なし）"}`;
+${cards.map((c) => `- ${c.card_id}｜reviewed=${c.reviewed}｜${c.themes.join(" / ")}｜根拠 ${c.evidence_activity_ids.join(", ") || "なし"}｜告知 ${c.announcement_activity_ids.join(", ") || "なし"}｜published ${c.published_ids.join(", ") || "なし"}｜${c.summary}`).join("\n") || "（なし）"}`;
   return { text, count: acts.length, latest };
 }
 
@@ -183,7 +199,19 @@ export async function updateNotebook(
         if (out.action === "created") created++;
         else if (out.action === "updated") updated++;
         else kept++;
-        emit({ type: "card", action: out.action!, card_id: out.card!.card_id, employee_id: employeeId, theme: out.card!.themes[0] });
+        const c = out.card!;
+        const status = c.publication_status === "unpublished" ? "未発信" : c.publication_status === "blogged" ? "ブログ済み" : "登壇済み";
+        let message: string;
+        if (out.action === "created") message = `新しく作ったカード ${c.card_id}（${status}）：${c.themes[0]}`;
+        else if (out.action === "updated") message = `更新したカード ${c.card_id}（${status}）：${c.themes[0]}`;
+        else {
+          const parts = ["確認済みカード：内容は変えず"];
+          if (out.evidence_added?.length) parts.push(`根拠を${out.evidence_added.length}件追加（${out.evidence_added.join(", ")}）`);
+          if (out.pending_themes_added?.length) parts.push(`新しいテーマ案を提案「${out.pending_themes_added.join("」「")}」`);
+          if (parts.length === 1) parts.push("事実の項目だけ更新");
+          message = `${parts.join("、")} ${c.card_id}`;
+        }
+        emit({ type: "card", action: out.action!, card_id: c.card_id, employee_id: employeeId, theme: c.themes[0], status, message });
         results.push({ type: "tool_result", tool_use_id: u.id, content: `${out.action}: ${out.card!.card_id}` });
       }
       // Only continue the conversation if something needs fixing; otherwise this employee is done.

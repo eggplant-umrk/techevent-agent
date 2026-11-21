@@ -408,7 +408,11 @@ export const UPSERT_CARD_DEF: Anthropic.Tool = {
         items: { type: "string" },
         description: "話せるテーマ案を1〜3個。本人の取り組みから絞った具体的なタイトル",
       },
-      evidence_activity_ids: { type: "array", items: { type: "string" } },
+      evidence_activity_ids: {
+        type: "array",
+        items: { type: "string" },
+        description: "取り組みの中身が分かる投稿の activity id。発信済みで告知しかない取り組みなら空配列でよい（そのときは published_ids が必須）",
+      },
       format: { type: "string", enum: ["talk", "lt", "blog"], description: "おすすめの形" },
       format_reason: { type: "string", description: "その形をすすめる理由（1文）" },
       published_ids: {
@@ -416,8 +420,23 @@ export const UPSERT_CARD_DEF: Anthropic.Tool = {
         items: { type: "string" },
         description: "この取り組みをすでに発信した published の id。なければ空配列",
       },
+      announcement_activity_ids: {
+        type: "array",
+        items: { type: "string" },
+        description: "「公開しました」「登壇しました」など発信の告知だけの投稿の activity id。根拠ではなく発信の記録として入れる。なければ空配列",
+      },
     },
-    required: ["card_id", "employee_id", "summary", "themes", "evidence_activity_ids", "format", "format_reason", "published_ids"],
+    required: [
+      "card_id",
+      "employee_id",
+      "summary",
+      "themes",
+      "evidence_activity_ids",
+      "format",
+      "format_reason",
+      "published_ids",
+      "announcement_activity_ids",
+    ],
     additionalProperties: false,
   },
 };

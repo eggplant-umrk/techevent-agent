@@ -31,6 +31,10 @@ export interface Card {
   publication_status: PublicationStatus;
   published_ids: string[];
   latest_activity_date: string;
+  /** "公開しました" posts: a record of publication, not evidence of the work. */
+  announcement_activity_ids: string[];
+  /** Theme ideas the agent proposed for a reviewed card. Shown as 未確認 until accepted or rejected. */
+  pending_themes: string[];
   outreach_history: OutreachEntry[];
   /** true once 技術広報 edited the card in the UI. Proposals prefer reviewed cards; the agent never overwrites their text. */
   reviewed: boolean;
@@ -41,7 +45,9 @@ export interface Card {
 
 export function loadCards(): Card[] {
   if (!fs.existsSync(FILE)) return [];
-  return JSON.parse(fs.readFileSync(FILE, "utf-8")) as Card[];
+  const raw = JSON.parse(fs.readFileSync(FILE, "utf-8")) as Card[];
+  // Cards written before these fields existed.
+  return raw.map((c) => ({ ...c, announcement_activity_ids: c.announcement_activity_ids ?? [], pending_themes: c.pending_themes ?? [] }));
 }
 
 function saveCards(cards: Card[]) {
@@ -70,6 +76,7 @@ export interface CardInput {
   format: CardFormat;
   format_reason: string;
   published_ids: string[];
+  announcement_activity_ids: string[];
 }
 
 /** Returns error messages; empty means the input can be saved. */
@@ -80,11 +87,22 @@ export function validateCardInput(input: CardInput, cards = loadCards()): string
   if (!Array.isArray(input.themes) || input.themes.length < 1 || input.themes.length > 3) errs.push("themes は1〜3個にしてください");
   if (!["talk", "lt", "blog"].includes(input.format)) errs.push("format は talk / lt / blog のどれかです");
   const acts = new Map(activities().map((a) => [a.id, a]));
-  if (!input.evidence_activity_ids?.length) errs.push("根拠の activity id がありません");
+  if (!input.evidence_activity_ids?.length && !input.published_ids?.length) {
+    errs.push("根拠の activity id がありません（発信済みの取り組みなら published_ids を入れてください）");
+  }
   for (const id of input.evidence_activity_ids ?? []) {
     const a = acts.get(id);
     if (!a) errs.push(`根拠 ${id} は存在しない activity id です`);
     else if (a.author_id !== input.employee_id) errs.push(`根拠 ${id} は ${input.employee_id} の活動ではありません`);
+  }
+  for (const id of input.announcement_activity_ids ?? []) {
+    const a = acts.get(id);
+    if (!a) errs.push(`告知 ${id} は存在しない activity id です`);
+    else if (a.author_id !== input.employee_id) errs.push(`告知 ${id} は ${input.employee_id} の活動ではありません`);
+    if (input.evidence_activity_ids?.includes(id)) errs.push(`${id} が根拠と告知の両方に入っています。告知の投稿は告知だけに入れてください`);
+  }
+  if (input.announcement_activity_ids?.length && !input.published_ids?.length) {
+    errs.push("告知の投稿があるときは、対応する published_ids を入れてください");
   }
   const pubs = new Map(published().map((p) => [p.id, p]));
   for (const id of input.published_ids ?? []) {
@@ -107,9 +125,15 @@ function statusFrom(publishedIds: string[]): PublicationStatus {
   return "unpublished";
 }
 
-function latestDate(ids: string[]): string {
-  const acts = activities().filter((a) => ids.includes(a.id));
-  return acts.reduce((m, a) => (a.date > m ? a.date : m), "");
+/** Latest date among the work and announcement posts; falls back to the publication date. */
+function latestDate(activityIds: string[], publishedIds: string[] = []): string {
+  const a = activities()
+    .filter((x) => activityIds.includes(x.id))
+    .reduce((m, x) => (x.date > m ? x.date : m), "");
+  if (a) return a;
+  return published()
+    .filter((p) => publishedIds.includes(p.id))
+    .reduce((m, p) => (p.published_at.slice(0, 10) > m ? p.published_at.slice(0, 10) : m), "");
 }
 
 export interface UpsertOutcome {
@@ -117,15 +141,26 @@ export interface UpsertOutcome {
   errors: string[];
   action?: "created" | "updated" | "kept_reviewed";
   card?: Card;
+  /** For reviewed cards: what changed without touching the human-edited text. */
+  evidence_added?: string[];
+  pending_themes_added?: string[];
 }
 
-/** upsert_card: create or update a card. Reviewed cards keep their human-edited text; only evidence/status are merged. */
+const clean = (xs: string[]) => xs.map((s) => s.trim()).filter(Boolean);
+
+/**
+ * upsert_card: create or update a card.
+ * Reviewed cards keep summary / themes / format as the human left them. Facts (evidence ids,
+ * announcements, published ids, status, latest date) are still merged, and theme ideas that are
+ * new become pending_themes (未確認) for the human to accept or reject.
+ */
 export function upsertCard(input: CardInput): UpsertOutcome {
   const cards = loadCards();
   const errors = validateCardInput(input, cards);
   if (errors.length) return { ok: false, errors };
   const t = now();
-  const evidence = [...new Set(input.evidence_activity_ids)];
+  const evidence = [...new Set(input.evidence_activity_ids ?? [])];
+  const announcements = [...new Set(input.announcement_activity_ids ?? [])];
   const pubIds = [...new Set(input.published_ids ?? [])];
 
   if (!input.card_id) {
@@ -133,13 +168,15 @@ export function upsertCard(input: CardInput): UpsertOutcome {
       card_id: nextCardId(cards, input.employee_id),
       employee_id: input.employee_id,
       summary: input.summary.trim(),
-      themes: input.themes.map((s) => s.trim()).filter(Boolean),
+      themes: clean(input.themes),
       evidence_activity_ids: evidence,
       format: input.format,
       format_reason: input.format_reason.trim(),
       publication_status: statusFrom(pubIds),
       published_ids: pubIds,
-      latest_activity_date: latestDate(evidence),
+      latest_activity_date: latestDate([...evidence, ...announcements], pubIds),
+      announcement_activity_ids: announcements,
+      pending_themes: [],
       outreach_history: [],
       reviewed: false,
       reviewed_at: null,
@@ -153,27 +190,65 @@ export function upsertCard(input: CardInput): UpsertOutcome {
   const i = cards.findIndex((c) => c.card_id === input.card_id);
   const prev = cards[i];
   const mergedEvidence = [...new Set([...prev.evidence_activity_ids, ...evidence])];
+  const mergedAnn = [...new Set([...prev.announcement_activity_ids, ...announcements])];
   const mergedPubs = [...new Set([...prev.published_ids, ...pubIds])];
-  const base = {
-    ...prev,
+  const facts = {
     evidence_activity_ids: mergedEvidence,
+    announcement_activity_ids: mergedAnn,
     published_ids: mergedPubs,
     publication_status: statusFrom(mergedPubs),
-    latest_activity_date: latestDate(mergedEvidence),
+    latest_activity_date: latestDate([...mergedEvidence, ...mergedAnn], mergedPubs),
     updated_at: t,
   };
-  const card: Card = prev.reviewed
-    ? base
-    : {
-        ...base,
-        summary: input.summary.trim(),
-        themes: input.themes.map((s) => s.trim()).filter(Boolean),
-        format: input.format,
-        format_reason: input.format_reason.trim(),
-      };
+
+  if (prev.reviewed) {
+    const known = new Set([...prev.themes, ...prev.pending_themes]);
+    const newIdeas = clean(input.themes).filter((th) => !known.has(th));
+    const card: Card = { ...prev, ...facts, pending_themes: [...prev.pending_themes, ...newIdeas] };
+    cards[i] = card;
+    saveCards(cards);
+    return {
+      ok: true,
+      errors: [],
+      action: "kept_reviewed",
+      card,
+      evidence_added: mergedEvidence.filter((id) => !prev.evidence_activity_ids.includes(id)),
+      pending_themes_added: newIdeas,
+    };
+  }
+
+  const card: Card = {
+    ...prev,
+    ...facts,
+    summary: input.summary.trim(),
+    themes: clean(input.themes),
+    format: input.format,
+    format_reason: input.format_reason.trim(),
+  };
   cards[i] = card;
   saveCards(cards);
-  return { ok: true, errors: [], action: prev.reviewed ? "kept_reviewed" : "updated", card };
+  return { ok: true, errors: [], action: "updated", card };
+}
+
+/** One click in the UI: adopt or drop an agent-proposed theme on a reviewed card. */
+export function resolvePendingTheme(cardId: string, theme: string, accept: boolean): UpsertOutcome {
+  const cards = loadCards();
+  const i = cards.findIndex((c) => c.card_id === cardId);
+  if (i < 0) return { ok: false, errors: [`カード ${cardId} は存在しません`] };
+  const prev = cards[i];
+  if (!prev.pending_themes.includes(theme)) return { ok: false, errors: ["そのテーマ案はありません"] };
+  if (accept && prev.themes.length >= 3) {
+    return { ok: false, errors: ["テーマ案は3つまでです。先にカードを編集して1つ外してください"] };
+  }
+  const card: Card = {
+    ...prev,
+    themes: accept ? [...prev.themes, theme] : prev.themes,
+    pending_themes: prev.pending_themes.filter((x) => x !== theme),
+    updated_at: now(),
+  };
+  cards[i] = card;
+  saveCards(cards);
+  return { ok: true, errors: [], action: "updated", card };
 }
 
 /** Edit from the UI by 技術広報. Marks the card reviewed. */
@@ -194,6 +269,7 @@ export function editCard(
     format: patch.format ?? prev.format,
     format_reason: patch.format_reason ?? prev.format_reason,
     published_ids: prev.published_ids,
+    announcement_activity_ids: prev.announcement_activity_ids,
   };
   const errors = validateCardInput(next, cards);
   if (errors.length) return { ok: false, errors };
@@ -201,9 +277,9 @@ export function editCard(
   const card: Card = {
     ...prev,
     summary: next.summary.trim(),
-    themes: next.themes.map((s) => s.trim()).filter(Boolean),
+    themes: clean(next.themes),
     evidence_activity_ids: [...new Set(next.evidence_activity_ids)],
-    latest_activity_date: latestDate(next.evidence_activity_ids),
+    latest_activity_date: latestDate([...next.evidence_activity_ids, ...prev.announcement_activity_ids], prev.published_ids),
     format: next.format,
     format_reason: next.format_reason.trim(),
     reviewed: true,

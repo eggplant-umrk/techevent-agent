@@ -53,7 +53,8 @@ const latest = JSON.parse(fs.readFileSync(path.join(process.cwd(), "docs", "eval
 const all = latest.rows.flatMap((r) => r.result?.candidates ?? []).flatMap((c) => c.cautions);
 const removed = all.filter(repeatsTalkTag);
 const left = withoutTalkTagRepeats(all).filter((c) => /^(登壇経験なし|登壇は初めて|登壇経験はありません)/.test(c));
-check("保存結果：印と同じだけの注意点を見つけて除ける", removed.length > 0 && left.length === 0, `${all.length}件中 ${removed.length}件を除く`);
+// 保存結果に、印と同じだけの注意点が残らない（Agent が書かなくなった結果なら、除くものが0件でもよい）
+check("保存結果：印と同じだけの注意点は、除いたあとに残らない", left.length === 0, `${all.length}件中 ${removed.length}件を除く`);
 
 console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
 process.exit(failed ? 1 : 0);

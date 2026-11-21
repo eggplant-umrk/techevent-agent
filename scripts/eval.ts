@@ -284,11 +284,16 @@ function progress(e: AgentEvent): string | null {
 }
 
 async function propose(r: SpeakingRequest, withPitch = true) {
+  const t0 = Date.now(); // 1件の準備にかかった時間（代わりの人を推す文を含む）
   let usd = 0;
   let steps = 0;
+  /** 差し戻しの理由（評価の結果のファイルにだけ残す。作業ログ・画面には出さない） */
+  const rejections: Array<{ step: number; reasons: string }> = [];
+  let step = 0;
   const result = await runAgent(
     r,
     (e) => {
+      if (e.type === "step") step = e.n;
       const s = progress(e);
       if (s) console.log(s);
       if (e.type === "done") {
@@ -296,9 +301,9 @@ async function propose(r: SpeakingRequest, withPitch = true) {
         steps = e.steps;
       }
     },
-    { withAlternativePitch: withPitch },
+    { withAlternativePitch: withPitch, onRejected: (reasons) => rejections.push({ step, reasons: reasons.join("\n") }) },
   );
-  return { result, usd, steps };
+  return { result, usd, steps, elapsed_ms: Date.now() - t0, rejections };
 }
 
 interface Check {
@@ -427,8 +432,8 @@ async function main() {
   for (const r of targets) {
     console.log(`\n=== ${r.id} (${r.pattern}) ${r.event?.title}`);
     const savedRow = saved?.rows.find((x) => x.request_id === r.id);
-    const { result, usd, steps } = saved
-      ? { result: savedRow?.result ?? null, usd: 0, steps: savedRow?.steps ?? 0 }
+    const { result, usd, steps, elapsed_ms, rejections } = saved
+      ? { result: savedRow?.result ?? null, usd: 0, steps: savedRow?.steps ?? 0, elapsed_ms: (savedRow as { elapsed_ms?: number } | undefined)?.elapsed_ms ?? null, rejections: (savedRow as { rejections?: unknown[] } | undefined)?.rejections ?? [] }
       : await propose(r);
     results.set(r.id, result);
     const top3 = result?.candidates.map((c) => c.employee_id) ?? [];
@@ -486,7 +491,7 @@ async function main() {
     );
     for (const c of conds) console.log(`    条件付き ${c.name}：${c.caveat}`);
     console.log(`  想定のいずれか=${anyHit ? "○" : "×"} 主候補=${primaryHit ? "○" : "×"}${altOk === null ? "" : ` 代わりの提案=${altOk ? "○" : "×"}`}  $${usd.toFixed(3)}（${steps}回）`);
-    rows.push({ request_id: r.id, pattern: r.pattern, top3, expected: exp.ids, primary: exp.primary, any_hit: anyHit, primary_hit: primaryHit, alternatives: alts, alternative_ok: altOk, run_usd: usd, steps, result });
+    rows.push({ request_id: r.id, pattern: r.pattern, top3, expected: exp.ids, primary: exp.primary, any_hit: anyHit, primary_hit: primaryHit, alternatives: alts, alternative_ok: altOk, run_usd: usd, steps, elapsed_ms, rejections, result });
     if (!offline) mergeLatest({ rows: [rows.at(-1)] }); // 終わった依頼から保存する
   }
 

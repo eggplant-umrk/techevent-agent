@@ -139,7 +139,7 @@ const BASE_TOOL_DEFS: Anthropic.Tool[] = [
               cautions: {
                 type: "array",
                 items: { type: "string" },
-                description: "注意点（最近登壇した／忙しい／予定が重なる など）",
+                description: "コードで出せない注意点だけ（テーマが少しずれる／根拠が1件だけ／社外に出してよい範囲の確認 など）。予定の埋まり・予定の重なり・日程が未定・登壇経験・カードが未確認はコードが足すので書かない。なければ空配列",
               },
               is_alternative_to_nominee: {
                 type: "boolean",
@@ -497,7 +497,8 @@ export function searchCards(input: Input) {
       ...(e && e.ng_themes.length ? { ng_themes: e.ng_themes } : {}),
       themes: c.themes,
       summary: clip(c.summary, 120),
-      evidence_activity_ids: c.evidence_activity_ids,
+      // 根拠は、今の材料にある活動だけ（リリースノート・ブログを入れていない評価のときに、ない id を根拠にして差し戻されないように）
+      evidence_activity_ids: c.evidence_activity_ids.filter((id) => acts.has(id)),
       published_ids: c.published_ids,
       format: c.format,
       publication_status: c.publication_status,
@@ -523,11 +524,15 @@ export function getCard(input: Input) {
     ...(blogToLt(c) ? { blog_to_lt: BLOG_TO_LT_NOTE } : {}),
     // イベント後の反応は、採用済みのものだけを文で渡す（提案中・見送りは渡さない）
     reactions: reactionLines(c),
+    // 根拠は、今の材料にある活動だけ（search_cards・先に渡す候補と同じ扱い）
+    evidence_activity_ids: c.evidence_activity_ids.filter((id) => acts.has(id)),
     employee: e ? `${e.id} ${e.name}｜${e.business_unit}｜${busyForAgent(busynessFor(e.id))}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}` : c.employee_id,
-    evidence: c.evidence_activity_ids.map((id) => {
-      const a = acts.get(id);
-      return a ? `${a.id} ${a.date} [${a.type}] ${a.title}` : id;
-    }),
+    evidence: c.evidence_activity_ids
+      .filter((id) => acts.has(id))
+      .map((id) => {
+        const a = acts.get(id)!;
+        return `${a.id} ${a.date} [${a.type}] ${a.title}`;
+      }),
     published: c.published_ids.map((id) => {
       const p = pubs.get(id);
       return p ? `${p.id} ${p.published_at.slice(0, 10)} ${p.genre} ${p.title}` : id;

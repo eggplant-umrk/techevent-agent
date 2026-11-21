@@ -1,6 +1,7 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
 import { originalUrl } from "./originalUrl";
 import Anthropic from "@anthropic-ai/sdk";
+import { computedCautions, dropComputableCautions, prefetchForAgent } from "./proposalPrep";
 import { todayJst } from "./clock";
 import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
 import { blogToLt, talkTag, withoutTalkTagRepeats, type TalkTag } from "./talkTag";
@@ -294,21 +295,6 @@ export function validateSubmit(input: SubmitInput, seen: Set<string>, nomineeId:
   return errs;
 }
 
-/** Cautions computed from data, added to the agent's own so the 3 decline reasons are always visible. */
-function systemCautions(employeeId: string, eventDate: string | undefined): string[] {
-  const e = employeeById(employeeId);
-  if (!e) return [];
-  const out: string[] = [];
-  // 登壇の経験は注意点にしない（順位も下げない）。候補の印 talk_tag で見せる
-  const busy = busynessFor(employeeId);
-  if (busy.known && busy.level === "詰まっている") out.push(busyText(busy));
-  if (eventDate) {
-    const hit = schedules().find((s) => s.employee_id === employeeId && s.from <= eventDate && s.to >= eventDate);
-    if (hit) out.push(`予定が重なる（${hit.kind} ${hit.from}〜${hit.to}）`);
-  }
-  return out;
-}
-
 function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput): ProposalResult {
   const acts = new Map(activities().map((a) => [a.id, a]));
   return {
@@ -321,10 +307,9 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
     no_fit: input.candidates.length === 0 ? input.no_fit : null,
     candidates: input.candidates.map((c, i) => {
       const e = employeeById(c.employee_id)!;
-      const sys = systemCautions(c.employee_id, eventDateOf(request) ?? undefined);
-      // 登壇経験の印（talk_tag）と同じことだけを言っている注意点は、表示の前に除く（印が理由の近くに出るため）
-      const cautions = withoutTalkTagRepeats(c.cautions);
-      for (const s of sys) if (!cautions.some((x) => x.includes(s.slice(0, 4)))) cautions.push(s);
+      // 注意点：Agent が書いたもの（コードで出せないことだけ）＋コードが出すもの（予定・日程・カードの確認）。
+      // 登壇経験の印と同じこと・コードが足すものと同じことだけを言っている文は、表示の前に除く
+      const cautions = [...dropComputableCautions(withoutTalkTagRepeats(c.cautions)), ...computedCautions(c.employee_id, request, c.card_id)];
       return {
         rank: i + 1,
         employee_id: e.id,
@@ -372,6 +357,8 @@ export interface LoopSpec<T> {
   submittedSummary: (input: T) => string;
   /** 提出以外のツールを実行する。seen には「この調査で見たid」を足す */
   runTool: (name: string, input: unknown, seen: Set<string>) => { ok: boolean; result: unknown; summary: string };
+  /** 最初の指示で先に見せた id（コードで先に調べた結果。根拠に使ってよい） */
+  seen?: string[];
 }
 
 /** ツールを呼びながら考え、提出ツールで終わる。上限 MAX_STEPS 回。作業ログは emit で流す */
@@ -379,7 +366,7 @@ export async function runToolLoop<T>(spec: LoopSpec<T>, emit: (e: AgentEvent) =>
   const client = getClient();
   const system: Anthropic.TextBlockParam[] = [{ type: "text", text: spec.system, cache_control: { type: "ephemeral" } }];
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: spec.firstMessage }];
-  const seen = new Set<string>();
+  const seen = new Set<string>(spec.seen ?? []);
   let step = 0;
 
   for (step = 1; step <= MAX_STEPS; step++) {
@@ -477,7 +464,8 @@ export const pitchDeferred = () => pitchLater.getStore() === true;
 export async function runAgent(
   request: SpeakingRequest,
   emit: (e: AgentEvent) => void,
-  opts: { withAlternativePitch?: boolean } = {},
+  /** onRejected：評価用。差し戻しの理由を受け取る（作業ログ・画面には出さない） */
+  opts: { withAlternativePitch?: boolean; onRejected?: (reasons: string[]) => void } = {},
 ): Promise<ProposalResult | null> {
   await loadCalendarIfConfigured(); // iCal を使う設定のときだけ読む（社員一覧の予定の埋まりに使う）
   const runId = randomUUID();
@@ -492,15 +480,24 @@ export async function runAgent(
     switch_usd: models.switchUsd,
   });
 
+  // 最初の検索をコードで先にやり、最初の指示にまとめて渡す（Agent は足りなければツールで探し直す）
+  const pre = prefetchForAgent(request);
+  emit({ type: "tool_call", id: "prefetch", name: "search_cards", input: { query: pre.query, by: "code" } });
+  emit({ type: "tool_result", id: "prefetch", name: "search_cards", ok: true, summary: `コードで先に検索：${pre.seen.length ? "候補のカードを最初の指示に添えました" : "カードは見つかりませんでした"}` });
   const { submitted, steps: step } = await runToolLoop<SubmitInput>(
     {
       runId,
       model: models.loop,
       system: systemPrompt(),
       tools: PROPOSAL_TOOLS,
-      firstMessage: `次の登壇依頼に対して、ネタ帳から、合う候補を${MAX_CANDIDATES}人まで提案してください（合う人がいるだけ）。\n\n${JSON.stringify(requestForAgent(request), null, 2)}${peopleNotesForAgent()}`,
+      firstMessage: `次の登壇依頼に対して、ネタ帳から、合う候補を${MAX_CANDIDATES}人まで提案してください（合う人がいるだけ）。\n\n${JSON.stringify(requestForAgent(request), null, 2)}${peopleNotesForAgent()}${pre.text}`,
+      seen: pre.seen,
       submitTool: SUBMIT_TOOL,
-      validate: (input, seen) => validateSubmit(input, seen, request.nominated_employee_id ?? null, request),
+      validate: (input, seen) => {
+        const errs = validateSubmit(input, seen, request.nominated_employee_id ?? null, request);
+        if (errs.length) opts.onRejected?.(errs);
+        return errs;
+      },
       submittedSummary: (input) => `候補${input.candidates.length}人を提出`,
       runTool: (name, input, seen) => {
         const { ok, result: out } = executeTool(name, input);

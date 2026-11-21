@@ -17,6 +17,7 @@
     "test:release": "tsx scripts/test_release_notes.ts",
     "test:runtime": "tsx scripts/test_runtime.ts",
     "test:loop": "tsx scripts/test_notebook_loop.ts",
+    "test:prep": "tsx scripts/test_proposal_prep.ts",
     "test:reviewed": "tsx scripts/test_notebook_reviewed.ts",
     "test:edge": "tsx scripts/test_edge_cases.ts",
     "try:edge": "tsx scripts/try_edge_cases.ts",

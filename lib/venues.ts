@@ -21,6 +21,7 @@ import {
 } from "./externalEvents";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
 import { executeTool, toolDef } from "./tools";
+import { getPerson, INTENT_LABEL, ngHits } from "./people";
 import { chooseModels, runUsd, totalUsd } from "./usage";
 
 // ---------------------------------------------------------------------------
@@ -126,6 +127,7 @@ const SYSTEM = `あなたはLayerXの技術広報を支えるAgentです。ネ�
 - 根拠は、カードのもとになった活動の id だけ（カードの根拠から選ぶ）
 - cfp_status が unknown のものは締切が公式で未確認、event_date が null のものは開催日が未定。どちらも出してよいが、そのことを踏まえて書く（注意点はシステムが必ず足す）
 - 応募するのは本人。あなたは出し先を提案するところまで
+- カードの person（技術広報が確認済みの人の情報）に従う。登壇の意向が「今は控えたい」なら出し先は conditional にして caveat にそのことを書く。NGのテーマに当たるタイトル案にしない
 - ${PLAIN_TEXT_RULE}。idは event_id や evidence_activity_ids の項目にだけ書き、文の中には書かない`;
 
 // ---------------------------------------------------------------------------
@@ -205,6 +207,10 @@ export function validateVenues(input: VenueSubmit, card: Card, today = TODAY): s
       if (!v.caveat?.trim()) errs.push(`${e.name} は条件付きなので、caveat に何が引っかかるかを1文で書いてください`);
     }
     if (v.confidence === "strong" && seenConditional) errs.push("自信のある出し先（strong）を、条件付き（conditional）より先に並べてください");
+    const person = getPerson(card.employee_id);
+    if (person?.speaking_intent === "hold" && v.confidence !== "conditional") errs.push(`${person.name}さんは登壇の意向が「今は控えたい」なので、出し先は条件付きにして、引っかかる点にそのことを書いてください`);
+    const ng = person ? ngHits(v.theme, person.ng_themes) : [];
+    if (ng.length) errs.push(`${e.name} のタイトル案が、本人のNGのテーマ「${ng.join("」「")}」に当たります`);
     const bad = (v.evidence_activity_ids ?? []).filter((id) => !card.evidence_activity_ids.includes(id));
     if (bad.length) errs.push(`${e.name} の根拠 ${bad.join(", ")} はこのカードの根拠ではありません。カードのもとになった活動の id を使ってください`);
     if (!v.evidence_activity_ids?.length && card.evidence_activity_ids.length) errs.push(`${e.name} の根拠（カードのもとになった活動の id）がありません`);
@@ -235,7 +241,10 @@ function buildVenues(input: VenueSubmit, card: Card): VenueCard[] {
   return input.venues.map((v, i) => {
     const e = externalEventById(v.event_id)!;
     // 必ず付ける注意点（締切は公式で要確認・開催日は要確認・締切が近い・本人の予定）は、決まった文のまま必ず入れる
-    const required = requiredCautions(e, card.employee_id);
+    const required = [
+      ...requiredCautions(e, card.employee_id),
+      ...(getPerson(card.employee_id)?.speaking_intent === "hold" ? ["本人は今は登壇を控えたい意向（技術広報が確認済み）"] : []),
+    ];
     const cautions = [...required, ...v.cautions.filter((c) => !required.includes(c))];
     return {
       rank: i + 1,
@@ -298,6 +307,10 @@ export async function findVenues(cardId: string, emit: (e: VenueEvent) => void):
     themes: card.themes,
     format: card.format,
     publication_status: card.publication_status,
+    person: (() => {
+      const p = getPerson(card.employee_id);
+      return p ? { speaking_intent: INTENT_LABEL[p.speaking_intent], ng_themes: p.ng_themes } : null;
+    })(),
     evidence: card.evidence_activity_ids.map((id) => {
       const a = acts.get(id);
       return a ? `${a.id} ${a.date} ${a.title}：${a.body}` : id;

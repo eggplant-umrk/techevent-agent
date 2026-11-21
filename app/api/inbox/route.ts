@@ -4,6 +4,7 @@
 // localhost からのリクエストだけ受け付ける。
 import { runAgent } from "@/lib/agent";
 import { addToInbox, listInbox, listView, parseInboxInput } from "@/lib/inbox";
+import { isActiveInboxItem } from "@/lib/archive";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
 import { extractNomineeWithAgent } from "@/lib/nominee";
 
@@ -23,5 +24,6 @@ export async function POST(req: Request) {
 
 export function GET(req: Request) {
   if (!isLocalRequest(req)) return forbidden();
-  return Response.json({ items: listInbox().map(listView) });
+  // 開催日が過ぎた依頼は受信箱に出さない（アーカイブへ。判定はコード）
+  return Response.json({ items: listInbox().filter((it) => isActiveInboxItem(it)).map(listView) });
 }

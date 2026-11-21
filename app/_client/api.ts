@@ -98,6 +98,12 @@ export interface Api {
   archiveDetail(kind: ArchiveKind, id: string): Promise<ArchiveDetail>;
 }
 
+// 通信そのものに失敗したとき（サーバーが止まっている・つながらない）は、英語の「Failed to fetch」ではなく使う人向けの文にする
+const safeFetch = (input: string, init?: RequestInit) =>
+  fetch(input, init).catch(() => {
+    throw new Error("サーバーにつながりませんでした。少し待ってから、もう一度押してください");
+  });
+
 async function json<T>(res: Response): Promise<T> {
   const j = await res.json().catch(() => ({ error: `サーバーから応答がありません（${res.status}）` }));
   if (!res.ok) throw new Error((j as { error?: string }).error ?? `エラー（${res.status}）`);
@@ -126,7 +132,7 @@ async function readNdjson<T>(res: Response, onEvent: (e: T) => void) {
 }
 
 const post = (url: string, body?: unknown) =>
-  fetch(url, {
+  safeFetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -134,9 +140,9 @@ const post = (url: string, body?: unknown) =>
 
 export const realApi: Api = {
   mock: false,
-  cards: () => fetch("/api/cards").then(json<{ cards: NotebookCard[]; units: string[] }>),
-  state: () => fetch("/api/state").then(json<{ models: ModelChoice; pending_employees: number }>),
-  requests: () => fetch("/api/requests").then(json<SpeakingRequest[]>),
+  cards: () => safeFetch("/api/cards").then(json<{ cards: NotebookCard[]; units: string[] }>),
+  state: () => safeFetch("/api/state").then(json<{ models: ModelChoice; pending_employees: number }>),
+  requests: () => safeFetch("/api/requests").then(json<SpeakingRequest[]>),
   runAgent: async (body, onEvent) => readNdjson(await post("/api/agent", body), onEvent),
   updateNotebook: async (onEvent) => readNdjson(await post("/api/notebook"), onEvent),
   blogIdeas: async () => json(await post("/api/blog-ideas")),
@@ -146,22 +152,22 @@ export const realApi: Api = {
     await json(await post("/api/outcome/undo", { request_id, card_id }));
   },
   editCard: async (card_id, patch) => {
-    await json(await fetch("/api/cards", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ card_id, patch }) }));
+    await json(await safeFetch("/api/cards", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ card_id, patch }) }));
   },
   resolvePending: async (card_id, theme, accept) => {
     await json(await post("/api/cards/pending", { card_id, theme, accept }));
   },
-  inbox: async () => (await json<{ items: BoardListItem[] }>(await fetch("/api/inbox"))).items,
+  inbox: async () => (await json<{ items: BoardListItem[] }>(await safeFetch("/api/inbox"))).items,
   inboxAdd: async (text) => json(await post("/api/inbox", { text, source: "manual" })),
-  inboxDetail: async (id) => json(await fetch(`/api/inbox/${encodeURIComponent(id)}/detail`)),
+  inboxDetail: async (id) => json(await safeFetch(`/api/inbox/${encodeURIComponent(id)}/detail`)),
   inboxOpen: async (id) => {
     await json(await post(`/api/inbox/${encodeURIComponent(id)}/open`));
   },
   inboxProceed: async (id) => {
     await json(await post(`/api/inbox/${encodeURIComponent(id)}/proceed`));
   },
-  events: async () => (await json<{ events: EventListItem[] }>(await fetch("/api/events"))).events,
-  eventDetail: async (id) => json(await fetch(`/api/events/${encodeURIComponent(id)}`)),
+  events: async () => (await json<{ events: EventListItem[] }>(await safeFetch("/api/events"))).events,
+  eventDetail: async (id) => json(await safeFetch(`/api/events/${encodeURIComponent(id)}`)),
   analyzeEvent: async (id, onEvent) => readNdjson(await post(`/api/events/${encodeURIComponent(id)}/analyze`), onEvent),
   resolveReaction: async (card_id, reaction_id, accept) => {
     await json(await post("/api/cards/reactions", { card_id, reaction_id, accept }));
@@ -169,19 +175,19 @@ export const realApi: Api = {
   importSurvey: async (id, csv) => json(await post(`/api/events/${encodeURIComponent(id)}/import`, { csv })),
   venues: async (cardId, onEvent) => readNdjson(await post("/api/venues", { card_id: cardId }), onEvent),
   venueDraft: async (body) => json(await post("/api/venues/draft", body)),
-  people: async () => (await json<{ people: PersonRow[] }>(await fetch("/api/people"))).people,
-  person: async (id) => json(await fetch(`/api/people/${encodeURIComponent(id)}`)),
+  people: async () => (await json<{ people: PersonRow[] }>(await safeFetch("/api/people"))).people,
+  person: async (id) => json(await safeFetch(`/api/people/${encodeURIComponent(id)}`)),
   editPerson: async (id, patch) =>
     (
       await json<{ person: Person }>(
-        await fetch(`/api/people/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),
+        await safeFetch(`/api/people/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }),
       )
     ).person,
-  archive: async () => (await json<{ rows: ArchiveRow[] }>(await fetch("/api/archive"))).rows,
-  voices: async () => (await json<{ voices: SurveyVoice[] }>(await fetch("/api/voices"))).voices,
-  unassigned: async () => (await json<{ cards: UnassignedCard[] }>(await fetch("/api/unassigned-cards"))).cards,
+  archive: async () => (await json<{ rows: ArchiveRow[] }>(await safeFetch("/api/archive"))).rows,
+  voices: async () => (await json<{ voices: SurveyVoice[] }>(await safeFetch("/api/voices"))).voices,
+  unassigned: async () => (await json<{ cards: UnassignedCard[] }>(await safeFetch("/api/unassigned-cards"))).cards,
   assignUnassigned: async (card_id, employee_id) => json(await post("/api/unassigned-cards/assign", { card_id, employee_id })),
-  archiveDetail: async (kind, id) => json(await fetch(`/api/archive/${kind}/${encodeURIComponent(id)}`)),
+  archiveDetail: async (kind, id) => json(await safeFetch(`/api/archive/${kind}/${encodeURIComponent(id)}`)),
 };
 
 export function pickApi(): Api {

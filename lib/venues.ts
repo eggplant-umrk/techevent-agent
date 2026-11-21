@@ -26,6 +26,7 @@ import { busyForAgent, busynessFor, loadCalendarIfConfigured } from "./busyness"
 import { executeTool, toolDef } from "./tools";
 import { getPerson, INTENT_LABEL, ngHits } from "./people";
 import { chooseModels, runUsd, totalUsd } from "./usage";
+import { userErrorText } from "./userError";
 
 // ---------------------------------------------------------------------------
 // ツール
@@ -361,7 +362,7 @@ export async function findVenues(cardId: string, emit: (e: VenueEvent) => void):
       blog = r.ideas[0] ?? null;
       if (!blog) blogNote = "ブログ案を作れませんでした";
     } catch (e) {
-      blogNote = `ブログ案を作れませんでした（${e instanceof Error ? e.message : "不明なエラー"}）`;
+      blogNote = `ブログ案を作れませんでした（${userErrorText(e, { where: "出し先のブログ案" })}）`;
     }
   }
 

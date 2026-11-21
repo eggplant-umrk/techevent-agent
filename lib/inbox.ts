@@ -13,6 +13,7 @@ import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type In
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
+import { userErrorText } from "./userError";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
 const FILE = () => process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json");
@@ -367,7 +368,7 @@ export async function prepare(id: string, runner: Runner, extractor?: IntakeExtr
     update(id, (x) => ({
       ...x,
       status: "error",
-      error: err instanceof Error ? err.message : "候補を出せませんでした",
+      error: userErrorText(err, { where: "受信箱の候補づくり", retryLabel: "もう一度探す", fallback: "候補を出せませんでした" }),
       events,
       run_usd: runUsd,
       finished_at: nowJst(),
@@ -394,7 +395,7 @@ async function makePitch(id: string, request: SpeakingRequest, result: ProposalR
     const cost = usageOfRun(result.run_id) - before;
     update(id, (x) => ({
       ...x,
-      events: [...x.events, { type: "error", message: `代わりの人を推す理由を作れませんでした：${e instanceof Error ? e.message : String(e)}` }],
+      events: [...x.events, { type: "error", message: `代わりの人を推す理由を作れませんでした：${userErrorText(e, { where: "代わりの人を推す文" })}` }],
       run_usd: x.run_usd + cost,
       pitch_status: "error",
     }));

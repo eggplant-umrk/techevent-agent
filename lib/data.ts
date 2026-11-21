@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { dataFile } from "./dataSource";
+import { demoActivities, demoEmployee, demoPersonOn } from "./demoPerson";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -122,8 +123,15 @@ export interface UsageEntry {
   cost_usd: number;
 }
 
-export const employees = () => readJson<Employee[]>("employees.json");
-export const activities = () => readJson<Activity[]>("activities.json");
+// DEMO_PERSON=on のときだけ、開発者本人を31人目として足す（lib/demoPerson.ts）。既定は架空の30人だけ
+export const employees = () => {
+  const list = readJson<Employee[]>("employees.json");
+  return demoPersonOn() ? [...list, demoEmployee()] : list;
+};
+export const activities = () => {
+  const list = readJson<Activity[]>("activities.json");
+  return demoPersonOn() ? [...list, ...demoActivities()] : list;
+};
 export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");

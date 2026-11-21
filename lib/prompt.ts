@@ -61,11 +61,12 @@ const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです�
 ${PLAIN_TEXT_RULE}。idは evidence_activity_ids や card_id などの項目にだけ書き、文の中には書かない。`;
 
 export function buildSystemPrompt(): string {
-  const roster = employees()
+  const list = employees();
+  const roster = list
     .map(
       (e) =>
         `- ${e.id} ${e.name}｜${e.business_unit}｜${e.role}｜得意: ${e.expertise_tags.join("、")}｜登壇${e.past_talk_count}回｜最終登壇 ${e.last_talk_date ?? "なし"}｜${busyForAgent(busynessFor(e.id))}`,
     )
     .join("\n");
-  return `${INSTRUCTIONS}\n\n# 社員一覧（30人）\n${roster}`;
+  return `${INSTRUCTIONS}\n\n# 社員一覧（${list.length}人）\n${roster}`;
 }

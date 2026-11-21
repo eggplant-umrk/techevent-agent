@@ -10,6 +10,7 @@ import { TODAY, TRENDS } from "./config";
 import { activities, employees, published } from "./data";
 import { UPSERT_CARD_DEF } from "./tools";
 import { dataFile } from "./dataSource";
+import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
 import { PLAIN_TEXT_RULE } from "./plainText";
 import { chooseModels, recordUsage, runUsd, totalUsd } from "./usage";
 
@@ -20,11 +21,20 @@ const MAX_CALLS_PER_EMPLOYEE = 3;
 /** employee_id -> latest activity date already read into the notebook. */
 type NotebookState = Record<string, string>;
 
+function readState(file: string): NotebookState {
+  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as NotebookState) : {};
+}
 function loadState(): NotebookState {
-  if (!fs.existsSync(STATE_FILE())) return {};
-  return JSON.parse(fs.readFileSync(STATE_FILE(), "utf-8")) as NotebookState;
+  // DEMO_PERSON=on：本人の更新状態は data/sources/demo-person/ に分けてある
+  return { ...readState(STATE_FILE()), ...(demoPersonOn() ? readState(demoFile("notebook_state.json")) : {}) };
 }
 function saveState(s: NotebookState) {
+  if (demoPersonOn()) {
+    const { [DEMO_ID]: mine, ...rest } = s;
+    writeIfChanged(demoFile("notebook_state.json"), mine ? { [DEMO_ID]: mine } : {});
+    writeIfChanged(STATE_FILE(), rest);
+    return;
+  }
   fs.writeFileSync(STATE_FILE(), JSON.stringify(s, null, 2) + "\n", "utf-8");
 }
 

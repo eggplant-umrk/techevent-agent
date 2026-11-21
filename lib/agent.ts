@@ -1,7 +1,7 @@
 // The agent loop: Claude API tool use, up to MAX_STEPS model calls.
 import Anthropic from "@anthropic-ai/sdk";
 import { busynessFor, busyText, loadCalendarIfConfigured } from "./busyness";
-import { talkTag, type TalkTag } from "./talkTag";
+import { talkTag, withoutTalkTagRepeats, type TalkTag } from "./talkTag";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
 import { MAX_CANDIDATES, MAX_STEPS } from "./config";
@@ -267,7 +267,8 @@ function buildResult(runId: string, request: SpeakingRequest, input: SubmitInput
     candidates: input.candidates.map((c, i) => {
       const e = employeeById(c.employee_id)!;
       const sys = systemCautions(c.employee_id, request.event?.date);
-      const cautions = [...c.cautions];
+      // 登壇経験の印（talk_tag）と同じことだけを言っている注意点は、表示の前に除く（印が理由の近くに出るため）
+      const cautions = withoutTalkTagRepeats(c.cautions);
       for (const s of sys) if (!cautions.some((x) => x.includes(s.slice(0, 4)))) cautions.push(s);
       return {
         rank: i + 1,

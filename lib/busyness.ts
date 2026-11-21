@@ -4,7 +4,7 @@
 //
 // 予定の出どころ
 //   - 架空データ（既定）：data/calendar.json（時間単位の予定）＋ data/schedules.json（出張・休暇などの終日の予定）
-//   - DATA_SOURCE=github（本人）：CALENDAR_ICS_URL があればその iCal、なければ「予定は不明」（推測の数字は入れない）
+//   - DATA_SOURCE=github（本人）・DEMO_PERSON=on の31人目（本人）：CALENDAR_ICS_URL があればその iCal、なければ「予定は不明」（推測の数字は入れない）
 //
 // 画面からは busynessFor(id) と busyText(b) を呼ぶ。iCal を使うときは、先に loadCalendarIfConfigured() を await する。
 import fs from "node:fs";
@@ -12,6 +12,7 @@ import { TODAY } from "./config";
 import { dataFile, dataSource } from "./dataSource";
 import { schedules } from "./data";
 import { parseIcs, type BusySlot } from "./ics";
+import { demoPersonOn, isDemoPerson } from "./demoPerson";
 
 export type { BusySlot } from "./ics";
 
@@ -178,7 +179,7 @@ let icsCache: { at: number; slots: BusySlot[] | null } | null = null;
 /** iCal の設定があるときだけ読み込む（10分は読み直さない）。失敗したら「予定は不明」になる。 */
 export async function loadCalendarIfConfigured(): Promise<void> {
   const url = process.env.CALENDAR_ICS_URL?.trim();
-  if (!url || dataSource() !== "github") return;
+  if (!url || (dataSource() !== "github" && !demoPersonOn())) return;
   if (icsCache && Date.now() - icsCache.at < ICS_TTL_MS) return;
   try {
     const res = await fetch(url, { headers: { Accept: "text/calendar" } });
@@ -198,8 +199,13 @@ export async function loadCalendarIfConfigured(): Promise<void> {
 }
 
 /** 予定の一覧。分からなければ null。 */
+/** 予定を iCal から読む人か（DATA_SOURCE=github の本人、または DEMO_PERSON=on の31人目） */
+export function usesIcs(employeeId: string): boolean {
+  return dataSource() === "github" || isDemoPerson(employeeId);
+}
+
 export function slotsFor(employeeId: string): BusySlot[] | null {
-  if (dataSource() === "github") {
+  if (usesIcs(employeeId)) {
     // 本人の予定は iCal だけ（架空の schedules・calendar は使わない）
     return process.env.CALENDAR_ICS_URL?.trim() && icsCache?.slots
       ? icsCache.slots

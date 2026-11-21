@@ -1,7 +1,6 @@
 // Agent tools over data/*.json. Results are kept short (top 10, 200-char bodies).
 import type Anthropic from "@anthropic-ai/sdk";
-import { busyForAgent, busynessFor, slotsFor } from "./busyness";
-import { dataSource } from "./dataSource";
+import { busyForAgent, busynessFor, slotsFor, usesIcs } from "./busyness";
 import { activities, employeeById, employees, events, published, schedules } from "./data";
 import { BODY_CHARS, SEARCH_LIMIT } from "./config";
 import { filterCards, getCardById, loadCards, outreachSummary, type CardFilter } from "./cards";
@@ -321,7 +320,7 @@ export function checkSchedule(input: Input) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "date は YYYY-MM-DD で指定してください" };
   const slots = slotsFor(id);
   if (!slots) return { id, date, conflict: false, nearby: [], note: "予定は不明（カレンダーにつながっていない）。本人への確認が必要" };
-  if (dataSource() === "github") {
+  if (usesIcs(id)) {
     // 本人の予定は iCal だけ。終日の予定（出張・休暇など）を、架空データの schedules と同じ扱いにする
     const near = slots
       .filter((s) => s.all_day && s.start <= addDays(date, 4) && s.end > addDays(date, -3))

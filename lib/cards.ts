@@ -5,6 +5,7 @@ import fs from "node:fs";
 import { activities, employeeById, employees, published, requests } from "./data";
 import { internalTermProblems } from "./plainText";
 import { dataFile } from "./dataSource";
+import { DEMO_ID, demoFile, demoPersonOn, writeIfChanged } from "./demoPerson";
 
 // Follows DATA_SOURCE (lib/dataSource.ts). Resolved on each use so .env loaded after import still applies.
 const FILE = () => dataFile("cards.json");
@@ -74,21 +75,37 @@ export interface Reaction {
   added_at: string;
 }
 
+function readCardFile(file: string): Card[] {
+  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as Card[]) : [];
+}
+
 export function loadCards(): Card[] {
-  if (!fs.existsSync(FILE())) return [];
-  const raw = JSON.parse(fs.readFileSync(FILE(), "utf-8")) as Card[];
-  // Cards written before these fields existed.
-  return raw.map((c) => ({
+  // DEMO_PERSON=on：本人のカードは data/sources/demo-person/cards.json にあり、架空の30人のカードの後ろに足す
+  const raw = [...readCardFile(FILE()), ...(demoPersonOn() ? readCardFile(demoFile("cards.json")) : [])];
+  return raw.map(withDefaults);
+}
+
+/** Cards written before these fields existed. */
+function withDefaults(c: Card): Card {
+  return {
     ...c,
     announcement_activity_ids: c.announcement_activity_ids ?? [],
     evidence_request_ids: c.evidence_request_ids ?? [],
     pending_themes: c.pending_themes ?? [],
     edited_fields: c.edited_fields ?? [],
     reactions: c.reactions ?? [],
-  }));
+  };
 }
 
 function saveCards(cards: Card[]) {
+  if (demoPersonOn()) {
+    // 本人のカードは別のファイルへ。架空の30人のファイルは、カードの中身が変わったときだけ書く
+    // （読み込み時に補った空の項目だけの違いでは書かない）
+    writeIfChanged(demoFile("cards.json"), cards.filter((c) => c.employee_id === DEMO_ID));
+    const base = cards.filter((c) => c.employee_id !== DEMO_ID);
+    if (JSON.stringify(base) !== JSON.stringify(readCardFile(FILE()).map(withDefaults))) writeIfChanged(FILE(), base);
+    return;
+  }
   fs.writeFileSync(FILE(), JSON.stringify(cards, null, 2) + "\n", "utf-8");
 }
 

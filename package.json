@@ -13,6 +13,8 @@
     "test:inbox": "tsx scripts/test_inbox.ts",
     "test:surveys": "tsx scripts/test_surveys.ts",
     "test:busyness": "tsx scripts/test_busyness.ts",
+    "test:talktag": "tsx scripts/test_talktag.ts",
+    "test:demo": "tsx scripts/test_demo_person.ts",
     "slack": "tsx scripts/slack-bot.ts",
     "slack:mock-inbox": "tsx scripts/slack/mock-inbox.ts",
     "slack:dry-run": "tsx scripts/slack/dry-run.ts",

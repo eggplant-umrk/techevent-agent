@@ -15,6 +15,7 @@ try {
 }
 // アンケートは架空データのイベントだけ。.env に DATA_SOURCE があっても切り替えない（結合テストと同じ）
 delete process.env.DATA_SOURCE;
+delete process.env.DEMO_PERSON; // デモ用の31人目（本人）も入れない
 
 import { events } from "../lib/data";
 import { surveys } from "../lib/surveyCsv";

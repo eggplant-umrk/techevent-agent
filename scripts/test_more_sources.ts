@@ -1,5 +1,6 @@
 // ブログと Slack の一部を材料に足す部分のテスト（APIは使わない・Slack に接続しない・data/ に書き込まない）。
 //   npm run test:sources
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import { fakeSlack, useTempFiles } from "./slack/sources-dry-run";
@@ -49,8 +50,9 @@ async function main() {
     const found = executeTool("search_cards", { query: "ゼロトラスト アカウント 権限" }).result as { results: Array<{ card_id: string; blog_to_lt?: string }> };
     check("search_cards で印が Agent に渡る", found.results.some((r) => r.card_id === out.card!.card_id && !!r.blog_to_lt));
     check("get_card でも印が渡る", !!(executeTool("get_card", { card_id: out.card!.card_id }).result as { blog_to_lt?: string }).blog_to_lt);
-    fs.writeFileSync(CARDS, original); // 戻す
-    check("カードのファイルは元に戻した", loadCards().every((c) => c.card_id !== out.card!.card_id));
+    check("保存しても元のデータ（data/cards.json）は変わらない（実行時のデータにだけ入る）", fs.readFileSync(CARDS).equals(original));
+    fs.rmSync(path.join(process.env.DATA_RUNTIME_DIR!, "cards.json"), { force: true }); // 実行時のデータを片付ける
+    check("実行時のデータを片付けると、元のカードだけに戻る", loadCards().every((c) => c.card_id !== out.card!.card_id));
 
     process.env.MORE_SOURCES = "off";
     check("MORE_SOURCES=off なら入れない（評価は今までどおりの材料）", activities().every((a) => a.type !== "blog" && a.type !== "slack"));

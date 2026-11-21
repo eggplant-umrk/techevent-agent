@@ -5,6 +5,7 @@
 //     登壇者の記録（内部）に運営・会場・設備のことと全体の満足度を入れない／画面用の窓口（イベント単位の集計）に登壇者ごとの評価が出ない
 // - APIを使う判定：本番のアンケート分析の結果 → 書き戻し（提案は採用した状態にする）→ 次の提案が変わる（APIは書き戻し後の提案1回だけ）
 // data/cards.json は判定のたびにバイトごと元に戻す。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import type { ProposalResult } from "../lib/agent";

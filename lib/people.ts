@@ -1,6 +1,7 @@
 // 人の情報（ネタ帳タブの「人」）。社員データ（employees.json）に、技術広報が画面で直した内容を重ねる。
 // 直した項目は「人が確認済み」になり、Agent やほかの自動処理は上書きしない（applyAutoPersonUpdate を通す）。
 import fs from "node:fs";
+import { runtimeFile } from "./runtime";
 import { blogsOf, type BlogItem } from "./blogView";
 import path from "node:path";
 import { activities, employeeById, employees, published, type Employee } from "./data";
@@ -8,7 +9,8 @@ import { loadCards } from "./cards";
 import { talkTag, type TalkTag } from "./talkTag";
 import { isDemoPerson } from "./demoPerson";
 
-const FILE = () => process.env.PEOPLE_FILE || path.join(process.cwd(), "data", "people.json");
+// 人の情報を直した結果は実行時のデータ（data/runtime/people.json、git の対象外）。元のデータ（employees.json）は書かない
+const FILE = () => process.env.PEOPLE_FILE || runtimeFile("people.json");
 
 /** 登壇の意向。unknown は「未確認」 */
 export type SpeakingIntent = "available" | "hold" | "unknown";
@@ -37,6 +39,7 @@ function load(): Record<string, PersonOverride> {
 }
 
 function save(all: Record<string, PersonOverride>) {
+  fs.mkdirSync(path.dirname(FILE()), { recursive: true });
   fs.writeFileSync(/*turbopackIgnore: true*/ FILE(), JSON.stringify(all, null, 2) + "\n", "utf-8");
 }
 

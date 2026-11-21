@@ -2,6 +2,7 @@
 //   npm run test:tabs
 // 人の情報（直す・確認済み・Agent は上書きしない・意向とNGのテーマの判定）と、アーカイブ（開催日が過ぎたかの判定）。
 // data/people.json には触らない（一時ファイルに書く）。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

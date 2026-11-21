@@ -2,6 +2,7 @@
 // published items and creates / updates cards with upsert_card. The system prompt
 // (instructions + roster + published list) is identical across employees, so it is cached.
 import Anthropic from "@anthropic-ai/sdk";
+import { readOverlay, writeOverlay } from "./runtime";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { getClient } from "./anthropic";
@@ -22,21 +23,13 @@ const MAX_CALLS_PER_EMPLOYEE = 3;
 /** employee_id -> latest activity date already read into the notebook. */
 type NotebookState = Record<string, string>;
 
-function readState(file: string): NotebookState {
-  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as NotebookState) : {};
-}
+// 元のデータ（data/notebook_state.json と、DEMO_PERSON=on なら本人の分）は読むだけ。更新は data/runtime/ に重ねる（lib/runtime.ts）
+const stateBases = () => [STATE_FILE(), ...(demoPersonOn() ? [demoFile("notebook_state.json")] : [])];
 function loadState(): NotebookState {
-  // DEMO_PERSON=on：本人の更新状態は data/sources/demo-person/ に分けてある
-  return { ...readState(STATE_FILE()), ...(demoPersonOn() ? readState(demoFile("notebook_state.json")) : {}) };
+  return readOverlay<string>(stateBases(), "notebook_state.json");
 }
 function saveState(s: NotebookState) {
-  if (demoPersonOn()) {
-    const { [DEMO_ID]: mine, ...rest } = s;
-    writeIfChanged(demoFile("notebook_state.json"), mine ? { [DEMO_ID]: mine } : {});
-    writeIfChanged(STATE_FILE(), rest);
-    return;
-  }
-  fs.writeFileSync(STATE_FILE(), JSON.stringify(s, null, 2) + "\n", "utf-8");
+  writeOverlay(stateBases(), "notebook_state.json", { ...loadState(), ...s });
 }
 
 export type NotebookEvent =

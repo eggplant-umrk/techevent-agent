@@ -6,6 +6,7 @@
 // - 流す前の金額の見積もり（上限は .env の NOTEBOOK_BUDGET_USD、なければ $1）
 // - 保存の前の重複カードの検査（同じ人の同じ取り組み）
 import fs from "node:fs";
+import { readOverlay, writeOverlay } from "./runtime";
 import type { Card, CardInput } from "./cards";
 import type { Activity } from "./data";
 import { dataFile } from "./dataSource";
@@ -149,18 +150,18 @@ export interface Progress {
 }
 type ProgressFile = Record<string, Progress>;
 
-const progressFile = (employeeId: string) =>
-  demoPersonOn() && employeeId === DEMO_ID ? demoFile("notebook_progress.json") : dataFile("notebook_progress.json");
+// 元のデータ（data/notebook_progress.json と、DEMO_PERSON=on なら本人の分）は読むだけ。更新は data/runtime/ に重ねる（lib/runtime.ts）
+const progressBases = () => [dataFile("notebook_progress.json"), ...(demoPersonOn() ? [demoFile("notebook_progress.json")] : [])];
 
-function readProgress(file: string): ProgressFile {
-  return fs.existsSync(file) ? (JSON.parse(fs.readFileSync(file, "utf-8")) as ProgressFile) : {};
+function readProgressAll(): ProgressFile {
+  return readOverlay<Progress>(progressBases(), "notebook_progress.json");
 }
 
 const LEGACY_TYPES = new Set<string>(["slack_post", "github_pr", "design_doc", "weekly_report"]);
 
 /** 読んだ活動の id。記録がなければ、今までの notebook_state（日付）までを読んだものとして引き継ぐ */
 export function processedIds(employeeId: string, acts: Activity[], legacyDate: string | undefined): Set<string> {
-  const p = readProgress(progressFile(employeeId))[employeeId];
+  const p = readProgressAll()[employeeId];
   if (p) return new Set(p.processed);
   // 引き継ぐのは、日付の記録をつけていたころからある種類の活動だけ。あとから足した材料（ブログなど）は、
   // 日付が古くても読んでいないので新しい活動として扱う
@@ -168,10 +169,9 @@ export function processedIds(employeeId: string, acts: Activity[], legacyDate: s
 }
 
 export function saveProgress(employeeId: string, processed: Set<string>, last: Progress["last"]) {
-  const file = progressFile(employeeId);
-  const all = readProgress(file);
+  const all = readProgressAll();
   all[employeeId] = { processed: [...processed].sort(), updated_at: new Date().toISOString(), last };
-  fs.writeFileSync(file, JSON.stringify(all, null, 2) + "\n", "utf-8");
+  writeOverlay(progressBases(), "notebook_progress.json", all);
 }
 
 /** 1人分の前処理：新しい活動 → コードで落とす → 上限で切る */

@@ -1,6 +1,7 @@
 // カード → 出し先 のテスト（APIを使わない）。
 //   npm run test:venues
 // 外部イベントの検索、締切の判定、必ず付ける注意点、提出の検証（コード）を確かめる。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import { getCardById } from "../lib/cards";
 import { isClosed, requiredCautions, searchExternalEvents, externalEventById, type ExternalEvent } from "../lib/externalEvents";
 import { validateVenues, type VenueSubmit } from "../lib/venues";

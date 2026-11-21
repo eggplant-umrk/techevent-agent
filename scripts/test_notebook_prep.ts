@@ -2,6 +2,7 @@
 //   npm run test:notebook
 // 見るもの：コードで落とす（共通・GitHub）／件数と文字数の上限と次回送り／前回より新しい活動だけ（今までの日付の記録からの引き継ぎ）／
 //           金額の見積もりと、上限を超えたら API を呼ばずに止まること／保存の前の重複カードの検査
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import path from "node:path";
 import type { Activity } from "../lib/data";

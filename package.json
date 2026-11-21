@@ -13,6 +13,8 @@
     "test:inbox": "tsx scripts/test_inbox.ts",
     "test:pitch": "tsx scripts/test_pitch_later.ts",
     "test:release": "tsx scripts/test_release_notes.ts",
+    "test:runtime": "tsx scripts/test_runtime.ts",
+    "reset:demo": "tsx scripts/reset_demo.ts",
     "test:sources": "tsx scripts/test_more_sources.ts",
     "slack:sources": "tsx scripts/slack-bot.ts --read-sources",
     "slack:sources:dry-run": "tsx scripts/slack/sources-dry-run.ts",

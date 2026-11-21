@@ -4,6 +4,7 @@
 // - 受信箱の流れ（読み取り → 既存の依頼の形 → 未定を注意点に）も、偽の runner で通す
 // - 主催者への返事の検査（lib/organizerReply.ts）
 // data/inbox.json には触らない（一時ファイルに書く）。
+import "./_isolate"; // 元のデータだけで動かす（実行時のデータ data/runtime/ は読まない・書かない）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

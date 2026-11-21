@@ -1,0 +1,586 @@
+[
+  {
+    "id": "pub001",
+    "title": "SaaSのマルチテナント設計 ─ layerx.go #12",
+    "url": "https://example.com/published/pub001",
+    "tags": [
+      "アーキテクチャ",
+      "SaaS"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2025-02-03T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "マルチテナントSaaSを設計するエンジニア",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub002",
+    "title": "EMになって1年で変えたこと",
+    "url": "https://example.com/published/pub002",
+    "tags": [
+      "チームビルディング"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2025-02-10T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "新任のEM",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub003",
+    "title": "E2Eテストを育てる",
+    "url": "https://example.com/published/pub003",
+    "tags": [
+      "E2Eテスト",
+      "テスト自動化"
+    ],
+    "author_id": "e005",
+    "business_unit": "バクラク",
+    "published_at": "2025-02-21T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "E2Eテストを始めたい人",
+    "team": "バクラク QAチーム"
+  },
+  {
+    "id": "pub004",
+    "title": "AIエージェント設計入門",
+    "url": "https://example.com/published/pub004",
+    "tags": [
+      "AIエージェント",
+      "LLM"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2025-03-17T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "AIエージェントを作り始めた人",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub005",
+    "title": "技術選定の判断記録を残す文化",
+    "url": "https://example.com/published/pub005",
+    "tags": [
+      "技術戦略",
+      "組織づくり"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2025-04-21T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "技術選定に関わるリードエンジニア",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub006",
+    "title": "金融システムをGoで書く",
+    "url": "https://example.com/published/pub006",
+    "tags": [
+      "Go",
+      "金融システム"
+    ],
+    "author_id": "e004",
+    "business_unit": "Fintech",
+    "published_at": "2025-04-22T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "金融系のバックエンドエンジニア",
+    "team": "Fintech 勘定系チーム"
+  },
+  {
+    "id": "pub007",
+    "title": "Goで書くバッチ処理の設計",
+    "url": "https://example.com/published/pub007",
+    "tags": [
+      "Go"
+    ],
+    "author_id": "e004",
+    "business_unit": "Fintech",
+    "published_at": "2025-05-26T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "バッチ処理を設計する人",
+    "team": "Fintech 勘定系チーム"
+  },
+  {
+    "id": "pub008",
+    "title": "Kubernetesの可観測性入門",
+    "url": "https://example.com/published/pub008",
+    "tags": [
+      "Kubernetes",
+      "可観測性"
+    ],
+    "author_id": "e009",
+    "business_unit": "Fintech",
+    "published_at": "2025-05-26T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "SRE",
+    "team": "Fintech SREチーム"
+  },
+  {
+    "id": "pub009",
+    "title": "RAGの現場でハマったこと",
+    "url": "https://example.com/published/pub009",
+    "tags": [
+      "RAG",
+      "LLM"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2025-06-13T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "RAGを本番に入れたい人",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub010",
+    "title": "CTO室が考える、これからのLayerXの技術",
+    "url": "https://example.com/published/pub010",
+    "tags": [
+      "技術戦略"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2025-06-30T10:00:00+09:00",
+    "genre": "インタビュー記事",
+    "target_reader": "LayerXに興味がある候補者",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub011",
+    "title": "SaaS開発組織のスピードを保つ仕組み",
+    "url": "https://example.com/published/pub011",
+    "tags": [
+      "プロダクト開発プロセス"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2025-07-07T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "開発組織のリーダー",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub012",
+    "title": "デザインシステムを育てる",
+    "url": "https://example.com/published/pub012",
+    "tags": [
+      "デザインシステム",
+      "Figma"
+    ],
+    "author_id": "e008",
+    "business_unit": "バクラク",
+    "published_at": "2025-07-07T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "プロダクトデザイナー",
+    "team": "バクラク デザインチーム"
+  },
+  {
+    "id": "pub013",
+    "title": "テスト自動化の投資対効果",
+    "url": "https://example.com/published/pub013",
+    "tags": [
+      "テスト自動化",
+      "品質保証"
+    ],
+    "author_id": "e005",
+    "business_unit": "バクラク",
+    "published_at": "2025-08-01T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "QAエンジニア・EM",
+    "team": "バクラク QAチーム"
+  },
+  {
+    "id": "pub014",
+    "title": "夏のアーキテクチャ祭り 基調講演",
+    "url": "https://example.com/published/pub014",
+    "tags": [
+      "アーキテクチャ"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2025-09-01T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "アーキテクチャに関心のあるエンジニア",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub015",
+    "title": "AIエージェントの評価をどうするか（入門編）",
+    "url": "https://example.com/published/pub015",
+    "tags": [
+      "AIエージェント",
+      "LLM評価"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2025-09-22T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "LLMアプリの品質に悩む人",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub016",
+    "title": "AIエージェントのプロダクトマネジメント",
+    "url": "https://example.com/published/pub016",
+    "tags": [
+      "プロダクトマネジメント",
+      "AIエージェント"
+    ],
+    "author_id": "e006",
+    "business_unit": "Ai Workforce",
+    "published_at": "2025-09-22T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "AIプロダクトのPM",
+    "team": "Ai Workforce プロダクトチーム"
+  },
+  {
+    "id": "pub017",
+    "title": "プロダクト開発の速さを支える型",
+    "url": "https://example.com/published/pub017",
+    "tags": [
+      "TypeScript",
+      "プロダクト開発プロセス"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2025-10-20T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "TypeScriptで開発するチーム",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub018",
+    "title": "金融×クラウドの分散トランザクション",
+    "url": "https://example.com/published/pub018",
+    "tags": [
+      "分散トランザクション",
+      "金融システム"
+    ],
+    "author_id": "e004",
+    "business_unit": "Fintech",
+    "published_at": "2025-12-01T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "金融×クラウドのエンジニア",
+    "team": "Fintech 勘定系チーム"
+  },
+  {
+    "id": "pub019",
+    "title": "金融サービスのクラウドセキュリティ",
+    "url": "https://example.com/published/pub019",
+    "tags": [
+      "クラウドセキュリティ",
+      "AWS"
+    ],
+    "author_id": "e007",
+    "business_unit": "セキュリティ",
+    "published_at": "2025-12-01T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "金融系のセキュリティ担当",
+    "team": "セキュリティ プラットフォームチーム"
+  },
+  {
+    "id": "pub020",
+    "title": "LLMをプロダクトに入れるときの設計判断",
+    "url": "https://example.com/published/pub020",
+    "tags": [
+      "LLM",
+      "アーキテクチャ"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2026-01-26T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "LLM機能を作るエンジニア",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub021",
+    "title": "社内のLLM基盤を1年運用して",
+    "url": "https://example.com/published/pub021",
+    "tags": [
+      "LLM",
+      "Python"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2026-01-27T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "LLM基盤の運用者",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub022",
+    "title": "AI時代のQAの役割",
+    "url": "https://example.com/published/pub022",
+    "tags": [
+      "品質保証"
+    ],
+    "author_id": "e005",
+    "business_unit": "バクラク",
+    "published_at": "2026-02-26T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "QAエンジニア",
+    "team": "バクラク QAチーム"
+  },
+  {
+    "id": "pub023",
+    "title": "QA Night #7 開催レポート",
+    "url": "https://example.com/published/pub023",
+    "tags": [
+      "品質保証"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2026-02-27T10:00:00+09:00",
+    "genre": "イベントレポート",
+    "target_reader": "QAとの協業に関心のある開発者",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub024",
+    "title": "Docs as Codeで社内ドキュメントを整える",
+    "url": "https://example.com/published/pub024",
+    "tags": [
+      "技術ドキュメント",
+      "Docs as Code"
+    ],
+    "author_id": "e030",
+    "business_unit": "CTO室",
+    "published_at": "2026-03-09T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "ドキュメント整備に悩む人",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub025",
+    "title": "マルチエージェントの協調パターン",
+    "url": "https://example.com/published/pub025",
+    "tags": [
+      "AIエージェント"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2026-03-20T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "AIエージェントを作るエンジニア",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub026",
+    "title": "マルチエージェント設計の勘所",
+    "url": "https://example.com/published/pub026",
+    "tags": [
+      "AIエージェント",
+      "LLM"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2026-03-23T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "AIエージェントを作るエンジニア",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub027",
+    "title": "PMから見たAI Workforce",
+    "url": "https://example.com/published/pub027",
+    "tags": [
+      "プロダクトマネジメント"
+    ],
+    "author_id": "e006",
+    "business_unit": "Ai Workforce",
+    "published_at": "2026-04-15T10:00:00+09:00",
+    "genre": "インタビュー記事",
+    "target_reader": "LayerXに興味がある候補者",
+    "team": "Ai Workforce プロダクトチーム"
+  },
+  {
+    "id": "pub028",
+    "title": "生成AIプロダクト開発の現実",
+    "url": "https://example.com/published/pub028",
+    "tags": [
+      "LLM"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2026-05-18T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "生成AIプロダクトの開発者",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub029",
+    "title": "経費精算のユーザーリサーチで見えたこと",
+    "url": "https://example.com/published/pub029",
+    "tags": [
+      "ユーザーリサーチ"
+    ],
+    "author_id": "e028",
+    "business_unit": "バクラク",
+    "published_at": "2026-06-02T10:00:00+09:00",
+    "genre": "インタビュー記事",
+    "target_reader": "SaaSのPM",
+    "team": "バクラク 経費精算チーム"
+  },
+  {
+    "id": "pub030",
+    "title": "型とテストで守る請求書ドメイン",
+    "url": "https://example.com/published/pub030",
+    "tags": [
+      "TypeScript",
+      "テスト自動化"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2026-06-26T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "業務SaaSの開発者",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub031",
+    "title": "社内ID基盤をゼロトラストに寄せた話",
+    "url": "https://example.com/published/pub031",
+    "tags": [
+      "ID管理",
+      "ゼロトラスト"
+    ],
+    "author_id": "e025",
+    "business_unit": "セキュリティ",
+    "published_at": "2026-07-14T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "情シス・セキュリティ担当",
+    "team": "セキュリティ IDチーム"
+  },
+  {
+    "id": "pub032",
+    "title": "バクラクの開発組織が大事にしていること",
+    "url": "https://example.com/published/pub032",
+    "tags": [
+      "チームビルディング"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2026-07-20T10:00:00+09:00",
+    "genre": "インタビュー記事",
+    "target_reader": "LayerXに興味がある候補者",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub033",
+    "title": "残高計算の整合性をどう守るか",
+    "url": "https://example.com/published/pub033",
+    "tags": [
+      "金融システム",
+      "Go"
+    ],
+    "author_id": "e004",
+    "business_unit": "Fintech",
+    "published_at": "2026-08-10T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "金融系のバックエンドエンジニア",
+    "team": "Fintech 勘定系チーム"
+  },
+  {
+    "id": "pub034",
+    "title": "AIエージェントの本番運用とガードレール",
+    "url": "https://example.com/published/pub034",
+    "tags": [
+      "AIエージェント",
+      "LLM"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2026-09-12T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "AIエージェントを本番で動かす人",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub035",
+    "title": "テスト自動化の投資対効果 2026",
+    "url": "https://example.com/published/pub035",
+    "tags": [
+      "テスト自動化"
+    ],
+    "author_id": "e005",
+    "business_unit": "バクラク",
+    "published_at": "2026-09-28T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "QAエンジニア・EM",
+    "team": "バクラク QAチーム"
+  },
+  {
+    "id": "pub036",
+    "title": "LLMプロダクトのアーキテクチャ選定",
+    "url": "https://example.com/published/pub036",
+    "tags": [
+      "LLM",
+      "アーキテクチャ"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2026-09-30T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "LLMプロダクトの技術選定をする人",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub037",
+    "title": "AIエージェントの今を語る",
+    "url": "https://example.com/published/pub037",
+    "tags": [
+      "AIエージェント"
+    ],
+    "author_id": "e003",
+    "business_unit": "Ai Workforce",
+    "published_at": "2026-10-05T10:00:00+09:00",
+    "genre": "Podcast",
+    "target_reader": "AIエージェントの動向を追う人",
+    "team": "Ai Workforce エージェント基盤チーム"
+  },
+  {
+    "id": "pub038",
+    "title": "開発プロセスを週次で見直す",
+    "url": "https://example.com/published/pub038",
+    "tags": [
+      "プロダクト開発プロセス"
+    ],
+    "author_id": "e002",
+    "business_unit": "バクラク",
+    "published_at": "2026-10-10T10:00:00+09:00",
+    "genre": "メンバーのブログ",
+    "target_reader": "チームの改善を回したい人",
+    "team": "バクラク 請求書チーム"
+  },
+  {
+    "id": "pub039",
+    "title": "金融とSaaSのあいだ ─ layerx.go #17",
+    "url": "https://example.com/published/pub039",
+    "tags": [
+      "アーキテクチャ",
+      "金融システム"
+    ],
+    "author_id": "e001",
+    "business_unit": "CTO室",
+    "published_at": "2026-11-02T10:00:00+09:00",
+    "genre": "登壇資料",
+    "target_reader": "SaaSと金融の両方に関心のあるエンジニア",
+    "team": "CTO室"
+  },
+  {
+    "id": "pub040",
+    "title": "layerx.go #17 アーカイブ公開",
+    "url": "https://example.com/published/pub040",
+    "tags": [
+      "金融システム"
+    ],
+    "author_id": "e004",
+    "business_unit": "Fintech",
+    "published_at": "2026-11-04T10:00:00+09:00",
+    "genre": "イベントレポート",
+    "target_reader": "イベントに参加できなかった人",
+    "team": "Fintech 勘定系チーム"
+  }
+]

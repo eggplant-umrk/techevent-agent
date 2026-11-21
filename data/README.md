@@ -11,6 +11,12 @@
 | [events.json](events.json) | 20件 | 過去の社外向けイベント |
 | [requests.json](requests.json) | 5件 | 社外から来た登壇の依頼 |
 | [application_rules.json](application_rules.json) | 13ルール | イベント開催時に必要な申請 |
+| [published.json](published.json) | 40件 | 発信済みの記録（「直近の発信」DBのダミー） |
+| [schedules.json](schedules.json) | 14件 | 社員の既知の予定（出張・登壇・リリース対応など） |
+| [learnings.json](learnings.json) | 0件〜 | Agentの学び。画面で結果を記録すると追記される |
+| `usage.json` | — | APIの使用量と金額の記録。アプリが作る。gitには入れない |
+
+`employees.json`〜`application_rules.json`、`published.json`、`schedules.json` は [scripts/gen_data.py](../scripts/gen_data.py) で作り直せます（`python scripts/gen_data.py`）。検証は `python scripts/validate_data.py` です。
 
 日付はすべて `YYYY-MM-DD` 形式です。データの基準日（「今日」）は **2026-11-21** としています。
 
@@ -110,6 +116,28 @@
 | `blocking` | `true` なら申請ではなく開催不可（年末年始の閉館） |
 
 主なルール：金曜×自社会場はゴミ回収申請、6〜9月×自社会場は空調延長申請、51人以上は警備会社への連絡、101人以上×自社会場は消防署への届出。自社イベントスペースの定員（120人）は `internal_venue` にあります。
+
+## published.json
+
+実物の「直近の発信」DBの項目に合わせています。`e001`〜`e005` で40件中32件（80%）です。
+
+| フィールド | 説明 |
+| --- | --- |
+| `id` / `title` / `url` | ID・タイトル・URL（すべて `example.com`） |
+| `tags` | タグ |
+| `author_id` | Author（`employees.json` の `id`） |
+| `business_unit` / `team` | 所属事業部・所属チーム |
+| `published_at` | 公開日時（ISO 8601、JST） |
+| `genre` | 発信ジャンル（メンバーのブログ／インタビュー記事／登壇資料／イベントレポート／Podcast） |
+| `target_reader` | こういう方に読んでもらいたい |
+
+## schedules.json
+
+`check_schedule` が見る予定です。`employee_id`・`from`・`to`（両端を含む）・`kind`・`note`。
+
+## learnings.json
+
+画面の「結果の記録」で追記されます。`request_id`・`employee_id`・`result`（`accepted` / `declined`）・`reason`（`theme_mismatch` / `busy` / `schedule_conflict` / `other`）・`note`・`event_date`・`recorded_at`。
 
 ---
 

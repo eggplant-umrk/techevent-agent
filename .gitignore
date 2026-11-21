@@ -65,3 +65,6 @@ pip-wheel-metadata/
 .coverage.*
 htmlcov/
 .ipynb_checkpoints/
+
+# ===== App runtime data =====
+data/usage.json

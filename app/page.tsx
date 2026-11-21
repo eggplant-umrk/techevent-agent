@@ -299,7 +299,13 @@ function CardView({
                 </button>
               </>
             )}
-            <span className="muted small">更新 {card.updated_at.slice(0, 10)}</span>
+            <span className="muted small">
+              更新 {card.updated_at.slice(0, 10)}
+              {card.edited_fields.length > 0 &&
+                `・人が直した項目：${card.edited_fields
+                  .map((f) => ({ summary: "要約", themes: "テーマ案", format: "形", format_reason: "形の理由", evidence: "根拠" })[f] ?? f)
+                  .join("、")}`}
+            </span>
           </div>
         </div>
       )}

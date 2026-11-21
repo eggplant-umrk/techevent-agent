@@ -39,6 +39,8 @@ export interface Card {
   /** true once 技術広報 edited the card in the UI. Proposals prefer reviewed cards; the agent never overwrites their text. */
   reviewed: boolean;
   reviewed_at: string | null;
+  /** Which fields 技術広報 changed by hand (summary / themes / format / format_reason / evidence). */
+  edited_fields: string[];
   created_at: string;
   updated_at: string;
 }
@@ -47,7 +49,12 @@ export function loadCards(): Card[] {
   if (!fs.existsSync(FILE)) return [];
   const raw = JSON.parse(fs.readFileSync(FILE, "utf-8")) as Card[];
   // Cards written before these fields existed.
-  return raw.map((c) => ({ ...c, announcement_activity_ids: c.announcement_activity_ids ?? [], pending_themes: c.pending_themes ?? [] }));
+  return raw.map((c) => ({
+    ...c,
+    announcement_activity_ids: c.announcement_activity_ids ?? [],
+    pending_themes: c.pending_themes ?? [],
+    edited_fields: c.edited_fields ?? [],
+  }));
 }
 
 function saveCards(cards: Card[]) {
@@ -180,6 +187,7 @@ export function upsertCard(input: CardInput): UpsertOutcome {
       outreach_history: [],
       reviewed: false,
       reviewed_at: null,
+      edited_fields: [],
       created_at: t,
       updated_at: t,
     };
@@ -274,8 +282,15 @@ export function editCard(
   const errors = validateCardInput(next, cards);
   if (errors.length) return { ok: false, errors };
   const t = now();
+  const changed: string[] = [];
+  if (next.summary.trim() !== prev.summary) changed.push("summary");
+  if (JSON.stringify(clean(next.themes)) !== JSON.stringify(prev.themes)) changed.push("themes");
+  if (next.format !== prev.format) changed.push("format");
+  if (next.format_reason.trim() !== prev.format_reason) changed.push("format_reason");
+  if (JSON.stringify([...new Set(next.evidence_activity_ids)]) !== JSON.stringify(prev.evidence_activity_ids)) changed.push("evidence");
   const card: Card = {
     ...prev,
+    edited_fields: [...new Set([...prev.edited_fields, ...changed])],
     summary: next.summary.trim(),
     themes: clean(next.themes),
     evidence_activity_ids: [...new Set(next.evidence_activity_ids)],

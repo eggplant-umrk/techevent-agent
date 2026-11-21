@@ -318,6 +318,40 @@ async function main() {
     delete process.env.DATA_SOURCE;
   }
 
+  // ---- 繰り返しとタイムゾーン（本人のカレンダーと同じ形：TZID=Asia/Tokyo・BYDAY 複数・INTERVAL=2・UNTIL・変更された回） ----
+  {
+    const text = fs.readFileSync(path.join(process.cwd(), "scripts", "fixtures", "recurring.ics"), "utf-8");
+    const w = windowOf(TODAY);
+    const starts = parseIcs(text, new Date(w.fromMs), new Date(w.toMs))
+      .map((s) => s.start.slice(0, 16))
+      .sort();
+    const want = [
+      "2026-11-25T10:00", // America/Los_Angeles の 11/24 17:00 → 日本時間 11/25 10:00
+      "2026-11-25T16:00", // 毎週 水・金 14:00 の 11/25 の回は 16:00 に変更（RECURRENCE-ID）
+      "2026-11-26T13:00", // TZID="Tokyo Standard Time"（Windows の名前）
+      "2026-11-30T10:00", // 隔週（INTERVAL=2）月・木。11/23 の週は休み、12/3 は UNTIL の後
+      "2026-12-02T14:00", // 毎週 水・金（11/27 は EXDATE で休み）
+      "2026-12-04T14:00",
+    ];
+    check(
+      ".ics：TZID・BYDAY 複数・INTERVAL=2・UNTIL・EXDATE・変更された回・ほかのタイムゾーンを読む",
+      starts.join(",") === want.join(","),
+      starts.join(" / "),
+    );
+  }
+
+  // ---- 取得できない・iCal でないときは「予定は不明」（推測しない） ----
+  {
+    process.env.DEMO_PERSON = "on";
+    process.env.CALENDAR_ICS_URL = `data:text/html;base64,${Buffer.from("<html><body>Not Found</body></html>").toString("base64")}`;
+    const { calendarStatus, usesIcs: uses, clearCalendarCache } = await import("../lib/busyness");
+    clearCalendarCache();
+    await loadCalendarIfConfigured();
+    check("iCal でない中身（HTML のエラーページなど）は読み込みに失敗として扱う", calendarStatus().includes("失敗") && uses("e031") && !busynessFor("e031", TODAY).known, calendarStatus());
+    delete process.env.CALENDAR_ICS_URL;
+    delete process.env.DEMO_PERSON;
+  }
+
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
   process.exit(failed ? 1 : 0);
 }

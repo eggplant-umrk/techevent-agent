@@ -11,7 +11,7 @@ import fs from "node:fs";
 import { TODAY } from "./config";
 import { dataFile, dataSource } from "./dataSource";
 import { schedules } from "./data";
-import { parseIcs, type BusySlot } from "./ics";
+import { looksLikeIcs, parseIcs, type BusySlot } from "./ics";
 import { demoPersonOn, isDemoPerson } from "./demoPerson";
 
 export type { BusySlot } from "./ics";
@@ -181,21 +181,54 @@ export async function loadCalendarIfConfigured(): Promise<void> {
   const url = process.env.CALENDAR_ICS_URL?.trim();
   if (!url || (dataSource() !== "github" && !demoPersonOn())) return;
   if (icsCache && Date.now() - icsCache.at < ICS_TTL_MS) return;
-  try {
-    const res = await fetch(url, { headers: { Accept: "text/calendar" } });
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const w = windowOf();
-    icsCache = {
-      at: Date.now(),
-      slots: parseIcs(await res.text(), new Date(w.fromMs), new Date(w.toMs)),
-    };
-  } catch (e) {
-    // URL は出さない
-    console.error(
-      `カレンダー（CALENDAR_ICS_URL）を読めませんでした：${e instanceof Error ? e.message.replace(/https?:\/\/\S+/g, "（URL）") : "不明なエラー"}`,
-    );
+  // ログには URL を出さない（理由・ステータス・件数だけ）
+  const fail = (why: string) => {
+    console.error(`カレンダー（CALENDAR_ICS_URL）を読めませんでした：${why.replace(/https?:\/\/\S+/g, "（URL）")}`);
     icsCache = { at: Date.now(), slots: null };
+  };
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { Accept: "text/calendar" } });
+  } catch (e) {
+    return fail(`取得に失敗（${e instanceof Error ? e.message : "不明なエラー"}）`);
   }
+  if (!res.ok) return fail(`HTTP ${res.status}${urlHint(url, res.status)}`);
+  const text = await res.text();
+  if (!looksLikeIcs(text)) return fail(`HTTP ${res.status} ですが、中身が iCal ではありません（${res.headers.get("content-type") ?? "種類不明"}・${text.length}文字）`);
+  try {
+    const w = windowOf();
+    const slots = parseIcs(text, new Date(w.fromMs), new Date(w.toMs));
+    icsCache = { at: Date.now(), slots };
+    const events = (text.match(/BEGIN:VEVENT/g) ?? []).length;
+    console.log(`カレンダー（CALENDAR_ICS_URL）を読みました：予定${events}件のうち、今後2週間（${w.from}〜${w.to}）にかかる予定${slots.length}件`);
+  } catch (e) {
+    fail(`読み取りに失敗（${e instanceof Error ? e.message : "不明なエラー"}）`);
+  }
+}
+
+/** 失敗したときの手がかり（URL の種類だけを見る。値は出さない） */
+function urlHint(url: string, status: number): string {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "calendar.google.com" && u.pathname.split("/").includes("public") && (status === 404 || status === 403))
+      return "。Google カレンダーの「公開アドレス」は、カレンダーを一般公開していないと 404 になります。設定の「iCal 形式の非公開アドレス」（…/private-…/basic.ics）を使ってください";
+    if (status === 404) return "。アドレスが変わった（非公開アドレスをリセットした）可能性があります";
+  } catch {
+    return "。URL の形が正しくありません";
+  }
+  return "";
+}
+
+/** テスト用：読み込んだ iCal を忘れる（10分の間も読み直させる） */
+export function clearCalendarCache(): void {
+  icsCache = null;
+}
+
+/** 調べる用：iCal の読み込みの状態（件数だけ。URL は出さない）。 */
+export function calendarStatus(): string {
+  if (!process.env.CALENDAR_ICS_URL?.trim()) return "CALENDAR_ICS_URL なし";
+  if (!icsCache) return "まだ読み込んでいない（DATA_SOURCE=github か DEMO_PERSON=on のときだけ読む）";
+  return icsCache.slots ? `読み込み済み：今後2週間の予定 ${icsCache.slots.length}件` : "読み込みに失敗（ログを確認）";
 }
 
 /** 予定の一覧。分からなければ null。 */

@@ -234,11 +234,9 @@ function buildVenues(input: VenueSubmit, card: Card): VenueCard[] {
   const acts = new Map(activities().map((a) => [a.id, a]));
   return input.venues.map((v, i) => {
     const e = externalEventById(v.event_id)!;
-    const cautions = [...v.cautions];
-    for (const r of requiredCautions(e, card.employee_id)) {
-      const key = r.slice(0, 5);
-      if (!cautions.some((c) => c.includes(key))) cautions.push(r);
-    }
+    // 必ず付ける注意点（締切は公式で要確認・開催日は要確認・締切が近い・本人の予定）は、決まった文のまま必ず入れる
+    const required = requiredCautions(e, card.employee_id);
+    const cautions = [...required, ...v.cautions.filter((c) => !required.includes(c))];
     return {
       rank: i + 1,
       event_id: e.id,

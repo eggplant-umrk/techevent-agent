@@ -54,7 +54,7 @@ export function CardDetail({
     return ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
   }
 
-  const KEEP_OPEN = "書きかけの内容があるので閉じませんでした。保存するか「やめる」を押してから閉じてください。";
+  const KEEP_OPEN = "書きかけの内容があるので閉じませんでした。保存するか、「やめる」や「下書きに戻す」で元に戻してから閉じてください。";
 
   function onBackdropClick(ev: React.MouseEvent<HTMLDialogElement>) {
     const outside = pressedOutside.current && isOutside(ev);

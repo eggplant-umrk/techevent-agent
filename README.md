@@ -77,6 +77,7 @@ http://localhost:3000 を開く。APIキーはサーバー側だけで使い、�
 - 画面の一番上は受信箱です。Slack（`POST /api/inbox`、形は [docs/inbox-api.md](docs/inbox-api.md)）や「手で追加」で届いた依頼に、Agentが候補を準備しておきます
 - APIを使わずに画面を見るときは http://localhost:3000/?mock（保存済みの結果で受信箱に「準備済み」の依頼が並びます）
 - 受信箱のテスト（APIなし）：`npm run test:inbox`
+- カード詳細の「出し先を探す」で、そのネタを出せそうな社外イベント（data/external_events.json、2026-11-21時点）とブログ案を探します。テスト（APIなし）：`npm run test:venues`
 
 #### Slackから依頼を受け付ける（練習用ワークスペース専用）
 

@@ -24,7 +24,8 @@
     "created_at": "2026-11-21T05:11:53.281Z",
     "updated_at": "2026-11-21T05:11:53.281Z",
     "announcement_activity_ids": [],
-    "pending_themes": []
+    "pending_themes": [],
+    "edited_fields": []
   },
   {
     "card_id": "card-e013-01",
@@ -51,7 +52,8 @@
     "created_at": "2026-11-21T05:12:03.817Z",
     "updated_at": "2026-11-21T05:12:03.817Z",
     "announcement_activity_ids": [],
-    "pending_themes": []
+    "pending_themes": [],
+    "edited_fields": []
   },
   {
     "card_id": "card-e015-01",
@@ -77,7 +79,8 @@
     "created_at": "2026-11-21T05:12:09.564Z",
     "updated_at": "2026-11-21T05:12:09.564Z",
     "announcement_activity_ids": [],
-    "pending_themes": []
+    "pending_themes": [],
+    "edited_fields": []
   },
   {
     "card_id": "card-e001-01",
@@ -103,7 +106,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:29.533Z",
-    "updated_at": "2026-11-21T05:25:29.533Z"
+    "updated_at": "2026-11-21T05:25:29.533Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e002-01",
@@ -129,7 +133,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:39.523Z",
-    "updated_at": "2026-11-21T05:25:39.523Z"
+    "updated_at": "2026-11-21T05:25:39.523Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e003-01",
@@ -155,21 +160,24 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:46.582Z",
-    "updated_at": "2026-11-21T05:25:46.582Z"
+    "updated_at": "2026-11-21T05:25:46.582Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e004-01",
     "employee_id": "e004",
-    "summary": "layerx.go #17で、金融とSaaSのデータ整合性について登壇した。アーカイブはイベントレポートとして公開済み（2026-11-04）。",
+    "summary": "layerx.go #17で「金融とSaaSのあいだ」と題して、金融とSaaSのデータ整合性について登壇した。登壇資料（2026-11-02）とアーカイブのイベントレポート（2026-11-04）を公開済み。",
     "themes": [
-      "金融とSaaSでデータ整合性をどう守るか：Goで書くバックエンドの設計"
+      "金融とSaaSでデータ整合性をどう守るか：Goで書くバックエンドの設計",
+      "金融とSaaSのあいだ：整合性要件が違うシステムをつなぐアーキテクチャ"
     ],
     "evidence_activity_ids": [],
-    "format": "talk",
-    "format_reason": "すでにlayerx.goで同じテーマを登壇しており、登壇経験も8回あるので、20分以上の登壇として他のイベントにも展開しやすいため。",
-    "publication_status": "blogged",
+    "format": "blog",
+    "format_reason": "登壇とアーカイブ公開はもう済んでいるので、次は話した内容を設計の要点に絞ってブログにまとめ、文章で読みたい人にも届けるのがよいため。",
+    "publication_status": "talked",
     "published_ids": [
-      "pub040"
+      "pub040",
+      "pub039"
     ],
     "latest_activity_date": "2026-10-31",
     "announcement_activity_ids": [
@@ -180,7 +188,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:25:55.503Z",
-    "updated_at": "2026-11-21T05:25:55.503Z"
+    "updated_at": "2026-11-21T05:46:21.622Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e005-01",
@@ -206,7 +215,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:06.001Z",
-    "updated_at": "2026-11-21T05:26:06.001Z"
+    "updated_at": "2026-11-21T05:26:06.001Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e012-01",
@@ -230,7 +240,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:23.278Z",
-    "updated_at": "2026-11-21T05:26:23.278Z"
+    "updated_at": "2026-11-21T05:26:23.278Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e014-01",
@@ -255,7 +266,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:28.116Z",
-    "updated_at": "2026-11-21T05:26:28.116Z"
+    "updated_at": "2026-11-21T05:26:28.116Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e016-01",
@@ -279,7 +291,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:32.694Z",
-    "updated_at": "2026-11-21T05:26:32.694Z"
+    "updated_at": "2026-11-21T05:26:32.694Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e017-01",
@@ -304,7 +317,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:41.933Z",
-    "updated_at": "2026-11-21T05:26:41.933Z"
+    "updated_at": "2026-11-21T05:26:41.933Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e018-01",
@@ -328,7 +342,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:46.685Z",
-    "updated_at": "2026-11-21T05:26:46.685Z"
+    "updated_at": "2026-11-21T05:26:46.685Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e020-01",
@@ -354,7 +369,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:26:54.244Z",
-    "updated_at": "2026-11-21T05:26:54.244Z"
+    "updated_at": "2026-11-21T05:26:54.244Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e022-01",
@@ -378,7 +394,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:04.454Z",
-    "updated_at": "2026-11-21T05:27:04.454Z"
+    "updated_at": "2026-11-21T05:27:04.454Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e023-01",
@@ -403,7 +420,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:10.106Z",
-    "updated_at": "2026-11-21T05:27:10.106Z"
+    "updated_at": "2026-11-21T05:27:10.106Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e024-01",
@@ -429,7 +447,8 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:20.794Z",
-    "updated_at": "2026-11-21T05:27:20.794Z"
+    "updated_at": "2026-11-21T05:27:20.794Z",
+    "edited_fields": []
   },
   {
     "card_id": "card-e026-01",
@@ -453,6 +472,7 @@
     "reviewed": false,
     "reviewed_at": null,
     "created_at": "2026-11-21T05:27:32.778Z",
-    "updated_at": "2026-11-21T05:27:32.778Z"
+    "updated_at": "2026-11-21T05:27:32.778Z",
+    "edited_fields": []
   }
 ]

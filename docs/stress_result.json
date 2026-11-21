@@ -237,6 +237,274 @@
           "reactions": []
         }
       ]
+    },
+    {
+      "at": "2026-11-21T09:25:13.148Z",
+      "targets": [
+        "e013",
+        "e015",
+        "e024"
+      ],
+      "spent_usd": 0.11059759999999996,
+      "per": [
+        {
+          "employee_id": "e013",
+          "name": "早乙女 蓮",
+          "cards": [
+            {
+              "card_id": "card-e013-01",
+              "theme": "LLM-as-a-judgeでAIエージェントの回帰テストをCIに組み込む：3回多数決と人手評価との一致率の測り方",
+              "evidence": 14,
+              "on_topic": 14,
+              "noise_evidence": [],
+              "kind": "topic"
+            }
+          ],
+          "noise_cards": 0,
+          "noise_in_evidence": 0,
+          "found_topic": true,
+          "duplicate_topic_cards": 0,
+          "signal_covered": "10/15",
+          "activities": 50,
+          "activity_chars": 2321,
+          "seconds": 13.1,
+          "usd": 0.049924,
+          "estimate_usd": 0.055764,
+          "prep": {
+            "fresh": 50,
+            "sent": 30,
+            "dropped": {
+              "too_short": 2,
+              "duplicate": 18
+            },
+            "deferred": 0
+          },
+          "log": [
+            "見積もり $0.056（上限 $1）",
+            "早乙女 蓮：新しい活動50件（全50件のうち読んだ0件を除く）→ 渡す30件・コードで落とした20件（極端に短い2・同じ本文の重複18）",
+            "新しく作ったカード card-e013-01（未発信）：LLM-as-a-judgeでAIエージェントの回帰テストをCIに組み込む：3回多数決と人手評価との一致率の測り方"
+          ],
+          "left_for_next": 0,
+          "second_run": {
+            "usd": 0,
+            "called_api": false,
+            "log": [
+              "見積もり $0.000（上限 $1）",
+              "早乙女 蓮：新しい活動0件（全50件のうち読んだ50件を除く）→ 渡す0件・コードで落とした0件",
+              "カードなし：新しく渡す活動がありません（API は呼んでいません）"
+            ]
+          }
+        },
+        {
+          "employee_id": "e015",
+          "name": "芹沢 葵",
+          "cards": [
+            {
+              "card_id": "card-e015-01",
+              "theme": "リトライが雪だるま式に増えた月末決済バッチの4時間遅延：ポストモーテムから学んだこと",
+              "evidence": 8,
+              "on_topic": 8,
+              "noise_evidence": [],
+              "kind": "topic"
+            }
+          ],
+          "noise_cards": 0,
+          "noise_in_evidence": 0,
+          "found_topic": true,
+          "duplicate_topic_cards": 0,
+          "signal_covered": "6/9",
+          "activities": 30,
+          "activity_chars": 1425,
+          "seconds": 9.9,
+          "usd": 0.0270848,
+          "estimate_usd": 0.041384,
+          "prep": {
+            "fresh": 30,
+            "sent": 19,
+            "dropped": {
+              "duplicate": 10,
+              "trivial_commit": 1
+            },
+            "deferred": 0
+          },
+          "log": [
+            "見積もり $0.041（上限 $1）",
+            "芹沢 葵：新しい活動30件（全30件のうち読んだ0件を除く）→ 渡す19件・コードで落とした11件（同じ本文の重複10・typo・依存の更新・書式だけのコミット1）",
+            "新しく作ったカード card-e015-01（未発信）：リトライが雪だるま式に増えた月末決済バッチの4時間遅延：ポストモーテムから学んだこと"
+          ],
+          "left_for_next": 0,
+          "second_run": {
+            "usd": 0,
+            "called_api": false,
+            "log": [
+              "見積もり $0.000（上限 $1）",
+              "芹沢 葵：新しい活動0件（全30件のうち読んだ30件を除く）→ 渡す0件・コードで落とした0件",
+              "カードなし：新しく渡す活動がありません（API は呼んでいません）"
+            ]
+          }
+        },
+        {
+          "employee_id": "e024",
+          "name": "織部 隼人",
+          "cards": [
+            {
+              "card_id": "card-e024-01",
+              "theme": "SBOM×到達可能性分析で脆弱性アラートを月400件から50件にした話",
+              "evidence": 8,
+              "on_topic": 8,
+              "noise_evidence": [],
+              "kind": "topic"
+            }
+          ],
+          "noise_cards": 0,
+          "noise_in_evidence": 0,
+          "found_topic": true,
+          "duplicate_topic_cards": 0,
+          "signal_covered": "6/18",
+          "activities": 60,
+          "activity_chars": 2651,
+          "seconds": 16.5,
+          "usd": 0.0335888,
+          "estimate_usd": 0.05228,
+          "prep": {
+            "fresh": 60,
+            "sent": 28,
+            "dropped": {
+              "duplicate": 28,
+              "trivial_commit": 4
+            },
+            "deferred": 0
+          },
+          "log": [
+            "見積もり $0.052（上限 $1）",
+            "織部 隼人：新しい活動60件（全60件のうち読んだ0件を除く）→ 渡す28件・コードで落とした32件（同じ本文の重複28・typo・依存の更新・書式だけのコミット4）",
+            "新しく作ったカード card-e024-01（未発信）：SBOM×到達可能性分析で脆弱性アラートを月400件から50件にした話"
+          ],
+          "left_for_next": 0,
+          "second_run": {
+            "usd": 0,
+            "called_api": false,
+            "log": [
+              "見積もり $0.000（上限 $1）",
+              "織部 隼人：新しい活動0件（全60件のうち読んだ60件を除く）→ 渡す0件・コードで落とした0件",
+              "カードなし：新しく渡す活動がありません（API は呼んでいません）"
+            ]
+          }
+        }
+      ],
+      "cards": [
+        {
+          "card_id": "card-e013-01",
+          "employee_id": "e013",
+          "summary": "AIエージェントの回帰テストとして、LLM-as-a-judgeで過去の正解ケース200件を自動評価する仕組みをCIに入れた。判定のブレは3回判定の多数決で抑え、失敗ログから拾ったケースを正解ケースに足し続け、人手評価との一致率（投稿により80〜87%）を測りながら判定プロンプトを改善している。新しいモデルへの切り替え判断は、手動確認で1週間かかっていたのが1日で終わるようになり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。評価コストを月額で見積もる方法も設計ドキュメントにまとめている。",
+          "themes": [
+            "LLM-as-a-judgeでAIエージェントの回帰テストをCIに組み込む：3回多数決と人手評価との一致率の測り方",
+            "モデル切り替えの判断を1週間から1日に：失敗ログから正解ケースを育てるエージェント評価基盤",
+            "判定LLMのブレとコストとどう付き合うか：エージェント評価を本番運用して分かったこと"
+          ],
+          "evidence_activity_ids": [
+            "st0001",
+            "st0015",
+            "st0009",
+            "st0006",
+            "st0019",
+            "st0002",
+            "st0004",
+            "st0003",
+            "st0021",
+            "st0008",
+            "st0005",
+            "st0014",
+            "st0016",
+            "st0017"
+          ],
+          "format": "talk",
+          "format_reason": "設計ドキュメント、数か月分の運用、1週間から1日に縮んだという分かりやすい成果がそろっていて、時流のAIエージェントの評価にも合うので20分の登壇にできる厚さがある（本人は登壇経験がないので、最初はブログで内容を整理してからでもよい）。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-04",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:24:46.554Z",
+          "updated_at": "2026-11-21T09:24:46.554Z",
+          "reactions": []
+        },
+        {
+          "card_id": "card-e015-01",
+          "employee_id": "e015",
+          "summary": "月末の決済バッチが4時間遅れた障害で、ポストモーテムを書いて原因を突き止めた。原因はロック競合で、リトライが雪だるま式に増えていた。再発防止としてバッチを分割し、処理単位にキーを付けて冪等化した。本番に入れた後は月末の処理時間が平均で約4割短くなり（投稿によって35〜41%）、その後の月末バッチも遅れなく終わっている。ポストモーテムは他チームからも参考にしたいと声がかかった。",
+          "themes": [
+            "リトライが雪だるま式に増えた月末決済バッチの4時間遅延：ポストモーテムから学んだこと",
+            "ロック競合を減らす決済バッチの分割と冪等キーの設計",
+            "他チームにも参考にされるポストモーテムの書き方：タイムラインと再発防止策の追い方"
+          ],
+          "evidence_activity_ids": [
+            "st0051",
+            "st0057",
+            "st0061",
+            "st0062",
+            "st0052",
+            "st0059",
+            "st0055",
+            "st0056"
+          ],
+          "format": "blog",
+          "format_reason": "ポストモーテムにタイムライン・原因・再発防止策がまとまっていて文章にしやすく、本人は登壇経験がないので、まずブログで書いてから登壇を考えるのがよい。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-13",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:24:56.506Z",
+          "updated_at": "2026-11-21T09:24:56.506Z",
+          "reactions": []
+        },
+        {
+          "card_id": "card-e024-01",
+          "employee_id": "e024",
+          "summary": "全リポジトリでSBOMを生成し、依存ライブラリの脆弱性アラートを「実際に到達可能なコードか」で自動で振り分ける仕組みを作って、全社に展開した。開発チームに届くアラートは月400件から50件程度になり、対応が必要なものは全体の12〜15%に絞れている。到達可能性の判定は5言語まで対応済みで、判定ロジックをOSSとして切り出す方針もまとめている。",
+          "themes": [
+            "SBOM×到達可能性分析で脆弱性アラートを月400件から50件にした話",
+            "到達可能性の判定を5言語に広げるまで：誤判定とどう向き合うか",
+            "脆弱性トリアージの判定ロジックをOSSにする：社内固有の設定をどう切り離したか"
+          ],
+          "evidence_activity_ids": [
+            "st0081",
+            "st0082",
+            "st0083",
+            "st0103",
+            "st0106",
+            "st0089",
+            "st0097",
+            "st0094"
+          ],
+          "format": "blog",
+          "format_reason": "設計・数字・OSS化の流れまでそろっていて中身は登壇にも耐えるが、本人は登壇経験がないため、まずブログで整理し、OSS公開に合わせて登壇につなげるのがよい。",
+          "publication_status": "unpublished",
+          "published_ids": [],
+          "latest_activity_date": "2026-11-05",
+          "announcement_activity_ids": [],
+          "evidence_request_ids": [],
+          "pending_themes": [],
+          "outreach_history": [],
+          "reviewed": false,
+          "reviewed_at": null,
+          "edited_fields": [],
+          "created_at": "2026-11-21T09:25:13.094Z",
+          "updated_at": "2026-11-21T09:25:13.094Z",
+          "reactions": []
+        }
+      ]
     }
   ]
 }

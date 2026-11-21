@@ -22,6 +22,7 @@
     "test:venues": "tsx scripts/test_venues.ts",
     "test:tabs": "tsx scripts/test_tabs.ts",
     "test:xconv": "tsx scripts/test_xconv.ts",
+    "test:notebook": "tsx scripts/test_notebook_prep.ts",
     "test:stage": "tsx scripts/test_stage.ts"
   },
   "dependencies": {

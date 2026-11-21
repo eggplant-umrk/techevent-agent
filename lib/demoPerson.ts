@@ -56,7 +56,7 @@ export function demoActivities(): Activity[] {
 
 // ---- 本人の分だけ別のファイルに保存する（架空の30人のファイルは、中身が変わったときだけ書く） ----
 
-export function demoFile(name: "cards.json" | "notebook_state.json"): string {
+export function demoFile(name: "cards.json" | "notebook_state.json" | "notebook_progress.json"): string {
   return path.join(DEMO_DIR, name);
 }
 

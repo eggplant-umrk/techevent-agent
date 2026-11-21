@@ -12,6 +12,10 @@ function line(e: NotebookEvent): string | null {
       return `model=${e.model} targets=${e.targets.length}`;
     case "employee":
       return `[${e.n}/${e.of}] ${e.employee_id} ${e.name}（活動${e.activity_count}件）`;
+    case "budget":
+      return `   ${e.message}`;
+    case "prep":
+      return `   ${e.message}`;
     case "card":
       return `   ${e.message}`;
     case "rejected":

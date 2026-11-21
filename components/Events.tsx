@@ -75,6 +75,18 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
         <h2 id="evd-title" className="req-title">
           {d.event.title}
         </h2>
+        {/* イベントの告知ページ：connpass_url があればそのページ、なければアプリの中の架空のページ（/events/{id}） */}
+        <p className="btn-row">
+          <a
+            className="btn btn-sm"
+            href={d.event.connpass_url?.trim() || `/events/${encodeURIComponent(d.event.id)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            イベントページを開く
+          </a>
+          {!d.event.connpass_url?.trim() && <span className="meta">（架空のイベントのため、アプリの中の架空のページを開きます）</span>}
+        </p>
         <h3 className="h4">登壇</h3>
         <ul className="plain-list small">
           {d.speakers.map((sp) => (

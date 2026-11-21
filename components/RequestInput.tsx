@@ -87,6 +87,20 @@ export function RequestInput({
           {st && st.stage === "outreach" && <p className="small muted-strong">{st.outreach_to.map((p) => `${p.name}さん`).join("・")}に声かけ中（返事待ち）</p>}
           {st && st.stage === "declined" && <p className="small muted-strong">{st.declined_by.map((p) => `${p.name}さん`).join("・")}が辞退。次の人を選べます</p>}
           {inbox.nominee_name && <p className="small muted-strong">指名：{inbox.nominee_name}さん（依頼文から読み取り）</p>}
+          {inbox.event_urls?.length > 0 && (
+            <p className="small">
+              イベントページ：
+              {inbox.event_urls.map((u, i) => (
+                <span key={u}>
+                  {i > 0 && "、"}
+                  <a href={u} target="_blank" rel="noreferrer">
+                    {u}
+                  </a>
+                </span>
+              ))}
+              <span className="meta">（依頼文から読み取り）</span>
+            </p>
+          )}
           {inbox.intake && (
             <dl className="person-facts intake" aria-label="会話から読み取った項目">
               {INTAKE_ROWS.map(([f, label]) => (

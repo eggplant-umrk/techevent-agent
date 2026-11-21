@@ -115,6 +115,52 @@ async function main() {
   }
   check("テーマ案がアンケート由来か（声と同じ文）", isSurveyTheme(` ${voices[0].text} `, voices) && !isSurveyTheme("関係のないテーマ", voices));
 
+  // ---- 人の一覧の並び順（コード）：本人（デモ）を一番上 → 未発信のネタが多い順 → 最近の活動が新しい順
+  {
+    const rs = people.peopleRows();
+    const ordered = rs.every((r, i) => {
+      if (i === 0) return true;
+      const p = rs[i - 1];
+      if (p.is_demo !== r.is_demo) return p.is_demo;
+      if (p.unpublished_cards !== r.unpublished_cards) return p.unpublished_cards > r.unpublished_cards;
+      return (p.latest_activity_date ?? "") >= (r.latest_activity_date ?? "");
+    });
+    check("人の一覧は未発信のネタが多い順 → 最近の活動が新しい順", ordered, rs.slice(0, 3).map((r) => `${r.name}:${r.unpublished_cards}`).join(" "));
+    check("DEMO_PERSON がなければ本人（デモ）の印は付かない", rs.every((r) => !r.is_demo));
+    const prev = process.env.DEMO_PERSON;
+    process.env.DEMO_PERSON = "on";
+    const rd = people.peopleRows();
+    check("DEMO_PERSON=on なら本人を一番上に固定し、本人（デモ）の印", rd[0]?.id === "e031" && rd[0].is_demo && rd.filter((r) => r.is_demo).length === 1);
+    if (prev === undefined) delete process.env.DEMO_PERSON;
+    else process.env.DEMO_PERSON = prev;
+  }
+
+  // ---- 担当者未定のネタ：関わっていそうな人は、キーワードが一致した活動（根拠）がある人だけ
+  {
+    const { listUnassigned } = await import("../lib/releaseCards");
+    const list = listUnassigned();
+    check("担当者の候補は根拠（一致した活動）のある人だけ", list.every((c) => c.related_employees.every((p) => p.evidence.length > 0)), list.map((c) => `${c.card_id}:${c.related_employees.length}人`).join(" "));
+  }
+
+  // ---- イベントページ（架空）と、依頼の会話の中のイベントの URL
+  {
+    const { fictionalEventPage, eventPageHref } = await import("../lib/eventPage");
+    const { eventUrlsIn } = await import("../lib/eventUrls");
+    check("イベントのデータに connpass_url（架空のイベントは空）", events().every((e) => e.connpass_url === ""));
+    check("connpass_url がなければアプリの中の架空のページ", eventPageHref({ id: "ev019", connpass_url: "" }).href === "/events/ev019" && !eventPageHref({ id: "ev019" }).external);
+    check("connpass_url があればそのページ", eventPageHref({ id: "ev019", connpass_url: "https://example.connpass.com/event/1/" }).external);
+    const pg = fictionalEventPage("ev019")!;
+    check("架空のページ：タイトル・日時・会場・形式・登壇者と話したタイトル・参加者数・告知文", !!pg.title && !!pg.date && !!pg.venue && !!pg.format && pg.attendees > 0 && pg.speakers.some((s) => s.title === "AIエージェントの本番運用で効くガードレール設計"), pg.format);
+    const sentences = pg.description.split("。").filter(Boolean).length;
+    check("告知文は2〜3文", sentences >= 2 && sentences <= 3, pg.description);
+    const text = "告知はこちらです→https://layerx-go.connpass.com/event/123456/）。資料は https://example.com/slides も見てください。申込は https://techplay.jp/event/999、。";
+    const urls = eventUrlsIn(text);
+    check("会話の中の connpass などの URL を読み取る（句読点・かっこは外す）", urls.join(" ") === "https://layerx-go.connpass.com/event/123456/ https://techplay.jp/event/999", urls.join(" "));
+    check("イベントのサイトでない URL は使わない", !urls.some((u) => u.includes("example.com")));
+    check("読み取った URL は会話の中に本当にある文字列", urls.every((u) => text.includes(u)));
+    check("URL がなければ空", eventUrlsIn("日程は1/29です").length === 0);
+  }
+
   fs.rmSync(tmp, { force: true });
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
   process.exitCode = failed ? 1 : 0;

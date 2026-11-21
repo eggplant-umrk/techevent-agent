@@ -197,6 +197,7 @@ export function People({
                 <span className="meta">{p.business_unit}</span>
                 <span className="grow" />
                 <span className="tags nb-marks">
+                  {p.is_demo && <Tag tone="accent">本人（デモ）</Tag>}
                   {p.speaking_intent === "hold" && <Tag tone="warn">今は控えたい</Tag>}
                   {p.reviewed && <Tag tone="ok">確認済み</Tag>}
                 </span>

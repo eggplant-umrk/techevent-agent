@@ -310,14 +310,35 @@ export async function updateReleaseCards(emit: (e: ReleaseEvent) => void): Promi
 
 export function listUnassigned() {
   const notes = new Map(releaseNotes().map((n) => [n.id, n]));
-  return unassignedCards().map((c) => ({
-    ...c,
-    release_notes: c.release_note_ids.map((id) => {
-      const n = notes.get(id);
-      return n ? { id, date: n.date, product: n.product, title: n.title, url: n.url, team: n.team } : { id, date: "", product: "", title: id, url: "", team: null };
-    }),
-    related_employees: c.related_employee_ids.map((id) => ({ id, name: employeeById(id)?.name ?? id })),
-  }));
+  const acts = activities();
+  const actById = new Map(acts.map((x) => [x.id, x]));
+  return unassignedCards().map((c) => {
+    // 関わっていそうな人：キーワードが一致した活動（根拠）がある人だけ。根拠の活動を横に出す（コードで決める）
+    const byPerson = new Map<string, { id: string; name: string; keywords: Set<string>; evidence: Map<string, { id: string; type: string; date: string; title: string }> }>();
+    for (const rid of c.release_note_ids) {
+      const n = notes.get(rid);
+      if (!n) continue;
+      for (const cand of ownerCandidates(n, acts)) {
+        const p = byPerson.get(cand.employee_id) ?? { id: cand.employee_id, name: employeeById(cand.employee_id)?.name ?? cand.employee_id, keywords: new Set<string>(), evidence: new Map() };
+        cand.matched_keywords.forEach((k) => p.keywords.add(k));
+        for (const aid of cand.activity_ids) {
+          const x = actById.get(aid);
+          if (x) p.evidence.set(aid, { id: aid, type: x.type, date: x.date, title: x.title });
+        }
+        byPerson.set(cand.employee_id, p);
+      }
+    }
+    return {
+      ...c,
+      release_notes: c.release_note_ids.map((id) => {
+        const n = notes.get(id);
+        return n ? { id, date: n.date, product: n.product, title: n.title, url: n.url, team: n.team } : { id, date: "", product: "", title: id, url: "", team: null };
+      }),
+      related_employees: [...byPerson.values()]
+        .filter((p) => p.evidence.size > 0)
+        .map((p) => ({ id: p.id, name: p.name, matched_keywords: [...p.keywords].slice(0, 5), evidence: [...p.evidence.values()] })),
+    };
+  });
 }
 
 /**

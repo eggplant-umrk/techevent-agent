@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { PersonRow, UnassignedCard } from "@/app/_client/types";
-import { FORMAT_LABEL } from "./labels";
+import { ACTIVITY_LABEL, FORMAT_LABEL } from "./labels";
 import { ErrorLine, Tag } from "./ui";
 
 /**
@@ -47,10 +47,10 @@ export function UnassignedCards({
 }
 
 function Row({ card, people, onAssign }: { card: UnassignedCard; people: PersonRow[]; onAssign: (cardId: string, employeeId: string) => Promise<void> }) {
-  // 関わっていそうな人（チームや活動から）を先に並べる
+  // 関わっていそうな人：キーワードが一致した活動（根拠）がある人だけを先に並べる。最初から誰も選ばない（推測で選んでおかない）
   const related = new Set(card.related_employees.map((p) => p.id));
   const sorted = [...people].sort((a, b) => Number(related.has(b.id)) - Number(related.has(a.id)));
-  const [who, setWho] = useState(card.related_employees[0]?.id ?? "");
+  const [who, setWho] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,10 +91,26 @@ function Row({ card, people, onAssign }: { card: UnassignedCard; people: PersonR
           <li key={t}>{t}</li>
         ))}
       </ul>
-      <p className="meta">
-        おすすめの形：{FORMAT_LABEL[card.format] ?? card.format}
-        {card.related_employees.length > 0 && `・関わっていそうな人：${card.related_employees.map((p) => `${p.name}さん`).join("・")}`}
-      </p>
+      <p className="meta">おすすめの形：{FORMAT_LABEL[card.format] ?? card.format}</p>
+      {card.related_employees.length > 0 ? (
+        <div className="small">
+          <h3 className="h4">関わっていそうな人（キーワードが一致した活動）</h3>
+          <ul className="plain-list">
+            {card.related_employees.map((p) => (
+              <li key={p.id}>
+                <span className="strong">{p.name}さん</span>
+                <span className="meta">
+                  　根拠：
+                  {p.evidence.map((e) => `${ACTIVITY_LABEL[e.type] ?? e.type} ${e.date}「${e.title}」`).join("／")}
+                  {p.matched_keywords.length > 0 && `（一致：${p.matched_keywords.join("・")}）`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="meta">キーワードが一致する活動のある人は見つかりませんでした。担当者を選んでください。</p>
+      )}
       <div className="btn-row">
         <select className="input input-sm" aria-label="担当者" value={who} onChange={(e) => setWho(e.target.value)} disabled={busy}>
           <option value="">担当者を選ぶ</option>

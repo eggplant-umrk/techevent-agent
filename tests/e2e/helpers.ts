@@ -40,7 +40,7 @@ export async function openArchive(page: Page) {
   const firstEvent = list.getByRole("button").first();
   await expect(firstEvent).toBeVisible();
   await firstEvent.click();
-  await expect(page.getByRole("heading", { name: "登壇", level: 3 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "登壇", exact: true, level: 3 })).toBeVisible();
 }
 
 /** ネタ帳で人を探して開き、その人の記録に承諾が残っているかを見る */

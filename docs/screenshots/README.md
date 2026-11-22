@@ -9,6 +9,7 @@
 |---|---|
 | 01_inbox_x_conversation_reading | 受信箱：X の会話を貼ったあとの読み取り（読めた項目と、たたまれた「未定 9件」） |
 | 02_candidates_first_talk_reason_notes | 候補：初登壇の印・理由・注意点・忙しさ・根拠のリンク |
+| 02b_candidates_candidate_dates | 候補：会話に候補日が3つある依頼で、候補日ごとの都合（12/15 ×・12/17 ×・1/14 ○）と注意点（偽の API ＋本人の予定のサーバー `scripts/testing/serve_for_shots_dates.mjs` で撮影） |
 | 03a_outreach_draft | 声かけ文の下書き |
 | 03b_organizer_reply_with_questions | 主催者への返事の下書き（日程・持ち時間・テーマの聞き返しつき） |
 | 04_request_trace_timeline | 「この依頼の記録」の時間の線（見出しの金額は撮るときに伏せている） |

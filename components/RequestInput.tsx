@@ -15,14 +15,19 @@ export type RequestMode = "custom" | "inbox";
 
 /** 読み取った項目の並び（読めた値と未定。lib/askBack.ts と同じ並びで、主催者への返事・声かけの下書きと食い違わない） */
 // 日程は、主催者への返事・声かけの下書きと同じ形（「1月28日（木）」。年が今年と違うときだけ年つき）で出す
-const intakeRows = (intake: NonNullable<BoardDetail["intake"]>) =>
-  requestItems({ intake }).map((i) => ({ ...i, label: i.key === "organizer" ? "主催者" : i.label, value: i.key === "date" && i.value ? displayDate(i.value) : i.value }));
+// 会話に開催日の候補があれば、日程は「候補日：12/15・12/17・1/14」（未定にしない・聞き返さない）
+const intakeRows = (intake: NonNullable<BoardDetail["intake"]>, candidateDates?: string[]) =>
+  requestItems({ intake, candidate_dates: candidateDates }).map((i) => ({
+    ...i,
+    label: i.key === "organizer" ? "主催者" : i.label,
+    value: i.key === "date" && i.value && !i.value.startsWith("候補日") ? displayDate(i.value) : i.value,
+  }));
 
 /**
  * 会話から読み取った項目。読めた項目を並べ、未定の項目は「未定 7件（主催者に聞き返します）」にたたむ（開けば見られる）
  */
-function IntakeRows({ intake }: { intake: NonNullable<BoardDetail["intake"]> }) {
-  const rows = intakeRows(intake);
+function IntakeRows({ intake, candidateDates }: { intake: NonNullable<BoardDetail["intake"]>; candidateDates?: string[] }) {
+  const rows = intakeRows(intake, candidateDates);
   const known = rows.filter((i) => i.value !== null);
   const undecided = rows.filter((i) => i.value === null);
   return (
@@ -210,7 +215,7 @@ export function RequestInput({
             </p>
           )}
           {/* 依頼ではない・不適切と読んだ文には、読み取った項目を並べない（全部「未定」になるだけなので） */}
-          {inbox.intake && (inbox.kind ?? "request") === "request" && <IntakeRows intake={inbox.intake} />}
+          {inbox.intake && (inbox.kind ?? "request") === "request" && <IntakeRows intake={inbox.intake} candidateDates={inbox.date_suggestions?.candidate_dates} />}
           <details className="req-message" open={!compact && inbox.kind !== "inappropriate"}>
             <summary>依頼文を読む</summary>
             <p className="pre small">{inbox.text}</p>

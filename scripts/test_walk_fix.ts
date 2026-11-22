@@ -140,7 +140,7 @@ async function main() {
 
   // ---- 9・10. 依頼の詳細：未定はたたむ・日程の形
   check("未定の項目は「未定 n件（主催者に聞き返します）」にたたみ、開けば見られる", reqSrc.includes('<details className="intake-undecided">') && reqSrc.includes("未定 {undecided.length}件") && reqSrc.includes("（主催者に聞き返します）") && reqSrc.includes('aria-label="未定の項目"'));
-  check("依頼の詳細の日程も、返事・下書きと同じ形にする（displayDate）", reqSrc.includes('i.key === "date" && i.value ? displayDate(i.value) : i.value'));
+  check("依頼の詳細の日程も、返事・下書きと同じ形にする（displayDate）", reqSrc.includes('i.key === "date" && i.value && !i.value.startsWith("候補日") ? displayDate(i.value) : i.value'));
 
   // ---- 6. 実行の記録の名前
   const labels: Array<["llm" | "tool" | "code", string, string]> = [

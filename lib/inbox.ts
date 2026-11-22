@@ -8,6 +8,7 @@ import { randomBytes } from "node:crypto";
 import { withPitchLater, type AgentEvent, type ProposalResult } from "./agent";
 import type { SpeakingRequest } from "./data";
 import { buildDateSuggestions, type DateSuggestions } from "./dateSuggest";
+import { candidateDatesIn, dateLabel } from "./dateHint";
 import { KIND_LABEL, type IntakeKind } from "./intake";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
@@ -169,13 +170,20 @@ export function inboxRequest(
   it: Pick<InboxItem, "id" | "text" | "received_at" | "source"> & { nominee?: NomineeReading | null; intake?: IntakeReading | null },
 ): SpeakingRequest {
   const intake = it.intake ?? null;
+  // 会話に開催日の候補が2〜4日はっきり書いてあれば、依頼に持たせる（コードで読む。lib/dateHint.ts の datesInText）。
+  // 日程が1日に決まっている（読み取りで確かめ済み）なら、候補日としては扱わない
+  const candidateDates = intake?.date ? null : candidateDatesIn(it.text, it.received_at);
+  const note = candidateDates ? `${candidateDatesInstruction(candidateDates)}\n` : "";
+  // 読み取った項目は先頭のまま。候補日の注意は「【元の会話】」の直前に入れる
+  const header = intake ? `${intakeHeader(intake, it.nominee ?? null)}\n`.replace(/【元の会話】\n$/, `${note}【元の会話】\n`) : note ? `${note}【元の会話】\n` : "";
   return {
     id: it.id,
     received_at: it.received_at.slice(0, 10),
-    // 会話から読み取った項目があれば先頭に足す（未定は未定のまま渡す）。元の会話はそのまま続ける
-    message: intake ? `${intakeHeader(intake, it.nominee ?? null)}\n${it.text}` : it.text,
+    // 会話から読み取った項目があれば先頭に足す（未定は未定のまま渡す）。候補日があれば、その扱いの注意も足す。元の会話はそのまま続ける
+    message: `${header}${it.text}`,
     nominated_employee_id: it.nominee?.employee_id ?? null,
     ...(intake ? { intake } : {}),
+    ...(candidateDates ? { candidate_dates: candidateDates } : {}),
   };
 }
 
@@ -278,6 +286,30 @@ export async function readNominee(text: string, extractor: NomineeExtractor, run
 }
 
 /** 指名なしとして扱った理由を、各候補の注意点に書く（候補がいなければ見つからない理由に書く） */
+/**
+ * Agent に渡す、候補日の扱いの注意（コードで作る）。候補日の一部だけ予定が合わない人も、テーマがぴったりなら候補から外さず、
+ * 自信のある候補のまま日程のことを注意点に書かせる（候補日ごとの都合は、候補ができたあとにコードが注意点に足す）
+ */
+export function candidateDatesInstruction(days: string[]): string {
+  return [
+    `【開催日の候補（会話に書かれた日付をコードで読んだもの）】${days.map(dateLabel).join("・")}`,
+    "候補日の一部だけ予定が合わない人も、テーマがぴったりなら候補から外さず、自信のある候補のままにすること。日程のことは注意点に書く（どの日が合うかはコードが確かめて足す）。",
+  ].join("\n");
+}
+
+/** 候補日の都合（「候補日のうち 1/14 だけ都合がよい」）を、その人の注意点に足す（コードで作った文。同じ文は足さない） */
+export function addCandidateDateNotes(result: ProposalResult, dates: DateSuggestions | null): ProposalResult {
+  if (!dates?.candidate_dates?.length) return result;
+  return {
+    ...result,
+    candidates: result.candidates.map((c) => {
+      const n = dates.candidates.find((x) => x.employee_id === c.employee_id)?.candidate_note;
+      // 日程の調整がこのデモの要なので、注意点の先頭に置く（たたまれずに見える）
+      return n && !c.cautions.includes(n) ? { ...c, cautions: [n, ...c.cautions] } : c;
+    }),
+  };
+}
+
 export function addNomineeNote(result: ProposalResult, note: string | null): ProposalResult {
   if (!note) return result;
   if (result.candidates.length === 0) {
@@ -414,10 +446,11 @@ async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtra
     }
     update(id, (x) => ({ ...x, kind: "request", kind_reason: null }));
     const note = it.nominee?.note ?? null;
-    const undecided = undecidedNote(it.intake);
     // 判断が要る依頼の注意（属性で絞らない・競合の比較・ほかの依頼は別に）は、コードが候補の注意点に足す
     const judgment = it.intake?.notes ?? [];
     const request = inboxRequest(it);
+    // 候補日があるときは、日程を未定の注意に入れない（候補日ごとの都合をコードが注意点に足す）
+    const undecided = undecidedNote(request.candidate_dates && it.intake ? { ...it.intake, undecided: it.intake.undecided.filter((f) => f !== "date") } : it.intake);
     // 代わりの人を推す文は、この中では作らない（準備済みにしてから下で作る）
     const raw = await withPitchLater(() =>
       runner(request, (e) => {
@@ -430,14 +463,16 @@ async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtra
         }
       }),
     );
-    const result = raw ? judgment.reduce((r, n) => addNomineeNote(r, n), addNomineeNote(addNomineeNote(raw, note), undecided)) : null;
+    const base = raw ? judgment.reduce((r, n) => addNomineeNote(r, n), addNomineeNote(addNomineeNote(raw, note), undecided)) : null;
     runUsd += usageOfRun(id); // 指名の読み取りの分（依頼の id で記録している）
     const failed = events.find((e): e is Extract<AgentEvent, { type: "error" }> => e.type === "error");
+    // 日程が決まっていなければ、候補ごとの空いていそうな日。会話に候補日があれば、候補日ごとの都合（コード。失敗しても候補はそのまま）
+    const dateSuggestions = base ? await buildDateSuggestions(it.intake, base.candidates, undefined, request.candidate_dates ?? null).catch(() => null) : null;
+    // 候補日の都合は、候補から外さずに注意点に書く（コードで作った文。テーマが合う人は自信のある候補のまま）
+    const result = base ? addCandidateDateNotes(base, dateSuggestions) : null;
     const needsPitch =
       !!result && !!request.nominated_employee_id && !result.alternative_pitch && result.candidates.some((c) => c.is_alternative_to_nominee);
     if (needsPitch) pitchJob = { request, result: result! };
-    // 日程が決まっていなければ、候補ごとの空いていそうな日（コード。失敗しても候補はそのまま）
-    const dateSuggestions = result ? await buildDateSuggestions(it.intake, result.candidates).catch(() => null) : null;
     update(id, (x) => ({
       ...x,
       status: result ? "ready" : "error",

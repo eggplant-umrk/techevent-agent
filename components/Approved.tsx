@@ -232,7 +232,8 @@ function OrganizerReply({
             title={dateSentence}
             onClick={() => setValue((v) => `${v.trimEnd()}${v.trimEnd().endsWith("。") || v.trimEnd().endsWith("！") ? "" : "。"}${dateSentence}`)}
           >
-            {hasDate ? "空いていそうな日を入れました" : "空いていそうな日を入れる"}
+            {/* 会話に候補日があるときの1文（「1月14日（木）でしたら…」「ご提示の日程が難しく…」）は、候補日の都合として入れる */}
+            {dateSentence.includes("あたりなら") ? (hasDate ? "空いていそうな日を入れました" : "空いていそうな日を入れる") : hasDate ? "候補日の都合を入れました" : "候補日の都合を入れる"}
           </button>
         )}
         <button type="button" className="btn" disabled={value === text} onClick={() => setValue(text)}>

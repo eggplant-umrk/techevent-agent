@@ -116,9 +116,13 @@ async function main() {
     check("記録の窓口：記録があれば返す（名前・時間・金額・成否）", ok.status === 200 && j.trace?.steps.length === 2 && j.trace.total_cost_usd === 0.12);
     check("記録の窓口：なければ 404（画面は「まだありません」）", (await get("req001")).status === 404);
     check("記録の窓口：形の違う id は 400", (await get("../etc")).status === 400);
+    const presenterTrace = traceFile(id);
     process.env.SHARE_MODE = "lan";
     process.env.ACCESS_CODE = "test-code-for-feedback";
     process.env.SHARE_BUDGET_USD = "5";
+    // 見せる用では、実行の記録はその人の場所（visitors/{人}/traces/。lib/visitorScope.ts）にある。人の印のない要求は no-person の場所
+    fs.mkdirSync(path.dirname(traceFile(id)), { recursive: true });
+    fs.copyFileSync(presenterTrace, traceFile(id));
     check("記録の窓口：見せる用で会場の端末からも開ける", (await get(id, "192.168.1.20:3100", "192.168.1.55")).status === 200);
     check("記録の窓口：見せる用でもこの端末からは開ける", (await get(id, "127.0.0.1:3100", "127.0.0.1")).status === 200);
     delete process.env.SHARE_MODE;

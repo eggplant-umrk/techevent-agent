@@ -18,7 +18,7 @@ import { withCurrentVisitor } from "./visitorScope";
 import { scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 import { userErrorText } from "./userError";
-import { intakeChanges, needsRerun, type IntakeChange } from "./continuation";
+import { intakeChanges, needsRerun, squash, type IntakeChange } from "./continuation";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
 const FILE = () => scopedFile(process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json"));
@@ -536,6 +536,14 @@ export function restart(id: string, runner: Runner, extractor?: IntakeExtractor,
 /** 続きの会話を読み取れなかったとき（前の会話・候補はそのまま残す） */
 export const CONTINUE_READ_FAILED = "続きの会話を読み取れませんでした（前の内容はそのままです）。もう一度貼ってください";
 
+/**
+ * 更新後の会話。貼った文が前の会話をまるごと含んでいればそのまま、含んでいなければ（聞いて「はい」と答えた続き）前の会話の後ろにつなげる
+ * （短い続きだけに置き換えると、前に読めていた日程やイベント名が消えるため）
+ */
+export function continuedText(before: string, pasted: string): string {
+  return squash(pasted).includes(squash(before)) ? pasted : `${before.trimEnd()}\n\n${pasted}`;
+}
+
 const readingOf = (it: Pick<InboxItem, "nominee" | "intake">) => ({ nominee_name: it.nominee?.employee_id ? it.nominee.name : null, intake: it.intake ?? null });
 
 /**
@@ -549,8 +557,10 @@ export function continueInbox(id: string, text: string, runner: Runner, extracto
   if (!it) return { ok: false, error: "その依頼は受信箱にありません" };
   if (it.kind === "inappropriate") return { ok: false, error: "この内容には対応しません" };
   if (it.status === "processing") return { ok: false, error: "準備中です" };
+  const merged = continuedText(it.text, text);
+  if (merged.length > MAX_TEXT) return { ok: false, error: `前の会話とつなげると ${MAX_TEXT} 文字を超えます。新しい依頼として追加してください` };
   update(id, (x) => ({ ...x, status: "processing", started_at: nowJst(), progress: progressOf("reading"), continue_error: null }));
-  void continuePrepared(id, it, text, runner, extractor).finally(() => onSettled?.());
+  void continuePrepared(id, it, merged, runner, extractor).finally(() => onSettled?.());
   return { ok: true };
 }
 

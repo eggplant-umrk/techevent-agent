@@ -134,6 +134,16 @@ async function main() {
   const out = inbox.continueInbox(busy.id, "続き", runner, extractor);
   check("準備中の依頼は更新しない", !out.ok && out.error === "準備中です");
 
+  // 含まない続き（聞いて「はい」）：前の会話の後ろにつなげる
+  const short = "@infra_study_tokyo\nInfra Study Tokyo の西村です。会場は渋谷になりました。";
+  check("含まない続き：前の会話の後ろにつなげる（前に読めた項目を消さない）", inbox.continuedText(A, short) === `${A}\n\n${short}`);
+  const loose2 = B.replace(/\n/g, "\r\n ");
+  check("含む続き：貼った文をそのまま使う（二重にしない）", inbox.continuedText(A, B) === B && inbox.continuedText(A, loose2) === loose2);
+  const done = inbox.registerInbox({ text: "@long_meetup\n「Long Night」運営です。LT10分をお願いできる方を探しています。", source: "manual" });
+  await inbox.prepare(done.id, runner, extractor, pitcher);
+  const tooLong = inbox.continueInbox(done.id, "あ".repeat(3990), runner, extractor);
+  check("つなげて4000文字を超えるなら、更新せずに知らせる", !tooLong.ok && /4000 文字を超えます/.test(tooLong.error) && inbox.getInboxItem(done.id)?.status === "ready", JSON.stringify(tooLong));
+
   fs.rmSync(tmp, { recursive: true, force: true });
   console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
   process.exit(failed ? 1 : 0);

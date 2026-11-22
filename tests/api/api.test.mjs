@@ -130,6 +130,12 @@ async function main() {
     check("続きを貼る：候補は残っている", (contDetail?.result?.candidates?.length ?? 0) >= 1);
     const asNew = await api.post("/api/inbox", { text: `${MORE}\n\nもう1件、別の回のご相談です。`, source: "manual", as_new: true });
     check("「新しい依頼として追加」（as_new）なら、別の依頼として入る", asNew.status === 200 && /^inb-/.test(asNew.data?.id ?? "") && asNew.data?.id !== id && !asNew.data?.continued, asNew.text.slice(0, 120));
+    // 裏の準備が終わるまで待つ（次の確かめが、偽の API の呼び出しの数を数えるため）
+    for (let i = 0; i < 120 && asNew.data?.id; i++) {
+      await sleep(500);
+      const d = (await api.get(`/api/inbox/${asNew.data.id}/detail`)).data;
+      if (d && d.status !== "processing" && d.pitch_status !== "pending") break;
+    }
 
     // ---- 2. 依頼ではない文で止まる
     console.log("\n━ 依頼ではない文で止まる");

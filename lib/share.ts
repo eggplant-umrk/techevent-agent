@@ -27,6 +27,8 @@ export function shareConfigProblem(): string | null {
   if (shareMode() === "lan" && !accessCode()) return "SHARE_MODE=lan のときは .env に ACCESS_CODE（合言葉）を設定してください。合言葉なしでは起動しません";
   if (shareMode() === "lan" && [...accessCode()].length < MIN_ACCESS_CODE)
     return `SHARE_MODE=lan のときは ACCESS_CODE（合言葉）を${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`;
+  const mentorProblem = shareMode() === "lan" ? mentorConfigProblem() : null;
+  if (mentorProblem) return mentorProblem;
   const perPerson = (process.env.SHARE_PER_PERSON_USD ?? "").trim();
   if (shareMode() === "lan" && perPerson && !(Number(perPerson) > 0))
     return `SHARE_PER_PERSON_USD（見せる用の1人あたりの API 代の上限）は 0 より大きい数にしてください（例：5）`;
@@ -59,6 +61,26 @@ function safeEqual(a: string, b: string): boolean {
 }
 /** 入力された合言葉が合っているか */
 export const codeMatches = (input: string | null | undefined) => !!accessCode() && !!input && safeEqual(input.trim(), accessCode());
+
+// ---- メンター用の合言葉（MENTOR_ACCESS_CODE、任意） ----------------------------------------------
+//   一般の合言葉と同じ守り（12文字以上・回数の制限・全体の上限・値を表示しない）。入った人は1人あたりの上限が SHARE_MENTOR_USD になり、
+//   使われた結果・実行の記録に role: "mentor" が付く（lib/personBudget.ts の roleOf）。画面の見た目は一般の人と同じ
+export const mentorCode = () => (process.env.MENTOR_ACCESS_CODE ?? "").trim();
+/** メンターの印（cookie nb_role）の値。合言葉の値そのものは入れない */
+export const mentorToken = (code = mentorCode()) => createHash("sha256").update(`netacho-mentor:${code}`).digest("hex");
+export const MENTOR_COOKIE = "nb_role";
+/** 入力された合言葉がメンター用か */
+export const mentorCodeMatches = (input: string | null | undefined) => !!mentorCode() && !!input && safeEqual(input.trim(), mentorCode());
+/** メンター用の設定の問題（なければ null）。設定しないなら問題なし */
+export function mentorConfigProblem(): string | null {
+  const m = mentorCode();
+  const usd = (process.env.SHARE_MENTOR_USD ?? "").trim();
+  if (usd && !(Number(usd) > 0)) return "SHARE_MENTOR_USD（メンターの1人あたりの API 代の上限）は 0 より大きい数にしてください（例：15）";
+  if (!m) return null;
+  if ([...m].length < MIN_ACCESS_CODE) return `MENTOR_ACCESS_CODE（メンター用の合言葉）は${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`;
+  if (m === accessCode()) return "MENTOR_ACCESS_CODE（メンター用の合言葉）は ACCESS_CODE と別のものにしてください";
+  return null;
+}
 
 const LOOPBACK = new Set(["localhost", "127.0.0.1", "::1", "[::1]", "::ffff:127.0.0.1"]);
 /** Host ヘッダー（ポートつき）からホスト名だけ */
@@ -116,7 +138,7 @@ export function checkRequest(r: GateInput): Gate {
   if (blocked) return { ok: false, status: 403, error: blocked.reason };
   // 合言葉の入力画面と、その送り先は合言葉なしで開ける
   if (r.pathname === ACCESS_PATH || (r.pathname === ACCESS_API && r.method === "POST")) return { ok: true };
-  const authed = (!!r.cookie && safeEqual(r.cookie, accessToken())) || codeMatches(r.headerCode);
+  const authed = (!!r.cookie && safeEqual(r.cookie, accessToken())) || codeMatches(r.headerCode) || mentorCodeMatches(r.headerCode);
   if (authed) return { ok: true };
   if (isApi) return { ok: false, status: 401, error: "合言葉が必要です。画面を開き直して、合言葉を入れてください" };
   return { ok: false, status: 303, error: "合言葉が必要です", redirectTo: `${ACCESS_PATH}?next=${encodeURIComponent(r.pathname)}` };

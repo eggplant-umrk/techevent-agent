@@ -14,8 +14,7 @@ import { PROGRESS_ORDER, progressOf } from "@/lib/progressStage";
 /** モックで、貼った依頼の準備にかける時間（本物は約30秒。モックは4段階を順に見せるだけ） */
 const MOCK_PREP_MS = 10000;
 
-/** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
-const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
+import { askBack, CONFIRMING, outreachFacts, requestItems } from "@/lib/askBack";
 import proposals from "./proposals.json";
 import postevent from "./postevent.json";
 import venueFixtures from "./venues.json";
@@ -146,13 +145,20 @@ const NO_FIT: Omit<Proposal, "run_id" | "request_id"> = {
 function draftFor(c: Candidate, req: SpeakingRequest | undefined): OutreachDraft {
   const ev = req?.event;
   const title = ev?.title ?? "ご相談中のイベント";
-  const mins = ev?.duration_min ?? 10;
+  // 人数と持ち時間：分かっていれば値、分からなければ「主催者に確認中」（本物の下書きと同じ決まり。lib/askBack.ts）
+  const items = requestItems(req);
+  const facts = outreachFacts(items);
+  const duration = facts.find((f) => f.key === "duration");
+  const size = facts.find((f) => f.key === "audience_size");
+  const mins = ev?.duration_min ?? (Number.parseInt(duration?.value ?? "", 10) || 10);
+  const slot = duration && !duration.value ? `登壇の枠（持ち時間は${CONFIRMING}）` : `${mins}分の枠`;
+  const sizeLine = size ? `\n${size.label}は${size.value ?? CONFIRMING}です。` : "";
   return {
     subject: `【ご相談】${title}での${ev?.format ?? "LT"}登壇について`,
     message: `${c.name.split(" ")[0]}さん
 
 技術広報の〇〇です。突然すみません。
-${ev ? `${ev.date}に開催される「${title}」（${ev.audience}）` : `「${title}」`}で、LayerXから${mins}分の枠をいただいています。
+${ev ? `${ev.date}に開催される「${title}」（${ev.audience}）` : `「${title}」`}で、LayerXから${slot}をいただいています。${sizeLine}
 
 ${c.name.split(" ")[0]}さんの取り組みを拝見して、
 「${c.theme}」
@@ -176,7 +182,7 @@ ${c.name.split(" ")[0]}さんの取り組みを拝見して、
       theme: c.theme,
       organizer: req?.requester?.contact_name ?? req?.intake?.organizer ?? null,
       eventName: ev?.title ?? req?.intake?.event_name ?? null,
-      undecided: (req?.intake?.undecided ?? []).map((f) => INTAKE_LABEL_MOCK[f]),
+      undecided: askBack(items).map((i) => i.label),
     }),
     organizer_reply_note: null,
   };

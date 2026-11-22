@@ -62,6 +62,10 @@ const EDGE_PLAN: Record<string, { priority: EvalPriority; checks: string[]; para
   F3: { priority: P(2, 2), checks: ["entry_accepted", "candidates_max", "no_internal_terms"] },
   F4: { priority: P(2, 3), checks: ["entry_accepted", "no_forbidden_words", "candidates_max"] },
   F5: { priority: P(2, 1), checks: ["entry_accepted", "intake_matches", "candidates_max"], params: { intake: { date: "2027-01-23", format: "LT10分", theme: "アクセシビリティ" } } },
+  // 聞き返し（feature/ask-back で足した3件）：人数などの読み取りと、会話にない数字を作らないこと。足した項目そのものの判定は scripts/test_ask_back.ts
+  A1: { priority: P(3, 2), checks: ["entry_accepted", "intake_matches", "kind_is", "candidates_max", "organizer_reply_clean"], params: { kind: "request", intake: { date: "2027-01-19", format: "LT（10分）", organizer: "西村" } } },
+  A2: { priority: P(3, 2), checks: ["entry_accepted", "intake_matches", "kind_is", "candidates_max", "organizer_reply_clean"], params: { kind: "request", intake: { date: "2027-02-09", organizer: "大野" } } },
+  A3: { priority: P(2, 3), checks: ["entry_accepted", "intake_matches", "kind_is", "candidates_max", "no_forbidden_words", "organizer_reply_clean"], params: { kind: "request", intake: { date: "2027-03-03", organizer: "久保" } } },
 };
 
 /** 本番で流した結果（scripts/try_edge_cases.ts が docs/edge_cases_result.json に保存。なければ空） */

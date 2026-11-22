@@ -2,6 +2,7 @@
 //   { code: string } → 200 { ok: true } ／ 401 ／ 429（同じ送り元が続けて間違えたとき・全体の間違いが多いとき。lib/accessGuard.ts）
 import { ACCESS_COOKIE, accessToken, codeMatches, shareMode } from "@/lib/share";
 import { accessLock, accessSourceKey, noteAccessFailure, noteAccessSuccess } from "@/lib/accessGuard";
+import { newPersonId, personCookieHeader, personCookieOf } from "@/lib/personBudget";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,5 +23,7 @@ export async function POST(req: Request) {
   noteAccessSuccess(key);
   const res = Response.json({ ok: true });
   res.headers.append("Set-Cookie", `${ACCESS_COOKIE}=${accessToken()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 12}`);
+  // 人ごとの印（1人あたりの API 代の上限を数えるため。合言葉の印は全員同じ値なので別に付ける）。もう持っていれば変えない
+  if (!personCookieOf(req.headers.get("cookie"))) res.headers.append("Set-Cookie", personCookieHeader(newPersonId()));
   return res;
 }

@@ -1,6 +1,6 @@
 // 合言葉を全員に公開して見せるときの守りのテスト（APIは使わない・data/ に書き込まない）。
 //   npm run test:hardening
-// 見るもの：lan で上限が必須／API を使う操作は同時に2件まで／lan で「ネタ帳を更新」を止める／見せる用で ?debug を外す／
+// 見るもの：lan で上限が必須／API を使う操作は同時に2件まで／lan の「ネタ帳を更新」の守り（409・1人あたり・見積もり）／見せる用で ?debug を外す／
 //           発表用と見せる用を分けて立てる（設定・置き場・片付け）／Slack ボットは発表用だけ／受信箱のリンクは Slack だけ／
 //           下書きは保存済みの候補から引き直す／提出の中身を作業ログに流さない／合言葉のあとの移動先
 import fs from "node:fs";
@@ -32,12 +32,15 @@ async function main() {
   process.env.SHARE_BUDGET_USD = "5";
   check("合言葉と上限がそろえば起動できる", share.shareConfigProblem() === null);
 
-  // ---- 1. lan で「ネタ帳を更新」を止める
+  // ---- 1. lan でも「ネタ帳を更新」を使える（11/22 から）。代わりに3つの守りが効いていること
   const nb = share.checkRequest({ method: "POST", pathname: "/api/notebook", host: "192.168.1.20:3100", origin: "http://192.168.1.20:3100", forwardedFor: null, cookie: share.accessToken(), headerCode: null });
-  check("lan：合言葉があっても「ネタ帳を更新」は 403 で止め、理由を返す", !nb.ok && nb.status === 403 && nb.error.includes("ネタ帳を更新"));
-  const { POST: notebookPost } = await import("../app/api/notebook/route");
-  const nbRes = await notebookPost();
-  check("lan：「ネタ帳を更新」の窓口自体も止める（入口を通らなくても）", nbRes.status === 403 && ((await nbRes.json()) as { error: string }).error.includes("ネタ帳を更新"));
+  check("lan：合言葉があれば「ネタ帳を更新」も入口を通す", nb.ok);
+  check("lan：「ネタ帳を更新」は API を使う操作として、合計の上限と1人あたりの上限の対象", share.spendsApi("POST", "/api/notebook"));
+  const nbSrc = fs.readFileSync(path.join("app", "api", "notebook", "route.ts"), "utf-8");
+  check("守り1：動いている間の2回目は 409（二重実行の防止）", nbSrc.includes("if (g.__notebookUpdating) return Response.json({ error: NOTEBOOK_BUSY }, { status: 409 });"));
+  check("守り2：1人あたりの上限で数える（perPerson で包む）", nbSrc.includes("export const POST = perPerson(slotted(handlePost));"));
+  const nbLib = fs.readFileSync(path.join("lib", "notebook.ts"), "utf-8");
+  check("守り3：1回の見積もりが NOTEBOOK_BUDGET_USD を超えるなら始めない・途中で届いたら残りは次回", /const overBudget = estimate > cfg\.budgetUsd;/.test(nbLib) && nbLib.includes("今回の金額が上限"));
   check("lan：ほかの API を使う操作（候補を出す）は止めない", share.checkRequest({ method: "POST", pathname: "/api/agent", host: "192.168.1.20:3100", origin: null, forwardedFor: null, cookie: share.accessToken(), headerCode: null }).ok);
 
   // ---- 2. 見せる用で ?debug を外す
@@ -110,7 +113,7 @@ async function main() {
   check("数は .env の API_MAX_CONCURRENT で変えられる", slots.maxApiSlots() === 1);
   delete process.env.API_MAX_CONCURRENT;
   const routes = ["agent", "notebook", "events/[id]/analyze", "events/[id]/import", "draft", "blog-ideas", "venues", "venues/draft"];
-  const unwrapped = routes.filter((r) => !fs.readFileSync(path.join("app", "api", r, "route.ts"), "utf-8").includes("export const POST = slotted(handlePost)"));
+  const unwrapped = routes.filter((r) => !fs.readFileSync(path.join("app", "api", r, "route.ts"), "utf-8").includes("slotted(handlePost)"));
   const inboxRoute = fs.readFileSync(path.join("app", "api", "inbox", "route.ts"), "utf-8");
   check("API を使う窓口はすべて、同時実行の上限を通す（受信箱への追加は候補づくりが終わるまで）", unwrapped.length === 0 && inboxRoute.includes("acquireApiSlotWait(req.signal)") && inboxRoute.includes("extractIntakeWithAgent, release)"), unwrapped.join(","));
   const inbox = await import("../lib/inbox");

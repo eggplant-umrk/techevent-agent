@@ -44,11 +44,21 @@ export interface DraftResponse {
   total_usd: number;
 }
 
+/** GET /api/state の形 */
+export interface StateResponse {
+  models: ModelChoice;
+  pending_employees: number;
+  trace_allowed?: boolean;
+  feedback_reasons?: ReasonCodes;
+  /** 見せる用（SHARE_MODE=lan）のときだけ：その人の残り（1人あたりの上限があるとき） */
+  share?: { person_limit_usd: number | null; person_remaining_usd: number | null } | null;
+}
+
 export interface Api {
   mock: boolean;
   cards(): Promise<{ cards: NotebookCard[]; units: string[] }>;
   /** trace_allowed：実行の記録の画面を開けるか（見せる用では、この端末〔127.0.0.1〕からだけ） */
-  state(): Promise<{ models: ModelChoice; pending_employees: number; trace_allowed?: boolean; feedback_reasons?: ReasonCodes }>;
+  state(): Promise<StateResponse>;
   /** 使われた結果（この候補は違う・下書きを直して使った など）を送る。記録の側（POST /api/feedback）へ */
   feedback(input: FeedbackInput): Promise<void>;
   /** 記録の側（POST /api/feedback）があるか。ないうちは、使われた結果のボタンを出さない */
@@ -150,7 +160,7 @@ const post = (url: string, body?: unknown) =>
 export const realApi: Api = {
   mock: false,
   cards: () => safeFetch("/api/cards").then(json<{ cards: NotebookCard[]; units: string[] }>),
-  state: () => safeFetch("/api/state").then(json<{ models: ModelChoice; pending_employees: number; trace_allowed?: boolean; feedback_reasons?: ReasonCodes }>),
+  state: () => safeFetch("/api/state").then(json<StateResponse>),
   feedback: async (input) => {
     await json(await post("/api/feedback", input));
   },

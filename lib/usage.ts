@@ -4,6 +4,7 @@ import { appendUsage, usage, type UsageEntry } from "./data";
 import { costUsd } from "./pricing";
 import { traceUsagePurpose } from "./trace";
 import { envConfig, SWITCH_HEAVY_MODEL, SWITCH_LOOP_MODEL } from "./config";
+import { notePersonUsage } from "./personBudget";
 
 type AnyUsage = Pick<
   Anthropic.Usage,
@@ -29,6 +30,7 @@ export function recordUsage(runId: string, purpose: UsageEntry["purpose"], model
     cost_usd: costUsd(model, t),
   };
   appendUsage(entry);
+  notePersonUsage(entry.cost_usd); // 見せる用：1人あたりの上限のため、いまの人に足す（lib/personBudget.ts）
   traceUsagePurpose(purpose, model, t.output); // 実行の記録の、直近の呼び出しに使い道の名前を付ける
   return entry;
 }

@@ -44,6 +44,8 @@ if (shareProfile) {
     fail(`見せる用の ACCESS_CODE（合言葉）は${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`);
   const budget = Number((process.env.SHARE_BUDGET_USD ?? "").trim());
   if (!(Number.isFinite(budget) && budget > 0)) fail("見せる用には .env の SHARE_BUDGET_USD（見せている間の API 代の上限、例：5）が必要です。上限なしでは起動しません");
+  const perPerson = (process.env.SHARE_PER_PERSON_USD ?? "").trim();
+  if (perPerson && !(Number(perPerson) > 0)) fail("SHARE_PER_PERSON_USD（1人あたりの API 代の上限）は 0 より大きい数にしてください（例：5）。使わないときは空にします");
   host = (process.env.SHARE_BIND_HOST ?? "").trim() || "0.0.0.0";
   port = (process.env.SHARE_PORT ?? "").trim() || "3100";
   const dir = path.resolve((process.env.SHARE_DATA_DIR ?? "").trim() || path.join("data", "runtime-share"));

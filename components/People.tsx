@@ -6,6 +6,8 @@ import { ErrorLine, Spinner, Tag } from "./ui";
 
 export type NbLogLine = { text: string; tone: "info" | "ok" | "warn" | "error" };
 type Filter = "unpublished" | "noTalk";
+/** いちばん上の切り替え：人／アンケートの声／担当者未定のネタ */
+type NbView = "people" | "voices" | "unassigned";
 
 /**
  * ネタ帳タブの左：人の一覧（社員全員。カードのない人も出す）。
@@ -86,16 +88,44 @@ export function People({
       return n;
     });
   const anyFilter = filters.size > 0 || unit !== "" || needle !== "";
+  const clearFilters = () => {
+    setFilters(new Set());
+    setUnit("");
+    setQ("");
+  };
+
+  // いちばん上の切り替え（タブの形）：右に何を出すか。アンケートの声・担当者未定のネタは右の一覧を開く。どちらも開いていなければ「人」
+  const view: NbView = voicesOpen ? "voices" : unassignedOpen ? "unassigned" : "people";
+  const select = (v: NbView) => {
+    if (v === view) return;
+    if (v === "voices") onVoices();
+    else if (v === "unassigned") onUnassigned();
+    else if (voicesOpen) onVoices();
+    else if (unassignedOpen) onUnassigned();
+  };
+  const views: Array<{ id: NbView; label: string; count: number; title: string }> = [
+    { id: "people", label: "人", count: people.length, title: "社員の一覧と、その人のネタ" },
+    { id: "voices", label: "アンケートの声", count: voiceCount, title: "イベント後のアンケートで、参加者が今後聞いてみたい話" },
+    { id: "unassigned", label: "担当者未定のネタ", count: unassignedCount, title: "リリースノートから作った、担当者が決まっていないネタ" },
+  ];
 
   return (
     <section aria-labelledby="people-title" className="surface notebook">
       <div className="nb-top">
-        <div className="row-between">
+        {/* 切り替え：選んでいるものは下線と太字（塗りつぶさない） */}
+        <div role="tablist" aria-label="ネタ帳の表示" className="nb-tabs">
+          {views.map((v) => (
+            <button key={v.id} type="button" role="tab" aria-selected={view === v.id} className="nb-tab" title={v.title} onClick={() => select(v.id)}>
+              {v.label} <span className="nb-tab-count">{v.count}</span>
+            </button>
+          ))}
+        </div>
+        <div className="row-between nb-head">
           <h2 id="people-title" className="h2">
-            人 <span className="meta">{anyFilter ? `${visible.length} / ${people.length}人` : `${people.length}人`}</span>
+            人
           </h2>
-          <div className="btn-row">
-            <button type="button" className="btn btn-sm btn-ghost link-btn" onClick={onBlog} disabled={blogBusy}>
+          <div className="nb-actions">
+            <button type="button" className="link small" onClick={onBlog} disabled={blogBusy}>
               {blogBusy ? "考えています…" : "ブログのネタを出す"}
             </button>
             <button type="button" className="btn btn-sm" onClick={onUpdate} disabled={updating}>
@@ -103,33 +133,45 @@ export function People({
             </button>
           </div>
         </div>
-        <div className="chips">
-          <button type="button" className="chip voices-chip" aria-pressed={voicesOpen} onClick={onVoices} title="イベント後のアンケートで、参加者が今後聞いてみたい話">
-            アンケートの声 {voiceCount}件
-          </button>
-          <button type="button" className="chip voices-chip" aria-pressed={unassignedOpen} onClick={onUnassigned} title="リリースノートから作った、担当者が決まっていないネタ">
-            担当者未定のネタ {unassignedCount}件
-          </button>
-        </div>
-        <input type="search" className="input" aria-label="人を探す" placeholder="名前・所属・得意分野で検索" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div className="filter-row">
-          <div role="group" aria-label="絞り込み" className="chips">
-            <button type="button" className="chip" aria-pressed={filters.has("unpublished")} onClick={() => toggle("unpublished")}>
-              未発信のネタあり {counts.unpublished}
-            </button>
-            <button type="button" className="chip" aria-pressed={filters.has("noTalk")} onClick={() => toggle("noTalk")}>
-              初登壇 {counts.noTalk}
-            </button>
+        {/* 絞り込み：「人」を選んでいるときだけ。検索の入力と、押すと ✓ が付く小さな印・事業部の選択（2行まで） */}
+        {view === "people" && (
+          <div className="nb-filters">
+            <div className="nb-filter-row">
+              <input type="search" className="input input-sm nb-search" aria-label="人を探す" placeholder="名前・所属・得意分野で検索" value={q} onChange={(e) => setQ(e.target.value)} />
+              <select className="input input-sm nb-unit" aria-label="事業部" value={unit} onChange={(e) => setUnit(e.target.value)}>
+                <option value="">すべての事業部</option>
+                {units.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div role="group" aria-label="絞り込み" className="nb-checks">
+              <button type="button" className="nb-check" aria-pressed={filters.has("unpublished")} onClick={() => toggle("unpublished")}>
+                <span className="nb-box" aria-hidden="true">
+                  {filters.has("unpublished") ? "✓" : ""}
+                </span>
+                未発信のネタあり {counts.unpublished}
+              </button>
+              <button type="button" className="nb-check" aria-pressed={filters.has("noTalk")} onClick={() => toggle("noTalk")}>
+                <span className="nb-box" aria-hidden="true">
+                  {filters.has("noTalk") ? "✓" : ""}
+                </span>
+                初登壇 {counts.noTalk}
+              </button>
+            </div>
           </div>
-          <select className="input input-sm" aria-label="事業部" value={unit} onChange={(e) => setUnit(e.target.value)}>
-            <option value="">すべての事業部</option>
-            {units.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
-        </div>
+        )}
+        {anyFilter && (
+          <p className="meta nb-filtered" role="status">
+            {visible.length}人に絞っています（
+            <button type="button" className="link" onClick={clearFilters}>
+              解除
+            </button>
+            ）
+          </p>
+        )}
       </div>
 
       {(log.length > 0 || updating) && (
@@ -183,15 +225,7 @@ export function People({
         {loaded && people.length > 0 && visible.length === 0 && (
           <li className="empty">
             <span className="meta">条件に合う人がいません。</span>
-            <button
-              type="button"
-              className="link"
-              onClick={() => {
-                setFilters(new Set());
-                setUnit("");
-                setQ("");
-              }}
-            >
+            <button type="button" className="link" onClick={clearFilters}>
               絞り込みを外す
             </button>
           </li>

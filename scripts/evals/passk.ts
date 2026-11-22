@@ -46,9 +46,9 @@ async function main() {
   process.env.DRAFTS_FILE = path.join(tmpDir, "drafts.json");
   process.env.FIXED_TODAY ??= "2026-11-21";
 
-  const { edgeCases, raiseCases, usageKeepCases } = await import("./cases");
+  const { edgeCases, promotedCases, raiseCases, usageKeepCases } = await import("./cases");
   const { runChecks } = await import("./checks");
-  const all: EvalCase[] = [...edgeCases(), ...usageKeepCases(), ...raiseCases()];
+  const all: EvalCase[] = [...edgeCases(), ...promotedCases(), ...usageKeepCases(), ...raiseCases()];
   // 対象：流せる入力（受信箱の文・サンプルの依頼）で、入口で断られないもの。--only がなければ優先度の高いもの
   const targets = all
     .filter((c) => (ONLY.length ? ONLY.includes(c.id) : isHighPriority(c.priority)))

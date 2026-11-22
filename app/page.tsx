@@ -803,6 +803,7 @@ export default function Home() {
             mode={mode}
             onMode={setMode}
             customText={customText}
+            demoIds={inboxItems.flatMap((x) => x.demo_ids ?? [])}
             onCustomText={setCustomText}
             running={running}
             onRun={run}

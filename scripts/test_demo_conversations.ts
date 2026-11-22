@@ -2,7 +2,7 @@
 import "./_isolate";
 import fs from "node:fs";
 import path from "node:path";
-import { demoConversations, MAX_DEMO_CONVERSATIONS } from "../lib/demoConversations";
+import { demoConversations, demoIdsIn, lockedNote, MAX_DEMO_CONVERSATIONS } from "../lib/demoConversations";
 import { hasRequestText } from "../lib/requestText";
 import { employees } from "../lib/data";
 
@@ -42,6 +42,33 @@ check(
   demoConversations({ conversations: [1, 2, 3, 4].map((i) => ({ id: `x${i}`, label: `L${i}`, text: `T${i}` })) }).length === MAX_DEMO_CONVERSATIONS,
 );
 
+// 例3は、受信箱に例2の依頼があるときだけ押せる（requires）
+check("例3は例2を requires にする（例1・例2はなし）", !ex1.requires && !ex2.requires && ex3.requires === "ex2");
+check("例2がないとき：「例2を入れると使えます」", lockedNote(ex3, [], list) === "例2を入れると使えます");
+check("例2があるとき：押せる（一言なし）", lockedNote(ex3, ["ex2"], list) === null && lockedNote(ex1, [], list) === null && lockedNote(ex2, [], list) === null);
+check("例1だけがあっても、例3は押せない", lockedNote(ex3, ["ex1"], list) !== null);
+check("受信箱の会話に入っている例：例2そのもの → ex2", demoIdsIn(ex2.text, list).join(",") === "ex2");
+check("続きの会話で更新された依頼（例3の会話）にも例2が入っている → ex2・ex3", demoIdsIn(ex3.text, list).join(",") === "ex2,ex3");
+check("空白・改行の違いは気にしない", demoIdsIn(ex2.text.replace(/\n\n/g, "\n").replace(/ /g, "　"), list).includes("ex2"));
+check("一部だけ・関係ない文は入らない", demoIdsIn(ex2.text.slice(0, 40), list).length === 0 && demoIdsIn("こんにちは", list).length === 0);
+check(
+  "並びにない例を requires にしていたら外す（押せないままにしない）",
+  demoConversations({ conversations: [{ id: "a", label: "A", text: "t", requires: "zzz" }] })[0].requires === undefined,
+);
+
+async function inboxChecks() {
+  // 受信箱の一覧（GET /api/inbox の items）に demo_ids が付く。見せる用では、見る人ごとの受信箱（INBOX_FILE が人の場所）で作る
+  const inbox = await import("../lib/inbox");
+  const { boardList } = await import("../lib/board");
+  const before = boardList().some((x) => (x as { demo_ids?: string[] }).demo_ids?.includes("ex2"));
+  const it = inbox.registerInbox({ text: ex2.text, source: "manual" });
+  const row = boardList().find((x) => x.id === it.id) as { demo_ids?: string[] } | undefined;
+  check("受信箱の一覧：例2を入れる前は印がない", !before);
+  check("受信箱の一覧：例2を入れると、その依頼に demo_ids: ex2", row?.demo_ids?.join(",") === "ex2", JSON.stringify(row?.demo_ids));
+  const other = inbox.registerInbox({ text: "「Mock Night」運営です。12月18日（金）19時〜、LT10分で登壇をお願いできる方を探しています。", source: "manual" });
+  check("関係ない依頼には印がない", (boardList().find((x) => x.id === other.id) as { demo_ids?: string[] })?.demo_ids?.length === 0);
+}
+
 // 画面：発表用と見せる用で同じ部品（RequestInput の custom）に出す。見せる用だけ隠すような分岐を入れていない
 const src = fs.readFileSync(path.join(process.cwd(), "components", "RequestInput.tsx"), "utf-8");
 const part = src.slice(src.indexOf("function DemoExamples"), src.indexOf("const when ="));
@@ -49,5 +76,9 @@ check("画面に「架空の会話です」と書く", part.includes("架空の�
 check("置き換えの確かめは窓（confirm）を出さない", !/confirm\(|alert\(|window\./.test(part));
 check("見せる用でも出す（share・visitor で分けない）", !/share|visitor|SHARE/.test(part) && /mode === "custom" && <DemoExamples/.test(src));
 
-console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
-process.exitCode = failed ? 1 : 0;
+check("例3が押せないときは、ボタンを押せなくして下に一言（aria-describedby でつなぐ）", part.includes("disabled={disabled || !!note}") && part.includes("aria-describedby"));
+
+inboxChecks().then(() => {
+  console.log(failed ? `\n${failed}件 失敗` : "\nすべて合格");
+  process.exitCode = failed ? 1 : 0;
+});

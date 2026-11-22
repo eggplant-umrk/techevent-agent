@@ -9,6 +9,7 @@ import type { Api, DraftResponse } from "./api";
 import { fallbackOrganizerReply } from "@/lib/organizerReply";
 import { recordsFor, requestState } from "@/lib/requestStage";
 import { eventUrlsIn } from "@/lib/eventUrls";
+import { demoIdsIn } from "@/lib/demoConversations";
 import { PROGRESS_ORDER, progressOf } from "@/lib/progressStage";
 
 /** モックで、貼った依頼の準備にかける時間（本物は約30秒。モックは4段階を順に見せるだけ） */
@@ -460,7 +461,7 @@ export function mockApi(real: Api): Api {
       const id = `inb-mock-${inboxItems.length + 1}`;
       const now = new Date().toISOString();
       const title = text.split(/\r?\n/).find((l) => l.trim()) ?? text;
-      inboxItems.unshift({ id, source: "manual", status: "processing", received_at: now, is_new: true, title: title.slice(0, 70), candidate_names: [], no_fit: false, error: null, permalink: null });
+      inboxItems.unshift({ id, source: "manual", status: "processing", received_at: now, is_new: true, title: title.slice(0, 70), candidate_names: [], no_fit: false, error: null, permalink: null, demo_ids: demoIdsIn(text) });
       inboxTexts.set(id, text);
       // 準備の進み具合：本物と同じ4段階を、2.5秒ずつ順に進めて約10秒で準備済みにする
       addedAt.set(id, Date.now());

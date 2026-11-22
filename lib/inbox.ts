@@ -364,6 +364,7 @@ export function safeSlackPermalink(url: string | null | undefined): string | nul
 export const NO_REQUEST_TEXT = "依頼の文が見つかりません（記号だけ・URL だけの文は受け付けません。URL の中身は読みません）";
 // 依頼の文がありそうかの入口のチェックは lib/requestText.ts（Slack ボットも同じものを使う）
 import { hasRequestText } from "./requestText";
+import { demoIdsIn } from "./demoConversations";
 export { hasRequestText, MIN_MEANINGFUL_CHARS } from "./requestText";
 
 export function parseInboxInput(body: unknown): { ok: true; input: InboxInput } | { ok: false; error: string } {
@@ -696,6 +697,8 @@ export interface InboxListItem {
   /** 種類の理由の一言と、画面に出す文 */
   kind_reason?: string | null;
   kind_label?: string | null;
+  /** この依頼の会話に入っている「例を入れる」の例（id）。例3を例2があるときだけ押せるようにするため。不適切な内容は空 */
+  demo_ids?: string[];
 }
 
 /** 不適切な内容の依頼の、一覧での題名 */
@@ -721,6 +724,7 @@ export function listView(it: InboxItem): InboxListItem {
     kind: it.kind ?? "request",
     kind_reason: it.kind && it.kind !== "request" ? it.kind_reason ?? null : null,
     kind_label: it.kind === "not_request" ? "依頼ではなさそうです" : it.kind === "inappropriate" ? "この内容には対応しません" : null,
+    demo_ids: it.kind === "inappropriate" ? [] : demoIdsIn(it.text),
   };
 }
 

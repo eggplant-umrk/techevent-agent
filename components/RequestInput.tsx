@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { BoardDetail } from "@/app/_client/types";
-import { demoConversations, type DemoConversation } from "@/lib/demoConversations";
+import { demoConversations, lockedNote, type DemoConversation } from "@/lib/demoConversations";
 import { requestItems } from "@/lib/askBack";
 import { displayDate } from "@/lib/dateText";
 import { md } from "./labels";
@@ -63,7 +63,18 @@ function IntakeRows({ intake, candidateDates }: { intake: NonNullable<BoardDetai
  * 「例を入れる」ボタン（架空の会話。中身は data/demo_conversations.json）。押すと入力欄にその会話が入る。
  * 入力欄にほかの文が入っていたら、置き換えてよいかをボタンの下で小さく確かめる（窓は出さない）
  */
-function DemoExamples({ current, onPick, disabled }: { current: string; onPick: (text: string) => void; disabled: boolean }) {
+function DemoExamples({
+  current,
+  onPick,
+  disabled,
+  presentIds,
+}: {
+  current: string;
+  onPick: (text: string) => void;
+  disabled: boolean;
+  /** 今の受信箱（見せる用では見る人ごと）にある例の id。requires のある例（例3）は、その例があるときだけ押せる */
+  presentIds: string[];
+}) {
   const items = demoConversations();
   const [asking, setAsking] = useState<DemoConversation | null>(null);
   if (!items.length) return null;
@@ -76,12 +87,31 @@ function DemoExamples({ current, onPick, disabled }: { current: string; onPick: 
     <div className="demo-examples" role="group" aria-label="例を入れる">
       <div className="demo-examples-row">
         <span className="meta">例を入れる：</span>
-        {items.map((c) => (
-          <button key={c.id} type="button" className="btn btn-sm" disabled={disabled} aria-pressed={asking?.id === c.id ? true : undefined} onClick={() => pick(c)}>
-            {c.label}
-          </button>
-        ))}
+        {items.map((c) => {
+          const note = lockedNote(c, presentIds, items);
+          return (
+            <button
+              key={c.id}
+              type="button"
+              className="btn btn-sm"
+              disabled={disabled || !!note}
+              aria-describedby={note ? `demo-locked-${c.id}` : undefined}
+              aria-pressed={asking?.id === c.id ? true : undefined}
+              onClick={() => pick(c)}
+            >
+              {c.label}
+            </button>
+          );
+        })}
       </div>
+      {items.map((c) => {
+        const note = lockedNote(c, presentIds, items);
+        return note ? (
+          <p key={c.id} id={`demo-locked-${c.id}`} className="meta small demo-locked">
+            {note}
+          </p>
+        ) : null;
+      })}
       <p className="meta small">架空の会話です（人物・イベントは実在しません）。</p>
       {asking && (
         <p className="small demo-confirm" role="status">
@@ -129,7 +159,10 @@ export function RequestInput({
   progress = null,
   children,
   onProceed,
+  demoIds = [],
 }: {
+  /** 今の受信箱（見せる用では見る人ごと）にある「例を入れる」の例の id（受信箱の一覧の demo_ids から） */
+  demoIds?: string[];
   mode: RequestMode;
   onMode: (m: RequestMode) => void;
   customText: string;
@@ -240,7 +273,7 @@ export function RequestInput({
         </div>
       )}
 
-      {mode === "custom" && <DemoExamples current={customText} onPick={onCustomText} disabled={adding} />}
+      {mode === "custom" && <DemoExamples current={customText} onPick={onCustomText} disabled={adding} presentIds={demoIds} />}
 
       {mode === "custom" && (
         <label className="field">

@@ -298,6 +298,20 @@ async function main() {
   delete process.env.VISITOR_MAX;
   check("上限の既定は200人", vs.visitorMax() === 200);
 
+  // ---- 「例を入れる」の例3は、見る人ごとの受信箱で判断する（人 D が例2を入れても、人 E の例3は押せないまま）
+  {
+    const { demoConversations, lockedNote } = await import("../lib/demoConversations");
+    const ex = demoConversations();
+    const ex2 = ex.find((c) => c.id === "ex2")!;
+    const ex3 = ex.find((c) => c.id === "ex3")!;
+    const D = visitorKey(newVisitorId());
+    const E = visitorKey(newVisitorId());
+    const idsOf = (k: string) => vs.withVisitor(k, () => board.boardList().flatMap((x) => (x as { demo_ids?: string[] }).demo_ids ?? []));
+    vs.withVisitor(D, () => inbox.registerInbox({ text: ex2.text, source: "manual" }));
+    check("例を入れる：例2を入れた人 D は例3を押せる", lockedNote(ex3, idsOf(D), ex) === null, idsOf(D).join(","));
+    check("例を入れる：入れていない人 E は例3を押せない（「例2を入れると使えます」）", lockedNote(ex3, idsOf(E), ex) === "例2を入れると使えます", idsOf(E).join(","));
+  }
+
   // ---- 発表用（SHARE_MODE なし）は今までどおり
   for (const k of Object.keys(SHARE_ENV)) delete process.env[k];
   const rt = path.join(tmp, "runtime-local");

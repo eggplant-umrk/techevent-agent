@@ -46,6 +46,12 @@ if (shareProfile) {
   if (!(Number.isFinite(budget) && budget > 0)) fail("見せる用には .env の SHARE_BUDGET_USD（見せている間の API 代の上限、例：5）が必要です。上限なしでは起動しません");
   const perPerson = (process.env.SHARE_PER_PERSON_USD ?? "").trim();
   if (perPerson && !(Number(perPerson) > 0)) fail("SHARE_PER_PERSON_USD（1人あたりの API 代の上限）は 0 より大きい数にしてください（例：5）。使わないときは空にします");
+  const mentor = (process.env.MENTOR_ACCESS_CODE ?? "").trim();
+  if (mentor && [...mentor].length < MIN_ACCESS_CODE)
+    fail(`見せる用の MENTOR_ACCESS_CODE（メンター用の合言葉）は${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`);
+  if (mentor && mentor === (process.env.ACCESS_CODE ?? "").trim()) fail("MENTOR_ACCESS_CODE（メンター用の合言葉）は ACCESS_CODE と別のものにしてください");
+  const mentorUsd = (process.env.SHARE_MENTOR_USD ?? "").trim();
+  if (mentorUsd && !(Number(mentorUsd) > 0)) fail("SHARE_MENTOR_USD（メンターの1人あたりの API 代の上限）は 0 より大きい数にしてください（例：15）。使わないときは空にします");
   host = (process.env.SHARE_BIND_HOST ?? "").trim() || "0.0.0.0";
   port = (process.env.SHARE_PORT ?? "").trim() || "3100";
   const dir = path.resolve((process.env.SHARE_DATA_DIR ?? "").trim() || path.join("data", "runtime-share"));
@@ -73,7 +79,7 @@ env.PORT = port;
 if (printOnly) {
   const pick = ["SHARE_MODE", "DATA_RUNTIME_DIR", "INBOX_FILE", "SAMPLE_PROPOSALS_FILE", "DRAFTS_FILE", "TALK_RECORD_FILE", "PEOPLE_FILE", "SURVEY_IMPORT_DIR", "USAGE_FILE", "SHARE_BUDGET_USD"];
   const shown = Object.fromEntries(pick.map((k) => [k, env[k] ?? ""]));
-  console.log(JSON.stringify({ profile: shareProfile ? "share" : "present", mode, host, port, access_code_set: !!(env.ACCESS_CODE ?? "").trim(), ...shown }));
+  console.log(JSON.stringify({ profile: shareProfile ? "share" : "present", mode, host, port, access_code_set: !!(env.ACCESS_CODE ?? "").trim(), mentor_code_set: !!(env.MENTOR_ACCESS_CODE ?? "").trim(), ...shown }));
   process.exit(0);
 }
 

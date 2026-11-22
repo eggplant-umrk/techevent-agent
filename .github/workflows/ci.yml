@@ -1,5 +1,8 @@
-# push と pull request のたびに、API を使わない確認だけを流す（型チェック・テスト・結合テストの保存済み結果の判定）。
-# 秘密の値（API キー・Slack のトークンなど）は使わない。.env もない状態で動く。
+# push と pull request のたびに、テストの層をすべて流す（並びと役割は docs/testing.md）。
+#   check：型チェック → 1. ユニット → 4. 評価（eval --offline と保つ評価）
+#   api  ：2. API（本物のサーバー＋偽の Anthropic）
+#   e2e  ：3. E2E（Playwright。ブラウザはここで入れる）
+# 本物の API・Slack は使わない。秘密の値（API キー・Slack のトークンなど）も使わない。.env もない状態で動く。
 name: CI
 
 on:
@@ -15,6 +18,7 @@ concurrency:
 
 jobs:
   check:
+    name: 型チェック・ユニット・評価
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -27,5 +31,48 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: 型チェック（キャッシュなし）
         run: npm run typecheck
-      - name: テスト（API なし。scripts/test_*.ts と eval --offline）
-        run: npm test
+      - name: 1. ユニット（scripts/test_*.ts）
+        run: npm run test:unit
+      - name: 4. 評価（eval --offline と保つ評価）
+        run: npm run test:eval
+
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: 依存を入れる
+        run: npm ci --no-audit --no-fund
+      - name: 2. API（本番用のビルド → 3201・3202番で起動 → 窓口に要求を投げる）
+        run: npm run test:api
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: 依存を入れる
+        run: npm ci --no-audit --no-fund
+      - name: Playwright のブラウザ（Chromium）を入れる
+        run: npx playwright install --with-deps chromium
+      - name: 3. E2E（本番用のビルド → 3211番で起動 → 画面でデモの流れを通す）
+        run: npm run test:e2e
+      - name: 失敗したときの記録（画面・トレース）を残す
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

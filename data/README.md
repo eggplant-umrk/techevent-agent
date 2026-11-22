@@ -15,6 +15,7 @@
 | [schedules.json](schedules.json) | 14件 | 社員の既知の予定（出張・登壇・リリース対応など） |
 | [cards.json](cards.json) | 18枚〜 | ネタ帳。Agentが活動を読んで作るカード。打診の結果もここに書き戻される |
 | [notebook_state.json](notebook_state.json) | — | ネタ帳の更新で、社員ごとにどの日付の活動まで読んだか |
+| [demo_conversations.json](demo_conversations.json) | 3件 | 「会話を貼って追加」の「例を入れる」ボタンの中身（架空の会話。ボタンの文字と会話。中身だけ差し替えてよい。画面にはビルドのときに入る） |
 | `usage.json` | — | APIの使用量と金額の記録。アプリが作る。gitには入れない |
 
 `employees.json`〜`application_rules.json`、`published.json`、`schedules.json` は [scripts/gen_data.py](../scripts/gen_data.py) で作り直せます（`python scripts/gen_data.py`）。検証は `python scripts/validate_data.py` です。

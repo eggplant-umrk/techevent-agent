@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import type { BoardDetail } from "@/app/_client/types";
+import { demoConversations, type DemoConversation } from "@/lib/demoConversations";
 import { requestItems } from "@/lib/askBack";
 import { displayDate } from "@/lib/dateText";
 import { md } from "./labels";
@@ -49,6 +51,53 @@ function IntakeRows({ intake }: { intake: NonNullable<BoardDetail["intake"]> }) 
         </details>
       )}
     </>
+  );
+}
+
+/**
+ * 「例を入れる」ボタン（架空の会話。中身は data/demo_conversations.json）。押すと入力欄にその会話が入る。
+ * 入力欄にほかの文が入っていたら、置き換えてよいかをボタンの下で小さく確かめる（窓は出さない）
+ */
+function DemoExamples({ current, onPick, disabled }: { current: string; onPick: (text: string) => void; disabled: boolean }) {
+  const items = demoConversations();
+  const [asking, setAsking] = useState<DemoConversation | null>(null);
+  if (!items.length) return null;
+  const pick = (c: DemoConversation) => {
+    if (current.trim() && current.trim() !== c.text) return setAsking(c);
+    setAsking(null);
+    onPick(c.text);
+  };
+  return (
+    <div className="demo-examples" role="group" aria-label="例を入れる">
+      <div className="demo-examples-row">
+        <span className="meta">例を入れる：</span>
+        {items.map((c) => (
+          <button key={c.id} type="button" className="btn btn-sm" disabled={disabled} aria-pressed={asking?.id === c.id ? true : undefined} onClick={() => pick(c)}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <p className="meta small">架空の会話です（人物・イベントは実在しません）。</p>
+      {asking && (
+        <p className="small demo-confirm" role="status">
+          入力欄の文を「{asking.label}」に置き換えますか？{" "}
+          <button
+            type="button"
+            className="link"
+            onClick={() => {
+              onPick(asking.text);
+              setAsking(null);
+            }}
+          >
+            置き換える
+          </button>
+          {" ／ "}
+          <button type="button" className="link" onClick={() => setAsking(null)}>
+            そのままにする
+          </button>
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -185,6 +234,8 @@ export function RequestInput({
           {inbox.status === "error" && <p className="error-line" role="alert">{inbox.error ?? "候補を出せませんでした"}。「もう一度探す」を押してください。</p>}
         </div>
       )}
+
+      {mode === "custom" && <DemoExamples current={customText} onPick={onCustomText} disabled={adding} />}
 
       {mode === "custom" && (
         <label className="field">

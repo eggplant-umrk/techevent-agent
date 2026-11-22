@@ -23,7 +23,8 @@ const LIST = args.includes("--list");
 /** 1回の読み取り＋候補づくりの見込み（今までの記録の上のほう）と、下書き1回の見込み */
 const RUN_MAX_USD = 0.2;
 const DRAFT_MAX_USD = 0.21;
-const OUT = path.join(process.cwd(), "docs", "evals_passk.json");
+/** 保存先（--out で変えられる。既定 docs/evals_passk.json） */
+const OUT = path.resolve(opt("--out") ?? path.join("docs", "evals_passk.json"));
 
 async function main() {
   const envFile = process.env.TRY_ENV_FILE || ".env";

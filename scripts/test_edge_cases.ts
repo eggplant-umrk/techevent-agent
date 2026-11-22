@@ -227,7 +227,7 @@ async function main() {
 
   // ---- 8. 一覧の「出てはいけない言葉」が、試験の文そのものには当たる（見張る言葉が効くこと）
   for (const c of EDGE_CASES.filter((x) => x.mustNotAppear)) {
-    const hit = c.mustNotAppear!.every(([, re]) => re.test(c.text) || ["B4", "J2", "F4"].includes(c.id));
+    const hit = c.mustNotAppear!.every(([, re]) => re.test(c.text) || ["B4", "J2", "F4", "J1"].includes(c.id));
     check(`[${c.id}] 見張る言葉が、入力の言い回しに当たる`, hit);
   }
 

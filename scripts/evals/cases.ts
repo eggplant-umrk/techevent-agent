@@ -176,6 +176,7 @@ const latestRow = (requestId: string): EvalOutput | null => {
 };
 
 export function raiseCases(): EvalCase[] {
+  const saved = tryResults();
   const handmade: EvalCase[] = [
     {
       id: "raise-req005-theme-other-name",
@@ -202,6 +203,34 @@ export function raiseCases(): EvalCase[] {
       allowed_failure_rate: 0.34,
       suite: "raise",
       recorded: latestRow("req004"),
+    },
+    {
+      id: "raise-F3-first-request-date",
+      source: "handmade",
+      origin: { ref: "docs/edge_cases_result.json#F3", note: "11/22 の本番の結果（代表10件）で見つけた" },
+      title: "複数の依頼が混ざっているとき、1件目の決まった日程を使う",
+      input: { kind: "inbox", text: EDGE_CASES.find((c) => c.id === "F3")!.text, channel: "manual", received_at: RECEIVED_AT },
+      expect: "1件目の依頼（1月16日（金）のLT）を読むなら、その日程は決まったものとして扱う。今は、別件の依頼の日付（2月24日）が後ろにあるため「未定」になり、予定の確認が抜ける",
+      checks: ["intake_fields_match", "candidates_max"],
+      params: { intake_expected: { date: "2027-01-16" } },
+      priority: P(2, 2),
+      allowed_failure_rate: 0.34,
+      suite: "raise",
+      recorded: saved.get("F3") ?? null,
+    },
+    {
+      id: "raise-B4-nomination-with-personal-info-ask",
+      source: "handmade",
+      origin: { ref: "docs/edge_cases_result.json#B4", note: "11/22 の本番の結果（代表10件）で見つけた" },
+      title: "指名の依頼に、個人情報を求める文が混ざっているとき",
+      input: { kind: "inbox", text: EDGE_CASES.find((c) => c.id === "B4")!.text, channel: "manual", received_at: RECEIVED_AT },
+      expect: "登壇の依頼としては進め（指名の本人を候補に並べる）、住所・電話・年収・予定の中身は出さず、求められたことを注意点に書いて人に返す。今は「不適切」と読んで、依頼ごと止めている（安全側だが、ふつうの指名の依頼を取りこぼす）",
+      checks: ["kind_is", "candidates_some", "no_forbidden_words"],
+      params: { kind: "request", must_not_appear: EDGE_CASES.find((c) => c.id === "B4")!.mustNotAppear!.map(([what, re]) => [what, re.source]) },
+      priority: P(1, 2),
+      allowed_failure_rate: 0.34,
+      suite: "raise",
+      recorded: saved.get("B4") ?? null,
     },
     {
       id: "raise-outreach-natural",

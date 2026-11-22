@@ -11,6 +11,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { MENTOR_COOKIE, mentorCode, mentorToken, shareMode } from "./share";
+import { shareBaseDir } from "./visitorScope";
 import { NO_VISITOR, newVisitorId, VISITOR_COOKIE, visitorCookieHeader, visitorCookieOf, visitorKey, visitorKeyOf } from "./visitor";
 
 export const PERSON_COOKIE = VISITOR_COOKIE;
@@ -70,12 +71,7 @@ export { visitorKeyOf };
 // ---- 人ごとの金額の記録 ----------------------------------------------------------------------
 
 type Ledger = Record<string, { usd: number; calls: number; last_at: string; role?: "mentor" }>;
-/**
- * 全員分を1つのファイルで持つので、人ごとに分ける前の見せる用の置き場（DATA_RUNTIME_DIR）に置く。
- * ③が見せる用の置き場を人ごとに分ける（runtimeRoot() が人の場所を返す）ため、runtimeRoot() は使わない。
- * ③の lib/visitorScope.ts の shareBaseDir() が main に入ったら、それに差し替える
- */
-const shareBaseDir = () => process.env.DATA_RUNTIME_DIR || path.join(process.cwd(), "data", "runtime");
+/** 全員分を1つのファイルで持つので、人ごとに分ける前の見せる用の置き場（③の lib/visitorScope.ts の shareBaseDir()）に置く */
 export const personUsageFile = () => path.join(shareBaseDir(), "person_usage.json");
 const readLedger = (): Ledger => readJsonSafe<Ledger>(personUsageFile(), {}, "object");
 

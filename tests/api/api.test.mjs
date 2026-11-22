@@ -212,10 +212,21 @@ async function main() {
     };
     const hungId = hung.add.data?.id;
     const c7 = fake.calls.length;
-    const rs = await api.post(`/api/inbox/${hungId}/restart`);
+    // 準備中のあいだに2回目を押せるように、この試験のあいだだけ偽の API の返事を遅らせる
+    // （機械が混んでいると、遅らせないと2回目が届く前に準備が終わってしまい、409 にならないことがあった）
+    fake.setDelay(3000);
+    let rs;
+    let rsAgain;
+    let stillProcessing;
+    try {
+      rs = await api.post(`/api/inbox/${hungId}/restart`);
+      rsAgain = await api.post(`/api/inbox/${hungId}/restart`);
+      stillProcessing = (await api.get(`/api/inbox/${hungId}/detail`)).data?.status;
+    } finally {
+      fake.setDelay(0);
+    }
     check("エラーの依頼で「もう一度探す」：窓口が受け付ける", rs.status === 200 && rs.data?.ok === true, `${rs.status} ${rs.text.slice(0, 80)}`);
-    const rsAgain = await api.post(`/api/inbox/${hungId}/restart`);
-    check("準備中にもう一度押すと 409（二重に走らせない）", rsAgain.status === 409, String(rsAgain.status));
+    check("準備中にもう一度押すと 409（二重に走らせない）", rsAgain.status === 409, `${rsAgain.status}（2回目のあとの状態：${stillProcessing}）`);
     const rd = await waitReady(hungId);
     check("エラーだった依頼が、準備し直して ready になる", rd?.status === "ready" && !rd?.error, `${rd?.status} ${rd?.error ?? ""}`);
     check("準備し直しで、候補を探すループを呼んだ", fake.calls.slice(c7).some((x) => x.kind === "loop"));

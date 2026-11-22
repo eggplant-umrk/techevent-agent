@@ -9,6 +9,7 @@
 //   ok      … それらしく答える（下の「答え方」）
 //   429     … 混雑（rate_limit_error）   529 … 過負荷（overloaded_error）   500 … サーバーのエラー
 //   hang    … 返事をしない（時間切れの試験）  badjson … 200 だが JSON でない中身
+// 返事を遅らせる：setDelay(ms)（import したときだけ。準備中のあいだの操作を確実に試すとき。0 で元に戻す）
 //
 // 答え方（ok）：届いた要求の形を見て決める。アプリのコードは変えずに、本物と同じ形の返事を返す
 //   - 候補を探すループ（tools に submit_candidates）：1回目は最初の指示に出てくるカードを get_card で見る。
@@ -186,6 +187,8 @@ export function startFakeAnthropic({ port = 0, modeFile = null, logFile = null }
   const mode = () => (modeFile && fs.existsSync(modeFile) ? fs.readFileSync(modeFile, "utf-8").trim() || "ok" : memMode);
   const calls = [];
   const notes = [];
+  /** 返事を遅らせる長さ（ミリ秒）。準備中のあいだの操作を確実に試すため（setDelay で変える。既定は遅らせない） */
+  let delayMs = 0;
   const log = (line) => {
     if (logFile) fs.appendFileSync(logFile, `${new Date().toISOString()} ${line}\n`);
   };
@@ -227,8 +230,12 @@ export function startFakeAnthropic({ port = 0, modeFile = null, logFile = null }
         notes.push(n);
         log(`note ${n}`);
       });
-      res.writeHead(200, { "content-type": "application/json", "request-id": "req_fake" });
-      res.end(JSON.stringify(out));
+      const send = () => {
+        res.writeHead(200, { "content-type": "application/json", "request-id": "req_fake" });
+        res.end(JSON.stringify(out));
+      };
+      if (delayMs > 0) setTimeout(send, delayMs);
+      else send();
     });
   });
   return new Promise((resolve) => {
@@ -242,6 +249,10 @@ export function startFakeAnthropic({ port = 0, modeFile = null, logFile = null }
         setMode: (v) => {
           memMode = v;
           if (modeFile) fs.writeFileSync(modeFile, v);
+        },
+        /** ok の返事を ms ミリ秒遅らせる（0 で元に戻す）。受け取った時点の長さで遅らせる */
+        setDelay: (ms) => {
+          delayMs = Math.max(0, Number(ms) || 0);
         },
         close: () => new Promise((r) => {
           server.closeAllConnections?.();

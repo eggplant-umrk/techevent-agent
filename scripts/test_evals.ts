@@ -69,12 +69,12 @@ async function main() {
   // 上げる評価から保つ評価に移したケース（docs/evals.md の10）
   const { promotedCases } = await import("./evals/cases");
   const promoted = promotedCases();
-  check("移したケース（N2・F3・req004）は保つ評価に入っていて、直したあとの本番の結果で通る", promoted.length >= 3 && promoted.every((c) => c.suite === "keep" && !!c.recorded && !!c.origin?.note && T.evalCaseProblems(c, CHECK_NAMES).length === 0) && promoted.every((c) => keep.results.find((r) => r.id === c.id)?.passed === true), promoted.map((c) => `${c.id}:${keep.results.find((r) => r.id === c.id)?.passed}`).join(" "));
-  check("移したケースは、上げる評価には残っていない（id が重ならない）", !raiseCases().some((c) => /F3-first-request-date|N2-date-decided-later|req004-theme/.test(c.id)) && new Set(keep.results.map((r) => r.id)).size === keep.results.length);
+  check("移したケース（N2・F3・req004・req005）は保つ評価に入っていて、直したあとの本番の結果で通る", promoted.length >= 4 && promoted.every((c) => c.suite === "keep" && !!c.recorded && !!c.origin?.note && T.evalCaseProblems(c, CHECK_NAMES).length === 0) && promoted.every((c) => keep.results.find((r) => r.id === c.id)?.passed === true), promoted.map((c) => `${c.id}:${keep.results.find((r) => r.id === c.id)?.passed}`).join(" "));
+  check("移したケースは、上げる評価には残っていない（id が重ならない）", !raiseCases().some((c) => /F3-first-request-date|N2-date-decided-later|req004-theme|req005-theme/.test(c.id)) && new Set(keep.results.map((r) => r.id)).size === keep.results.length);
 
   // ---- 3. 上げる評価
   const raise = runRaise();
-  check(`上げる評価：流せて、形が正しい（${raise.cases}件。点数 ${pct(raise.score)}）`, raise.cases >= 3 && raise.problems.length === 0, raise.problems.slice(0, 2).join("／"));
+  check(`上げる評価：流せて、形が正しい（${raise.cases}件。点数 ${pct(raise.score)}）`, raise.cases >= 2 && raise.problems.length === 0, raise.problems.slice(0, 2).join("／"));
   check("上げる評価には、AI に判定させる観点を持つケースがあり、オフラインでは「分からない」になる", raiseCases().some((c) => c.judge?.length) && raise.results.some((r) => r.checks.some((c) => c.name.startsWith("AI：") && c.verdict === "unknown")));
   const baselineFile = path.join(process.cwd(), "docs", "evals_baseline.json");
   if (fs.existsSync(baselineFile)) {

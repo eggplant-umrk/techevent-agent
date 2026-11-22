@@ -525,3 +525,11 @@ textarea.input { resize: vertical; }
 .nb-unit { flex: 0 1 auto; width: auto; max-width: 46%; height: 30px; }
 .nb-filtered { margin: 0; }
 .nb-filtered .link { font-size: inherit; }
+
+/* 続きの会話：聞き返し（入力の上に小さく）と、変わった項目・前の候補 */
+.continue-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.continue-update { margin: 12px 24px 0; padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 13px; }
+.continue-update-title { font-weight: 600; margin: 0 0 4px; }
+.continue-update ul { margin: 4px 0; padding-left: 20px; }
+.continue-previous { margin-top: 4px; }
+.continue-previous summary { cursor: pointer; color: var(--muted); }

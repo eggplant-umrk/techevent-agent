@@ -81,7 +81,8 @@ export interface Api {
   inbox(): Promise<BoardListItem[]>;
   /** 手で追加（受信箱に入る入口の1つ） */
   /** 同じ文の依頼がすでにあれば、足さずにその id と duplicate: true */
-  inboxAdd(text: string): Promise<{ id: string; duplicate?: boolean }>;
+  /** 続きの会話：前の会話をまるごと含めば、その依頼を更新して continued: true。同じアカウントと同じイベント名なら、足さずに ask_continue（聞き返す） */
+  inboxAdd(text: string, opt?: { continue_of?: string; as_new?: boolean }): Promise<{ id?: string; duplicate?: boolean; continued?: boolean; ask_continue?: { id: string; title: string } }>;
   /** 受信箱の1件（保存した候補と作業ログつき） */
   inboxDetail(id: string): Promise<BoardDetail>;
   /** 開いた印を付ける */
@@ -194,7 +195,7 @@ export const realApi: Api = {
     await json(await post("/api/cards/pending", { card_id, theme, accept }));
   },
   inbox: async () => (await json<{ items: BoardListItem[] }>(await safeFetch("/api/inbox"))).items,
-  inboxAdd: async (text) => json(await post("/api/inbox", { text, source: "manual" })),
+  inboxAdd: async (text, opt) => json(await post("/api/inbox", { text, source: "manual", ...(opt ?? {}) })),
   inboxDetail: async (id) => json(await safeFetch(`/api/inbox/${encodeURIComponent(id)}/detail`)),
   inboxOpen: async (id) => {
     await json(await post(`/api/inbox/${encodeURIComponent(id)}/open`));

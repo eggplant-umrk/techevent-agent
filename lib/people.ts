@@ -4,6 +4,7 @@ import fs from "node:fs";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { nowJst } from "./clock";
 import { runtimeFile } from "./runtime";
+import { scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import { blogsOf, type BlogItem } from "./blogView";
 import path from "node:path";
 import { activities, employeeById, employees, published, type Employee } from "./data";
@@ -12,7 +13,7 @@ import { talkTag, type TalkTag } from "./talkTag";
 import { isDemoPerson } from "./demoPerson";
 
 // 人の情報を直した結果は実行時のデータ（data/runtime/people.json、git の対象外）。元のデータ（employees.json）は書かない
-const FILE = () => process.env.PEOPLE_FILE || runtimeFile("people.json");
+const FILE = () => scopedFile(process.env.PEOPLE_FILE || runtimeFile("people.json"));
 
 /** 登壇の意向。unknown は「未確認」 */
 export type SpeakingIntent = "available" | "hold" | "unknown";

@@ -16,6 +16,7 @@ import { schedules } from "./data";
 import { looksLikeIcs, parseIcs, type BusySlot } from "./ics";
 import { demoPersonOn, isDemoPerson } from "./demoPerson";
 import { runtimeRoot } from "./runtime";
+import { scopedFile } from "./visitorScope";
 
 export type { BusySlot } from "./ics";
 
@@ -206,7 +207,7 @@ let inFlight: Promise<void> | null = null;
 
 /** 保存する場所（data/runtime/calendar_cache.json。テストでは一時フォルダ） */
 export function calendarCacheFile(): string {
-  return path.join(runtimeRoot(), CALENDAR_CACHE_NAME);
+  return scopedFile(path.join(runtimeRoot(), CALENDAR_CACHE_NAME)); // 見せる用では今の人の場所
 }
 
 const keyMemo = { url: "", key: "" };

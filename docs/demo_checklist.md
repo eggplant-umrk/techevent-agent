@@ -12,6 +12,7 @@
 | やること | コマンド | 確かめること |
 | --- | --- | --- |
 | 最新にする | `git pull` | `git status` が「working tree clean」で、main の最新のコミットになっている |
+| 戻す前に記録を写す（使われた結果・実行の記録を残すなら） | `npm run save:session`（見せる用は `npm run save:session -- --share`） | 「…の記録を data/sessions/<日時> に写しました」が出る（戻す前に save:session） |
 | 発表用の画面の操作の結果を片付ける | `npm run reset:demo` | 「初期状態に戻しました」（または「片付けるものはありませんでした」）が出る（消さずに data/runtime-backup/ に退避） |
 | 見せる用の置き場を片付ける | `npm run reset:share` | 同じく「初期状態に戻しました」か「片付けるものはありませんでした」（発表用のデータには触らない） |
 | テストが通る | `npm run test:hardening` と `npm run test:security` と `npx tsx scripts/eval.ts all --offline`（API なしのテストを全部まとめて流すなら `npm test`） | 「すべて合格」が2つと「段階1 結合テスト：69/69」 |

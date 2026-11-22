@@ -14,11 +14,13 @@ import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./no
 import { runUsd as usageOfRun } from "./usage";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { traceEmit, withTrace } from "./trace";
+import { withCurrentVisitor } from "./visitorScope";
+import { scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 import { userErrorText } from "./userError";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
-const FILE = () => process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json");
+const FILE = () => scopedFile(process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json"));
 /** 準備中のまま、これより長く経ったものは中断とみなす（サーバーの再起動など） */
 const STALE_MS = 15 * 60 * 1000;
 const MAX_TEXT = 4000;
@@ -319,7 +321,8 @@ export function registerInbox(input: InboxInput): InboxItem {
  * 実行の記録（lib/trace.ts）を、依頼の id で残す（名前・時間・数・成否だけ）。
  */
 export function prepare(id: string, runner: Runner, extractor?: IntakeExtractor, pitcher: Pitcher = defaultPitcher): Promise<void> {
-  return withTrace(id, () => prepareTraced(id, (request, emit) => runner(request, traceEmit(emit)), extractor, pitcher));
+  // 見せる用では、始めたときの人で固定する（要求が終わったあとも、別の人の場所に書かない）
+  return withCurrentVisitor(() => withTrace(id, () => prepareTraced(id, (request, emit) => runner(request, traceEmit(emit)), extractor, pitcher)));
 }
 
 async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtractor, pitcher: Pitcher = defaultPitcher): Promise<void> {

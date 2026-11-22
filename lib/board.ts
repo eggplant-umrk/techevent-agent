@@ -6,6 +6,7 @@
 // 評価用のデータ（requests.json）と結合テストの動きは変えない（ここは画面用の読み書きだけ）。
 import { originalUrl } from "./originalUrl";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
+import { SEED_NOTE, scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import fs from "node:fs";
 import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
@@ -20,8 +21,8 @@ import { eventUrlsIn } from "./eventUrls";
 // 依頼1件の合計金額は、実行の記録（③、下書き・代わりの人を推す文も入る）があればそれを使う
 import { requestCostUsd } from "./trace";
 
-const SAMPLE_FILE = () => process.env.SAMPLE_PROPOSALS_FILE || path.join(process.cwd(), "data", "sample_proposals.json");
-const DRAFT_FILE = () => process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json");
+const SAMPLE_FILE = () => scopedFile(process.env.SAMPLE_PROPOSALS_FILE || path.join(process.cwd(), "data", "sample_proposals.json"));
+const DRAFT_FILE = () => scopedFile(process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json"));
 
 function readJson<T>(file: string, fallback: T): T {
   // 壊れていたら、次の書き込みで上書きして消してしまわないように、退けてから空として読む
@@ -38,6 +39,8 @@ interface SavedProposal {
   run_usd: number;
   saved_at: string;
   opened_at: string | null;
+  /** 見せる用で人の場所を作ったときに入れた、保存済みの結果（lib/visitorScope.ts）。自分で出し直すと消える */
+  seeded?: boolean;
 }
 const loadSamples = () => readJson<Record<string, SavedProposal>>(SAMPLE_FILE(), {});
 
@@ -112,6 +115,8 @@ export interface BoardDetail extends Omit<InboxDetail, "source"> {
   event_date: string | null;
   /** 承諾した人への主催者への返事の下書き（保存してあれば） */
   accepted_reply: { name: string; text: string; employee_id?: string } | null;
+  /** 保存済みの結果を入れたサンプルの依頼なら、小さく出す一言（「保存済みの結果です。自分の依頼を貼ると本物の AI が動きます」）。ほかは null・なし */
+  seeded_note?: string | null;
   /** 会話（依頼文）の中にあるイベントの告知ページの URL（connpass など。lib/eventUrls.ts でコードが取り出す） */
   event_urls: string[];
 }
@@ -239,6 +244,7 @@ function boardDetailRaw(id: string): BoardDetail | null {
     result: s?.result ?? null,
     events: s?.events ?? [],
     run_usd: s?.run_usd ?? 0,
+    seeded_note: s?.seeded ? SEED_NOTE : null,
     pitch_status: null,
     state,
     event_date: date,

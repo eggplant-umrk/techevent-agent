@@ -59,5 +59,7 @@ for (const { from, to } of items()) {
   moved++;
 }
 const kept = !withCalendar && fs.existsSync(path.join(runtimeRoot(), CALENDAR_CACHE_NAME));
+// 記録（使われた結果・実行の記録・受信箱・金額）を残すなら、戻す前に写す
+console.log("記録を残すときは、戻す前に npm run save:session（見せる用は npm run save:session -- --share）で data/sessions/ に写してください");
 console.log(moved ? `\n初期状態に戻しました（${moved}件）。画面を読み込み直してください` : "片付けるものはありませんでした（初期状態です）");
 if (kept) console.log(`保存したカレンダー（${rel(path.join(runtimeRoot(), CALENDAR_CACHE_NAME))}）は残しました（片付けるときは --calendar）`);

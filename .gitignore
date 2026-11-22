@@ -93,6 +93,8 @@ data/runtime/
 data/runtime-backup/
 # 見せる用（npm run start:share）の置き場
 data/runtime-share/
+# save:session で写した記録（貼られた会話などが入るのでコミットしない）
+data/sessions/
 data/people.json
 
 # ===== 本物の Slack から読んだ内容（コミットしない） =====

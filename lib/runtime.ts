@@ -8,7 +8,9 @@ import fs from "node:fs";
 import { readJsonSafe, writeFileAtomic } from "./fileStore";
 import path from "node:path";
 import { dataSource } from "./dataSource";
+import { scopedFile } from "./visitorScope";
 
+/** 実行時のデータの置き場（人ごとに分ける前）。見せる用で全員分を1つで持つもの（金額の記録など）はここに置く */
 export function runtimeRoot(): string {
   return process.env.DATA_RUNTIME_DIR || path.join(process.cwd(), "data", "runtime");
 }
@@ -16,7 +18,8 @@ export function runtimeRoot(): string {
 /** 実行時のデータの置き場所（データの切り替えごとに分ける） */
 export function runtimeFile(name: string): string {
   const s = dataSource();
-  return s ? path.join(runtimeRoot(), s, name) : path.join(runtimeRoot(), name);
+  // 見せる用（SHARE_MODE=lan）では、今の人の場所（<置き場>/visitors/{人}/。lib/visitorScope.ts）
+  return scopedFile(s ? path.join(runtimeRoot(), s, name) : path.join(runtimeRoot(), name));
 }
 
 export function readJsonFile<T>(file: string, fallback: T): T {

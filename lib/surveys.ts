@@ -13,6 +13,7 @@
 // 全体の満足度の点数は登壇者に結びつけない（イベント単位の集計にだけ使う）。登壇ごとの点数の列があるときだけ、その点数を登壇者の参考にする。
 import { analysisOverview } from "./surveyOverview";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
+import { scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import { todayJst, nowJst } from "./clock";
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
@@ -30,9 +31,11 @@ export { surveys } from "./surveyCsv";
 const MAX_CALLS = 3;
 /** 分析結果の保存先。テストでは SURVEY_ANALYSIS_FILE で別のファイルに向ける */
 const FILE = () =>
-  process.env.SURVEY_ANALYSIS_FILE ||
-  // 置き場所を分けたサーバー（見せる用など）は、その中に保存する（保存済みの分析結果で補うのは今までどおり）
-  (process.env.DATA_RUNTIME_DIR ? path.join(process.env.DATA_RUNTIME_DIR, "survey_analysis.json") : path.join(process.cwd(), "data", "survey_analysis.json"));
+  scopedFile(
+    process.env.SURVEY_ANALYSIS_FILE ||
+      // 置き場所を分けたサーバー（見せる用など）は、その中に保存する（保存済みの分析結果で補うのは今までどおり）
+      (process.env.DATA_RUNTIME_DIR ? path.join(process.env.DATA_RUNTIME_DIR, "survey_analysis.json") : path.join(process.cwd(), "data", "survey_analysis.json")),
+  );
 
 // ---------------------------------------------------------------------------
 // コード：集計・除外・洗い出し・文への分割
@@ -582,7 +585,7 @@ export interface TalkRecord {
 }
 
 /** 登壇者の記録の保存先（内部）。テストでは TALK_RECORD_FILE で別のファイルに向ける */
-const RECORD_FILE = () => process.env.TALK_RECORD_FILE || path.join(process.cwd(), "data", "talk_records.json");
+const RECORD_FILE = () => scopedFile(process.env.TALK_RECORD_FILE || path.join(process.cwd(), "data", "talk_records.json"));
 export const talkRecordFile = RECORD_FILE;
 
 export function loadTalkRecords(): TalkRecord[] {

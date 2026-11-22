@@ -54,6 +54,7 @@
     "test:robust": "tsx scripts/test_robust.ts",
     "test:trace": "tsx scripts/test_trace.ts",
     "eval:from-feedback": "tsx scripts/eval_from_feedback.ts",
+    "save:session": "tsx scripts/save_session.ts",
     "test:guard": "tsx scripts/test_ui_guard.ts",
     "test:access": "tsx scripts/test_access_harden.ts",
     "test:feedback-ui": "tsx scripts/test_feedback_ui.ts",

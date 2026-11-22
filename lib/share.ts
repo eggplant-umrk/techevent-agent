@@ -164,6 +164,8 @@ const SPENDING: RegExp[] = [
   /^\/api\/inbox$/,
   // 「依頼として進める」（依頼ではなさそうと読んだ1件の候補づくり）
   /^\/api\/inbox\/[^/]+\/proceed$/,
+  // 受信箱の依頼の「もう一度探す」（受信箱で準備し直す）
+  /^\/api\/inbox\/[^/]+\/restart$/,
 ];
 export const spendsApi = (method: string, pathname: string) => method === "POST" && SPENDING.some((re) => re.test(pathname));
 

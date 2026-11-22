@@ -106,6 +106,12 @@ export function visitorIdleMs(): number {
   return (Number.isFinite(n) && n > 0 ? n : 12) * 3600_000;
 }
 
+/** 上限を超えても消さない「直近に使った」の長さ（VISITOR_KEEP_RECENT_MINUTES、既定30分） */
+export function visitorRecentMs(): number {
+  const n = Number((process.env.VISITOR_KEEP_RECENT_MINUTES ?? "").trim());
+  return (Number.isFinite(n) && n > 0 ? n : 30) * 60_000;
+}
+
 function lastUsedMs(dir: string): number {
   try {
     return fs.statSync(/*turbopackIgnore: true*/ path.join(dir, LAST_USED)).mtimeMs;
@@ -147,17 +153,42 @@ export function sweepVisitors(opts: { keep?: string; makeRoomFor?: number } = {}
   };
   let list = listVisitors().filter((v) => v.key !== opts.keep);
   for (const v of list) if (now - v.last_used_ms > visitorIdleMs()) rm(v.key);
-  list = listVisitors().filter((v) => v.key !== opts.keep).sort((a, b) => a.last_used_ms - b.last_used_ms);
+  // 上限を超えたら、長く使われていない順に消す。ただし直近に使った人の場所（使っている最中の人）は消さない（上限を少し超えてもよい）
+  const used = (v: { last_used_ms: number }) => v.last_used_ms; // 使った時刻（1分に1回まで書く）
+  list = listVisitors().filter((v) => v.key !== opts.keep).sort((a, b) => used(a) - used(b));
   const room = opts.makeRoomFor ?? 0;
   let count = listVisitors().length;
   for (const v of list) {
     if (count + room <= visitorMax()) break;
+    if (now - used(v) < visitorRecentMs()) break; // ここから先は全員、直近に使った人
     rm(v.key);
     count--;
   }
+  if (count + room > visitorMax()) console.log(`[人の場所の片付け] 上限 ${visitorMax()}人を超えていますが、直近に使った人の場所は消しません（${count}人）`);
   state().lastSweep = now;
   if (removed.length) console.log(`[人の場所の片付け] ${removed.length}人分を消しました（使われていない・上限 ${visitorMax()}人）`);
   return removed;
+}
+
+/**
+ * 起動時の片付けなど：今ある人の場所それぞれの中で fn を動かす（使った時刻は変えない・片付けもしない）。
+ * 見せる用でなければ何もしない
+ */
+export function forEachVisitorQuietly<T>(fn: (key: string) => T): Array<{ key: string; value: T }> {
+  if (!visitorsOn()) return [];
+  const out: Array<{ key: string; value: T }> = [];
+  for (const { key } of listVisitors()) {
+    const st = state();
+    const had = st.touched.get(key);
+    st.touched.set(key, Date.now()); // ensureVisitor に「使った」と書かせない
+    try {
+      out.push({ key, value: withVisitor(key, () => fn(key)) });
+    } finally {
+      if (had === undefined) st.touched.delete(key);
+      else st.touched.set(key, had);
+    }
+  }
+  return out;
 }
 
 /** 人の場所を用意して返す（初めてなら作って、サンプルの依頼の保存済みの結果を入れる）。使った時刻を残す（1分に1回まで） */

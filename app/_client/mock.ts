@@ -492,6 +492,9 @@ export function mockApi(real: Api): Api {
     async inboxProceed() {
       // モックでは貼った会話を読まない（種類の判定もしない）ので、進めるものはない
     },
+    async inboxRestart() {
+      // モックの画面は「もう一度探す」で保存済みの結果を流し直す（runAgent）ので、ここは使わない
+    },
     async inboxOpen(id) {
       const it = inboxItems.find((x) => x.id === id);
       if (it) it.is_new = false;

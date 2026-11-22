@@ -491,3 +491,26 @@ textarea.input { resize: vertical; }
 .intake-undecided ul { margin: 4px 0 0; color: var(--text-2); }
 /* 「違うと記録済み」の印と取り消し */
 .wrong-done { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ネタ帳タブの左の欄：いちばん上の切り替え（タブの形）と、「人」のときだけの検索・絞り込み */
+.nb-tabs { display: flex; gap: 4px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin: -4px 0 0; }
+.nb-tab { all: unset; cursor: pointer; padding: 6px 0 7px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.nb-tab:hover { color: var(--text); }
+.nb-tab[aria-selected="true"] { color: var(--text); font-weight: 700; border-bottom-color: var(--text); }
+.nb-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nb-tab-count { font-weight: 400; color: var(--muted); margin-left: 2px; }
+.nb-tab[aria-selected="true"] .nb-tab-count { color: var(--text-2); }
+.nb-head { align-items: center; }
+.nb-actions { display: flex; align-items: center; gap: 12px; }
+.nb-actions .link { font-size: 13px; }
+.nb-filters { display: flex; flex-direction: column; gap: 6px; }
+.nb-filter-row { display: flex; gap: 6px; align-items: center; }
+.nb-search { flex: 1 1 auto; min-width: 0; width: auto; height: 30px; }
+.nb-checks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.nb-check { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text); white-space: nowrap; min-height: 24px; }
+.nb-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.nb-box { width: 14px; height: 14px; border: 1px solid var(--line-strong); border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1; color: var(--text); background: var(--surface); }
+.nb-check[aria-pressed="true"] .nb-box { border-color: var(--text); }
+.nb-unit { flex: 0 1 auto; width: auto; max-width: 46%; height: 30px; }
+.nb-filtered { margin: 0; }
+.nb-filtered .link { font-size: inherit; }

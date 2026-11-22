@@ -287,6 +287,13 @@ const QUOTED = {
   required: ["value", "quote"],
   additionalProperties: false,
 };
+/** 足した項目の形。API は null を許す項目の数に上限（16）があるので、足した項目は null を使わず、書かれていなければ空文字にさせる */
+const QUOTED_TEXT = {
+  type: "object",
+  properties: { value: { type: "string" }, quote: { type: "string" } },
+  required: ["value", "quote"],
+  additionalProperties: false,
+};
 const SCHEMA = {
   type: "object",
   properties: {
@@ -297,7 +304,7 @@ const SCHEMA = {
     organizer: QUOTED,
     nominee: QUOTED,
     date_hint: QUOTED,
-    ...Object.fromEntries(EXTRA_FIELDS.map((f) => [f, QUOTED])),
+    ...Object.fromEntries(EXTRA_FIELDS.map((f) => [f, QUOTED_TEXT])),
     kind: {
       type: "object",
       properties: { value: { type: "string", enum: ["request", "not_request", "inappropriate"] }, reason: { type: "string" } },
@@ -350,6 +357,7 @@ export const extractIntakeWithAgent: IntakeExtractor = async (text, runId) => {
 - quote は会話からそのまま抜き出す（言い換えない・要約しない・つなぎ合わせない）
 - あとのメッセージで変わったり決まったりしたら、いちばん新しい内容を使う
 - 決まっていない（調整中・候補が複数・「春ごろ」など）、書かれていない項目は value も quote も null。推測で埋めない
+- ただし duration・audience_size・audience・venue・recording・reward・reply_deadline の7項目は、書かれていなければ null ではなく、value も quote も空文字（""）にする
 - 数字（人数・分数・金額・日付）は、会話に書かれているものだけを value に入れる。書かれていない数字を作らない・計算しない`,
     messages: [{ role: "user", content: text }],
     output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },

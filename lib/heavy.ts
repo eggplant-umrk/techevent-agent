@@ -4,7 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getClient } from "./anthropic";
 import { HEAVY_FALLBACK_MODEL } from "./config";
 import { activities, employeeById, employees, type SpeakingRequest } from "./data";
-import { askBack, EXTRA_FIELDS, notAsked, outreachFacts, outreachFactsLine, outreachFactsMissing, requestItems, type ItemKey } from "./askBack";
+import { askBack, EXTRA_FIELDS, notAsked, outreachFacts, outreachFactsLine, outreachFactsMissing, requestItems, type ItemKey, type RequestItem } from "./askBack";
 import { CONTACT_PROBLEM, fallbackOrganizerReply, ORGANIZER_REPLY_MAX, organizerReplyProblems, safeForReply } from "./organizerReply";
 import { chooseModels, recordUsage } from "./usage";
 import type { UsageEntry } from "./data";
@@ -257,6 +257,12 @@ export async function draftOrganizerReply(
   };
 }
 
+/** 声かけ文に人数と持ち時間が入っていなければ、最後に1行足す（コード。モデルは呼ばない） */
+export function withOutreachFacts(draft: OutreachDraft, items: RequestItem[]): OutreachDraft {
+  const missing = outreachFactsMissing(draft.message, items);
+  return missing.length ? { ...draft, message: `${draft.message.trimEnd()}\n\n${outreachFactsLine(missing)}` } : draft;
+}
+
 /** draft_outreach(employee_id, theme): outreach message + talk outline. Never sent; shown for copy only. */
 export async function draftOutreach(
   runId: string,
@@ -312,12 +318,10 @@ ${evidence || "（なし）"}`;
       ...d.lt_outline.flatMap((s) => [{ where: "構成案", text: s.heading }, ...s.points.map((p) => ({ where: "構成案", text: p }))]),
       ...d.tips_for_pr.map((t) => ({ where: "声をかける前に", text: t })),
     ],
-    // 人数と持ち時間：分かっていれば値、分からなければ「主催者に確認中」が声かけ文にあること。作り直してもなければ、コードが1行足す
-    {
-      problems: (d) => outreachFactsMissing(d.message, items).map((m) => `声かけ文に「${m.label}：${m.value ?? "主催者に確認中"}」が入っていません`),
-      repair: (d) => ({ ...d, message: `${d.message.trimEnd()}\n\n${outreachFactsLine(outreachFactsMissing(d.message, items))}` }),
-    },
   );
+  // 人数と持ち時間：分かっていれば値、分からなければ「主催者に確認中」が声かけ文にあること。
+  // なければ作り直さず（重いモデルをもう1回動かさない）、コードが最後に1行足す
+  outreach.value = withOutreachFacts(outreach.value, items);
   // 主催者への返事は、会話の原文を渡さず、確かめた項目と承認した候補の名前・テーマだけで別に作る
   const reply = await draftOrganizerReply(runId, request, { employee_id: emp.id, name: emp.name, theme: candidate.theme });
   return {

@@ -693,6 +693,9 @@ async function main() {
   const rate = checks.length ? passed / checks.length : 0;
   console.log(`\n=== 段階1 結合テスト：${passed}/${checks.length}（${Math.round(rate * 100)}%）${rate >= PASS_RATE ? "合格" : "不合格"}`);
   for (const c of checks) console.log(`${c.pass ? "○" : "×"} ${c.name}：${c.detail}`);
+  // 評価（docs/evals.md）が読むために、判定の一覧を書き出す（--checks-out <ファイル>）
+  const checksOut = args.indexOf("--checks-out");
+  if (checksOut >= 0 && args[checksOut + 1]) fs.writeFileSync(args[checksOut + 1], JSON.stringify(checks, null, 2));
 
   // ---- stage 2: LLM judge, before vs after
   let quality: Array<Record<string, unknown>> | null = null;

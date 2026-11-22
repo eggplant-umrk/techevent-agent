@@ -37,7 +37,7 @@ import { Spinner } from "@/components/ui";
 import { AlternativePitch, Candidates } from "@/components/Proposal";
 import { RequestInput, type RequestMode } from "@/components/RequestInput";
 import { TraceTimeline } from "@/components/TraceTimeline";
-import { FeedbackProvider, type FeedbackInput } from "@/app/_client/feedback";
+import { FeedbackProvider, type FeedbackInput, type ReasonCodes } from "@/app/_client/feedback";
 
 const msg = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback);
 
@@ -76,6 +76,8 @@ export default function Home() {
   const [traceAllowed, setTraceAllowed] = useState(false);
   /** 使われた結果を送る窓口（記録の側）があるか。?mock は手元に残すので常にある */
   const [feedbackReady, setFeedbackReady] = useState(false);
+  /** 理由の選択肢（記録の側の REASON_CODES。/api/state から） */
+  const [feedbackReasons, setFeedbackReasons] = useState<ReasonCodes | null>(null);
   useEffect(() => {
     let alive = true;
     api.feedbackReady().then((ok) => alive && setFeedbackReady(ok));
@@ -170,6 +172,7 @@ export default function Home() {
       setTotalUsd(s.models.totalUsd);
       setPending(s.pending_employees);
       setTraceAllowed(s.trace_allowed !== false);
+      if (s.feedback_reasons) setFeedbackReasons(s.feedback_reasons);
     } catch {
       /* the header just keeps the last numbers */
     }
@@ -626,9 +629,10 @@ export default function Home() {
   }
 
   // 使われた結果（この候補は違う・下書きを直して使った）を送る先の依頼。受信箱なら開いている1件、サンプルなら候補を出した依頼
-  const feedbackRequestId = mode === "inbox" ? inboxId : result?.request_id ?? null;
+  // 自由入力の依頼（custom）は記録の側に依頼がないので送らない
+  const feedbackRequestId = mode === "inbox" ? inboxId : mode === "custom" ? null : result?.request_id ?? null;
   // 記録の側（POST /api/feedback）がまだないうちは、ボタンを出さない（requestId を渡さない）
-  const feedbackCtx = { requestId: feedbackReady ? feedbackRequestId : null, send: (input: FeedbackInput) => api.feedback(input) };
+  const feedbackCtx = { requestId: feedbackReady ? feedbackRequestId : null, reasons: feedbackReasons, send: (input: FeedbackInput) => api.feedback(input) };
 
   const requestPanel = (
     <FeedbackProvider value={feedbackCtx}>

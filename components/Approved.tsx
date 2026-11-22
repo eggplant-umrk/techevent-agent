@@ -199,7 +199,7 @@ function OrganizerReply({
 }) {
   const [value, setValue] = useState(text);
   // コピーしたら「使った」として、直していなければ good、直していれば edited を送る（確認の窓は出さない）
-  const used = useUsedFeedback("organizer_reply", employeeId, text);
+  const used = useUsedFeedback("reply", employeeId, text);
   const hasDate = !!dateSentence && value.includes(dateSentence);
   return (
     <section className="surface pad-lg" aria-labelledby="reply-title">

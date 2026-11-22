@@ -1,4 +1,4 @@
-import type { FeedbackInput, RequestTrace } from "./feedback";
+import type { FeedbackInput, ReasonCodes, RequestTrace } from "./feedback";
 // Every call the screens make. In mock mode (?mock in the URL) nothing that costs money or
 // writes to data/ is called: reads still come from data/ via the GET routes, and the agent,
 // the draft, and every write are answered from fixtures and kept in memory.
@@ -48,7 +48,7 @@ export interface Api {
   mock: boolean;
   cards(): Promise<{ cards: NotebookCard[]; units: string[] }>;
   /** trace_allowed：実行の記録の画面を開けるか（見せる用では、この端末〔127.0.0.1〕からだけ） */
-  state(): Promise<{ models: ModelChoice; pending_employees: number; trace_allowed?: boolean }>;
+  state(): Promise<{ models: ModelChoice; pending_employees: number; trace_allowed?: boolean; feedback_reasons?: ReasonCodes }>;
   /** 使われた結果（この候補は違う・下書きを直して使った など）を送る。記録の側（POST /api/feedback）へ */
   feedback(input: FeedbackInput): Promise<void>;
   /** 記録の側（POST /api/feedback）があるか。ないうちは、使われた結果のボタンを出さない */
@@ -150,7 +150,7 @@ const post = (url: string, body?: unknown) =>
 export const realApi: Api = {
   mock: false,
   cards: () => safeFetch("/api/cards").then(json<{ cards: NotebookCard[]; units: string[] }>),
-  state: () => safeFetch("/api/state").then(json<{ models: ModelChoice; pending_employees: number; trace_allowed?: boolean }>),
+  state: () => safeFetch("/api/state").then(json<{ models: ModelChoice; pending_employees: number; trace_allowed?: boolean; feedback_reasons?: ReasonCodes }>),
   feedback: async (input) => {
     await json(await post("/api/feedback", input));
   },

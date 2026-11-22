@@ -242,7 +242,7 @@ export function mockApi(real: Api): Api {
         : null;
     // 一覧に小さく出す、かかった金額と時間（モックは記録の見本から）
     const tr = x.status === "ready" ? mockTrace(x.id) : null;
-    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date, run_usd: tr?.total_usd ?? 0, elapsed_ms: tr?.total_ms ?? null };
+    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date, run_usd: tr?.total_cost_usd ?? 0, elapsed_ms: tr?.total_ms ?? null };
   }
   function acceptedReply(id: string, state: BoardListItem["state"]): BoardDetail["accepted_reply"] {
     for (const p of state.accepted_by) {
@@ -316,18 +316,20 @@ export function mockApi(real: Api): Api {
     const startedAt = Date.parse(inboxItems.find((x) => x.id === id)?.received_at ?? "") || Date.now() - 180_000;
     let t = startedAt;
     const steps: RequestTrace["steps"] = [];
-    const add = (kind: "llm" | "tool", name: string, ms: number, usd: number | null, ok = true) => {
-      steps.push({ kind, name, started_at: new Date(t).toISOString(), ms, usd, ok, error: ok ? null : "見本の失敗" });
+    // 記録の側（lib/trace.ts）と同じ形：llm の名前は使い道（inbox_extract・loop・alternative_pitch）
+    const add = (kind: "llm" | "tool" | "code", name: string, ms: number, usd: number | null, ok = true) => {
+      steps.push({ kind, name, started_at: new Date(t).toISOString(), ms, ...(usd !== null ? { cost_usd: usd } : {}), ok, ...(ok ? {} : { error: "見本の失敗" }) });
       t += ms;
     };
-    add("llm", "依頼を読む", 4200, usdEach);
+    add("llm", "inbox_extract", 4200, usdEach);
     let n = 0;
     for (const e of events) {
-      if (e.type === "step") add("llm", `考える（${e.n}回目）`, 6800 + ((n++ * 1700) % 5000), usdEach);
+      if (e.type === "step") add("llm", "loop", 6800 + ((n++ * 1700) % 5000), usdEach);
       if (e.type === "tool_result") add("tool", e.name, 120 + ((e.name.length * 37) % 380), null, e.ok);
-      if (e.type === "alternative_pitch") add("llm", "代わりの人を推す文", 9400, usdEach);
+      if (e.type === "alternative_pitch") add("llm", "alternative_pitch", 9400, usdEach);
     }
-    return { request_id: id, started_at: new Date(startedAt).toISOString(), total_ms: t - startedAt, total_usd: run.runUsd, steps };
+    add("code", "date_suggestions", 35, null);
+    return { request_id: id, started_at: new Date(startedAt).toISOString(), total_ms: t - startedAt, total_cost_usd: run.runUsd, steps };
   }
 
   function eventsFor(result: Proposal, requestId: string, runUsd: number): Array<[AgentEvent, number]> {

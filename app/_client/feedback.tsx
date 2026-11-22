@@ -1,64 +1,41 @@
 "use client";
 // 使われた結果（フィードバック）と、実行の記録（trace）の画面側。
-//   送り先・読み先は記録の側（③：POST /api/feedback と traces を読む関数）。形はここで決めて、記録の側に合わせる。
+//   送り先・読み先は記録の側（③：POST /api/feedback〔lib/feedback.ts〕と getTrace〔lib/trace.ts〕）。形はそちらに合わせる。
 //   画面は送るだけで、確認の窓は出さない。送れなくても操作は続けられる（小さく「送れませんでした」と出すだけ）。
 import { createContext, useCallback, useContext, useRef, useState } from "react";
+import type { Trace } from "@/lib/trace";
+import type { FeedbackTarget } from "@/lib/feedback";
 
-/** 「この候補は違う」の理由 */
-export type WrongReason = "theme_mismatch" | "busy" | "not_their_work" | "other";
-export const WRONG_REASON_LABEL: Record<WrongReason, string> = {
-  theme_mismatch: "テーマが合わない",
-  busy: "忙しい",
-  not_their_work: "本人の活動ではない",
-  other: "その他",
-};
+/** 理由の選択肢（記録の側 lib/feedback.ts の REASON_CODES そのもの。/api/state の feedback_reasons で受け取る） */
+export type ReasonCodes = Record<FeedbackTarget, Record<string, string>>;
 
-/** POST /api/feedback の本文 */
-export type FeedbackInput =
-  | { kind: "candidate_wrong"; request_id: string; employee_id: string; reason: WrongReason; note?: string }
-  | {
-      /** draft：声かけの下書き ／ organizer_reply：主催者への返事 */
-      kind: "draft" | "organizer_reply";
-      request_id: string;
-      employee_id: string | null;
-      /** good：直さずに使った ／ edited：直してから使った */
-      verdict: "good" | "edited";
-      /** 直す前（Agent が出した文） */
-      before: string;
-      /** 使った文（good なら before と同じ） */
-      after: string;
-    };
-
-/** 実行の記録の1つ（AI の呼び出し・ツールの呼び出し） */
-export interface TraceStep {
-  kind: "llm" | "tool";
-  /** 何をしたか（ツールの名前・AI の呼び出しの目的） */
-  name: string;
-  /** 始まり（ISO） */
-  started_at: string;
-  /** かかった時間 */
-  ms: number;
-  /** 金額（AI の呼び出しだけ。分からなければ null） */
-  usd: number | null;
-  ok: boolean;
-  /** 失敗したときの短い理由（使う人向けの文） */
-  error?: string | null;
-}
-
-/** 1つの依頼の実行の記録 */
-export interface RequestTrace {
+/** POST /api/feedback の本文（lib/feedback.ts の parseFeedback の形） */
+export interface FeedbackInput {
   request_id: string;
-  started_at: string;
-  total_ms: number;
-  total_usd: number;
-  steps: TraceStep[];
+  /** candidate：候補 ／ draft：声かけの下書き ／ reply：主催者への返事 */
+  target: "candidate" | "draft" | "reply";
+  /** 社員 id（候補の人・下書きや返事の相手） */
+  target_id: string;
+  /** wrong：この候補は違う ／ edited：直してから使った ／ good：直さずに使った */
+  verdict: "wrong" | "edited" | "good";
+  /** 理由。good は "good"。コピーで「直して使った」と数えたときは理由を聞かないので "other" */
+  reason_code: string;
+  note?: string;
+  /** 直す前（Agent が出した文）と、使った文（edited のとき） */
+  before?: string;
+  after?: string;
 }
+
+/** 1つの依頼の実行の記録（lib/trace.ts の Trace。名前・時間・数・成否だけ） */
+export type RequestTrace = Trace;
 
 interface FeedbackCtx {
   requestId: string | null;
+  /** 理由の選択肢（REASON_CODES）。まだ読めていなければ null（ボタンを出さない） */
+  reasons: ReasonCodes | null;
   send: (input: FeedbackInput) => Promise<void>;
 }
-const Ctx = createContext<FeedbackCtx>({ requestId: null, send: async () => {} });
+const Ctx = createContext<FeedbackCtx>({ requestId: null, reasons: null, send: async () => {} });
 export const FeedbackProvider = Ctx.Provider;
 export const useFeedback = () => useContext(Ctx);
 
@@ -68,24 +45,32 @@ export const FEEDBACK_DONE = "次からの評価に使います";
 /**
  * 下書き・返事を「使った」（コピーした）ときに、good／edited を送る。
  * 同じ文を何度コピーしても送るのは1回。直してから別の文をコピーしたら、もう1回送る。
+ * 送り先の依頼・相手の人が分からないときは何もしない。
  */
-export function useUsedFeedback(kind: "draft" | "organizer_reply", employeeId: string | null, original: string) {
+export function useUsedFeedback(target: "draft" | "reply", employeeId: string | null, original: string) {
   const { requestId, send } = useFeedback();
   const lastSent = useRef<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const onUsed = useCallback(
     (used: string) => {
-      if (!requestId || lastSent.current === used) return;
+      if (!requestId || !employeeId || lastSent.current === used) return;
       lastSent.current = used;
-      const verdict = used === original ? "good" : "edited";
-      send({ kind, request_id: requestId, employee_id: employeeId, verdict, before: original, after: used })
+      const good = used === original;
+      send({
+        request_id: requestId,
+        target,
+        target_id: employeeId,
+        verdict: good ? "good" : "edited",
+        reason_code: good ? "good" : "other",
+        ...(good ? {} : { before: original, after: used }),
+      })
         .then(() => setNote(FEEDBACK_DONE))
         .catch(() => {
           lastSent.current = null;
           setNote("評価用の記録を送れませんでした（コピーはできています）");
         });
     },
-    [requestId, send, kind, employeeId, original],
+    [requestId, send, target, employeeId, original],
   );
   return { onUsed, note };
 }

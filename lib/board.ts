@@ -17,6 +17,8 @@ import type { OutreachDraft } from "./heavy";
 import { detailView, getInboxItem, listInbox, listView, type InboxDetail, type InboxListItem } from "./inbox";
 import { recordsFor, requestState, type RequestState } from "./requestStage";
 import { eventUrlsIn } from "./eventUrls";
+// 依頼1件の合計金額は、実行の記録（③、下書き・代わりの人を推す文も入る）があればそれを使う
+import { requestCostUsd } from "./trace";
 
 const SAMPLE_FILE = () => process.env.SAMPLE_PROPOSALS_FILE || path.join(process.cwd(), "data", "sample_proposals.json");
 const DRAFT_FILE = () => process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json");
@@ -139,7 +141,7 @@ function sampleList(): BoardListItem[] {
         error: null,
         permalink: null,
         state: stateOf(r.id, s ? "ready" : "new", date),
-        run_usd: s?.run_usd ?? 0,
+        run_usd: requestCostUsd(r.id) ?? s?.run_usd ?? 0,
         elapsed_ms: null,
         event_date: date,
       };
@@ -171,7 +173,7 @@ export function boardList(): BoardListItem[] {
       // かかった金額と時間（一覧に小さく出す）。時間は受け取ってから候補ができるまで
       // 途中で止まった・エラーの依頼は時間を出さない（止まるまでの時間は、かかった時間ではないため）
       const elapsed = it.status === "ready" && it.finished_at && it.started_at ? Date.parse(it.finished_at) - Date.parse(it.started_at) : NaN;
-      return { ...v, state: stateOf(it.id, it.status, date), event_date: date, run_usd: it.run_usd ?? 0, elapsed_ms: Number.isFinite(elapsed) && elapsed >= 0 ? elapsed : null };
+      return { ...v, state: stateOf(it.id, it.status, date), event_date: date, run_usd: requestCostUsd(it.id) ?? it.run_usd ?? 0, elapsed_ms: Number.isFinite(elapsed) && elapsed >= 0 ? elapsed : null };
     })
     .filter((x) => x.state.stage !== "archived");
   return [...inbox, ...sampleList()].sort((a, b) => byTimeDesc(a.received_at, b.received_at));

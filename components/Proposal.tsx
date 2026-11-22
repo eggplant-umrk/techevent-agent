@@ -4,22 +4,25 @@ import { useState } from "react";
 import type { Candidate, DateSuggestions, Proposal as ProposalT } from "@/app/_client/types";
 import { ACTIVITY_LABEL } from "./labels";
 import { CopyButton, Tag } from "./ui";
-import { FEEDBACK_DONE, useFeedback, WRONG_REASON_LABEL, type WrongReason } from "@/app/_client/feedback";
+import { FEEDBACK_DONE, useFeedback } from "@/app/_client/feedback";
 
 /**
  * 「この候補は違う」：押すと理由を選ぶ（テーマが合わない・忙しい・本人の活動ではない・その他＋ひとこと）。
  * 選んだらすぐ送り、「次からの評価に使います」と小さく出す。確認の窓は出さない。ほかの操作はそのまま使える。
  */
 function WrongCandidate({ employeeId }: { employeeId: string }) {
-  const { requestId, send } = useFeedback();
+  const { requestId, reasons, send } = useFeedback();
   const [open, setOpen] = useState(false);
   const [other, setOther] = useState(false);
   const [note, setNote] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "fail">("idle");
-  if (!requestId) return null;
-  const submit = (reason: WrongReason) => {
+  // 理由の選択肢は記録の側の REASON_CODES.candidate をそのまま出す（「その他」だけ、ひとことを足せる）
+  const choices = reasons ? Object.entries(reasons.candidate) : [];
+  if (!requestId || !choices.length) return null;
+  const otherLabel = reasons?.candidate.other;
+  const submit = (reason: string) => {
     setState("sending");
-    send({ kind: "candidate_wrong", request_id: requestId, employee_id: employeeId, reason, ...(reason === "other" && note.trim() ? { note: note.trim().slice(0, 200) } : {}) })
+    send({ request_id: requestId, target: "candidate", target_id: employeeId, verdict: "wrong", reason_code: reason, ...(reason === "other" && note.trim() ? { note: note.trim().slice(0, 200) } : {}) })
       .then(() => setState("sent"))
       .catch(() => setState("fail"));
   };
@@ -38,14 +41,16 @@ function WrongCandidate({ employeeId }: { employeeId: string }) {
   return (
     <div className="wrong-box" role="group" aria-label="この候補が違う理由">
       <span className="meta">理由：</span>
-      {(["theme_mismatch", "busy", "not_their_work"] as WrongReason[]).map((r) => (
-        <button key={r} type="button" className="btn btn-sm" disabled={state === "sending"} onClick={() => submit(r)}>
-          {WRONG_REASON_LABEL[r]}
-        </button>
-      ))}
-      {!other ? (
+      {choices
+        .filter(([code]) => code !== "other")
+        .map(([code, label]) => (
+          <button key={code} type="button" className="btn btn-sm" disabled={state === "sending"} onClick={() => submit(code)}>
+            {label}
+          </button>
+        ))}
+      {!otherLabel ? null : !other ? (
         <button type="button" className="btn btn-sm" disabled={state === "sending"} onClick={() => setOther(true)}>
-          {WRONG_REASON_LABEL.other}
+          {otherLabel}
         </button>
       ) : (
         <span className="wrong-other">

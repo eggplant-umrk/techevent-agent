@@ -431,3 +431,5 @@ textarea.input { resize: vertical; }
   .trace-row { grid-template-columns: 40px 1fr auto; }
   .trace-track { grid-column: 1 / -1; }
 }
+.trace-kind-code { background: var(--ok-soft); color: var(--ok); }
+.trace-bar-code { background: var(--ok); opacity: 0.6; }

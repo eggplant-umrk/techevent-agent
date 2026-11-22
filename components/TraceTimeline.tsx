@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { Api } from "@/app/_client/api";
 import { durationText, usdText, type RequestTrace } from "@/app/_client/feedback";
 
-const KIND_LABEL = { llm: "AI", tool: "ツール" } as const;
+const KIND_LABEL = { llm: "AI", tool: "ツール", code: "処理" } as const;
 
 export function TraceTimeline({ api, requestId }: { api: Api; requestId: string }) {
   const [open, setOpen] = useState(false);
@@ -47,15 +47,18 @@ export function TraceTimeline({ api, requestId }: { api: Api; requestId: string 
 }
 
 function TraceView({ trace, mock }: { trace: RequestTrace; mock: boolean }) {
-  const total = Math.max(1, trace.total_ms);
-  const t0 = Date.parse(trace.started_at);
+  // 線の長さは、最初の呼び出しの始まりから最後の呼び出しの終わりまで（もう一度探した・下書きを作ったも同じ線に並ぶ）
+  const starts = trace.steps.map((s) => Date.parse(s.started_at)).filter(Number.isFinite);
+  const t0 = starts.length ? Math.min(...starts) : Date.parse(trace.started_at);
+  const end = Math.max(t0 + 1, ...trace.steps.map((s) => Date.parse(s.started_at) + s.ms).filter(Number.isFinite));
+  const total = Math.max(1, end - t0);
   const llm = trace.steps.filter((s) => s.kind === "llm").length;
-  const tools = trace.steps.length - llm;
+  const tools = trace.steps.filter((s) => s.kind === "tool").length;
   const failed = trace.steps.filter((s) => !s.ok).length;
   return (
     <>
       <p className="meta">
-        合計 {durationText(trace.total_ms)}・{usdText(trace.total_usd)}・AI {llm}回・ツール {tools}回{failed ? `・失敗 ${failed}回` : ""}
+        合計 {durationText(trace.total_ms)}・{usdText(trace.total_cost_usd)}・AI {llm}回・ツール {tools}回{failed ? `・失敗 ${failed}回` : ""}
         {mock && "（モックの見本）"}
       </p>
       <ol className="trace-list">
@@ -73,7 +76,7 @@ function TraceView({ trace, mock }: { trace: RequestTrace; mock: boolean }) {
               </span>
               <span className="trace-num meta">
                 {durationText(s.ms)}
-                {s.usd !== null ? `・${usdText(s.usd)}` : ""}
+                {typeof s.cost_usd === "number" ? `・${usdText(s.cost_usd)}` : ""}
                 {s.ok ? "" : `・失敗${s.error ? `（${s.error}）` : ""}`}
               </span>
             </li>

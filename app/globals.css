@@ -77,7 +77,8 @@ p { margin: 0; }
   overflow-y: auto;
 }
 /* 列の中の欄（作業ログ・ブログにしやすいネタ）：長くても列を押し出さず、欄の中でスクロールする。一覧（.nb-list）にも場所を残す */
-.notebook > .nb-section { flex: none; max-height: 40vh; overflow-y: auto; }
+/* 高さの上限は、列の上の部分（切り替え・絞り込み 約200px）と一覧の 120px を残した分まで（低い画面で列ごとはみ出すと、列のスクロールバーが出て3重になり、一覧も1人分しか見えなくなるため）。最低 96px */
+.notebook > .nb-section { flex: none; max-height: max(96px, min(40vh, calc(100vh - 88px - 200px - 120px))); overflow-y: auto; }
 .notebook > .nb-top { flex: none; }
 .notebook > .nb-list { flex: 1 1 auto; min-height: 120px; }
 .panel { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
@@ -493,13 +494,23 @@ textarea.input { resize: vertical; }
 .wrong-done { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ネタ帳タブの左の欄：いちばん上の切り替え（タブの形）と、「人」のときだけの検索・絞り込み */
-.nb-tabs { display: flex; gap: 4px 16px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin: -4px 0 0; }
+/* 切り替えは折り返さない（1行）。左の欄が細いとき（いちばん細い 330px の欄に、ブログのネタなどで欄のスクロールバーが出たときなど）は、間と文字を少し小さくして収める */
+.nb-top { container-type: inline-size; }
+.nb-tabs { display: flex; gap: 16px; flex-wrap: nowrap; border-bottom: 1px solid var(--line); margin: -4px 0 0; }
 .nb-tab { all: unset; cursor: pointer; padding: 6px 0 7px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
 .nb-tab:hover { color: var(--text); }
 .nb-tab[aria-selected="true"] { color: var(--text); font-weight: 700; border-bottom-color: var(--text); }
 .nb-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .nb-tab-count { font-weight: 400; color: var(--muted); margin-left: 2px; }
 .nb-tab[aria-selected="true"] .nb-tab-count { color: var(--text-2); }
+@container (max-width: 310px) {
+  .nb-tabs { gap: 12px; }
+  .nb-tab { font-size: 12px; }
+}
+@container (max-width: 270px) {
+  .nb-tabs { gap: 10px; }
+  .nb-tab { font-size: 11px; }
+}
 .nb-head { align-items: center; }
 .nb-actions { display: flex; align-items: center; gap: 12px; }
 .nb-actions .link { font-size: 13px; }

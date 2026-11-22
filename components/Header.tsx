@@ -2,6 +2,7 @@
 
 import type { ModelChoice } from "@/app/_client/types";
 import { usd } from "./labels";
+import { usdText } from "@/app/_client/feedback";
 
 /** 画面のタブ（いつ使うか で分ける）。ヘッダーのタブはこの3つだけ */
 export type Tab = "inbox" | "notebook" | "archive";
@@ -19,6 +20,7 @@ export function Header({
   totalUsd,
   models,
   mock,
+  share = null,
 }: {
   tab: Tab;
   onTab: (t: Tab) => void;
@@ -28,6 +30,8 @@ export function Header({
   totalUsd: number;
   models: ModelChoice | null;
   mock: boolean;
+  /** 見せる用のときだけ：その人の残り（1人あたりの上限があるとき） */
+  share?: { person_remaining_usd: number | null } | null;
 }) {
   return (
     <header className="app-header">
@@ -50,6 +54,11 @@ export function Header({
         ))}
       </nav>
       <div className="header-right">
+        {share && share.person_remaining_usd !== null && (
+          <span className="meta share-remaining">
+            {share.person_remaining_usd > 0 ? `あと ${usdText(share.person_remaining_usd)} 分試せます` : "この端末で試せる分を使い切りました"}
+          </span>
+        )}
         {debug && (
           <span className="meta debug-cost">
             今回 {usd(runUsd)}・累計 {usd(totalUsd)}

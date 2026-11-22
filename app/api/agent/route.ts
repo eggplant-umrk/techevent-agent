@@ -3,6 +3,8 @@ import { resolveRequest } from "@/lib/requests";
 import { saveSampleProposal } from "@/lib/board";
 import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
+import { traceEmit, withTrace } from "@/lib/trace";
+import { perPerson } from "@/lib/personBudget";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +30,8 @@ async function handlePost(req: Request) {
         controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
       };
       try {
-        const result = await runAgent(request, emit);
+        // 実行の記録（lib/trace.ts）：依頼の id で残す。その場で書いた依頼（custom_text）は残さない
+        const result = body.custom_text ? await runAgent(request, emit) : await withTrace(request.id, () => runAgent(request, traceEmit(emit)));
         // サンプルの依頼は、出した候補を保存して受信箱の状態を「候補準備済み」にする（受信箱の依頼は受信箱が保存する）
         if (result && !body.custom_text) saveSampleProposal(request.id, result, events, runUsd);
       } catch (err) {
@@ -45,4 +48,5 @@ async function handlePost(req: Request) {
 }
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
-export const POST = slotted(handlePost);
+// 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
+export const POST = perPerson(slotted(handlePost));

@@ -27,15 +27,19 @@ export function shareConfigProblem(): string | null {
   if (shareMode() === "lan" && !accessCode()) return "SHARE_MODE=lan のときは .env に ACCESS_CODE（合言葉）を設定してください。合言葉なしでは起動しません";
   if (shareMode() === "lan" && [...accessCode()].length < MIN_ACCESS_CODE)
     return `SHARE_MODE=lan のときは ACCESS_CODE（合言葉）を${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`;
+  const perPerson = (process.env.SHARE_PER_PERSON_USD ?? "").trim();
+  if (shareMode() === "lan" && perPerson && !(Number(perPerson) > 0))
+    return `SHARE_PER_PERSON_USD（見せる用の1人あたりの API 代の上限）は 0 より大きい数にしてください（例：5）`;
   if (shareMode() === "lan" && shareBudgetUsd() === null)
     return "SHARE_MODE=lan のときは .env に SHARE_BUDGET_USD（見せている間の API 代の上限、例：5）を設定してください。上限なしでは起動しません";
   return null;
 }
 
-/** 見せる用（lan）では止める操作。合言葉を全員に公開するので、全員分を読み直す重い操作は使わせない */
-export const LAN_BLOCKED: Array<{ method: string; path: RegExp; reason: string }> = [
-  { method: "POST", path: /^\/api\/notebook$/, reason: "見せる用では「ネタ帳を更新」を止めています（全員分の活動を読み直す重い操作のため。発表用の画面で行います）" },
-];
+/** 見せる用（lan）では止める操作（今はなし） */
+//   「ネタ帳を更新」は止めていたが、次の3つで守れるので開けた（11/22）：
+//   1回の見積もりの上限（NOTEBOOK_BUDGET_USD、超えるなら始めない・途中で届いたら残りは次回）、
+//   二重実行の防止（動いている間の2回目は 409）、1人あたりの上限（SHARE_PER_PERSON_USD）。合計の上限 SHARE_BUDGET_USD もそのまま
+export const LAN_BLOCKED: Array<{ method: string; path: RegExp; reason: string }> = [];
 
 /** 見せる用では、API 代などを出す ?debug を外した URL（外すものがなければ null） */
 export function withoutDebug(url: URL): URL | null {
@@ -128,6 +132,8 @@ const SPENDING: RegExp[] = [
   /^\/api\/blog-ideas$/,
   /^\/api\/venues(\/.*)?$/,
   /^\/api\/inbox$/,
+  // 「依頼として進める」（依頼ではなさそうと読んだ1件の候補づくり）
+  /^\/api\/inbox\/[^/]+\/proceed$/,
 ];
 export const spendsApi = (method: string, pathname: string) => method === "POST" && SPENDING.some((re) => re.test(pathname));
 

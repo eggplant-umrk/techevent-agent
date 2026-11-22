@@ -5,6 +5,8 @@ import { activities } from "@/lib/data";
 import { runUsd, totalUsd } from "@/lib/usage";
 import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
+import { withTrace } from "@/lib/trace";
+import { perPerson } from "@/lib/personBudget";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +29,9 @@ async function handlePost(req: Request) {
     return Response.json({ error: "依頼または候補がありません（保存済みの候補にいない人の下書きは作りません）" }, { status: 400 });
   }
   try {
-    const r = await draftOutreach(String(body.run_id ?? "").slice(0, 100) || `draft-${request.id}`, request, candidate);
+    const make = () => draftOutreach(String(body.run_id ?? "").slice(0, 100) || `draft-${request.id}`, request, candidate);
+    // 実行の記録（lib/trace.ts）：依頼の id の記録に足す。その場で書いた依頼（custom_text）は残さない
+    const r = body.request_id && !body.custom_text ? await withTrace(request.id, make) : await make();
     // 承諾済みの依頼を開き直したときに主催者への返事を出せるよう、下書きを保存する（送信はしない）
     if (body.request_id && !body.custom_text) saveDraft(body.request_id, candidate.employee_id, r.value);
     return Response.json({
@@ -43,4 +47,5 @@ async function handlePost(req: Request) {
 }
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
-export const POST = slotted(handlePost);
+// 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
+export const POST = perPerson(slotted(handlePost));

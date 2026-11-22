@@ -137,6 +137,15 @@ async function main() {
         title: c.title,
         input: c.text,
         expect: c.expect,
+        /** 評価（docs/evals.md）が読む形（EvalOutput）。カードの写しは大きいので外す */
+        output: {
+          status: it.status,
+          intake: it.intake ?? null,
+          result: r ? { ...r, candidates: r.candidates.map((x) => ({ ...x, card: null })) } : null,
+          draft: typeof draft.message === "string" ? { subject: String(draft.subject ?? ""), message: draft.message, organizer_reply: (draft.organizer_reply as string | null) ?? null, organizer_reply_note: (draft.organizer_reply_note as string | null) ?? null } : null,
+          recorded_at: new Date().toISOString(),
+          usd: Number((spent() - before).toFixed(4)),
+        },
         seconds: Math.round((Date.now() - started) / 1000),
         usd: { read_and_candidates: Number((afterPrepare - before).toFixed(4)), draft: Number((spent() - afterPrepare).toFixed(4)) },
         intake: { fields, decided, undecided: intake?.undecided ?? [], reasons: intake?.reasons ?? {}, nominee: it.nominee },

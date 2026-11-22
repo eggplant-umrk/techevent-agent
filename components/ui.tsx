@@ -11,7 +11,8 @@ export function Tag({ tone = "neutral", children }: { tone?: Tone; children: Rea
   return <span className={`tag tag-${tone}`}>{children}</span>;
 }
 
-export function CopyButton({ text, label = "コピー", primary = false }: { text: string; label?: string; primary?: boolean }) {
+/** onCopied：コピーできたとき（下書き・返事を「使った」と数えるため） */
+export function CopyButton({ text, label = "コピー", primary = false, onCopied }: { text: string; label?: string; primary?: boolean; onCopied?: (text: string) => void }) {
   const [state, setState] = useState<"idle" | "done" | "fail">("idle");
   return (
     <button
@@ -21,6 +22,7 @@ export function CopyButton({ text, label = "コピー", primary = false }: { tex
         try {
           await navigator.clipboard.writeText(text);
           setState("done");
+          onCopied?.(text);
         } catch {
           setState("fail");
         }

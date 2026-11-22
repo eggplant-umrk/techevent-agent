@@ -218,7 +218,7 @@ async function main() {
     const savedItem = inboxItem(hungId);
     check("結果が受信箱（inbox.json）に保存される", savedItem?.status === "ready" && rc.length >= 1 && (savedItem?.result?.candidates ?? []).length === rc.length, `${savedItem?.status} 候補${(savedItem?.result?.candidates ?? []).length}人`);
     if (rc[0]) {
-      const go = await api.post("/api/outcome", { request_id: hungId, card_id: rc[0].card_id, result: "approved", candidate: { employee_id: rc[0].employee_id } });
+      const go = await api.post("/api/outcome", { request_id: hungId, card_id: rc[0].card_id, result: "approved" });
       check("準備し直した候補で「この人で進める」が通る", go.status === 200, go.text.slice(0, 80));
       const dr = await api.post("/api/draft", { request_id: hungId, run_id: rd.result.run_id, candidate: { employee_id: rc[0].employee_id } });
       check("その人の下書きまで作れる（保存済みの候補から引き直せる）", dr.status === 200 && !!dr.data?.draft, `${dr.status} ${dr.text.slice(0, 80)}`);
@@ -242,25 +242,36 @@ async function main() {
     check("2人が別の人の印をもらう", !!p1.key && !!p2.key && p1.key !== p2.key);
     const u1 = client(share2.base, { cookie: p1.jar });
     const u2 = client(share2.base, { cookie: p2.jar });
-    const samples = ((await u1.get("/api/inbox")).data?.items ?? []).filter((x) => x.source === "sample").map((x) => x.id);
-    const [sa, sb] = samples;
-    // 流しながら返す窓口（候補を出す・分析）を、2人が同時に使う
-    const [a1, a2, n1, n2] = await Promise.all([
-      u1.post("/api/agent", { request_id: sa }),
-      u2.post("/api/agent", { request_id: sb }),
-      sleep(50).then(() => u1.post("/api/events/ev015/analyze")),
-      sleep(50).then(() => u2.post("/api/events/ev015/analyze")),
-    ]);
-    const okStream = (r) => r.status === 200 && !/"type":"error"/.test(r.text);
-    check("2人とも候補を出せる（流しながら返す窓口）", okStream(a1) && okStream(a2), `${a1.status} ${a2.status} ${(a1.text + a2.text).match(/"message":"[^"]{0,60}/)?.[0] ?? ""}`);
-    check("2人とも分析を流せる（1人1件なので、自分の候補づくりが終わってから始まる）", n1.status === 200 && n2.status === 200, `${n1.status} ${n2.status} ${(n1.data?.error ?? n2.data?.error ?? "").slice(0, 60)}`);
+    // それぞれの受信箱に依頼を1件ずつ（受信箱は人ごとの場所）
+    const [i1, i2] = await Promise.all([u1.addAndWait(`${REQUEST_TEXT}（人1）`), u2.addAndWait(`${REQUEST_TEXT}（人2）`)]);
+    const id1 = i1.add.data?.id;
+    const id2 = i2.add.data?.id;
+    check("2人とも自分の受信箱に依頼を入れて、準備が終わる", i1.detail?.status === "ready" && i2.detail?.status === "ready", `${i1.detail?.status} ${i2.detail?.status}`);
     const v1 = path.join(share2Dir, "visitors", p1.key ?? "x");
     const v2 = path.join(share2Dir, "visitors", p2.key ?? "y");
-    const sp1 = readJson(path.join(v1, "sample_proposals.json"), {});
-    const sp2 = readJson(path.join(v2, "sample_proposals.json"), {});
-    const fresh = (sp, rid) => !!sp[rid] && !sp[rid].seeded;
-    check("人1の出した候補は人1の場所だけに入る", fresh(sp1, sa) && !fresh(sp2, sa), `人1:${Object.keys(sp1).join(",")} 人2:${Object.keys(sp2).join(",")}`);
-    check("人2の出した候補は人2の場所だけに入る", fresh(sp2, sb) && !fresh(sp1, sb));
+    const steps = (v, rid) => (readJson(path.join(v, "traces", `${rid}.json`), null)?.steps ?? []).length;
+    const before1 = steps(v1, id1);
+    const before2 = steps(v2, id2);
+    // 流しながら返す窓口（候補を出す → 分析）を、2人が同時に使う（1人1件なので、1人の中では順に）。
+    // 人を Next.js の要求から決められていなければ、別の場所（no-person）を読んで「依頼が見つかりません」になる
+    const chain = async (u, rid) => {
+      const a = await u.post("/api/agent", { request_id: rid });
+      const n = await u.post("/api/events/ev015/analyze");
+      return [a, n];
+    };
+    const [[a1, n1], [a2, n2]] = await Promise.all([chain(u1, id1), chain(u2, id2)]);
+    const errOf = (r) => r.data?.error ?? r.text.split("\n").map((l) => { try { return JSON.parse(l); } catch { return null; } }).find((e) => e?.type === "error")?.message ?? null;
+    const okStream = (r) => r.status === 200 && !errOf(r);
+    check("2人とも、自分の依頼で候補を出せる（流しながら返す窓口が、その人の受信箱を読む）", okStream(a1) && okStream(a2), `${a1.status} ${a2.status} ${errOf(a1) ?? ""} ${errOf(a2) ?? ""}`);
+    check("2人とも分析を流せる", n1.status === 200 && n2.status === 200, `${n1.status} ${n2.status} ${(n1.data?.error ?? n2.data?.error ?? "").slice(0, 60)}`);
+    check("人1の実行の記録は人1の場所だけに足される", steps(v1, id1) > before1 && !fs.existsSync(path.join(v2, "traces", `${id1}.json`)), `${before1}→${steps(v1, id1)}`);
+    check("人2の実行の記録は人2の場所だけに足される", steps(v2, id2) > before2 && !fs.existsSync(path.join(v1, "traces", `${id2}.json`)), `${before2}→${steps(v2, id2)}`);
+    const ids = (v) => {
+      const f = readJson(path.join(v, "inbox.json"), []);
+      return (Array.isArray(f) ? f : f?.items ?? []).map((x) => x.id);
+    };
+    check("受信箱も混ざらない（人1の場所に人2の依頼がない・その逆も）", ids(v1).includes(id1) && !ids(v1).includes(id2) && ids(v2).includes(id2) && !ids(v2).includes(id1));
+    check("人の印のない場所（no-person）に書かない", !fs.existsSync(path.join(share2Dir, "visitors", "no-person")));
     const list = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((f) => !f.startsWith(".")).sort().join(",") : "（なし）");
     check("2人の場所に、同じ種類の記録ができる（分析の記録も、それぞれの場所に）", list(v1) === list(v2), `人1:${list(v1)} ／ 人2:${list(v2)}`);
     const baseLeft = fs.readdirSync(share2Dir).filter((f) => !["visitors", "usage.json", "person_usage.json"].includes(f));

@@ -7,6 +7,8 @@
 // - 上限（--max-usd、既定 1.0）を超えそうなら、その先を流さずに止まる
 // - 判定はコード（scripts/evals/checks.ts）。1回ごとに、ケースの判定がすべて通ったかを見る
 // - 結果は docs/evals_passk.json
+// - --record <ファイル> を付けると、ケースごとに最後の1回の結果（読み取り・候補）をそのファイルに書き足す（通っても落ちてもそのまま）。
+//   直したあとの本番の結果を、オフラインの評価（eval:raise・eval:compare）の保存済みの結果として使うため（scripts/evals/cases.ts の recordedRuns）
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -25,6 +27,8 @@ const RUN_MAX_USD = 0.2;
 const DRAFT_MAX_USD = 0.21;
 /** 保存先（--out で変えられる。既定 docs/evals_passk.json） */
 const OUT = path.resolve(opt("--out") ?? path.join("docs", "evals_passk.json"));
+/** 最後の1回の結果を書き足す先（--record。なければ書かない） */
+const RECORD = opt("--record") ? path.resolve(opt("--record")!) : null;
 
 async function main() {
   const envFile = process.env.TRY_ENV_FILE || ".env";
@@ -93,6 +97,7 @@ async function main() {
   }
 
   const rows: unknown[] = [];
+  const lastOutput = new Map<string, EvalOutput>();
   let stopped: string | null = null;
   try {
     for (const c of targets) {
@@ -108,6 +113,7 @@ async function main() {
         let seen: Record<string, unknown> = {};
         try {
           const o = await runOnce(c);
+          lastOutput.set(c.id, { ...o, recorded_at: new Date().toISOString() });
           seen = {
             kind: o.intake?.kind ?? null,
             date: o.intake?.date ?? null,
@@ -140,6 +146,11 @@ async function main() {
         detail: runs,
       });
       fs.writeFileSync(OUT, JSON.stringify({ at: new Date().toISOString(), k: K, max_usd: MAX_USD, spent_usd: Number(spent().toFixed(4)), stopped, rows }, null, 2) + "\n");
+      // 最後の1回の結果を書き足す（ほかのケースの分は残す）
+      if (RECORD && lastOutput.has(c.id)) {
+        const prev = fs.existsSync(RECORD) ? (JSON.parse(fs.readFileSync(RECORD, "utf-8")) as { outputs?: Record<string, EvalOutput> }) : {};
+        fs.writeFileSync(RECORD, JSON.stringify({ note: "eval:passk --record が書く。ケースごとの、本番で流した最後の1回の結果", outputs: { ...(prev.outputs ?? {}), [c.id]: lastOutput.get(c.id) } }, null, 2) + "\n");
+      }
       if (stopped) break;
     }
   } finally {

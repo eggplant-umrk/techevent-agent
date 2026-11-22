@@ -67,7 +67,8 @@
     "test:mentor": "tsx scripts/test_mentor.ts",
     "test:join": "tsx scripts/test_join_link.ts",
     "test:askback": "tsx scripts/test_ask_back.ts",
-    "test:replydate": "tsx scripts/test_reply_date.ts"
+    "test:replydate": "tsx scripts/test_reply_date.ts",
+    "test:intakefix": "tsx scripts/test_intake_fix.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

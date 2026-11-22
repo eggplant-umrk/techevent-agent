@@ -179,6 +179,9 @@ const latestRow = (requestId: string): EvalOutput | null => {
   return row ? { status: "ready", result: row.result, recorded_at: d?.at ?? null } : null;
 };
 
+/** 直したあとに本番で流した結果（eval:passk --record が docs/evals_recorded.json に書く。なければ空）。ケースの id で引く */
+const recordedRuns = (): Map<string, EvalOutput> => new Map(Object.entries(readJson<{ outputs?: Record<string, EvalOutput> }>(path.join(root, "docs", "evals_recorded.json"))?.outputs ?? {}));
+
 export function raiseCases(): EvalCase[] {
   const saved = tryResults();
   const handmade: EvalCase[] = [
@@ -220,7 +223,8 @@ export function raiseCases(): EvalCase[] {
       priority: P(2, 2),
       allowed_failure_rate: 0.34,
       suite: "raise",
-      recorded: saved.get("F3") ?? null,
+      // 読み取りを直したあとに流し直した結果があれば、それを使う（なければ 11/22 の代表10件の結果）
+      recorded: recordedRuns().get("raise-F3-first-request-date") ?? saved.get("F3") ?? null,
     },
     {
       id: "raise-B4-nomination-with-personal-info-ask",

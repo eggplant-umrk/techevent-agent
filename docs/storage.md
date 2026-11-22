@@ -46,7 +46,7 @@
 | サンプルの依頼の候補 | `data/sample_proposals.json` | 単独 | `lib/board.ts`：`saveSampleProposal`（48行）・`markSampleOpened`（55行） | 依頼 id（`req001`）がキー |
 | 下書き（声かけ文・主催者への返事） | `data/drafts.json` | 単独 | `lib/board.ts`：`saveDraft`（65行） | `<依頼id>:<社員id>` |
 | 金額の記録 | `data/usage.json` | 単独（追記） | `lib/data.ts`：`appendUsage`（183行）。呼ぶのは `lib/usage.ts` の `recordUsage`（12行） | なし（1回の呼び出しが1行。実行の id は `randomUUID`） |
-| アンケートの取り込み | `data/survey_imports/<イベントid>.json` | 単独 | `lib/surveyCsv.ts`：`saveImport`（267行） | 回答 id は `<イベントid>-r<CSVの行番号>` |
+| アンケートの取り込み | `data/survey_imports/<イベントid>.json` | 単独 | `lib/surveyCsv.ts`：`saveImport`（267行） | 回答 id は `<イベントid>-r<CSVの行番号>`。カジュアル面談の希望は `casual_interview`（人数・行番号・登壇ごとの人数だけ） |
 | アンケートの分析結果 | `data/survey_analysis.json`（なければ `docs/survey_latest.json` の保存済みの結果で補う） | 単独 | `lib/surveys.ts`（`saveAnalysis`） | イベント id がキー |
 | 登壇者の記録（内部） | `data/talk_records.json` | 単独 | `lib/surveys.ts`：`writeBack`（594行）の中 | `<イベントid>` と社員 id |
 | 社員・活動・イベント・依頼・発信・予定・外部イベント | `data/*.json`、`data/sources/…` | 読むだけ（`DATA_SOURCE`・`DEMO_PERSON`・`MORE_SOURCES`・`RELEASE_NOTES` で材料が変わる） | アプリからは書かない | 活動：`act001`（架空は決め打ち、GitHub は並び順 `scripts/import_github.ts` 295行、デモ用の本人は +200 `lib/demoPerson.ts` 37行）、Slack：`slk<連番3桁>`（`scripts/slack/sources.ts` 140行） |

@@ -150,7 +150,7 @@ async function main() {
     check("空欄・「特になし」の回答は除外して数える", st.excluded === rows19.filter((r) => ["", "なし", "特になし"].includes(r[4].trim()) && !r[5].trim()).length);
     // 画面の窓口：登壇者は「誰が何を話したか」だけ（タイトルはアンケートの「どの登壇か」の列からコードで取り出す）
     const det = eventDetail("ev019")!;
-    check("窓口は event・overview・speakers・source だけ（古い登壇者ごとの項目はない）", Object.keys(det).sort().join(",") === "event,overview,source,speakers", Object.keys(det).join(","));
+    check("窓口は event・overview・speakers・source・casual_interview だけ（古い登壇者ごとの項目はない）", Object.keys(det).sort().join(",") === "casual_interview,event,overview,source,speakers", Object.keys(det).join(","));
     check("登壇者は名前とタイトルだけ", det.speakers.every((sp) => Object.keys(sp).sort().join(",") === "business_unit,name,title") && det.speakers.some((sp) => sp.title === "AIエージェントの本番運用で効くガードレール設計"), det.speakers.map((sp) => `${sp.name}「${sp.title}」`).join(" / "));
     const mixed = sentencesOf("ev019").filter((s) => s.answer_id === all.find((a) => a.comment.startsWith("内容はとても良かったです。ただ"))?.id);
     check("1つの回答を文に分ける（良い点と不満が混ざる回答）", mixed.length === 2, mixed.map((m) => m.text).join(" / "));

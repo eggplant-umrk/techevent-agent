@@ -117,7 +117,7 @@ export async function surveyCodeChecks(): Promise<SurveyCheck[]> {
     if (!d?.overview) return [`${a.event_id} イベント単位の集計がない`];
     const out = overviewProblems(d.overview).map((e) => `${a.event_id} ${e}`);
     const keys = Object.keys(d).sort().join(",");
-    if (keys !== "event,overview,source,speakers") out.push(`${a.event_id} 窓口に古い項目が残っている（${keys}）`);
+    if (keys !== "casual_interview,event,overview,source,speakers") out.push(`${a.event_id} 窓口に古い項目が残っている（${keys}）`);
     if (d.speakers.some((sp) => Object.keys(sp).sort().join(",") !== "business_unit,name,title")) out.push(`${a.event_id} 登壇者に名前・タイトル以外が入っている`);
     return out;
   });

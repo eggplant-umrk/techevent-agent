@@ -117,8 +117,8 @@ async function main() {
   // ---- 文書 ----
   const envEx = read(".env.example");
   const doc = read("docs/demo_checklist.md");
-  check(".env.example に MENTOR_ACCESS_CODE・SHARE_MENTOR_USD と「Notion に書かず口頭で」", envEx.includes("MENTOR_ACCESS_CODE=") && envEx.includes("SHARE_MENTOR_USD=") && envEx.includes("Notion に書かず") && envEx.includes("口頭"));
-  check("docs/demo_checklist.md に「Notion に書くのは 3100番のアドレスだけ」「メンター用は口頭で」", doc.includes("Notion に書くのは見せる用（3100番）のアドレスだけ") && doc.includes("口頭で伝える"));
+  check(".env.example に MENTOR_ACCESS_CODE・SHARE_MENTOR_USD と「Notion やスライドに書かない（運営さんに渡す・口頭でも）」", envEx.includes("MENTOR_ACCESS_CODE=") && envEx.includes("SHARE_MENTOR_USD=") && envEx.includes("Notion やスライドには書かない") && envEx.includes("運営さん"));
+  check("docs/demo_checklist.md に「一般用は Notion に貼る」「メンター・審査員用は運営さんに渡し、Notion やスライドに出さない」", doc.includes("Notion に貼る用") && doc.includes("Notion にもスライドにも出さない") && doc.includes("運営さんに渡す"));
   check("画面に役割を出さない（見た目は一般と同じ）", !/mentor|メンター/.test(read("components/Header.tsx") + read("app/page.tsx")));
 
   ["SHARE_MODE", "ACCESS_CODE", "SHARE_BUDGET_USD", "SHARE_PER_PERSON_USD", "SHARE_MENTOR_USD", "MENTOR_ACCESS_CODE"].forEach((k) => delete process.env[k]);

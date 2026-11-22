@@ -14,6 +14,8 @@ export const ACCESS_COOKIE = "nb_access";
 export const ACCESS_HEADER = "x-access-code";
 export const ACCESS_PATH = "/access";
 export const ACCESS_API = "/api/access";
+/** 合言葉を打たずに入るリンク（GET /join?code=…） */
+export const JOIN_PATH = "/join";
 
 export const shareMode = (): ShareMode => ((process.env.SHARE_MODE ?? "").trim().toLowerCase() === "lan" ? "lan" : "local");
 export const accessCode = () => (process.env.ACCESS_CODE ?? "").trim();
@@ -137,7 +139,8 @@ export function checkRequest(r: GateInput): Gate {
   const blocked = LAN_BLOCKED.find((b) => b.method === r.method && b.path.test(r.pathname));
   if (blocked) return { ok: false, status: 403, error: blocked.reason };
   // 合言葉の入力画面と、その送り先は合言葉なしで開ける
-  if (r.pathname === ACCESS_PATH || (r.pathname === ACCESS_API && r.method === "POST")) return { ok: true };
+  // 合言葉のリンク（/join?code=…）も、合言葉の窓口と同じく合言葉なしで開ける（確かめるのは app/join/route.ts）
+  if (r.pathname === ACCESS_PATH || (r.pathname === ACCESS_API && r.method === "POST") || (r.pathname === JOIN_PATH && r.method === "GET")) return { ok: true };
   const authed = (!!r.cookie && safeEqual(r.cookie, accessToken())) || codeMatches(r.headerCode) || mentorCodeMatches(r.headerCode);
   if (authed) return { ok: true };
   if (isApi) return { ok: false, status: 401, error: "合言葉が必要です。画面を開き直して、合言葉を入れてください" };

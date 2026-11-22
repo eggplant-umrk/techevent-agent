@@ -1,11 +1,21 @@
 "use client";
 // 合言葉の入力（SHARE_MODE=lan で、別の端末から開いたとき）。合っていれば、もとの画面に戻る
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { safeNext } from "@/lib/safeNext";
+
+/** 合言葉のリンク（/join）から来て、入れなかったときの理由（app/join/route.ts が ?join= に付ける。合言葉は付かない） */
+const JOIN_ERROR: Record<string, string> = {
+  ng: "リンクの合言葉が違うか、古くなっています。見せている人から聞いた合言葉を入れてください",
+  locked: "合言葉の間違いが続いたので、しばらく受け付けません。数分たってから試してください",
+};
 
 export default function AccessPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const j = new URLSearchParams(window.location.search).get("join");
+    if (j && JOIN_ERROR[j]) setError(JOIN_ERROR[j]);
+  }, []);
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {

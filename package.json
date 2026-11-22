@@ -48,7 +48,8 @@
     "test:hardening": "tsx scripts/test_share_hardening.ts",
     "test:robust": "tsx scripts/test_robust.ts",
     "test:guard": "tsx scripts/test_ui_guard.ts",
-    "test:access": "tsx scripts/test_access_harden.ts"
+    "test:access": "tsx scripts/test_access_harden.ts",
+    "test:feedback-ui": "tsx scripts/test_feedback_ui.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

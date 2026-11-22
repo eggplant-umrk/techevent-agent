@@ -5,6 +5,7 @@ import type { BoardDetail, Candidate, DeclineReason, OutreachDraft, OutreachResu
 import { StageTag } from "./Inbox";
 import { REASON_LABEL, RESULT_LABEL } from "./labels";
 import { CopyButton, ErrorLine, Spinner } from "./ui";
+import { useUsedFeedback } from "@/app/_client/feedback";
 
 /** After "この人で進める": the outreach draft (copy only, never sent) and the result buttons. */
 export function Approved({
@@ -65,9 +66,9 @@ export function Approved({
           </button>
         </section>
       )}
-      {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} />}
+      {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} employeeId={candidate.employee_id} />}
       {draft?.organizer_reply && (
-        <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} dateSentence={dateSentence} />
+        <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} dateSentence={dateSentence} employeeId={candidate.employee_id} />
       )}
       {resume && !draft && !drafting && (
         <section className="surface pad-lg">
@@ -96,7 +97,7 @@ export function AcceptedView({
   onUndo,
 }: {
   detail: BoardDetail;
-  reply: { name: string; text: string } | null;
+  reply: { name: string; text: string; employee_id?: string } | null;
   /** 決まった人の「空いていそうな日」の1文（あれば） */
   dateSentence?: string | null;
   showOthers: boolean;
@@ -169,7 +170,7 @@ export function AcceptedView({
         </div>
       </section>
       {reply ? (
-        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted />
+        <OrganizerReply key={`acc-reply-${reply.name}`} text={reply.text} note={null} accepted employeeId={reply.employee_id ?? null} />
       ) : (
         <section className="surface pad-lg">
           <h3 className="h3">主催者への返事（下書き）</h3>
@@ -186,14 +187,19 @@ function OrganizerReply({
   note,
   accepted = false,
   dateSentence = null,
+  employeeId = null,
 }: {
   text: string;
   note: string | null;
   accepted?: boolean;
+  /** 使われた結果（good／edited）を送るときの、返事の相手の人 */
+  employeeId?: string | null;
   /** 「この日あたりなら調整しやすそうです（本人に確認します）」の1文。ボタンを押したときだけ本文に入れる */
   dateSentence?: string | null;
 }) {
   const [value, setValue] = useState(text);
+  // コピーしたら「使った」として、直していなければ good、直していれば edited を送る（確認の窓は出さない）
+  const used = useUsedFeedback("organizer_reply", employeeId, text);
   const hasDate = !!dateSentence && value.includes(dateSentence);
   return (
     <section className="surface pad-lg" aria-labelledby="reply-title">
@@ -211,7 +217,7 @@ function OrganizerReply({
         <textarea className="input reply-text" rows={4} value={value} onChange={(e) => setValue(e.target.value)} />
       </label>
       <div className="btn-row">
-        <CopyButton text={value} label="返事をコピー" primary />
+        <CopyButton text={value} label="返事をコピー" primary onCopied={used.onUsed} />
         {dateSentence && (
           <button
             type="button"
@@ -227,14 +233,21 @@ function OrganizerReply({
           最初の下書きに戻す
         </button>
       </div>
+      {used.note && (
+        <p className="meta feedback-note" role="status">
+          {used.note}
+        </p>
+      )}
       {dateSentence && !hasDate && <p className="meta">入れる文：{dateSentence}（本人に確認する前の目安。押したときだけ入れます）</p>}
     </section>
   );
 }
 
-function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | null }) {
+function DraftEditor({ draft, note, employeeId }: { draft: OutreachDraft; note: string | null; employeeId: string }) {
   const [subject, setSubject] = useState(draft.subject);
   const [message, setMessage] = useState(draft.message);
+  // コピーしたら「使った」として、直していなければ good、直していれば edited を送る（直す前と後の件名＋本文）
+  const used = useUsedFeedback("draft", employeeId, `${draft.subject}\n\n${draft.message}`);
   const edited = subject !== draft.subject || message !== draft.message;
   const outlineText = draft.lt_outline.map((s) => `${s.minutes}分　${s.heading}\n${s.points.map((p) => `・${p}`).join("\n")}`).join("\n");
 
@@ -270,7 +283,7 @@ function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | nul
           <textarea className="input draft-text" rows={14} value={message} onChange={(e) => setMessage(e.target.value)} />
         </label>
         <div className="btn-row">
-          <CopyButton text={`${subject}\n\n${message}`} label="声かけ文をコピー" primary />
+          <CopyButton text={`${subject}\n\n${message}`} label="声かけ文をコピー" primary onCopied={used.onUsed} />
           <button
             type="button"
             className="btn"
@@ -283,6 +296,11 @@ function DraftEditor({ draft, note }: { draft: OutreachDraft; note: string | nul
             最初の下書きに戻す
           </button>
         </div>
+        {used.note && (
+          <p className="meta feedback-note" role="status">
+            {used.note}
+          </p>
+        )}
       </section>
 
       <section className="surface pad-lg" aria-labelledby="outline-title">

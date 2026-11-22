@@ -4,6 +4,64 @@ import { useState } from "react";
 import type { Candidate, DateSuggestions, Proposal as ProposalT } from "@/app/_client/types";
 import { ACTIVITY_LABEL } from "./labels";
 import { CopyButton, Tag } from "./ui";
+import { FEEDBACK_DONE, useFeedback, WRONG_REASON_LABEL, type WrongReason } from "@/app/_client/feedback";
+
+/**
+ * 「この候補は違う」：押すと理由を選ぶ（テーマが合わない・忙しい・本人の活動ではない・その他＋ひとこと）。
+ * 選んだらすぐ送り、「次からの評価に使います」と小さく出す。確認の窓は出さない。ほかの操作はそのまま使える。
+ */
+function WrongCandidate({ employeeId }: { employeeId: string }) {
+  const { requestId, send } = useFeedback();
+  const [open, setOpen] = useState(false);
+  const [other, setOther] = useState(false);
+  const [note, setNote] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "fail">("idle");
+  if (!requestId) return null;
+  const submit = (reason: WrongReason) => {
+    setState("sending");
+    send({ kind: "candidate_wrong", request_id: requestId, employee_id: employeeId, reason, ...(reason === "other" && note.trim() ? { note: note.trim().slice(0, 200) } : {}) })
+      .then(() => setState("sent"))
+      .catch(() => setState("fail"));
+  };
+  if (state === "sent")
+    return (
+      <span className="meta feedback-note" role="status">
+        {FEEDBACK_DONE}
+      </span>
+    );
+  if (!open)
+    return (
+      <button type="button" className="link wrong-toggle" onClick={() => setOpen(true)}>
+        この候補は違う
+      </button>
+    );
+  return (
+    <div className="wrong-box" role="group" aria-label="この候補が違う理由">
+      <span className="meta">理由：</span>
+      {(["theme_mismatch", "busy", "not_their_work"] as WrongReason[]).map((r) => (
+        <button key={r} type="button" className="btn btn-sm" disabled={state === "sending"} onClick={() => submit(r)}>
+          {WRONG_REASON_LABEL[r]}
+        </button>
+      ))}
+      {!other ? (
+        <button type="button" className="btn btn-sm" disabled={state === "sending"} onClick={() => setOther(true)}>
+          {WRONG_REASON_LABEL.other}
+        </button>
+      ) : (
+        <span className="wrong-other">
+          <input className="input input-sm" value={note} maxLength={200} placeholder="ひとこと（なくてもよい）" aria-label="その他の理由（ひとこと）" onChange={(e) => setNote(e.target.value)} />
+          <button type="button" className="btn btn-sm" disabled={state === "sending"} onClick={() => submit("other")}>
+            送る
+          </button>
+        </span>
+      )}
+      <button type="button" className="link" onClick={() => setOpen(false)}>
+        やめる
+      </button>
+      {state === "fail" && <span className="meta warn-text">送れませんでした。もう一度押してください</span>}
+    </div>
+  );
+}
 
 /** All candidates in one surface, rows split by a thin line. The no-fit note sits at the bottom. */
 export function Candidates({
@@ -145,6 +203,7 @@ function CandidateRow({
             カードを見る
           </button>
         )}
+        <WrongCandidate employeeId={c.employee_id} />
       </div>
     </article>
   );

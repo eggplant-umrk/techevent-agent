@@ -5,6 +5,13 @@ import { STAGE_LABEL, STAGE_TONE } from "@/lib/requestStage";
 import { progressOf, progressText } from "@/lib/progressStage";
 import { md } from "./labels";
 import { Tag } from "./ui";
+import { durationText, usdText } from "@/app/_client/feedback";
+
+/** その依頼にかかった金額と時間（例：$0.81・2分18秒）。分からなければ出さない */
+export function runCostText(it: Pick<BoardListItem, "run_usd" | "elapsed_ms">): string | null {
+  const parts = [it.run_usd ? usdText(it.run_usd) : null, it.elapsed_ms ? durationText(it.elapsed_ms) : null].filter(Boolean);
+  return parts.length ? parts.join("・") : null;
+}
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -102,6 +109,11 @@ export function Inbox({
                 </span>
                 <span className="strong inbox-title">{inboxTitle(it)}</span>
                 <span className={`meta${it.state.stage === "accepted" ? " strong" : ""}`}>{stageLine(it)}</span>
+                {runCostText(it) && (
+                  <span className="meta run-cost" aria-label={`かかった金額と時間：${runCostText(it)}`}>
+                    {runCostText(it)}
+                  </span>
+                )}
               </button>
             </li>
           ))}

@@ -14,5 +14,18 @@ if (!process.env.DATA_RUNTIME_DIR) {
   // ただし API を使う評価（scripts/eval.ts を --offline なしで流すとき）は本物の記録に残す（累計と上限の判定に使うため）
   const realApiEval = /eval\.ts$/.test(process.argv[1] ?? "") && !process.argv.includes("--offline");
   if (!process.env.USAGE_FILE && !realApiEval) process.env.USAGE_FILE = path.join(dir, "usage.json");
+  // 画面の操作の記録（受信箱・サンプルの依頼の結果・下書き・登壇の記録・人の情報・取り込んだアンケート）も一時フォルダに。
+  // テストが本物の data/inbox.json などに書かないように（発表用の作業場所で npm test を流しても、受信箱が増えない）
+  if (!realApiEval) {
+    const files: Record<string, string> = {
+      INBOX_FILE: "inbox.json",
+      SAMPLE_PROPOSALS_FILE: "sample_proposals.json",
+      DRAFTS_FILE: "drafts.json",
+      TALK_RECORD_FILE: "talk_records.json",
+      PEOPLE_FILE: "people.json",
+      SURVEY_IMPORT_DIR: "survey_imports",
+    };
+    for (const [k, name] of Object.entries(files)) if (!process.env[k]) process.env[k] = path.join(dir, name);
+  }
   process.on("exit", () => fs.rmSync(dir, { recursive: true, force: true }));
 }

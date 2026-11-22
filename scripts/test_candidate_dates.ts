@@ -103,11 +103,13 @@ async function main() {
   check("日程は「候補日：12/15・12/17・1/14」（未定にしない）", items.find((i) => i.key === "date")?.value === "候補日：12/15・12/17・1/14", String(items.find((i) => i.key === "date")?.value));
   check("聞き返す項目に日程が入らない", !askBack(items).some((i) => i.key === "date"), askBack(items).map((i) => i.label).join("・"));
   const noDates = inbox.inboxRequest({ id: "inb-test-nodates", text: "12月中旬ごろに LT 会をやります。登壇をお願いできませんか", received_at: RECEIVED, source: "manual", intake: read.intake });
+  const fixedRead = { ...read.intake, date: "2026-12-17" };
+  check("日程が1日に決まっている依頼は、候補日として扱わない", inbox.inboxRequest({ id: "inb-test-fixed", text: CONV, received_at: RECEIVED, source: "manual", intake: fixedRead }).candidate_dates === undefined);
   check("候補日がない依頼は今までどおり（日程は未定として聞き返す）", noDates.candidate_dates === undefined && askBack(requestItems(noDates)).some((i) => i.key === "date"));
 
   // ---- 4. Agent に渡す注意（コードで作った文）
   console.log("\n━ 4. Agent に渡す注意");
-  check("依頼文の先頭に、候補日と「候補から外さず、注意点に書く」の注意が入る", req.message.startsWith("【開催日の候補") && req.message.includes("12月15日（火）・12月17日（木）・1月14日（木）") && req.message.includes("候補から外さず") && req.message.includes("注意点に書く"));
+  check("読み取った項目は先頭のまま、【元の会話】の直前に候補日と「候補から外さず、注意点に書く」の注意が入る", req.message.startsWith("【会話から読み取った項目") && /【開催日の候補[^]*【元の会話】/.test(req.message) && req.message.includes("12月15日（火）・12月17日（木）・1月14日（木）") && req.message.includes("候補から外さず") && req.message.includes("注意点に書く"));
   check("読み取った項目と元の会話はそのまま続く", req.message.includes("【会話から読み取った項目") && req.message.includes("【元の会話】") && req.message.endsWith(CONV));
 
   // ---- 5. 受信箱：候補日ごとの都合が保存され、候補の注意点に入る（本人の iCal：12/14〜18 に終日の予定）

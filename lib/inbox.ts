@@ -170,14 +170,17 @@ export function inboxRequest(
   it: Pick<InboxItem, "id" | "text" | "received_at" | "source"> & { nominee?: NomineeReading | null; intake?: IntakeReading | null },
 ): SpeakingRequest {
   const intake = it.intake ?? null;
-  // 会話に開催日の候補が2〜4日はっきり書いてあれば、依頼に持たせる（コードで読む。lib/dateHint.ts の datesInText）
-  const candidateDates = candidateDatesIn(it.text, it.received_at);
-  const header = intake ? `${intakeHeader(intake, it.nominee ?? null)}\n` : "";
+  // 会話に開催日の候補が2〜4日はっきり書いてあれば、依頼に持たせる（コードで読む。lib/dateHint.ts の datesInText）。
+  // 日程が1日に決まっている（読み取りで確かめ済み）なら、候補日としては扱わない
+  const candidateDates = intake?.date ? null : candidateDatesIn(it.text, it.received_at);
+  const note = candidateDates ? `${candidateDatesInstruction(candidateDates)}\n` : "";
+  // 読み取った項目は先頭のまま。候補日の注意は「【元の会話】」の直前に入れる
+  const header = intake ? `${intakeHeader(intake, it.nominee ?? null)}\n`.replace(/【元の会話】\n$/, `${note}【元の会話】\n`) : note ? `${note}【元の会話】\n` : "";
   return {
     id: it.id,
     received_at: it.received_at.slice(0, 10),
     // 会話から読み取った項目があれば先頭に足す（未定は未定のまま渡す）。候補日があれば、その扱いの注意も足す。元の会話はそのまま続ける
-    message: candidateDates ? `${candidateDatesInstruction(candidateDates)}\n${header || "【元の会話】\n"}${it.text}` : `${header}${it.text}`,
+    message: `${header}${it.text}`,
     nominated_employee_id: it.nominee?.employee_id ?? null,
     ...(intake ? { intake } : {}),
     ...(candidateDates ? { candidate_dates: candidateDates } : {}),

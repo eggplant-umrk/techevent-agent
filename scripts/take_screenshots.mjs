@@ -5,6 +5,9 @@
 // 大きさは 1600×900。ブラウザの拡大 125% と同じ見え方（幅 1280 の画面を 1.25 倍で描く）。
 // 画面の多くは ?mock（保存済みの結果）で撮る。「依頼ではない文で止まる」だけは偽の API のサーバーで撮る（?mock は種類を判定しないため）。
 // 写さないもの：合言葉・/share-links・金額の合計（「この依頼の記録」の見出しの金額は撮るときだけ伏せる）
+// 02b（候補日ごとの都合）だけは、本人の予定（12/14〜18 の終日の予定の iCal）を読ませたサーバーで撮る：
+//        TEST_ALLOW_BUILD=1 node scripts/testing/serve_for_shots_dates.mjs
+//        SHOTS_BASE=http://127.0.0.1:3271 node scripts/take_screenshots.mjs 02b
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "@playwright/test";
@@ -34,6 +37,18 @@ const openX = async (page) => {
   await page.getByRole("region", { name: /^候補 \d+人$/ }).waitFor();
 };
 
+/** 候補日が3つある例の会話（架空） */
+const CANDIDATE_DATES_CONV = [
+  "@hayami_frontend",
+  "LayerXさん、はじめまして！「Frontend Perf Night #4」を運営している早見です。Next.js での表示速度の改善事例をLTでお話しいただける方を探しています🙏",
+  "",
+  "@hayami_frontend",
+  "日程は 12月15日（火）・12月17日（木）・1月14日（木）のどれかで考えています。いずれも19時から渋谷、現地のみ、LTは10分です。参加は40名ほどの予定です。",
+  "",
+  "@LayerX_tech",
+  "ご連絡ありがとうございます！社内で話せそうな人に確認してみますね。",
+].join("\n");
+
 const SHOTS = {
   async "01_inbox_x_conversation_reading"(page) {
     await openX(page);
@@ -47,6 +62,20 @@ const SHOTS = {
     await first.waitFor();
     await toTop(first, 90);
     await shot(page, "02_candidates_first_talk_reason_notes");
+  },
+  // 偽の API ＋本人の予定のサーバー（serve_for_shots_dates.mjs）：候補日が3つある会話を貼って、候補日ごとの都合を出す
+  async "02b_candidates_candidate_dates"(page) {
+    await page.goto(`${BASE}/`);
+    await page.getByRole("button", { name: "会話を貼って追加" }).click();
+    await page.getByRole("textbox", { name: /会話を、そのまま貼って/ }).fill(CANDIDATE_DATES_CONV);
+    await page.getByRole("button", { name: "受信箱に追加" }).click();
+    const cands = page.getByRole("region", { name: /^候補 \d+人$/ });
+    await cands.waitFor({ timeout: 90_000 });
+    const days = page.getByLabel("候補日の都合").first();
+    await days.waitFor();
+    await toTop(cands, 80);
+    await page.mouse.move(5, 300);
+    await shot(page, "02b_candidates_candidate_dates");
   },
   async "03_outreach_draft_and_organizer_reply"(page) {
     await openX(page);

@@ -17,12 +17,16 @@ export const ACCESS_API = "/api/access";
 
 export const shareMode = (): ShareMode => ((process.env.SHARE_MODE ?? "").trim().toLowerCase() === "lan" ? "lan" : "local");
 export const accessCode = () => (process.env.ACCESS_CODE ?? "").trim();
+/** 合言葉の最短の長さ（scripts/serve.mjs と同じ）。短いと、回数の制限があっても当てられやすい */
+export const MIN_ACCESS_CODE = 12;
 
 /** 起動してはいけない設定なら、その理由（なければ null） */
 export function shareConfigProblem(): string | null {
   const raw = (process.env.SHARE_MODE ?? "").trim().toLowerCase();
   if (raw && raw !== "lan" && raw !== "local") return `SHARE_MODE は lan か空（既定）です（今は「${raw}」）`;
   if (shareMode() === "lan" && !accessCode()) return "SHARE_MODE=lan のときは .env に ACCESS_CODE（合言葉）を設定してください。合言葉なしでは起動しません";
+  if (shareMode() === "lan" && [...accessCode()].length < MIN_ACCESS_CODE)
+    return `SHARE_MODE=lan のときは ACCESS_CODE（合言葉）を${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`;
   if (shareMode() === "lan" && shareBudgetUsd() === null)
     return "SHARE_MODE=lan のときは .env に SHARE_BUDGET_USD（見せている間の API 代の上限、例：5）を設定してください。上限なしでは起動しません";
   return null;

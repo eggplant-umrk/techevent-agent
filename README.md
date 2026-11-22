@@ -111,13 +111,13 @@ http://localhost:3000 を開く。APIキーはサーバー側だけで使い、�
 | 起動 | `npm start` | `npm run start:share` |
 | 待ち受け | 127.0.0.1:3000（この端末だけ） | 0.0.0.0:3100（同じネットワークの全員） |
 | データの置き場 | 今までどおり（data/runtime/・data/inbox.json など） | data/runtime-share/（受信箱・下書き・分析・金額の記録もすべてここ） |
-| 合言葉・上限 | なし | `ACCESS_CODE`・`SHARE_BUDGET_USD` が必須（空なら起動しない） |
+| 合言葉・上限 | なし | `ACCESS_CODE`（12文字以上）・`SHARE_BUDGET_USD` が必須（足りなければ起動しない）。合言葉は送り元ごとに5分で5回、全体で5分に30回を超えて間違えると、しばらく受け付けない |
 | Slack ボット | つなぐ（`INBOX_BASE_URL` は既定の http://127.0.0.1:3000） | つながない（ボットは発表用以外には起動を拒む） |
 | ?debug（API 代の表示） | 出せる | 出さない（外した URL に移す） |
 | 「ネタ帳を更新」 | 使える | 止める（理由を画面に出す） |
 | API を使う操作 | 同時に2件まで | 同時に2件まで（超えたら 429 で断り、理由を出す） |
 
-1. 設定：`.env` に `ACCESS_CODE=（その日だけの合言葉）` と `SHARE_BUDGET_USD=5` を書く。`SHARE_MODE` は書かない（書いても発表用は使わない）
+1. 設定：`.env` に `ACCESS_CODE=（その日だけの合言葉、12文字以上。例：netacho-1122-hanami）` と `SHARE_BUDGET_USD=5` を書く。`SHARE_MODE` は書かない（書いても発表用は使わない）
 2. ビルド：`npm run build`（両方のサーバーが同じビルドを使う。開発サーバーでは見せる用を立てない）
 3. 発表用：`npm start` → 最初の行が `発表用：http://127.0.0.1:3000 で待ち受けます（この端末からだけ）`
 4. 見せる用：別のターミナルで `npm run start:share` → 最初の行が `見せる用（SHARE_MODE=lan）：http://192.168.x.x:3100 …API 代の上限 $5。データは data/runtime-share`

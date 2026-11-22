@@ -192,7 +192,7 @@ async function main() {
   // ---- 3. 合言葉を続けて間違えたら、しばらく受け付けない ----
   {
     process.env.SHARE_MODE = "lan";
-    process.env.ACCESS_CODE = "sakura-2026";
+    process.env.ACCESS_CODE = "sakura-2026-hanami";
     process.env.SHARE_BUDGET_USD = "5";
     const guard = await import("../lib/accessGuard");
     guard.clearAccessGuard();
@@ -205,9 +205,9 @@ async function main() {
     const fifth = await tryCode("nope");
     const fifthJson = (await fifth.json()) as { error: string };
     check("5回目で受け付けなくなる（429・待つ時間つき）", fifth.status === 429 && /5分ほど待って/.test(fifthJson.error), `${fifth.status} ${fifthJson.error}`);
-    const right = await tryCode("sakura-2026");
+    const right = await tryCode("sakura-2026-hanami");
     check("受け付けない間は、正しい合言葉でも入れない", right.status === 429 && !right.headers.get("set-cookie"));
-    const elsewhere = await tryCode("sakura-2026", "192.168.1.51");
+    const elsewhere = await tryCode("sakura-2026-hanami", "192.168.1.51");
     check("ほかのところ（別の端末）は入れる", elsewhere.status === 200);
     const key = guard.accessSourceKey("192.168.1.50");
     const later = Date.now() + guard.ACCESS_LOCK_MS + 1000;
@@ -223,7 +223,7 @@ async function main() {
     // 正しく入れたら回数を戻す
     guard.clearAccessGuard();
     for (let i = 0; i < 4; i++) await tryCode("nope", "192.168.1.60");
-    await tryCode("sakura-2026", "192.168.1.60");
+    await tryCode("sakura-2026-hanami", "192.168.1.60");
     const afterOk = await tryCode("nope", "192.168.1.60");
     check("正しく入れたら回数を戻す（そのあと1回間違えても 401）", afterOk.status === 401);
 
@@ -235,9 +235,9 @@ async function main() {
       proxy(new NextRequest("http://192.168.1.20:3000/api/cards", { headers: { host: "192.168.1.20:3000", "x-access-code": code, "x-forwarded-for": ip } }));
     const hs = [1, 2, 3, 4].map(() => via("nope").status);
     const h5 = via("nope");
-    const h6 = via("sakura-2026");
+    const h6 = via("sakura-2026-hanami");
     check("入口：ヘッダーの合言葉も、4回までは 401、5回目から 429", hs.every((s) => s === 401) && h5.status === 429 && h6.status === 429, `${hs.join(",")},${h5.status},${h6.status}`);
-    check("入口：ほかのところは、正しい合言葉で通る", via("sakura-2026", "192.168.1.71").headers.get("x-middleware-next") === "1");
+    check("入口：ほかのところは、正しい合言葉で通る", via("sakura-2026-hanami", "192.168.1.71").headers.get("x-middleware-next") === "1");
     delete process.env.SHARE_MODE;
     delete process.env.ACCESS_CODE;
     delete process.env.SHARE_BUDGET_USD;

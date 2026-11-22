@@ -1,7 +1,7 @@
 // POST /api/access：合言葉を確かめて、ブラウザに印（cookie、httpOnly）を付ける（SHARE_MODE=lan のときだけ使う）
-//   { code: string } → 200 { ok: true } ／ 401 ／ 429（同じところから続けて間違えたとき。lib/accessGuard.ts）
+//   { code: string } → 200 { ok: true } ／ 401 ／ 429（同じ送り元が続けて間違えたとき・全体の間違いが多いとき。lib/accessGuard.ts）
 import { ACCESS_COOKIE, accessToken, codeMatches, shareMode } from "@/lib/share";
-import { accessLockedMessage, accessLockedMs, accessSourceKey, noteAccessFailure, noteAccessSuccess } from "@/lib/accessGuard";
+import { accessLock, accessSourceKey, noteAccessFailure, noteAccessSuccess } from "@/lib/accessGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,12 +9,14 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (shareMode() !== "lan") return Response.json({ error: "合言葉は使っていません（同じ端末からだけ使う設定です）" }, { status: 400 });
   const key = accessSourceKey(req.headers.get("x-forwarded-for"));
-  const locked = accessLockedMs(key);
-  if (locked) return Response.json({ error: accessLockedMessage(locked) }, { status: 429, headers: { "Retry-After": String(Math.ceil(locked / 1000)) } });
+  // 続けて間違えた送り元・全体の間違いが多いときは、合言葉を見ずに断る
+  const locked = accessLock(key);
+  if (locked) return Response.json({ error: locked.message }, { status: 429, headers: { "Retry-After": String(Math.ceil(locked.ms / 1000)) } });
   const body = (await req.json().catch(() => null)) as { code?: unknown } | null;
   const code = typeof body?.code === "string" ? body.code : null;
   if (!codeMatches(code)) {
-    if (noteAccessFailure(key)) return Response.json({ error: accessLockedMessage(accessLockedMs(key)) }, { status: 429 });
+    const nowLocked = noteAccessFailure(key);
+    if (nowLocked) return Response.json({ error: nowLocked.message }, { status: 429 });
     return Response.json({ error: "合言葉が違います" }, { status: 401 });
   }
   noteAccessSuccess(key);

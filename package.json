@@ -47,6 +47,8 @@
     "test:replyfacts": "tsx scripts/test_reply_facts.ts",
     "test:hardening": "tsx scripts/test_share_hardening.ts",
     "test:robust": "tsx scripts/test_robust.ts",
+    "test:trace": "tsx scripts/test_trace.ts",
+    "eval:from-feedback": "tsx scripts/eval_from_feedback.ts",
     "test:guard": "tsx scripts/test_ui_guard.ts",
     "test:access": "tsx scripts/test_access_harden.ts"
   },

@@ -114,6 +114,8 @@ flowchart TD
 
 3つとも、いまは保つ評価に入っています。
 
+発表と質問の答えに使う数字（評価・テスト・費用・安全。出どころと日時つき）は [docs/numbers.md](docs/numbers.md) にまとめました。
+
 ## 費用
 
 実測と試算は [docs/cost_estimate.md](docs/cost_estimate.md) にあります（どれも米ドル）。

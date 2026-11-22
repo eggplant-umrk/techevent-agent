@@ -96,6 +96,27 @@ const SHOTS = {
     await toTop(page.getByRole("heading", { name: "カジュアル面談の希望" }), 100);
     await shot(page, "06b_archive_casual_interview");
   },
+  async "07_notebook"(page) {
+    await page.goto(`${BASE}/?mock`);
+    await nav(page, "ネタ帳").click();
+    const people = page.locator("section.notebook").first();
+    await people.waitFor();
+    // 人を1人開いて、右にその人のネタ・ブログ・最近の活動を出す
+    await page.getByRole("searchbox", { name: "人を探す" }).fill("百瀬");
+    await people.getByRole("button", { name: /^百瀬\s*結衣/ }).first().click();
+    await page.getByRole("heading", { name: /^百瀬\s*結衣/ }).first().waitFor();
+    await page.getByRole("searchbox", { name: "人を探す" }).fill("");
+    await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined));
+    await page.mouse.move(5, 300);
+    await page.waitForTimeout(800);
+    await shot(page, "07a_notebook_people");
+    // いちばん上の切り替え（人｜アンケートの声｜担当者未定のネタ）で、アンケートの声を出す
+    await page.getByRole("tablist", { name: "ネタ帳の表示" }).getByRole("tab", { name: /アンケートの声/ }).click();
+    const voices = page.locator(".panel[aria-label=\"アンケートの声\"]").first();
+    await voices.waitFor();
+    await toTop(voices, 90);
+    await shot(page, "07b_notebook_survey_voices");
+  },
 };
 
 for (const [name, fn] of Object.entries(SHOTS)) {

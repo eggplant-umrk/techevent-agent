@@ -15,6 +15,8 @@
 | 05_not_a_request_stopped | 依頼ではない文を貼って止まったところ（偽の API のサーバーで撮影） |
 | 06a_archive_survey_complaints_next_themes | アーカイブ：アンケートの改善点（原文）と次に聞きたいテーマ |
 | 06b_archive_casual_interview | アーカイブ：カジュアル面談の希望（人数・登壇ごと・行番号と、登壇者へ伝える文） |
+| 07a_notebook_people | ネタ帳：人の一覧（切り替え・検索・絞り込み）と、開いた人のネタ・ブログ・最近の活動 |
+| 07b_notebook_survey_voices | ネタ帳：アンケートの声（次に聞きたい話と、話せそうな人） |
 
 ## 前の画面（引き算の前）
 

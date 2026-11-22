@@ -10,7 +10,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
-import { MENTOR_COOKIE, mentorCode, mentorToken, shareMode } from "./share";
+import { MENTOR_COOKIE, mentorCode, mentorToken, shareMode, shareStartedAt } from "./share";
 import { shareBaseDir } from "./visitorScope";
 import { NO_VISITOR, newVisitorId, VISITOR_COOKIE, visitorCookieHeader, visitorCookieOf, visitorKey, visitorKeyOf } from "./visitor";
 
@@ -72,9 +72,22 @@ export { visitorKeyOf };
 
 /** usd：その人が使った合計。mentor_usd：そのうちメンターとして使った分（側ごとの上限を数えるため） */
 type Ledger = Record<string, { usd: number; calls: number; last_at: string; role?: "mentor"; mentor_usd?: number }>;
+/**
+ * 台帳のファイルの形：見せる用を起動した時刻（started_at）と、人ごとの金額（people）。
+ * 起動の時刻が今の見せる用と違えば（起動し直した・前の形のファイル）、空として数える。
+ * 合計の上限（SHARE_BUDGET_USD）と同じく、1人あたり・側ごとの上限も「見せる用を起動してからの分」で数えるため
+ */
+interface LedgerFile {
+  started_at: string;
+  people: Ledger;
+}
 /** 全員分を1つのファイルで持つので、人ごとに分ける前の見せる用の置き場（③の lib/visitorScope.ts の shareBaseDir()）に置く */
 export const personUsageFile = () => path.join(shareBaseDir(), "person_usage.json");
-const readLedger = (): Ledger => readJsonSafe<Ledger>(personUsageFile(), {}, "object");
+function readLedger(): Ledger {
+  const f = readJsonSafe<Partial<LedgerFile>>(personUsageFile(), {}, "object");
+  return f.started_at === shareStartedAt() && f.people && typeof f.people === "object" ? f.people : {};
+}
+const writeLedger = (people: Ledger) => writeJsonAtomic(personUsageFile(), { started_at: shareStartedAt(), people } satisfies LedgerFile);
 
 /** その人が使った金額 */
 export const personSpent = (key: string): number => readLedger()[key]?.usd ?? 0;
@@ -153,7 +166,7 @@ export function notePersonUsage(costUsd: number): void {
     ...(ctx.role === "mentor" || cur.role === "mentor" ? { role: "mentor" as const } : {}),
     ...(mentorUsd > 0 ? { mentor_usd: mentorUsd } : {}),
   };
-  writeJsonAtomic(personUsageFile(), ledger);
+  writeLedger(ledger);
 }
 
 /** 人の中で動かす（テスト用にも使う） */

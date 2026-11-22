@@ -5,6 +5,7 @@ import { acquireApiSlotWait, apiBusyResponse } from "@/lib/apiSlots";
 import { proceedAsRequest } from "@/lib/inbox";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
 import { perPerson } from "@/lib/personBudget";
+import { shareBudgetGate } from "@/lib/shareGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,12 @@ async function handlePost(req: Request, { params }: { params: Promise<{ id: stri
   // API を使う操作は同時に2件まで（lib/apiSlots.ts。空いていなければ最大60秒待つ）。候補づくりが裏で終わるまで1件分を持つ
   const release = await acquireApiSlotWait(req.signal);
   if (!release) return apiBusyResponse();
+  // 枠を取った直後にもう一度上限を見る（待っている間にほかの人の操作で届いていたら、始めずに返す。lib/shareGate.ts）
+  const gate = shareBudgetGate(req);
+  if (!gate.ok) {
+    release();
+    return Response.json({ error: gate.error }, { status: gate.status });
+  }
   const out = proceedAsRequest(id, (request, emit) => runAgent(request, emit), release);
   if (!out.ok) {
     release();

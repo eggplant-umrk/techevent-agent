@@ -1,6 +1,7 @@
 // 依頼の項目（読めた値・未定）を1つの並びにし、主催者に聞き返す項目をコードで選ぶ。
 // - 項目：これまでの5つ（イベント名・日程・形式・テーマ・主催者の名前）と、足した7つ（持ち時間・人数・対象者・会場・録画・資料の公開・謝礼・交通費・返事の期限）
 // - 聞き返すのは多くて ASK_MAX 個（X の返事は短いため）。どれを聞くかは ASK_PRIORITY の順でコードが決め、AI は言い回しだけを書く
+// - 会話に開催日の候補が2〜4日書いてあれば（candidate_dates）、日程は「候補日：…」として聞き返さない
 // - 画面（モック）からも使うので、ファイルやデータ・API は読まない純粋な関数だけにする（型だけを読む）
 import type { SpeakingRequest } from "./data";
 
@@ -45,7 +46,10 @@ export interface RequestItem {
   value: string | null;
 }
 
-type RequestLike = Pick<SpeakingRequest, "event" | "intake" | "theme" | "requester" | "reply_deadline">;
+type RequestLike = Pick<SpeakingRequest, "event" | "intake" | "theme" | "requester" | "reply_deadline" | "candidate_dates">;
+
+/** 候補日の並び（「候補日：12/15・12/17・1/14」）。会話に候補日が2〜4日書いてあるときの日程の値（聞き返さない） */
+export const candidateDatesValue = (days: string[]) => `候補日：${days.map((d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`).join("・")}`;
 
 /** 形式に書かれた分数（「LT（10分）」→「10分」）。なければ null */
 export function minutesInFormat(format: string | null | undefined): string | null {
@@ -71,7 +75,8 @@ export function requestItems(r: RequestLike | null | undefined): RequestItem[] {
     if (v || asked) values[key] = v;
   };
   put("event_name", ev?.title ?? it?.event_name, !!it);
-  put("date", ev?.date ?? it?.date, !!it);
+  // 候補日の一覧があるときは、日程は未定にしない（聞き返さない。返事の日程の1文は候補日の中の○の日から作る。lib/dateSuggest.ts）
+  put("date", ev?.date ?? it?.date ?? (r.candidate_dates?.length ? candidateDatesValue(r.candidate_dates) : null), !!it);
   put("format", ev?.format ?? it?.format, !!it);
   put("theme", r.theme ?? it?.theme, !!it);
   put("organizer", r.requester?.contact_name || it?.organizer, !!it);

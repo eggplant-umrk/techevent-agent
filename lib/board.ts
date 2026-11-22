@@ -1,3 +1,4 @@
+import { findContinuation, type Continuation } from "./continuation";
 // 受信箱の一覧と依頼の画面に出すもの（入口を受信箱に一本化する）。
 // - 受信箱に届いた依頼（data/inbox.json）に、サンプルの依頼（data/requests.json）も「届いた依頼」として並べる
 //   サンプルの依頼は自動では候補を出さない（API代がかかるため）。画面で「ネタ帳から候補を出す」を押すと出し、結果を保存する
@@ -182,6 +183,14 @@ export function findActiveDuplicate(text: string): string | null {
     .filter((it) => sameTextKey(it.text) === key)
     .find((it) => stateOf(it.id, it.status, inboxEventDate(it)).stage !== "archived");
   return hit?.id ?? null;
+}
+
+/** 貼った文が、受信箱の依頼（アーカイブを除く）の続きの会話か（lib/continuation.ts。見分けはコード） */
+export function findActiveContinuation(text: string): Continuation {
+  const targets = listInbox()
+    .filter((it) => it.kind !== "inappropriate" && stateOf(it.id, it.status, inboxEventDate(it)).stage !== "archived")
+    .map((it) => ({ id: it.id, text: it.text, event_name: it.intake?.event_name ?? null }));
+  return findContinuation(text, targets);
 }
 
 /** 受信箱の一覧：届いた依頼（開催日が過ぎたものはアーカイブへ）とサンプルの依頼。新しい順 */

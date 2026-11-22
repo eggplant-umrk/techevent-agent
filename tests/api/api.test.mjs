@@ -111,6 +111,32 @@ async function main() {
     const dup = await api.post("/api/inbox", { text: REQUEST_TEXT, source: "manual" });
     check("同じ文をもう一度貼ると、新しく足さずに同じ依頼を返す", dup.data?.id === id && dup.data?.duplicate === true);
 
+    // ---- 1b. 続きの会話を貼ると、件数が増えずに同じ依頼が更新される
+    console.log("\n━ 続きの会話で同じ依頼を更新する");
+    const countBefore = ((await api.get("/api/inbox")).data?.items ?? []).filter((x) => /^inb-/.test(x.id)).length;
+    const MORE = `${REQUEST_TEXT}\n\n追伸です。会場は渋谷で、参加は40名ほどの予定です。よろしくお願いします。`;
+    const cont = await api.post("/api/inbox", { text: MORE, source: "manual" });
+    check("続きを貼る：同じ依頼の id と continued: true が返る", cont.status === 200 && cont.data?.id === id && cont.data?.continued === true, `${cont.status} ${cont.text.slice(0, 120)}`);
+    let contDetail = null;
+    for (let i = 0; i < 120; i++) {
+      await sleep(500);
+      contDetail = (await api.get(`/api/inbox/${id}/detail`)).data;
+      if (contDetail && contDetail.status !== "processing") break;
+    }
+    const countAfter = ((await api.get("/api/inbox")).data?.items ?? []).filter((x) => /^inb-/.test(x.id)).length;
+    check("続きを貼る：受信箱の件数は増えない", countAfter === countBefore, `${countBefore} → ${countAfter}`);
+    check("続きを貼る：会話が新しいものに差し替わり、準備済みに戻る", contDetail?.status === "ready" && contDetail?.text === MORE, `${contDetail?.status} ${contDetail?.error ?? ""}`);
+    check("続きを貼る：変わった項目の一覧（コードで比べた結果）が付く", Array.isArray(contDetail?.last_update?.changes), JSON.stringify(contDetail?.last_update ?? null).slice(0, 200));
+    check("続きを貼る：候補は残っている", (contDetail?.result?.candidates?.length ?? 0) >= 1);
+    const asNew = await api.post("/api/inbox", { text: `${MORE}\n\nもう1件、別の回のご相談です。`, source: "manual", as_new: true });
+    check("「新しい依頼として追加」（as_new）なら、別の依頼として入る", asNew.status === 200 && /^inb-/.test(asNew.data?.id ?? "") && asNew.data?.id !== id && !asNew.data?.continued, asNew.text.slice(0, 120));
+    // 裏の準備が終わるまで待つ（次の確かめが、偽の API の呼び出しの数を数えるため）
+    for (let i = 0; i < 120 && asNew.data?.id; i++) {
+      await sleep(500);
+      const d = (await api.get(`/api/inbox/${asNew.data.id}/detail`)).data;
+      if (d && d.status !== "processing" && d.pitch_status !== "pending") break;
+    }
+
     // ---- 2. 依頼ではない文で止まる
     console.log("\n━ 依頼ではない文で止まる");
     const c2 = fake.calls.length;

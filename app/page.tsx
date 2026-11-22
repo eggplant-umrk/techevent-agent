@@ -97,6 +97,10 @@ export default function Home() {
   }, [api]);
   /** 同じ文の依頼を貼ったとき：新しく足さずに前の依頼を開いたことを知らせる */
   const [dupNotice, setDupNotice] = useState<string | null>(null);
+  // 続きの会話かを聞く（同じアカウントと同じイベント名のとき。窓は出さず、入力の上に小さく出す）
+  const [askContinue, setAskContinue] = useState<{ id: string; title: string; text: string } | null>(null);
+  // 「○○の依頼を更新しました」の知らせ（右下。開いている依頼でも出す）
+  const [updatedNotice, setUpdatedNotice] = useState<ReadyNotice | null>(null);
   const [pending, setPending] = useState(0);
   const [nbRunning, setNbRunning] = useState(false);
   const [nbLog, setNbLog] = useState<NbLogLine[]>([]);
@@ -516,13 +520,24 @@ export default function Home() {
   }
 
   /** 手で追加：受信箱に入れ、そのまま開いて準備の様子を見せる */
-  async function addManual() {
-    const text = customText.trim();
+  async function addManual(answer?: { text: string; continue_of?: string; as_new?: boolean }) {
+    const text = (answer?.text ?? customText).trim();
     if (!text) return;
     setAdding(true);
+    setAskContinue(null);
     try {
-      const { id, duplicate } = await api.inboxAdd(text);
+      const { id, duplicate, continued, ask_continue } = await api.inboxAdd(text, answer ? { continue_of: answer.continue_of, as_new: answer.as_new } : undefined);
+      // 続きかもしれない：足さずに聞く（文は入力欄に残す）
+      if (ask_continue) {
+        setAskContinue({ ...ask_continue, text });
+        return;
+      }
+      if (!id) throw new Error("追加の結果を読めませんでした");
       setCustomText("");
+      if (continued) {
+        const name = inboxItems.find((x) => x.id === id)?.title ?? "";
+        setUpdatedNotice({ id, kind: "ready", text: `${name ? `${name} の` : ""}依頼を更新しました` });
+      }
       await loadInbox();
       // 追加を待っている間にほかのタブへ移っていたら、受信箱に引き戻さない（追加した依頼は受信箱の一覧に入っている）
       if (tabRef.current !== "inbox") return;
@@ -773,6 +788,17 @@ export default function Home() {
               {dupNotice}
             </p>
           )}
+          {askContinue && (
+            <p className="banner notice-warn continue-ask" role="status">
+              <span>{askContinue.title} の依頼の続きとして更新しますか？</span>
+              <button type="button" className="btn btn-sm" disabled={adding} onClick={() => void addManual({ text: askContinue.text, continue_of: askContinue.id })}>
+                はい
+              </button>
+              <button type="button" className="btn btn-sm" disabled={adding} onClick={() => void addManual({ text: askContinue.text, as_new: true })}>
+                新しい依頼として追加
+              </button>
+            </p>
+          )}
           <RequestInput
             mode={mode}
             onMode={setMode}
@@ -782,7 +808,7 @@ export default function Home() {
             onRun={run}
             inbox={inbox}
             adding={adding}
-            onAdd={addManual}
+            onAdd={() => void addManual()}
             compact={running || !!result}
             mock={api.mock}
             loading={mode === "inbox" && !!inboxId && !inbox}
@@ -795,6 +821,43 @@ export default function Home() {
               <TraceTimeline key={feedbackRequestId} api={api} requestId={feedbackRequestId} />
             )}
           </RequestInput>
+          {mode === "inbox" && inbox?.continue_error && (
+            <p className="banner banner-error" role="alert">
+              {inbox.continue_error}
+            </p>
+          )}
+          {mode === "inbox" && inbox?.last_update && (
+            <section className="continue-update" aria-label="続きの会話での更新">
+              <p className="continue-update-title">続きの会話で更新しました（{inbox.last_update.at.slice(11, 16)}）</p>
+              {inbox.last_update.changes.length > 0 ? (
+                <ul>
+                  {inbox.last_update.changes.map((c) => (
+                    <li key={c.field}>
+                      {c.label}：{c.from} → {c.to}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="muted">変わった項目はありません（候補はそのままです）</p>
+              )}
+              {(inbox.previous ?? []).map((p) => (
+                <details key={p.at} className="continue-previous">
+                  <summary>前の候補（{p.at.slice(11, 16)}）</summary>
+                  {p.candidates.length > 0 ? (
+                    <ul>
+                      {p.candidates.map((c) => (
+                        <li key={c.name}>
+                          {c.name}（{c.confidence === "conditional" ? "条件付き" : "自信あり"}）：{c.theme}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="muted">候補はいませんでした</p>
+                  )}
+                </details>
+              ))}
+            </section>
+          )}
           {stage === "accepted" && inbox && (
             <AcceptedView
               detail={inbox}
@@ -846,7 +909,14 @@ export default function Home() {
           {loadError}
         </p>
       )}
-      <ReadyNotices notices={notices} onOpen={(id) => void openInbox(id)} onClose={(id) => setNotices((cur) => cur.filter((n) => n.id !== id))} />
+      <ReadyNotices
+        notices={updatedNotice ? [...notices.filter((n) => n.id !== updatedNotice.id), updatedNotice] : notices}
+        onOpen={(id) => void openInbox(id)}
+        onClose={(id) => {
+          setNotices((cur) => cur.filter((n) => n.id !== id));
+          setUpdatedNotice((cur) => (cur?.id === id ? null : cur));
+        }}
+      />
 
       {tab === "inbox" && (
         <main className="main">

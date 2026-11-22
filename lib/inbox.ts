@@ -19,6 +19,7 @@ import { withCurrentVisitor } from "./visitorScope";
 import { scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 import { userErrorText } from "./userError";
+import { intakeChanges, needsRerun, squash, type IntakeChange } from "./continuation";
 
 /** 書き込み先。テストでは INBOX_FILE で別のファイルに向ける */
 const FILE = () => scopedFile(process.env.INBOX_FILE || path.join(process.cwd(), "data", "inbox.json"));
@@ -72,6 +73,22 @@ export interface InboxItem {
   pitch_status?: PitchStatus | null;
   /** 日程が決まっていない依頼で、候補ごとの空いていそうな日（コードで計算）。日程が決まっている・候補がいなければ null */
   date_suggestions?: DateSuggestions | null;
+  /** 続きの会話で更新したときの、前の候補（消さずに残す。古い順に足す） */
+  previous?: PreviousRound[];
+  /** 最後に続きの会話で更新したときの、変わった項目（コードで前と比べたもの） */
+  last_update?: { at: string; changes: IntakeChange[]; rerun: boolean } | null;
+  /** 続きの会話を読み取れなかったときの文（前の会話・候補はそのまま。次に更新できたら消す） */
+  continue_error?: string | null;
+}
+
+/** 続きの会話で更新する前の1回分（会話・読み取り・候補） */
+export interface PreviousRound {
+  /** 前の候補ができた時刻（なければ受け取った時刻） */
+  at: string;
+  text: string;
+  nominee: NomineeReading | null;
+  intake: IntakeReading | null;
+  result: ProposalResult | null;
 }
 
 export type PitchStatus = "pending" | "ready" | "error";
@@ -551,6 +568,99 @@ export function restart(id: string, runner: Runner, extractor?: IntakeExtractor,
   return { ok: true };
 }
 
+/** 続きの会話を読み取れなかったとき（前の会話・候補はそのまま残す） */
+export const CONTINUE_READ_FAILED = "続きの会話を読み取れませんでした（前の内容はそのままです）。もう一度貼ってください";
+
+/**
+ * 更新後の会話。貼った文が前の会話をまるごと含んでいればそのまま、含んでいなければ（聞いて「はい」と答えた続き）前の会話の後ろにつなげる
+ * （短い続きだけに置き換えると、前に読めていた日程やイベント名が消えるため）
+ */
+export function continuedText(before: string, pasted: string): string {
+  return squash(pasted).includes(squash(before)) ? pasted : `${before.trimEnd()}\n\n${pasted}`;
+}
+
+const readingOf = (it: Pick<InboxItem, "nominee" | "intake">) => ({ nominee_name: it.nominee?.employee_id ? it.nominee.name : null, intake: it.intake ?? null });
+
+/**
+ * 続きの会話で、同じ依頼を更新する（POST /api/inbox が、続きと見分けたときに呼ぶ）。
+ * 会話を新しいものに差し替えて読み取りをやり直し（関所も通す）、前と比べて変わった項目を残す。
+ * 日程・指名・テーマのどれかが変わったら、候補づくりをやり直す（restart と同じ道）。変わっていなければ読み取りの更新だけ。
+ * 前の候補は previous に残す（打診の記録・下書きは別の置き場にあり、触らない）
+ */
+export function continueInbox(id: string, text: string, runner: Runner, extractor: IntakeExtractor, onSettled?: () => void): { ok: true } | { ok: false; error: string } {
+  const it = getInboxItem(id);
+  if (!it) return { ok: false, error: "その依頼は受信箱にありません" };
+  if (it.kind === "inappropriate") return { ok: false, error: "この内容には対応しません" };
+  if (it.status === "processing") return { ok: false, error: "準備中です" };
+  const merged = continuedText(it.text, text);
+  if (merged.length > MAX_TEXT) return { ok: false, error: `前の会話とつなげると ${MAX_TEXT} 文字を超えます。新しい依頼として追加してください` };
+  update(id, (x) => ({ ...x, status: "processing", started_at: nowJst(), progress: progressOf("reading"), continue_error: null }));
+  void continuePrepared(id, it, merged, runner, extractor).finally(() => onSettled?.());
+  return { ok: true };
+}
+
+/** continueInbox の中身（テストから待てるように Promise を返す） */
+export function continuePrepared(id: string, before: InboxItem, text: string, runner: Runner, extractor: IntakeExtractor, pitcher?: Pitcher): Promise<void> {
+  // 見せる用では、始めたときの人で固定する
+  return withCurrentVisitor(() => continueRun(id, before, text, runner, extractor, pitcher));
+}
+
+async function continueRun(id: string, before: InboxItem, text: string, runner: Runner, extractor: IntakeExtractor, pitcher?: Pitcher): Promise<void> {
+  const back = (error: string | null) =>
+    update(id, (x) => ({ ...x, status: before.status, started_at: before.started_at, finished_at: before.finished_at, error: before.error, continue_error: error, progress: null }));
+  try {
+    const r = await readIntake(text, before.received_at, extractor, id);
+    // 読み取れなかったら、前の会話・候補のままにして知らせる
+    if (r.failure === "failed") return back(r.why ? `${CONTINUE_READ_FAILED}：${r.why}` : CONTINUE_READ_FAILED);
+    const round: PreviousRound = { at: before.finished_at ?? before.received_at, text: before.text, nominee: before.nominee, intake: before.intake ?? null, result: before.result };
+    const keep = (x: InboxItem) => [...(x.previous ?? []), round];
+    // 関所：依頼ではない・不適切（読み取りの AI の拒否も）なら、候補づくりをせずに止める
+    const kind: IntakeKind = r.failure === "refused" ? "inappropriate" : r.intake?.kind ?? "request";
+    if (kind !== "request") {
+      update(id, (x) => ({
+        ...x,
+        text,
+        nominee: r.nominee,
+        intake: r.intake,
+        read_status: r.failure === "refused" ? "refused" : null,
+        kind_override: null,
+        previous: keep(x),
+        last_update: { at: nowJst(), changes: [], rerun: false },
+        continue_error: null,
+        pitch_status: null,
+        date_suggestions: null,
+      }));
+      return stopAsKind(id, kind, r.failure === "refused" ? READ_REFUSED_REASON : r.intake?.kind_reason ?? null, []);
+    }
+    const changes = intakeChanges(readingOf(before), readingOf({ nominee: r.nominee, intake: r.intake }));
+    // 前に候補ができていなければ（エラー・関所で止まっていた）、変わっていなくても候補づくりをする
+    const rerun = needsRerun(changes) || !before.result;
+    const last_update = { at: nowJst(), changes, rerun };
+    if (!rerun) {
+      update(id, (x) => ({ ...x, text, nominee: r.nominee, intake: r.intake, read_status: null, last_update, continue_error: null, status: before.status, finished_at: before.finished_at, progress: null }));
+      return;
+    }
+    update(id, (x) => ({
+      ...x,
+      text,
+      nominee: r.nominee,
+      intake: r.intake,
+      read_status: null,
+      kind_override: null,
+      previous: before.result ? keep(x) : x.previous,
+      last_update,
+      continue_error: null,
+      error: null,
+      finished_at: null,
+      pitch_status: null,
+    }));
+    // 読み取りは済んでいるので、候補づくりだけ（読み取りの AI は渡さない）
+    await prepare(id, runner, undefined, pitcher);
+  } catch (err) {
+    back(userErrorText(err, { where: "続きの会話の更新", fallback: CONTINUE_READ_FAILED }));
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 窓口（GET /api/inbox/{id}）の返す形
 // ---------------------------------------------------------------------------
@@ -630,6 +740,12 @@ export interface InboxDetail extends InboxListItem {
   pitch_status?: PitchStatus | null;
   /** 日程が決まっていない依頼の、候補ごとの空いていそうな日。reply_sentence は主催者への返事に入れてよい1文の材料（入れるかは技術広報が選ぶ） */
   date_suggestions?: DateSuggestions | null;
+  /** 続きの会話で更新したときの、変わった項目（「日程：未定 → 12月17日（木）」）。更新していなければ null */
+  last_update?: { at: string; changes: IntakeChange[]; rerun: boolean } | null;
+  /** 前の候補（続きの会話で候補づくりをやり直す前のもの。画面では畳んで出す）。新しい順 */
+  previous?: Array<{ at: string; candidates: Array<{ name: string; theme: string; confidence?: string }> }>;
+  /** 続きの会話を読み取れなかったときの文（前の内容はそのまま） */
+  continue_error?: string | null;
 }
 
 export function detailView(it: InboxItem): InboxDetail {
@@ -647,5 +763,11 @@ export function detailView(it: InboxItem): InboxDetail {
     run_usd: it.run_usd,
     pitch_status: it.pitch_status ?? null,
     date_suggestions: it.date_suggestions ?? null,
+    last_update: it.last_update ?? null,
+    continue_error: it.continue_error ?? null,
+    previous: (it.previous ?? [])
+      .filter((p) => p.result)
+      .map((p) => ({ at: p.at, candidates: p.result!.candidates.map((c) => ({ name: c.name, theme: c.theme, confidence: c.confidence })) }))
+      .reverse(),
   };
 }

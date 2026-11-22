@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Candidate, DateSuggestions, Proposal as ProposalT } from "@/app/_client/types";
+import { DAY_MARK_LABEL } from "@/lib/dateHint";
 import { ACTIVITY_LABEL } from "./labels";
 import { CopyButton, Tag } from "./ui";
 import { FEEDBACK_DONE, useFeedback } from "@/app/_client/feedback";
@@ -131,7 +132,11 @@ export function Candidates({
         </h2>
         <p className="small muted-strong">{result.summary}</p>
         {result.nominee_assessment && <p className="small muted-strong">指名された人：{result.nominee_assessment}</p>}
-        {dates && (
+        {dates?.candidate_dates ? (
+          <p className="meta">
+            会話に書かれた候補日（{dates.candidate_dates.map(dayLabel).join("・")}）ごとに、平日 {dates.hours.start}〜{dates.hours.end}時の都合を見ています（○＝予定なし・×＝予定あり・?＝予定が分からない）。本人に確認する前の目安です。
+          </p>
+        ) : dates && (
           <p className="meta">
             日程が未定のため、{dates.period.label}（{dates.period.from}〜{dates.period.to}・平日 {dates.hours.start}〜{dates.hours.end}時）で、候補ごとに空いていそうな日を出しています。本人に確認する前の目安です。
           </p>
@@ -217,6 +222,7 @@ function CandidateRow({
         ))}
         {c.evidence.length === 0 && !c.evidence_request_id && "発信済みの記録"}
       </p>
+      {free?.candidate_days && <CandidateDays days={free.candidate_days} />}
       {free !== undefined && <FreeDates free={free} />}
       {c.cautions.length > 0 && (
         <div className="cautions-full meta">
@@ -258,6 +264,16 @@ export function dayLabel(iso: string): string {
   return `${d.getUTCMonth() + 1}/${d.getUTCDate()}（${WEEK[d.getUTCDay()]}）`;
 }
 
+/** 候補日ごとの都合（「候補日の都合：12/15 ×（終日の予定）・12/17 ×（夜に予定）・1/14 ○」）。予定の題名は出さない */
+function CandidateDays({ days }: { days: NonNullable<DateSuggestions["candidates"][number]["candidate_days"]> }) {
+  return (
+    <p className="free-dates small" aria-label="候補日の都合">
+      <span className="strong">候補日の都合：</span>
+      {days.map((d) => `${Number(d.date.slice(5, 7))}/${Number(d.date.slice(8, 10))} ${DAY_MARK_LABEL[d.mark]}`).join("・")}
+    </p>
+  );
+}
+
 /** 候補の横に出す「空いていそうな日」。予定が分からない人は「予定は不明」。補足（予定が分かる範囲の外など）はそのまま出す */
 function FreeDates({ free }: { free: DateSuggestions["candidates"][number] | null }) {
   if (!free || !free.known) {
@@ -271,7 +287,7 @@ function FreeDates({ free }: { free: DateSuggestions["candidates"][number] | nul
   return (
     <p className="free-dates small">
       <span className="strong">空いていそうな日：</span>
-      {free.dates.length ? free.dates.map(dayLabel).join("・") : "この時期には見つかりませんでした"}
+      {free.dates.length ? free.dates.map(dayLabel).join("・") : free.candidate_days ? "候補日の中にはありません" : "この時期には見つかりませんでした"}
       <span className="meta">（本人に確認する前の目安です{free.note ? `。${free.note}` : ""}）</span>
     </p>
   );

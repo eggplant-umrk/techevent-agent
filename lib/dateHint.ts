@@ -271,6 +271,74 @@ export function replySentence(dates: string[]): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// 開催日の候補が会話に2〜4日はっきり書いてあるとき（「12月15日（火）・17日（木）・1月14日（木）のどれか」）
+//   候補日ごとに、その人の都合をコードで決める。予定の題名は出さない
+// ---------------------------------------------------------------------------
+/** 候補日の数の幅（これより少ない・多いときは候補日として扱わない） */
+export const CANDIDATE_DATES_MIN = 2;
+export const CANDIDATE_DATES_MAX = 4;
+
+/** 会話に書かれた開催日の候補（YYYY-MM-DD、日付の順）。2〜4日でなければ null。期間（〜）・暦にない日付は数えない */
+export function candidateDatesIn(text: string, receivedAt: string): string[] | null {
+  const days = [...new Set(datesInText(text).filter((d) => d.valid && !d.in_range).map((d) => withYear(d, receivedAt)))].sort();
+  return days.length >= CANDIDATE_DATES_MIN && days.length <= CANDIDATE_DATES_MAX ? days : null;
+}
+
+/** 候補日の都合：ok＝夜に予定がなく終日の予定もない／all_day＝終日の予定／evening＝夜に予定／unknown＝予定が分からない */
+export type DayMark = "ok" | "all_day" | "evening" | "unknown";
+export const DAY_MARK_LABEL: Record<DayMark, string> = { ok: "○", all_day: "×（終日の予定）", evening: "×（夜に予定）", unknown: "?" };
+
+/** 「12/15」 */
+export const shortDate = (date: string) => `${Number(date.slice(5, 7))}/${Number(date.slice(8, 10))}`;
+
+/**
+ * その日の都合。slots が null（カレンダーがない）・予定が分かる範囲（knownUntil）より先なら unknown。
+ * 終日の予定があれば all_day、指定の時間帯（既定 平日19〜21時）に予定があれば evening、どちらもなければ ok
+ */
+export function dayAvailability(
+  slots: BusySlot[] | null,
+  date: string,
+  opts: { knownUntil?: string | null; hours?: { start: number; end: number } } = {},
+): DayMark {
+  if (!slots) return "unknown";
+  if (opts.knownUntil && date > opts.knownUntil) return "unknown";
+  const hours = opts.hours ?? suggestHours();
+  const start = dayMs(date);
+  if (slots.some((s) => s.all_day && dayMs(s.start) <= start && start < dayMs(s.end))) return "all_day";
+  const a = start + hours.start * 3600_000;
+  const b = start + hours.end * 3600_000;
+  if (slots.map(slotRange).some(([x, y]) => y > x && x < b && y > a)) return "evening";
+  return "ok";
+}
+
+/** 候補日の都合を1行に（「12/15 × ・12/17 × ・1/14 ○」） */
+export const candidateDaysLine = (days: Array<{ date: string; mark: DayMark }>) => days.map((d) => `${shortDate(d.date)} ${DAY_MARK_LABEL[d.mark].slice(0, 1)}`).join(" ・");
+
+/**
+ * 主催者への返事に入れてよい1文（候補日のとき）。○の日があれば「1月14日（木）でしたら調整しやすそうです（本人に確認します）。」、
+ * ○が1つもなければ「ご提示の日程が難しく、別の日をご相談できればと思います。」。予定が分からない（全部 ?）なら null（返事には入れない）
+ */
+export function candidateDatesReply(days: Array<{ date: string; mark: DayMark }>): string | null {
+  if (!days.length || days.every((d) => d.mark === "unknown")) return null;
+  const ok = days.filter((d) => d.mark === "ok").map((d) => d.date);
+  if (ok.length) return `${ok.map(dateLabel).join("・")}でしたら調整しやすそうです（本人に確認します）。`;
+  if (days.some((d) => d.mark === "unknown")) return null; // ○はないが、分からない日がある：本人に確かめる前に断らない
+  return "ご提示の日程が難しく、別の日をご相談できればと思います。";
+}
+
+/** 候補の注意点に入れる文（コードで作る）。「候補日のうち 1/14 だけ都合がよい」など */
+export function candidateDatesNote(days: Array<{ date: string; mark: DayMark }>): string | null {
+  if (!days.length) return null;
+  const ok = days.filter((d) => d.mark === "ok").map((d) => shortDate(d.date));
+  const unknown = days.filter((d) => d.mark === "unknown").map((d) => shortDate(d.date));
+  if (unknown.length === days.length) return "候補日の予定は不明（本人に確認する）";
+  if (ok.length === days.length) return "候補日はどれも都合がよさそう（本人に確認する）";
+  if (ok.length) return `候補日のうち ${ok.join("・")} だけ都合がよい${unknown.length ? `（${unknown.join("・")} は予定が分からない）` : ""}`;
+  if (unknown.length) return `候補日に都合のよい日は見つからない（${unknown.join("・")} は予定が分からないので本人に確認する）`;
+  return "候補日はどれも予定が合わない（主催者に別の日を相談する）";
+}
+
+// ---------------------------------------------------------------------------
 // 会話の中の日付を読む（コード。lib/intake.ts の日程の確かめから使う想定）
 //   読める形：2026-12-15・2026/12/15・2026.12.15(火)・2026年12月15日・12/15・12月15日・全角の数字、
 //             英語の月名（February 18, 2027・Feb. 18・18 February 2027）、
@@ -311,6 +379,8 @@ const EN_DM = new RegExp(String.raw`\b(\d{1,2})(?:st|nd|rd|th)?\s+(${EN_MONTHS})
 /** 日付のすぐあとの「、16日」「と16日」「・16」（月を省いた2つ目の日） */
 //   2つ目の日は「日」で終わるか、すぐあとが区切り・文の終わりのときだけ（「12/15、19時から」「12/15、20名」の 19・20 は日付にしない）
 const MORE_DAY = /^\s*(?:[、,・]|と|か|または|又は|および|及び|or|and)\s*(\d{1,2})(?:\s*日|(?=\s*(?:[(（)）、,。・]|$|と|か|または|or\b|and\b)))/i;
+/** 日付のすぐあとの曜日のかっこ「(火)」「(木曜)」（読み飛ばす。文は NFKC でそろえてある） */
+const WEEKDAY_PAREN = /^\s*\(\s*[月火水木金土日](?:曜日?)?\s*\)/;
 /** 日付のすぐあとの「〜16日」「~12/17」（期間の終わり） */
 const RANGE_TO = /^\s*[〜~～\-–]\s*(?:(\d{4})\s*[-/.年]\s*)?(?:(\d{1,2})\s*[-/.月]\s*)?(\d{1,2})(?:\s*日|(?![\d:：時分名人件]))/;
 
@@ -324,21 +394,30 @@ export function datesInText(raw: string): DateInText[] {
     found.push({ text: t, index, year, month, day, valid: onCalendar(year, month, day), in_range: inRange });
   };
   const follow = (end: number, year: number | null, month: number) => {
-    // 月を省いた2つ目の日（「、16日」）と、期間の終わり（「〜16日」）
-    let rest = text.slice(end);
-    const more = rest.match(MORE_DAY);
-    if (more) {
-      add(more[0].trim(), end + (more.index ?? 0), year, month, Number(more[1]));
-      taken.push([end, end + more[0].length]);
-      return true;
+    // 月を省いた2つ目の日（「、16日」）と、期間の終わり（「〜16日」）。
+    // 曜日のかっこ（「12月15日（火）・17日（木）」の（火））は飛ばして読む。月を省いた日が続けば、3つ目以降も読む
+    let pos = end;
+    for (let k = 0; k < 4; k++) {
+      const wd = text.slice(pos).match(WEEKDAY_PAREN);
+      const at = pos + (wd ? wd[0].length : 0);
+      const rest = text.slice(at);
+      const more = rest.match(MORE_DAY);
+      if (more) {
+        add(more[0].trim(), at + (more.index ?? 0), year, month, Number(more[1]));
+        taken.push([pos, at + more[0].length]);
+        pos = at + more[0].length;
+        continue;
+      }
+      if (k > 0) return true;
+      const to = rest.match(RANGE_TO);
+      if (to) {
+        add(to[0].trim(), at, to[1] ? Number(to[1]) : year, to[2] ? Number(to[2]) : month, Number(to[3]), true);
+        taken.push([pos, at + to[0].length]);
+        return true;
+      }
+      return false;
     }
-    const to = rest.match(RANGE_TO);
-    if (to) {
-      add(to[0].trim(), end, to[1] ? Number(to[1]) : year, to[2] ? Number(to[2]) : month, Number(to[3]), true);
-      taken.push([end, end + to[0].length]);
-      return true;
-    }
-    return false;
+    return true;
   };
 
   // 英語の月名（数字の読み方より先。「Feb 18, 2027」の 18, 2027 を数字の日付と読まないように）

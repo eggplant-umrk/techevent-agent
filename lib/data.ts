@@ -101,6 +101,8 @@ export interface SpeakingRequest {
   reply_deadline?: string;
   /** 受信箱の会話から読み取った項目（lib/intake.ts。コードで確かめ済み、未定は未定のまま） */
   intake?: import("./intake").IntakeReading;
+  /** 会話に書かれた開催日の候補（2〜4日、YYYY-MM-DD。lib/dateHint.ts の candidateDatesIn。受信箱の依頼だけ） */
+  candidate_dates?: string[];
   message: string;
 }
 

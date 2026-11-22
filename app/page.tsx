@@ -568,6 +568,20 @@ export default function Home() {
   }
 
   async function run() {
+    // 受信箱の依頼（サンプルではないもの）の「もう一度探す」は、受信箱で準備し直して受信箱に保存する（裏で続き、準備中の表示になる）
+    if (mode === "inbox" && inboxId && inbox && inbox.source !== "sample" && !api.mock) {
+      const id = inboxId;
+      resetPanel();
+      try {
+        await api.inboxRestart(id);
+      } catch (err) {
+        setLog([{ kind: "note", tone: "error", text: `候補を出し直せませんでした（${msg(err, "不明なエラー")}）。もう一度押してください。` }]);
+        return;
+      }
+      await showInbox(id);
+      loadInbox();
+      return;
+    }
     const id = mode === "inbox" && inboxId ? inboxId : `custom-${Date.now().toString(36)}`;
     if (mode === "custom") setCustomId(id);
     started.current = Date.now();

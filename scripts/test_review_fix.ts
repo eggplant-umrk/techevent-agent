@@ -57,7 +57,7 @@ async function main() {
   const routes = ["agent", "draft", "blog-ideas", "events/[id]/analyze", "events/[id]/import", "venues", "venues/draft", "notebook"];
   const notWrapped = routes.filter((r) => !read(`app/api/${r}/route.ts`).includes("perPerson(slotted(afterSlot(handlePost)))"));
   check("枠を使う窓口は、すべて afterSlot で包む", !notWrapped.length, notWrapped.join(","));
-  check("受信箱の追加・依頼として進めるも、枠を取った直後に見る", ["app/api/inbox/route.ts", "app/api/inbox/[id]/proceed/route.ts"].every((f) => /acquireApiSlotWait[\s\S]{0,200}shareBudgetGate\(req\)[\s\S]{0,80}release\(\)/.test(read(f))));
+  check("受信箱の追加・依頼として進める・もう一度探すも、枠を取った直後に見る", ["app/api/inbox/route.ts", "app/api/inbox/[id]/proceed/route.ts", "app/api/inbox/[id]/restart/route.ts"].every((f) => /withApiSlotHandoff\(req\.signal[\s\S]{0,300}shareBudgetGate\(req\)[\s\S]{0,80}release\(\)/.test(read(f))));
 
   // ---- 3. ネタ帳の更新の二重実行の止めは、見せる用では人ごと ----
   const nbSrc = read("app/api/notebook/route.ts");

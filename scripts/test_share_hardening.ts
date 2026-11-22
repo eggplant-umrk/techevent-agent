@@ -115,7 +115,7 @@ async function main() {
   const routes = ["agent", "notebook", "events/[id]/analyze", "events/[id]/import", "draft", "blog-ideas", "venues", "venues/draft"];
   const unwrapped = routes.filter((r) => !fs.readFileSync(path.join("app", "api", r, "route.ts"), "utf-8").includes("slotted(afterSlot(handlePost))"));
   const inboxRoute = fs.readFileSync(path.join("app", "api", "inbox", "route.ts"), "utf-8");
-  check("API を使う窓口はすべて、同時実行の上限を通す（受信箱への追加は候補づくりが終わるまで）", unwrapped.length === 0 && inboxRoute.includes("acquireApiSlotWait(req.signal)") && inboxRoute.includes("extractIntakeWithAgent, release)"), unwrapped.join(","));
+  check("API を使う窓口はすべて、同時実行の上限を通す（受信箱への追加は候補づくりが終わるまで）", unwrapped.length === 0 && inboxRoute.includes("withApiSlotHandoff(req.signal") && inboxRoute.includes("extractIntakeWithAgent, release)"), unwrapped.join(","));
   const inbox = await import("../lib/inbox");
   let settled = 0;
   inbox.addToInbox({ text: "テストの依頼", source: "manual" }, async () => null, undefined, () => settled++);

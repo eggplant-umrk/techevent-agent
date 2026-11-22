@@ -86,6 +86,8 @@ export interface Api {
   inboxOpen(id: string): Promise<void>;
   /** 「依頼ではなさそう」と読んだ1件を、人が依頼として進める（候補づくりは裏で続く） */
   inboxProceed(id: string): Promise<void>;
+  /** 受信箱の依頼の「もう一度探す」：受信箱で準備し直す（候補づくりは裏で続き、結果は受信箱に保存される） */
+  inboxRestart(id: string): Promise<void>;
   /** 過去イベントの一覧（新しい順） */
   events(): Promise<EventListItem[]>;
   /** イベントの詳細（数字はコードで計算済み） */
@@ -195,6 +197,9 @@ export const realApi: Api = {
   },
   inboxProceed: async (id) => {
     await json(await post(`/api/inbox/${encodeURIComponent(id)}/proceed`));
+  },
+  inboxRestart: async (id) => {
+    await json(await post(`/api/inbox/${encodeURIComponent(id)}/restart`));
   },
   events: async () => (await json<{ events: EventListItem[] }>(await safeFetch("/api/events"))).events,
   eventDetail: async (id) => json(await safeFetch(`/api/events/${encodeURIComponent(id)}`)),

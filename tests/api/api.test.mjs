@@ -1,9 +1,10 @@
 // API 層の試験（npm run test:api）：本物のサーバーを立てて、窓口に本当に要求を投げる。返り値と、置き場（一時フォルダ）の変化を確かめる。
 // - API は偽の Anthropic（scripts/testing/fake_anthropic.mjs）。本物の API は使わない。Slack には投稿しない
-// - サーバーは本番用のビルドで、3201番（発表用）と3202番（見せる用）。3000番・3100番は使わない（TEST_API_PORT で始まりを変えられる）
+// - サーバーは本番用のビルドで、3201番（発表用）と3202番・3203番（見せる用）。3000番・3100番は使わない（TEST_API_PORT で始まりを変えられる）
 // - 置き場は一時フォルダ。終わったら消す。リポジトリの data/ が変わっていないことも確かめる
 // - SKIP_BUILD=1 なら、すでにある .next を使う（続けて流すとき）
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { buildApp, FAKE_KEY, startApp, tempDir } from "../../scripts/testing/app_server.mjs";
@@ -75,12 +76,16 @@ async function main() {
   const presentDir = tempDir("api-present");
   const shareDir = tempDir("api-share");
   const logDir = tempDir("api-logs");
+  const share2Dir = tempDir("api-share2");
   let present;
   let share;
+  let share2;
   try {
-    [present, share] = await Promise.all([
+    [present, share, share2] = await Promise.all([
       startApp({ profile: "present", port: PORT, fakeUrl: fake.url, dir: presentDir, logFile: path.join(logDir, "present.log") }),
       startApp({ profile: "share", port: PORT + 1, fakeUrl: fake.url, dir: shareDir, logFile: path.join(logDir, "share.log"), extraEnv: { ACCESS_CODE, SHARE_BUDGET_USD: BUDGET } }),
+      // 見せる用で2人が同時に使う試験用（上限は余裕を持たせ、待ちは短く）
+      startApp({ profile: "share", port: PORT + 2, fakeUrl: fake.url, dir: share2Dir, logFile: path.join(logDir, "share2.log"), extraEnv: { ACCESS_CODE, SHARE_BUDGET_USD: "5", API_SLOT_WAIT_MS: "300" } }),
     ]);
     const api = client(present.base);
 
@@ -188,11 +193,109 @@ async function main() {
     check("使う人向けの文で、時間切れと分かる", /秒なかったので止めました|時間/.test(hung.detail?.error ?? ""), (hung.detail?.error ?? "").slice(0, 80));
     const after = await api.addAndWait("「Recovery Night」運営です。2026年12月22日にLT5分の登壇をお願いできる方を探しています。");
     check("時間切れのあとも、次の依頼は準備できる（枠が戻っている）", after.detail?.status === "ready", `${after.detail?.status} ${after.detail?.error ?? ""}`);
+
+    // ---- 7. 受信箱の「もう一度探す」（受信箱で準備し直し、受信箱に保存する）
+    console.log("\n━ 受信箱の「もう一度探す」");
+    const waitReady = async (rid, maxMs = 60_000) => {
+      const until = Date.now() + maxMs;
+      let d = null;
+      while (Date.now() < until) {
+        await sleep(400);
+        d = (await api.get(`/api/inbox/${rid}/detail`)).data;
+        if (d && d.status !== "processing") break;
+      }
+      return d;
+    };
+    const inboxItem = (rid) => {
+      const f = readJson(path.join(presentDir, "inbox.json"), []);
+      return (Array.isArray(f) ? f : f.items ?? []).find((x) => x.id === rid);
+    };
+    const hungId = hung.add.data?.id;
+    const c7 = fake.calls.length;
+    const rs = await api.post(`/api/inbox/${hungId}/restart`);
+    check("エラーの依頼で「もう一度探す」：窓口が受け付ける", rs.status === 200 && rs.data?.ok === true, `${rs.status} ${rs.text.slice(0, 80)}`);
+    const rsAgain = await api.post(`/api/inbox/${hungId}/restart`);
+    check("準備中にもう一度押すと 409（二重に走らせない）", rsAgain.status === 409, String(rsAgain.status));
+    const rd = await waitReady(hungId);
+    check("エラーだった依頼が、準備し直して ready になる", rd?.status === "ready" && !rd?.error, `${rd?.status} ${rd?.error ?? ""}`);
+    check("準備し直しで、候補を探すループを呼んだ", fake.calls.slice(c7).some((x) => x.kind === "loop"));
+    const rc = rd?.result?.candidates ?? [];
+    const savedItem = inboxItem(hungId);
+    check("結果が受信箱（inbox.json）に保存される", savedItem?.status === "ready" && rc.length >= 1 && (savedItem?.result?.candidates ?? []).length === rc.length, `${savedItem?.status} 候補${(savedItem?.result?.candidates ?? []).length}人`);
+    if (rc[0]) {
+      const go = await api.post("/api/outcome", { request_id: hungId, card_id: rc[0].card_id, result: "approved" });
+      check("準備し直した候補で「この人で進める」が通る", go.status === 200, go.text.slice(0, 80));
+      const dr = await api.post("/api/draft", { request_id: hungId, run_id: rd.result.run_id, candidate: { employee_id: rc[0].employee_id } });
+      check("その人の下書きまで作れる（保存済みの候補から引き直せる）", dr.status === 200 && !!dr.data?.draft, `${dr.status} ${dr.text.slice(0, 80)}`);
+    }
+    const rsReady = await api.post(`/api/inbox/${id}/restart`);
+    const rd2 = await waitReady(id);
+    check("準備済みの依頼でも「もう一度探す」で準備し直して保存する", rsReady.status === 200 && rd2?.status === "ready" && (inboxItem(id)?.result?.candidates ?? []).length >= 1, `${rsReady.status} ${rd2?.status}`);
+    check("受信箱にない依頼は 404", (await api.post("/api/inbox/inb-nai/restart")).status === 404);
+
+    // ---- 8. 見せる用で2人が同時に使う（置き場所が混ざらない・1人1件まで）
+    console.log("\n━ 見せる用で2人が同時に使う");
+    const keyOf = (v) => createHash("sha256").update(`netacho-person:${v}`).digest("hex").slice(0, 32);
+    const login = async () => {
+      const r = await fetch(`${share2.base}/api/access`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: ACCESS_CODE }) });
+      const jar = (r.headers.getSetCookie?.() ?? []).map((x) => x.split(";")[0]).join("; ");
+      const v = /nb_person=([^;]+)/.exec(jar)?.[1] ?? null;
+      return { jar, key: v ? keyOf(v) : null };
+    };
+    const p1 = await login();
+    const p2 = await login();
+    check("2人が別の人の印をもらう", !!p1.key && !!p2.key && p1.key !== p2.key);
+    const u1 = client(share2.base, { cookie: p1.jar });
+    const u2 = client(share2.base, { cookie: p2.jar });
+    // それぞれの受信箱に依頼を1件ずつ（受信箱は人ごとの場所）
+    const [i1, i2] = await Promise.all([u1.addAndWait(`${REQUEST_TEXT}（人1）`), u2.addAndWait(`${REQUEST_TEXT}（人2）`)]);
+    const id1 = i1.add.data?.id;
+    const id2 = i2.add.data?.id;
+    check("2人とも自分の受信箱に依頼を入れて、準備が終わる", i1.detail?.status === "ready" && i2.detail?.status === "ready", `${i1.detail?.status} ${i2.detail?.status}`);
+    const v1 = path.join(share2Dir, "visitors", p1.key ?? "x");
+    const v2 = path.join(share2Dir, "visitors", p2.key ?? "y");
+    const steps = (v, rid) => (readJson(path.join(v, "traces", `${rid}.json`), null)?.steps ?? []).length;
+    const before1 = steps(v1, id1);
+    const before2 = steps(v2, id2);
+    // 流しながら返す窓口（候補を出す → 分析）を、2人が同時に使う（1人1件なので、1人の中では順に）。
+    // 人を Next.js の要求から決められていなければ、別の場所（no-person）を読んで「依頼が見つかりません」になる
+    const chain = async (u, rid) => {
+      const a = await u.post("/api/agent", { request_id: rid });
+      const n = await u.post("/api/events/ev015/analyze");
+      return [a, n];
+    };
+    const [[a1, n1], [a2, n2]] = await Promise.all([chain(u1, id1), chain(u2, id2)]);
+    const errOf = (r) => r.data?.error ?? r.text.split("\n").map((l) => { try { return JSON.parse(l); } catch { return null; } }).find((e) => e?.type === "error")?.message ?? null;
+    const okStream = (r) => r.status === 200 && !errOf(r);
+    check("2人とも、自分の依頼で候補を出せる（流しながら返す窓口が、その人の受信箱を読む）", okStream(a1) && okStream(a2), `${a1.status} ${a2.status} ${errOf(a1) ?? ""} ${errOf(a2) ?? ""}`);
+    check("2人とも分析を流せる", n1.status === 200 && n2.status === 200, `${n1.status} ${n2.status} ${(n1.data?.error ?? n2.data?.error ?? "").slice(0, 60)}`);
+    check("人1の実行の記録は人1の場所だけに足される", steps(v1, id1) > before1 && !fs.existsSync(path.join(v2, "traces", `${id1}.json`)), `${before1}→${steps(v1, id1)}`);
+    check("人2の実行の記録は人2の場所だけに足される", steps(v2, id2) > before2 && !fs.existsSync(path.join(v1, "traces", `${id2}.json`)), `${before2}→${steps(v2, id2)}`);
+    const ids = (v) => {
+      const f = readJson(path.join(v, "inbox.json"), []);
+      return (Array.isArray(f) ? f : f?.items ?? []).map((x) => x.id);
+    };
+    check("受信箱も混ざらない（人1の場所に人2の依頼がない・その逆も）", ids(v1).includes(id1) && !ids(v1).includes(id2) && ids(v2).includes(id2) && !ids(v2).includes(id1));
+    check("人の印のない場所（no-person）に書かない", !fs.existsSync(path.join(share2Dir, "visitors", "no-person")));
+    const list = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((f) => !f.startsWith(".")).sort().join(",") : "（なし）");
+    check("2人の場所に、同じ種類の記録ができる（分析の記録も、それぞれの場所に）", list(v1) === list(v2), `人1:${list(v1)} ／ 人2:${list(v2)}`);
+    const baseLeft = fs.readdirSync(share2Dir).filter((f) => !["visitors", "usage.json", "person_usage.json"].includes(f));
+    check("見せる用の置き場の直下には、人の場所と金額の記録のほかに書かない", baseLeft.length === 0, baseLeft.join(","));
+    // 1人1件まで：人1の依頼の準備が終わらない間（偽の API が返事をしない）、人1の2件目は待ってから断る。人2は始められる
+    fake.setMode("hang");
+    const h1 = await u1.post("/api/inbox", { text: "「Slot Night」運営です。2026年12月24日にLT5分の登壇をお願いできる方を探しています。", source: "manual" });
+    const h1b = await u1.post("/api/inbox", { text: "「Slot Night 2」運営です。2026年12月25日にLT5分の登壇をお願いできる方を探しています。", source: "manual" });
+    const h2 = await u2.post("/api/inbox", { text: "「Slot Night 3」運営です。2026年12月26日にLT5分の登壇をお願いできる方を探しています。", source: "manual" });
+    check("見せる用：1人目の1件目は受け付ける", h1.status === 200 && !!h1.data?.id, `${h1.status} ${h1.text.slice(0, 60)}`);
+    check("見せる用：同じ人の2件目は、1件目が動いている間は断る（理由はこの端末の1件）", h1b.status === 429 && /この端末/.test(h1b.data?.error ?? ""), `${h1b.status} ${(h1b.data?.error ?? "").slice(0, 60)}`);
+    check("見せる用：ほかの人は、その間も始められる（全体は6件まで）", h2.status === 200 && !!h2.data?.id, `${h2.status} ${(h2.data?.error ?? "").slice(0, 60)}`);
+    await sleep(6_000); // 時間切れ（5秒）で枠が返るのを待ってから止める
+    fake.setMode("ok");
   } finally {
-    await Promise.all([present?.stop(), share?.stop()]);
+    await Promise.all([present?.stop(), share?.stop(), share2?.stop()]);
     await fake.close();
     check("リポジトリの data/ は変わっていない（書いたのは一時フォルダだけ）", gitData() === dataBefore);
-    for (const d of [presentDir, shareDir]) fs.rmSync(d, { recursive: true, force: true });
+    for (const d of [presentDir, shareDir, share2Dir]) fs.rmSync(d, { recursive: true, force: true });
     if (failed) console.log(`\nサーバーの記録：${logDir}`);
     else fs.rmSync(logDir, { recursive: true, force: true });
   }

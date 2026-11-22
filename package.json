@@ -8,7 +8,12 @@
     "start": "node scripts/serve.mjs start",
     "start:share": "node scripts/serve.mjs start --share",
     "typecheck": "tsc --noEmit --incremental false",
-    "test": "node scripts/test_all.mjs",
+    "test": "node scripts/test_layers.mjs unit api eval",
+    "test:all": "node scripts/test_layers.mjs unit api e2e eval",
+    "test:unit": "node scripts/test_all.mjs --unit",
+    "test:api": "node tests/api/api.test.mjs",
+    "test:e2e": "playwright test",
+    "test:eval": "node scripts/test_all.mjs --eval",
     "eval": "tsx scripts/eval.ts",
     "notebook": "tsx scripts/notebook.ts",
     "import:github": "tsx scripts/import_github.ts",
@@ -54,8 +59,14 @@
     "test:robust": "tsx scripts/test_robust.ts",
     "test:trace": "tsx scripts/test_trace.ts",
     "eval:from-feedback": "tsx scripts/eval_from_feedback.ts",
+    "save:session": "tsx scripts/save_session.ts",
     "test:guard": "tsx scripts/test_ui_guard.ts",
-    "test:access": "tsx scripts/test_access_harden.ts"
+    "test:access": "tsx scripts/test_access_harden.ts",
+    "test:feedback-ui": "tsx scripts/test_feedback_ui.ts",
+    "test:per-person": "tsx scripts/test_share_per_person.ts",
+    "test:mentor": "tsx scripts/test_mentor.ts",
+    "test:askback": "tsx scripts/test_ask_back.ts",
+    "test:replydate": "tsx scripts/test_reply_date.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
@@ -66,6 +77,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

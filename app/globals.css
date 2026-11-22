@@ -399,3 +399,40 @@ textarea.input { resize: vertical; }
 
 /* 候補ができるまでの進み具合（1行） */
 .progress-line { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+
+/* 使われた結果（この候補は違う・下書きを使った）：小さく、操作の邪魔をしない */
+.feedback-note { font-size: 12px; color: var(--muted); }
+.wrong-toggle { font-size: 12px; color: var(--muted); margin-left: auto; }
+.wrong-box { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.wrong-other { display: inline-flex; gap: 6px; align-items: center; }
+.wrong-other .input-sm { min-width: 160px; height: 28px; }
+
+/* 受信箱の1件にかかった金額と時間 */
+.run-cost { font-size: 11px; color: var(--muted); }
+
+/* この依頼の記録（AI・ツールの呼び出しの時間の線） */
+.trace { margin-top: 8px; }
+.trace .link { font-size: 12px; }
+.trace-body { margin-top: 6px; }
+.trace-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.trace-row { display: grid; grid-template-columns: 44px minmax(90px, 160px) 1fr auto; align-items: center; gap: 8px; font-size: 12px; }
+.trace-kind { font-size: 11px; border-radius: 4px; padding: 0 4px; text-align: center; }
+.trace-kind-llm { background: var(--accent-soft); color: var(--accent); }
+.trace-kind-tool { background: var(--neutral-soft); color: var(--neutral); }
+.trace-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trace-track { position: relative; height: 10px; background: var(--neutral-soft); border-radius: 3px; }
+.trace-bar { position: absolute; top: 0; bottom: 0; border-radius: 3px; min-width: 2px; }
+.trace-bar-llm { background: var(--accent); }
+.trace-bar-tool { background: var(--neutral); opacity: 0.6; }
+.trace-fail .trace-bar { background: var(--error); opacity: 1; }
+.trace-fail .trace-num { color: var(--error); }
+.trace-num { white-space: nowrap; }
+@media (max-width: 860px) {
+  .trace-row { grid-template-columns: 40px 1fr auto; }
+  .trace-track { grid-column: 1 / -1; }
+}
+.trace-kind-code { background: var(--ok-soft); color: var(--ok); }
+.trace-bar-code { background: var(--ok); opacity: 0.6; }
+
+/* 見せる用のときだけ：その人の残り（小さく） */
+.share-remaining { font-size: 11px; color: var(--text-2); white-space: nowrap; }

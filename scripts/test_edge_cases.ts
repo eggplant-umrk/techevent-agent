@@ -44,7 +44,7 @@ async function main() {
   const { employees, requests, activities } = await import("../lib/data");
 
   // ---- 0. 一覧そのもの
-  check("試験は30件、id は重ならない", EDGE_CASES.length === 30 && new Set(EDGE_CASES.map((c) => c.id)).size === 30, `${EDGE_CASES.length}件`);
+  check("試験は33件、id は重ならない", EDGE_CASES.length === 33 && new Set(EDGE_CASES.map((c) => c.id)).size === 33, `${EDGE_CASES.length}件`);
   const api = EDGE_CASES.filter((c) => c.api);
   const count = (g: string) => api.filter((c) => c.group === g).length;
   check("本番で流す代表は10件（依頼ではない3・不適切3・判断が要る2・形の崩れ2）", api.length === 10 && count("依頼ではない") === 3 && count("不適切") === 3 && count("判断が要る") === 2 && count("形の崩れ") === 2);
@@ -60,7 +60,7 @@ async function main() {
     const p = parse(c.text);
     if (!p.ok) check(`[${c.id}] ${c.title} は受け付ける`, false, p.error);
   }
-  check("そのほかの26件は、入力としては受け付ける（中身の判断は読み取りと候補づくりで）", true);
+  check("そのほかの29件は、入力としては受け付ける（中身の判断は読み取りと候補づくりで）", true);
   want("R4", "記号だけの文は、API を呼ぶ前に止める", !parse(byId("R4").text).ok, "今は受け付けて、読み取りと候補づくりに進む");
   want("R5", "URL だけの文は、API を呼ぶ前に止める", !parse(byId("R5").text).ok, "今は受け付けて、読み取りと候補づくりに進む");
   const f2 = parse(byId("F2").text);
@@ -227,7 +227,7 @@ async function main() {
 
   // ---- 8. 一覧の「出てはいけない言葉」が、試験の文そのものには当たる（見張る言葉が効くこと）
   for (const c of EDGE_CASES.filter((x) => x.mustNotAppear)) {
-    const hit = c.mustNotAppear!.every(([, re]) => re.test(c.text) || ["B4", "J2", "F4", "J1"].includes(c.id));
+    const hit = c.mustNotAppear!.every(([, re]) => re.test(c.text) || ["B4", "J2", "F4", "J1", "A3"].includes(c.id)); // J1 は属性を言い切る文を、A3 は「会話にない数字」を見張るので、入力には当たらない
     check(`[${c.id}] 見張る言葉が、入力の言い回しに当たる`, hit);
   }
 

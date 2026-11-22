@@ -14,12 +14,13 @@ import { PROGRESS_ORDER, progressOf } from "@/lib/progressStage";
 /** モックで、貼った依頼の準備にかける時間（本物は約30秒。モックは4段階を順に見せるだけ） */
 const MOCK_PREP_MS = 10000;
 
-/** lib/intake.ts の INTAKE_LABEL と同じ（lib/intake.ts は API の呼び出しを含むので画面からは読まない） */
-const INTAKE_LABEL_MOCK = { event_name: "イベント名", date: "日程", format: "形式", theme: "テーマ", organizer: "主催者の名前" } as const;
+import { askBack, CONFIRMING, outreachFacts, requestItems } from "@/lib/askBack";
+import { displayDate } from "@/lib/dateText";
 import proposals from "./proposals.json";
 import postevent from "./postevent.json";
 import venueFixtures from "./venues.json";
 import xconvFixture from "./xconv.json";
+import type { FeedbackInput, RequestTrace } from "./feedback";
 import type {
   AgentEvent,
   EventDetail,
@@ -145,13 +146,20 @@ const NO_FIT: Omit<Proposal, "run_id" | "request_id"> = {
 function draftFor(c: Candidate, req: SpeakingRequest | undefined): OutreachDraft {
   const ev = req?.event;
   const title = ev?.title ?? "ご相談中のイベント";
-  const mins = ev?.duration_min ?? 10;
+  // 人数と持ち時間：分かっていれば値、分からなければ「主催者に確認中」（本物の下書きと同じ決まり。lib/askBack.ts）
+  const items = requestItems(req);
+  const facts = outreachFacts(items);
+  const duration = facts.find((f) => f.key === "duration");
+  const size = facts.find((f) => f.key === "audience_size");
+  const mins = ev?.duration_min ?? (Number.parseInt(duration?.value ?? "", 10) || 10);
+  const slot = duration && !duration.value ? `登壇の枠（持ち時間は${CONFIRMING}）` : `${mins}分の枠`;
+  const sizeLine = size ? `\n${size.label}は${size.value ?? CONFIRMING}です。` : "";
   return {
     subject: `【ご相談】${title}での${ev?.format ?? "LT"}登壇について`,
     message: `${c.name.split(" ")[0]}さん
 
 技術広報の〇〇です。突然すみません。
-${ev ? `${ev.date}に開催される「${title}」（${ev.audience}）` : `「${title}」`}で、LayerXから${mins}分の枠をいただいています。
+${ev ? `${displayDate(ev.date, today)}に開催される「${title}」（${ev.audience}）` : `「${title}」`}で、LayerXから${slot}をいただいています。${sizeLine}
 
 ${c.name.split(" ")[0]}さんの取り組みを拝見して、
 「${c.theme}」
@@ -175,7 +183,7 @@ ${c.name.split(" ")[0]}さんの取り組みを拝見して、
       theme: c.theme,
       organizer: req?.requester?.contact_name ?? req?.intake?.organizer ?? null,
       eventName: ev?.title ?? req?.intake?.event_name ?? null,
-      undecided: (req?.intake?.undecided ?? []).map((f) => INTAKE_LABEL_MOCK[f]),
+      undecided: askBack(items).map((i) => i.label),
     }),
     organizer_reply_note: null,
   };
@@ -239,7 +247,9 @@ export function mockApi(real: Api): Api {
       x.status === "processing" && started !== undefined
         ? progressOf(PROGRESS_ORDER[Math.min(PROGRESS_ORDER.length - 1, Math.floor((Date.now() - started) / (MOCK_PREP_MS / PROGRESS_ORDER.length)))])
         : null;
-    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date };
+    // 一覧に小さく出す、かかった金額と時間（モックは記録の見本から）
+    const tr = x.status === "ready" ? mockTrace(x.id) : null;
+    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date, run_usd: tr?.total_cost_usd ?? 0, elapsed_ms: tr?.total_ms ?? null };
   }
   function acceptedReply(id: string, state: BoardListItem["state"]): BoardDetail["accepted_reply"] {
     for (const p of state.accepted_by) {
@@ -286,6 +296,49 @@ export function mockApi(real: Api): Api {
   }
 
   /** 作業ログ（実行の再現にも、受信箱を開いたときの表示にも使う）。[イベント, 待ち時間ms] */
+  /** 使われた結果（手元だけ。ブラウザの開発ツールで window.__mockFeedback から見られる） */
+  const feedbackLog: FeedbackInput[] = [];
+  if (typeof window !== "undefined") (window as unknown as { __mockFeedback?: FeedbackInput[] }).__mockFeedback = feedbackLog;
+
+  /** モックの依頼の結果と金額（受信箱の詳細と同じ決め方） */
+  function mockRun(id: string): { result: Proposal; runUsd: number } | null {
+    if (id === X_ID) {
+      const x = xResult();
+      return x ? { result: x, runUsd: X_FIXTURE.run_usd } : null;
+    }
+    const it = inboxItems.find((x) => x.id === id);
+    if (it && it.status !== "ready") return null;
+    const fixture = FIXTURES[id];
+    if (fixture) return { result: { ...fixture.result, run_id: `mock-${id}` }, runUsd: fixture.run_usd };
+    return it ? { result: { ...NO_FIT, run_id: `mock-${id}`, request_id: id }, runUsd: 0.061 } : null;
+  }
+
+  /** モックの実行の記録：再生する作業ログから、AI とツールの呼び出しを順に並べる（時間は見本の値） */
+  function mockTrace(id: string): RequestTrace | null {
+    const run = mockRun(id);
+    if (!run) return null;
+    const events = eventsFor(run.result, id, run.runUsd).map(([e]) => e);
+    const llmCount = events.filter((e) => e.type === "step").length + (run.result.alternative_pitch ? 1 : 0) + 1;
+    const usdEach = run.runUsd / llmCount;
+    const startedAt = Date.parse(inboxItems.find((x) => x.id === id)?.received_at ?? "") || Date.now() - 180_000;
+    let t = startedAt;
+    const steps: RequestTrace["steps"] = [];
+    // 記録の側（lib/trace.ts）と同じ形：llm の名前は使い道（inbox_extract・loop・alternative_pitch）
+    const add = (kind: "llm" | "tool" | "code", name: string, ms: number, usd: number | null, ok = true) => {
+      steps.push({ kind, name, started_at: new Date(t).toISOString(), ms, ...(usd !== null ? { cost_usd: usd } : {}), ok, ...(ok ? {} : { error: "見本の失敗" }) });
+      t += ms;
+    };
+    add("llm", "inbox_extract", 4200, usdEach);
+    let n = 0;
+    for (const e of events) {
+      if (e.type === "step") add("llm", "loop", 6800 + ((n++ * 1700) % 5000), usdEach);
+      if (e.type === "tool_result") add("tool", e.name, 120 + ((e.name.length * 37) % 380), null, e.ok);
+      if (e.type === "alternative_pitch") add("llm", "alternative_pitch", 9400, usdEach);
+    }
+    add("code", "date_suggestions", 35, null);
+    return { request_id: id, started_at: new Date(startedAt).toISOString(), total_ms: t - startedAt, total_cost_usd: run.runUsd, steps };
+  }
+
   function eventsFor(result: Proposal, requestId: string, runUsd: number): Array<[AgentEvent, number]> {
     const ev: Array<[AgentEvent, number]> = [];
     const push = (e: AgentEvent, ms = 450) => ev.push([e, ms]);
@@ -338,6 +391,19 @@ export function mockApi(real: Api): Api {
     async state() {
       const s = await real.state();
       return { ...s, models: { ...s.models, totalUsd: total } };
+    },
+    async feedbackReady() {
+      return true;
+    },
+    async feedback(input) {
+      // 手元に残すだけ（記録の側には送らない）
+      await wait(150);
+      feedbackLog.push(input);
+    },
+    async trace(requestId) {
+      await wait(200);
+      await ensureInbox();
+      return mockTrace(requestId);
     },
     async requests() {
       requests = await real.requests();

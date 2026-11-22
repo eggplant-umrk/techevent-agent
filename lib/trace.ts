@@ -11,6 +11,7 @@ import { nowJst } from "./clock";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { costUsd } from "./pricing";
 import { runtimeRoot } from "./runtime";
+import { scopedFile } from "./visitorScope";
 
 export type TraceStepKind = "llm" | "tool" | "code";
 
@@ -40,7 +41,7 @@ export interface Trace {
 }
 
 /** 記録の置き場所（data/runtime/traces/。テスト・評価は DATA_RUNTIME_DIR の中） */
-export const tracesDir = () => path.join(runtimeRoot(), "traces");
+export const tracesDir = () => scopedFile(path.join(runtimeRoot(), "traces")); // 見せる用では今の人の場所
 /** 依頼の id をファイル名に使えるようにする（英数字・-・_ 以外は _ に） */
 const safeId = (id: string) => id.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 120);
 export const traceFile = (requestId: string) => path.join(tracesDir(), `${safeId(requestId)}.json`);

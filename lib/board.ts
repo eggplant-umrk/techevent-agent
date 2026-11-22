@@ -6,6 +6,7 @@
 // 評価用のデータ（requests.json）と結合テストの動きは変えない（ここは画面用の読み書きだけ）。
 import { originalUrl } from "./originalUrl";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
+import { SEED_NOTE, scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import fs from "node:fs";
 import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
@@ -17,9 +18,11 @@ import type { OutreachDraft } from "./heavy";
 import { detailView, getInboxItem, listInbox, listView, type InboxDetail, type InboxListItem } from "./inbox";
 import { recordsFor, requestState, type RequestState } from "./requestStage";
 import { eventUrlsIn } from "./eventUrls";
+// 依頼1件の合計金額は、実行の記録（③、下書き・代わりの人を推す文も入る）があればそれを使う
+import { requestCostUsd } from "./trace";
 
-const SAMPLE_FILE = () => process.env.SAMPLE_PROPOSALS_FILE || path.join(process.cwd(), "data", "sample_proposals.json");
-const DRAFT_FILE = () => process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json");
+const SAMPLE_FILE = () => scopedFile(process.env.SAMPLE_PROPOSALS_FILE || path.join(process.cwd(), "data", "sample_proposals.json"));
+const DRAFT_FILE = () => scopedFile(process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json"));
 
 function readJson<T>(file: string, fallback: T): T {
   // 壊れていたら、次の書き込みで上書きして消してしまわないように、退けてから空として読む
@@ -36,6 +39,8 @@ interface SavedProposal {
   run_usd: number;
   saved_at: string;
   opened_at: string | null;
+  /** 見せる用で人の場所を作ったときに入れた、保存済みの結果（lib/visitorScope.ts）。自分で出し直すと消える */
+  seeded?: boolean;
 }
 const loadSamples = () => readJson<Record<string, SavedProposal>>(SAMPLE_FILE(), {});
 
@@ -98,6 +103,10 @@ export interface BoardListItem extends Omit<InboxListItem, "source"> {
   state: RequestState;
   /** 開催日（分かれば） */
   event_date: string | null;
+  /** この依頼にかかった金額（候補づくり・代わりの人を推す文。分からなければ 0） */
+  run_usd?: number;
+  /** 受け取ってから候補ができるまでの時間（ms）。準備中・分からなければ null */
+  elapsed_ms?: number | null;
 }
 
 export interface BoardDetail extends Omit<InboxDetail, "source"> {
@@ -105,7 +114,9 @@ export interface BoardDetail extends Omit<InboxDetail, "source"> {
   state: RequestState;
   event_date: string | null;
   /** 承諾した人への主催者への返事の下書き（保存してあれば） */
-  accepted_reply: { name: string; text: string } | null;
+  accepted_reply: { name: string; text: string; employee_id?: string } | null;
+  /** 保存済みの結果を入れたサンプルの依頼なら、小さく出す一言（「保存済みの結果です。自分の依頼を貼ると本物の AI が動きます」）。ほかは null・なし */
+  seeded_note?: string | null;
   /** 会話（依頼文）の中にあるイベントの告知ページの URL（connpass など。lib/eventUrls.ts でコードが取り出す） */
   event_urls: string[];
 }
@@ -135,6 +146,8 @@ function sampleList(): BoardListItem[] {
         error: null,
         permalink: null,
         state: stateOf(r.id, s ? "ready" : "new", date),
+        run_usd: requestCostUsd(r.id) ?? s?.run_usd ?? 0,
+        elapsed_ms: null,
         event_date: date,
       };
     });
@@ -162,7 +175,10 @@ export function boardList(): BoardListItem[] {
     .map((it) => {
       const date = inboxEventDate(it);
       const v = listView(it);
-      return { ...v, state: stateOf(it.id, it.status, date), event_date: date };
+      // かかった金額と時間（一覧に小さく出す）。時間は受け取ってから候補ができるまで
+      // 途中で止まった・エラーの依頼は時間を出さない（止まるまでの時間は、かかった時間ではないため）
+      const elapsed = it.status === "ready" && it.finished_at && it.started_at ? Date.parse(it.finished_at) - Date.parse(it.started_at) : NaN;
+      return { ...v, state: stateOf(it.id, it.status, date), event_date: date, run_usd: requestCostUsd(it.id) ?? it.run_usd ?? 0, elapsed_ms: Number.isFinite(elapsed) && elapsed >= 0 ? elapsed : null };
     })
     .filter((x) => x.state.stage !== "archived");
   return [...inbox, ...sampleList()].sort((a, b) => byTimeDesc(a.received_at, b.received_at));
@@ -171,7 +187,7 @@ export function boardList(): BoardListItem[] {
 function replyFor(requestId: string, state: RequestState): BoardDetail["accepted_reply"] {
   for (const p of state.accepted_by) {
     const d = loadDraft(requestId, p.employee_id);
-    if (d?.organizer_reply) return { name: p.name, text: d.organizer_reply };
+    if (d?.organizer_reply) return { name: p.name, text: d.organizer_reply, employee_id: p.employee_id };
   }
   return null;
 }
@@ -228,6 +244,7 @@ function boardDetailRaw(id: string): BoardDetail | null {
     result: s?.result ?? null,
     events: s?.events ?? [],
     run_usd: s?.run_usd ?? 0,
+    seeded_note: s?.seeded ? SEED_NOTE : null,
     pitch_status: null,
     state,
     event_date: date,

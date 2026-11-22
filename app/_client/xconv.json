@@ -34,6 +34,23 @@
         "format": "会話の中でまだ決まっていません",
         "theme": "会話の中でまだ決まっていません",
         "date": "会話の中でまだ決まっていません"
+      },
+      "extra": {
+        "duration": null,
+        "audience_size": null,
+        "audience": null,
+        "venue": "オンライン",
+        "recording": null,
+        "reward": null,
+        "reply_deadline": null
+      },
+      "extra_reasons": {
+        "duration": "会話の中に書かれていません",
+        "audience_size": "会話の中に書かれていません",
+        "audience": "会話の中に書かれていません",
+        "recording": "会話の中に書かれていません",
+        "reward": "会話の中に書かれていません",
+        "reply_deadline": "会話の中に書かれていません"
       }
     },
     "result": {

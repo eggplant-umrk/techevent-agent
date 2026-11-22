@@ -5,6 +5,7 @@
 // - Google への API 連携は作らない（CSV を選ぶか貼るだけ）
 import Anthropic from "@anthropic-ai/sdk";
 import { writeJsonAtomic } from "./fileStore";
+import { scopedFile } from "./visitorScope"; // 見せる用では今の人の場所に（lib/visitorScope.ts）
 import { nowJst } from "./clock";
 import fs from "node:fs";
 import path from "node:path";
@@ -263,7 +264,7 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
 // ---------------------------------------------------------------------------
 const SAMPLE_DIR = () => path.join(process.cwd(), "data", "surveys");
 /** 画面から取り込んだもの（個人情報の列は捨てたあと）。テストでは SURVEY_IMPORT_DIR で別の場所に向ける */
-const IMPORT_DIR = () => process.env.SURVEY_IMPORT_DIR || path.join(process.cwd(), "data", "survey_imports");
+const IMPORT_DIR = () => scopedFile(process.env.SURVEY_IMPORT_DIR || path.join(process.cwd(), "data", "survey_imports"));
 
 export function saveImport(data: SurveyImport) {
   writeJsonAtomic(path.join(IMPORT_DIR(), `${data.event_id}.json`), data);

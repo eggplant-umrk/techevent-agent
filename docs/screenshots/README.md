@@ -1,5 +1,23 @@
 # 画面のスクリーンショット
 
+## スライド・README 用（11/22、番号つきのもの）
+
+1600×900（ブラウザの拡大 125% と同じ見え方）。撮り直すときは `scripts/take_screenshots.mjs` の先頭の手順で、試し用のサーバー（3000・3100 以外のポート・偽の API・一時フォルダ・本番用のビルド）を立てて撮る。本物の API は使わない。
+05 のほかは `?mock`（保存済みの結果）で撮っているので、画面の上に「（モック）」と出る。
+
+| ファイル | 画面 |
+|---|---|
+| 01_inbox_x_conversation_reading | 受信箱：X の会話を貼ったあとの読み取り（読めた項目と、たたまれた「未定 9件」） |
+| 02_candidates_first_talk_reason_notes | 候補：初登壇の印・理由・注意点・忙しさ・根拠のリンク |
+| 03a_outreach_draft | 声かけ文の下書き |
+| 03b_organizer_reply_with_questions | 主催者への返事の下書き（日程・持ち時間・テーマの聞き返しつき） |
+| 04_request_trace_timeline | 「この依頼の記録」の時間の線（見出しの金額は撮るときに伏せている） |
+| 05_not_a_request_stopped | 依頼ではない文を貼って止まったところ（偽の API のサーバーで撮影） |
+| 06a_archive_survey_complaints_next_themes | アーカイブ：アンケートの改善点（原文）と次に聞きたいテーマ |
+| 06b_archive_casual_interview | アーカイブ：カジュアル面談の希望（人数・登壇ごと・行番号と、登壇者へ伝える文） |
+
+## 前の画面（引き算の前）
+
 `http://localhost:3000/?mock` で撮影（モックモード）。引き算の前の画面なので、今の画面は before_after/ の after-*.png を見てください。モックモードでは API を呼ばず、data/ にも書き込みません。
 
 - カード・依頼・状態は data/ の JSON を GET で読む

@@ -113,9 +113,11 @@ async function main() {
   check("実在しない指名は各候補の注意点に書く", !!u.result && u.result.candidates.every((c) => c.cautions.some((t) => t.includes("山田さん"))));
 
   const failing = inbox.addToInbox({ text: "どなたか登壇できますか", source: "manual" }, async () => null);
+  let failingRan = false;
   await inbox.prepare(
     failing.id,
     async (request, emit) => {
+      failingRan = true;
       emit({ type: "done", run_usd: 0, total_usd: 0, steps: 1 });
       return { ...req004, candidates: [], no_fit: null, request_id: request.id };
     },
@@ -124,7 +126,7 @@ async function main() {
     },
   );
   const f = inbox.getInboxItem(failing.id)!;
-  check("読み取りに失敗したら指名なし、候補がいなければ見つからない理由に書く", f.nominee?.employee_id === null && !!f.result?.no_fit?.reasons.some((t) => t.includes("指名を読み取れなかった")));
+  check("読み取りに失敗したらエラーとして止める（依頼として候補づくりを走らせない）", f.status === "error" && f.read_status === "failed" && !failingRan && f.result === null && !!f.error?.startsWith(inbox.READ_FAILED_ERROR));
 
   // ---- 一覧・開いた印
   const list = inbox.listInbox().map(inbox.listView);

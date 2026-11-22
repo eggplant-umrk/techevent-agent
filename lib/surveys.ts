@@ -403,7 +403,7 @@ export function buildAnalysis(eventId: string, input: AnalysisInput, all: Survey
 // ---------------------------------------------------------------------------
 // AI への入力（集計結果と自由記述だけ）
 // ---------------------------------------------------------------------------
-const INSTRUCTIONS = `あなたはLayerXの技術広報を支えるAgentです。社外イベントのあとのアンケートの自由記述を読みます。集計（件数・平均・分布）はコードが済ませてあるので、あなたは文の意味を読む仕事だけをします。
+const instructions = () => `あなたはLayerXの技術広報を支えるAgentです。社外イベントのあとのアンケートの自由記述を読みます。集計（件数・平均・分布）はコードが済ませてあるので、あなたは文の意味を読む仕事だけをします。
 
 今日は${todayJst()}です。
 
@@ -430,12 +430,11 @@ function cardLine(c: Card) {
   return `- ${c.card_id}｜${e?.name ?? c.employee_id}（${e?.business_unit ?? ""}）｜${c.themes.join("／")}｜${c.summary.slice(0, 80)}`;
 }
 
-// 同じ日のうちは作り直さない。日付が変わったら作り直す（指示文に今日の日付が入るため）
-let SYSTEM_CACHE: { day: string; text: string } | undefined;
-const cachedSystem = () => (SYSTEM_CACHE?.day === todayJst() ? SYSTEM_CACHE.text : (SYSTEM_CACHE = { day: todayJst(), text: buildSystem() }).text);
-function buildSystem() {
+// 指示文は分析のたびに作る（控えは持たない）。未発信のカードは今の人の場所（見せる用）・今の中身から読むので、
+// 別の人のカードの文が渡ったり、カードを直したあとに古い文が渡ったりしない。中身が同じなら文も同じなので、プロンプトのキャッシュは効く
+export function surveySystem() {
   const unpublished = loadCards().filter((c) => c.publication_status === "unpublished");
-  return `${INSTRUCTIONS}\n\n# 別の社員の未発信カード（重なりを探す相手）\n${unpublished.map(cardLine).join("\n")}`;
+  return `${instructions()}\n\n# 別の社員の未発信カード（重なりを探す相手）\n${unpublished.map(cardLine).join("\n")}`;
 }
 
 /** AI に渡す文。集計結果と、自由記述（文に分けたもの）と、次に聞きたいテーマだけ。満足度の1件ずつ・職種・個人情報は渡さない */
@@ -830,7 +829,7 @@ export async function analyzeEvent(
     sentences: sentencesOf(eventId).length,
     excluded: stats.excluded,
   });
-  const system = cachedSystem();
+  const system = surveySystem();
   const message = eventMessage(ev);
   const messages: Anthropic.MessageParam[] = [];
   let accepted: AnalysisInput | null = null;

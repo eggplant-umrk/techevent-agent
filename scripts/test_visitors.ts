@@ -205,6 +205,15 @@ async function main() {
     appendUsage({ at: "2026-11-22T10:00:00+09:00", run_id: "x", purpose: "loop", model: "m", input_tokens: 1, output_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, cost_usd: 0.01 });
   });
 
+  // アンケート分析の指示文：控えを持たず、今の人のカードから作る（人 A が直した未発信のカードの文が、人 B に渡らない）
+  const unpub = vs.withVisitor(A, () => cards.loadCards().find((c) => c.publication_status === "unpublished"))!;
+  const sysB0 = vs.withVisitor(B, () => surveys.surveySystem()); // 先に B で作っても、A の分に使い回さない
+  vs.withVisitor(A, () => cards.editCard(unpub.card_id, { summary: "人 A だけが直した未発信のまとめ" }));
+  const sysA = vs.withVisitor(A, () => surveys.surveySystem());
+  const sysB = vs.withVisitor(B, () => surveys.surveySystem());
+  check("アンケート分析の指示文：人 A には人 A のカードの文が入る", sysA.includes("人 A だけが直した未発信のまとめ"));
+  check("アンケート分析の指示文：人 B には人 A のカードの文が渡らない（控えを使い回さない）", !sysB.includes("人 A だけが直した") && !sysB0.includes("人 A だけが直した"));
+
   // 人 A の裏の処理が動いている間に、人 B が操作する（B の場所に書く）
   const writesA = writes.splice(0);
   vs.withVisitor(B, () => {

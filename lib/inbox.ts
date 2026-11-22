@@ -12,7 +12,7 @@ import { KIND_LABEL, type IntakeKind } from "./intake";
 import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type IntakeReading } from "./intake";
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
-import { writeJsonAtomic } from "./fileStore";
+import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 import { userErrorText } from "./userError";
 
@@ -89,9 +89,7 @@ const PITCH_STALE_MS = 5 * 60 * 1000;
 // 保存
 // ---------------------------------------------------------------------------
 function load(): InboxItem[] {
-  const f = FILE();
-  if (!fs.existsSync(/*turbopackIgnore: true*/ f)) return [];
-  return JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ f, "utf-8")) as InboxItem[];
+  return readJsonSafe<InboxItem[]>(FILE(), [], "array"); // 壊れていたら退けて空として読む（落とさない）
 }
 
 function save(items: InboxItem[]) {

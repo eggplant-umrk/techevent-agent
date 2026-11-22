@@ -2,6 +2,8 @@
 // 既定は2件（.env の API_MAX_CONCURRENT で変えられる）。空いていなければ、すぐには断らず最大60秒（API_SLOT_WAIT_MS）待ち、
 // 届いた順に始める。60秒たっても空かなければ 429 を返し、画面に理由を出す。
 // 同じサーバーの中だけで数える（発表用と見せる用は別々のサーバーなので、それぞれ2件まで）。
+// 金額の記録（data/usage.json）が読めない間は、API を使う操作を始めず「金額の記録が読めません」と返す（503。lib/usageFile.ts）。
+import { usageProblem } from "./usageFile";
 type Waiter = { grant: (release: () => void) => void };
 type Slots = { busy: number; waiters?: Waiter[] };
 const g = globalThis as typeof globalThis & { __apiSlots?: Slots };
@@ -38,6 +40,7 @@ function releaser(): () => void {
 
 /** 空きがあれば1件分を取り、返す関数で返す。空きがない（または先に待っている人がいる）なら null（待たない） */
 export function acquireApiSlot(): (() => void) | null {
+  if (usageProblem()) return null; // 金額の記録が読めない間は、API を使う操作を始めない（apiBusyResponse が理由を出す）
   const s = slots();
   if (s.busy >= maxApiSlots() || s.waiters.length) return null;
   s.busy++;
@@ -51,7 +54,7 @@ export function acquireApiSlot(): (() => void) | null {
 export function acquireApiSlotWait(signal?: AbortSignal | null, waitMs = apiSlotWaitMs()): Promise<(() => void) | null> {
   const now = acquireApiSlot();
   if (now) return Promise.resolve(now);
-  if (waitMs <= 0 || signal?.aborted) return Promise.resolve(null);
+  if (waitMs <= 0 || signal?.aborted || usageProblem()) return Promise.resolve(null);
   return new Promise((resolve) => {
     const s = slots();
     let done = false;
@@ -77,13 +80,16 @@ export function acquireApiSlotWait(signal?: AbortSignal | null, waitMs = apiSlot
   });
 }
 
-export const apiBusyResponse = () =>
-  Response.json(
+export const apiBusyResponse = () => {
+  const problem = usageProblem();
+  if (problem) return Response.json({ error: problem }, { status: 503 });
+  return Response.json(
     {
       error: `API を使う操作が同時に${maxApiSlots()}件動いていて、${Math.round(apiSlotWaitMs() / 1000)}秒待っても空かなかったので、受け付けませんでした。少し待ってから、もう一度押してください`,
     },
     { status: 429 },
   );
+};
 
 /** 窓口の処理を、空きがあるときだけ動かす（空いていなければ最大60秒待つ）。作業ログを流す応答（NDJSON）は、流し終わるか切れるまで1件分を持つ */
 export async function withApiSlot(fn: () => Promise<Response>, signal?: AbortSignal | null): Promise<Response> {

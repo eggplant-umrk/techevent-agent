@@ -1,7 +1,8 @@
 // Read-only access to data/*.json (plus append for learnings / usage).
 // data/README.md holds the evaluation answer key and is never read here.
 import fs from "node:fs";
-import { writeJsonAtomic } from "./fileStore";
+import { readJsonSafe, writeJsonAtomic } from "./fileStore";
+import { usageFilePath, usageShapeOk } from "./usageFile";
 import path from "node:path";
 import { dataFile } from "./dataSource";
 import { demoActivities, demoEmployee, demoPersonOn } from "./demoPerson";
@@ -152,11 +153,8 @@ export const events = () => readJson<EventRecord[]>("events.json");
 export const published = () => readJson<Published[]>("published.json");
 export const schedules = () => readJson<Schedule[]>("schedules.json");
 /** 金額の記録。テストでは USAGE_FILE で一時ファイルに向ける（本物の記録を汚さない） */
-export const usage = (): UsageEntry[] => {
-  const f = process.env.USAGE_FILE;
-  if (f) return fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as UsageEntry[]) : [];
-  return readJson<UsageEntry[]>("usage.json", []);
-};
+// 壊れていたら退けて空として読む（落とさない）。退けたあとは API を使う操作を止める（lib/usageFile.ts の usageProblem）
+export const usage = (): UsageEntry[] => readJsonSafe<UsageEntry[]>(usageFilePath(), [], usageShapeOk);
 
 /** イベント後のアンケートの1回答（1行＝1つの登壇への回答）。Googleフォームの CSV から lib/surveyCsv.ts が作る。個人情報の列は入らない */
 export interface SurveyAnswer {
@@ -182,9 +180,7 @@ export function requests(): SpeakingRequest[] {
 }
 
 export function appendUsage(entry: UsageEntry) {
-  const f = process.env.USAGE_FILE;
-  if (f) writeJsonAtomic(f, [...usage(), entry]);
-  else writeJson("usage.json", [...usage(), entry]);
+  writeJsonAtomic(usageFilePath(), [...usage(), entry]);
 }
 
 export function employeeById(id: string): Employee | undefined {

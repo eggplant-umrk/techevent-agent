@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { usageProblem } from "./usageFile";
 
 let client: Anthropic | null = null;
 
@@ -26,6 +27,9 @@ type Create = (body: unknown, opts?: { signal?: AbortSignal | null } & Record<st
 function withDeadline(target: { create: Create }) {
   const original = target.create.bind(target);
   target.create = (body, opts) => {
+    // 金額の記録が読めない間は呼ばない（上限を守れないため。窓口の apiSlots でも止めているが、スクリプトから呼ばれたときの備え）
+    const problem = usageProblem();
+    if (problem) return Promise.reject(new Error(problem));
     const ms = apiTimeoutMs();
     const deadline = AbortSignal.timeout(ms);
     const signal = opts?.signal ? AbortSignal.any([opts.signal, deadline]) : deadline;

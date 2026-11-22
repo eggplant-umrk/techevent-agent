@@ -12,7 +12,7 @@
 //   運営・会場・設備の不満と良い点、人を攻撃する言葉、不満の原文は入れない。カードには書かない。
 // 全体の満足度の点数は登壇者に結びつけない（イベント単位の集計にだけ使う）。登壇ごとの点数の列があるときだけ、その点数を登壇者の参考にする。
 import { analysisOverview } from "./surveyOverview";
-import { writeJsonAtomic } from "./fileStore";
+import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { todayJst, nowJst } from "./clock";
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
@@ -211,7 +211,7 @@ const SAMPLE_FILE = () => path.join(process.cwd(), "docs", "survey_latest.json")
  */
 export function loadAnalyses(): Record<string, EventAnalysis> {
   const f = FILE();
-  const saved = fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>) : {};
+  const saved = readJsonSafe<Record<string, EventAnalysis>>(f, {}, "object"); // 壊れていたら退けて空として読む
   if (process.env.SURVEY_ANALYSIS_FILE) return withoutStale(saved);
   const sf = SAMPLE_FILE();
   if (!fs.existsSync(sf)) return saved;
@@ -231,7 +231,7 @@ function withoutStale(all: Record<string, EventAnalysis>): Record<string, EventA
 }
 function saveAnalysis(a: EventAnalysis) {
   const f = FILE();
-  const all = fs.existsSync(f) ? (JSON.parse(fs.readFileSync(f, "utf-8")) as Record<string, EventAnalysis>) : {};
+  const all = readJsonSafe<Record<string, EventAnalysis>>(f, {}, "object");
   all[a.event_id] = a;
   writeJsonAtomic(FILE(), all);
 }
@@ -586,9 +586,7 @@ const RECORD_FILE = () => process.env.TALK_RECORD_FILE || path.join(process.cwd(
 export const talkRecordFile = RECORD_FILE;
 
 export function loadTalkRecords(): TalkRecord[] {
-  const f = RECORD_FILE();
-  if (!fs.existsSync(f)) return [];
-  return JSON.parse(fs.readFileSync(f, "utf-8")) as TalkRecord[];
+  return readJsonSafe<TalkRecord[]>(RECORD_FILE(), [], "array"); // 壊れていたら退けて空として読む
 }
 function saveTalkRecord(r: TalkRecord) {
   const all = loadTalkRecords().filter((x) => x.id !== r.id);

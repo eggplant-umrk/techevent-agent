@@ -151,6 +151,116 @@ async function main() {
       /fs\.writeFileSync\(/.test(fs.readFileSync(path.join("lib", `${n}.ts`), "utf-8")),
     );
     check("保存するファイルの書き込みは、すべて一時ファイルから置き換える形（直接の上書きが残っていない）", src.length === 0, src.join(","));
+
+    // ---- 5. 壊れたファイルを読んでも落ちない（docs/abuse_test.md の 4 で「落ちる」だったもの）
+    const logs: string[] = [];
+    const realErr = console.error;
+    console.error = (...a: unknown[]) => void logs.push(a.map(String).join(" "));
+    const rt = path.join(tmp, "rt5");
+    process.env.DATA_RUNTIME_DIR = rt;
+    process.env.INBOX_FILE = path.join(tmp, "inbox5.json");
+    process.env.USAGE_FILE = path.join(tmp, "usage5.json");
+    process.env.TALK_RECORD_FILE = path.join(tmp, "talk5.json");
+    process.env.PEOPLE_FILE = path.join(tmp, "people5.json");
+    process.env.SURVEY_ANALYSIS_FILE = path.join(tmp, "survey5.json");
+    process.env.SAMPLE_PROPOSALS_FILE = path.join(tmp, "sample5.json");
+    const { loadCards, baseCards } = await import("../lib/cards");
+    const { loadTalkRecords, loadAnalyses } = await import("../lib/surveys");
+    const { usage } = await import("../lib/data");
+    const { readOverlay } = runtime;
+    const { boardList } = await import("../lib/board");
+    const people = await import("../lib/people");
+    const BAD: Array<[string, string]> = [["0バイト", ""], ["壊れた JSON", '{"cards": [ {"id": "c'], ["形が違う", '"文字だけ"']];
+    const cases: Array<{ name: string; file: () => string; read: () => unknown; empty: (v: unknown) => boolean }> = [
+      { name: "カード（data/runtime/cards.json）", file: () => runtime.runtimeFile("cards.json"), read: () => loadCards(), empty: (v) => (v as unknown[]).length === baseCards().length },
+      { name: "受信箱", file: () => process.env.INBOX_FILE!, read: () => inbox.listInbox(), empty: (v) => (v as unknown[]).length === 0 },
+      { name: "金額の記録", file: () => process.env.USAGE_FILE!, read: () => usage(), empty: (v) => (v as unknown[]).length === 0 },
+      { name: "登壇者の記録", file: () => process.env.TALK_RECORD_FILE!, read: () => loadTalkRecords(), empty: (v) => (v as unknown[]).length === 0 },
+      { name: "人の情報", file: () => process.env.PEOPLE_FILE!, read: () => people.allPeople(), empty: (v) => Array.isArray(v) && (v as unknown[]).length > 0 },
+      { name: "ネタ帳の読んだ記録", file: () => runtime.runtimeFile("notebook_state.json"), read: () => readOverlay<string>([], "notebook_state.json"), empty: (v) => Object.keys(v as object).length === 0 },
+      { name: "ネタ帳の更新の状態", file: () => runtime.runtimeFile("notebook_progress.json"), read: () => readOverlay<unknown>([], "notebook_progress.json"), empty: (v) => Object.keys(v as object).length === 0 },
+      { name: "アンケートの分析", file: () => process.env.SURVEY_ANALYSIS_FILE!, read: () => loadAnalyses(), empty: (v) => Object.keys(v as object).length === 0 },
+      { name: "サンプルの依頼の候補", file: () => process.env.SAMPLE_PROPOSALS_FILE!, read: () => boardList(), empty: (v) => Array.isArray(v) },
+    ];
+    for (const c of cases) {
+      for (const [kind, text] of BAD) {
+        if (c.name.startsWith("ネタ帳") && kind === "形が違う") continue; // 下で別に見る（オブジェクトでない）
+        const f = c.file();
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        for (const x of fs.readdirSync(path.dirname(f))) if (x.startsWith(path.basename(f) + ".broken-")) fs.rmSync(path.join(path.dirname(f), x));
+        fs.writeFileSync(f, text);
+        logs.length = 0;
+        let v: unknown;
+        let err = "";
+        try {
+          v = c.read();
+        } catch (e) {
+          err = e instanceof Error ? e.message : String(e);
+        }
+        const moved = fs.readdirSync(path.dirname(f)).filter((x) => x.startsWith(path.basename(f) + ".broken-"));
+        const keptText = moved.length ? fs.readFileSync(path.join(path.dirname(f), moved[0]), "utf-8") : null;
+        check(
+          `${c.name}が${kind}でも落ちず、空として読む・消さずに退ける・記録に残す`,
+          !err && c.empty(v) && !fs.existsSync(f) && moved.length === 1 && keptText === text && logs.some((l) => l.includes("[壊れたファイル]") && l.includes(moved[0])),
+          err || `退けた先 ${moved.join(",") || "なし"}／記録 ${logs.length}件`,
+        );
+      }
+    }
+    for (const nm of ["notebook_state.json", "notebook_progress.json"]) {
+      const f = runtime.runtimeFile(nm);
+      fs.writeFileSync(f, "[1,2]");
+      const v = readOverlay<unknown>([], nm);
+      check(`${nm} が形の違う中身（配列）でも、空として重ねる`, Object.keys(v).length === 0 && !fs.existsSync(f));
+    }
+    // 退けた名前は「<名前>.broken-<日時>」
+    const sampleBroken = fs.readdirSync(rt).find((x) => x.startsWith("cards.json.broken-")) ?? "";
+    check("退けた名前は「<名前>.broken-<日時>」", /^cards\.json\.broken-\d{8}-\d{6}-\d{3}$/.test(sampleBroken), sampleBroken);
+    // 読めるファイルはそのまま
+    fs.writeFileSync(process.env.TALK_RECORD_FILE!, JSON.stringify([{ id: "r1" }]));
+    check("読めるファイルはそのまま読む（退けない）", loadTalkRecords().length === 1 && fs.existsSync(process.env.TALK_RECORD_FILE!));
+    // 元のデータ（git に入っているファイル）は退けない：runtime の上書きが壊れていても、元のカードは残る
+    check("元のデータのカードは退けずに使い続ける", baseCards().length > 0);
+
+    // 金額の記録が壊れたら、API を使う操作を止める（0ドルから数え直すと上限が効かないため）
+    const { usageProblem } = await import("../lib/usageFile");
+    for (const x of fs.readdirSync(tmp)) if (x.startsWith("usage5.json.broken-")) fs.rmSync(path.join(tmp, x));
+    fs.writeFileSync(process.env.USAGE_FILE!, '[{"cost_usd": 0.5}, {"cost_usd": ');
+    check("金額の記録が読めないと分かる（まだ誰も読んでいなくても）", /金額の記録が読めません/.test(usageProblem() ?? ""), usageProblem() ?? "");
+    check("金額の記録：退けたあとも止めたまま（空のファイルを作っても）", (fs.writeFileSync(process.env.USAGE_FILE!, "[]"), !!usageProblem()));
+    check("金額の記録が読めない間は、枠を取れない", slots.acquireApiSlot() === null && (await slots.acquireApiSlotWait(null, 5000)) === null);
+    const blockedRes = await slots.withApiSlot(async () => Response.json({ ok: true }));
+    const blockedBody = (await blockedRes.json()) as { error: string };
+    check("窓口は 503 と「金額の記録が読めません」を返す（待たずに）", blockedRes.status === 503 && /金額の記録が読めません/.test(blockedBody.error), blockedBody.error);
+    hits = 0;
+    const errUsage = await getClient()
+      .messages.create({ model: "claude-haiku-5-5", max_tokens: 10, messages: [{ role: "user", content: "x" }] })
+      .then(() => null, (e: unknown) => e);
+    check("金額の記録が読めない間は、API を呼ばない（スクリプトから呼んでも）", errUsage instanceof Error && /金額の記録が読めません/.test(errUsage.message) && hits === 0, `呼び出し ${hits}回`);
+    fs.writeFileSync(process.env.USAGE_FILE!, '[{"cost_usd": "たくさん"}]');
+    for (const x of fs.readdirSync(tmp)) if (x.startsWith("usage5.json.broken-")) fs.rmSync(path.join(tmp, x));
+    check("金額が数でない記録も、壊れているとみなす（合計が NaN になって上限が効かないため）", !!usageProblem());
+    for (const x of fs.readdirSync(tmp)) if (x.startsWith("usage5.json.broken-")) fs.rmSync(path.join(tmp, x));
+    fs.writeFileSync(process.env.USAGE_FILE!, '[{"cost_usd": 0.1}]');
+    const ok1 = slots.acquireApiSlot();
+    check("退けたファイルを片付けると、また使える", usageProblem() === null && !!ok1 && usage().length === 1);
+    ok1?.();
+    console.error = realErr;
+
+    // ---- 6. 「ネタ帳を更新」の二重実行
+    const nb = await import("../app/api/notebook/route");
+    const gl = globalThis as typeof globalThis & { __notebookUpdating?: boolean };
+    gl.__notebookUpdating = true;
+    const busyRes = await nb.POST();
+    const busyBody = (await busyRes.json()) as { error: string };
+    check("更新が動いている間は、2回目を始めず「更新中です」と返す", busyRes.status === 409 && /ネタ帳を更新中です/.test(busyBody.error), busyBody.error);
+    check("2回目は枠を持ったままにしない", slots.busyApiSlots() === 0);
+    gl.__notebookUpdating = false;
+    const [a, b] = await Promise.all([nb.POST(), nb.POST()]);
+    const kinds = [a, b].map((r) => (r.headers.get("content-type") ?? "").includes("ndjson") ? "更新" : String(r.status));
+    check("同時に2回押しても、動くのは1つだけ（もう1つは 409）", kinds.sort().join(",") === "409,更新", kinds.join(","));
+    const running = [a, b].find((r) => (r.headers.get("content-type") ?? "").includes("ndjson"))!;
+    await running.text();
+    check("更新が終わったら、次の更新を受け付ける", gl.__notebookUpdating === false && slots.busyApiSlots() === 0);
   } finally {
     for (const r of hanging) r.destroy();
     server.close();

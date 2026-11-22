@@ -1,7 +1,7 @@
 // 人の情報（ネタ帳タブの「人」）。社員データ（employees.json）に、技術広報が画面で直した内容を重ねる。
 // 直した項目は「人が確認済み」になり、Agent やほかの自動処理は上書きしない（applyAutoPersonUpdate を通す）。
 import fs from "node:fs";
-import { writeJsonAtomic } from "./fileStore";
+import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import { nowJst } from "./clock";
 import { runtimeFile } from "./runtime";
 import { blogsOf, type BlogItem } from "./blogView";
@@ -35,9 +35,7 @@ export interface PersonOverride {
 }
 
 function load(): Record<string, PersonOverride> {
-  const f = FILE();
-  if (!fs.existsSync(/*turbopackIgnore: true*/ f)) return {};
-  return JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ f, "utf-8")) as Record<string, PersonOverride>;
+  return readJsonSafe<Record<string, PersonOverride>>(FILE(), {}, "object"); // 壊れていたら退けて空として読む
 }
 
 function save(all: Record<string, PersonOverride>) {

@@ -5,7 +5,7 @@
 //   - npm run reset:demo で data/runtime/ を片付けると、元のデータだけの初期状態に戻る
 //   - 評価・テストは DATA_RUNTIME_DIR を一時フォルダにして、元のデータだけで動く
 import fs from "node:fs";
-import { writeFileAtomic } from "./fileStore";
+import { readJsonSafe, writeFileAtomic } from "./fileStore";
 import path from "node:path";
 import { dataSource } from "./dataSource";
 
@@ -35,7 +35,8 @@ function writeJsonFile(file: string, value: unknown) {
 export function readOverlay<T>(baseFiles: string[], name: string): Record<string, T> {
   const merged: Record<string, T> = {};
   for (const f of baseFiles) Object.assign(merged, readJsonFile<Record<string, T>>(f, {}));
-  return Object.assign(merged, readJsonFile<Record<string, T>>(runtimeFile(name), {}));
+  // 実行時のデータは、壊れていたら退けて空として重ねる（元のデータは退けない）
+  return Object.assign(merged, readJsonSafe<Record<string, T>>(runtimeFile(name), {}, "object"));
 }
 
 export function writeOverlay<T>(baseFiles: string[], name: string, all: Record<string, T>) {
@@ -53,7 +54,10 @@ export function writeOverlay<T>(baseFiles: string[], name: string, all: Record<s
 // ---------------------------------------------------------------------------
 export function readReplaced<T>(baseFile: string, name: string, fallback: T): T {
   const rt = runtimeFile(name);
-  return fs.existsSync(/*turbopackIgnore: true*/ rt) ? readJsonFile<T>(rt, fallback) : readJsonFile<T>(baseFile, fallback);
+  // 実行時のデータが壊れていたら退けて、元のデータを使う（元のデータは退けない）
+  const MISSING = Symbol("missing");
+  const v = readJsonSafe<T | typeof MISSING>(rt, MISSING, Array.isArray(fallback) ? "array" : "object");
+  return v !== MISSING ? v : readJsonFile<T>(baseFile, fallback);
 }
 export function writeReplaced(name: string, value: unknown) {
   writeJsonFile(runtimeFile(name), value);
@@ -70,7 +74,9 @@ export interface CardOverlay<C> {
 }
 
 export function readCardOverlay<C>(): CardOverlay<C> {
-  return readJsonFile<CardOverlay<C>>(runtimeFile("cards.json"), { cards: [], deleted: [] });
+  // 壊れていたら退けて、元のデータのカードだけにする（落とさない）
+  const ok = (v: unknown) => !!v && typeof v === "object" && Array.isArray((v as CardOverlay<C>).cards) && Array.isArray((v as CardOverlay<C>).deleted);
+  return readJsonSafe<CardOverlay<C>>(runtimeFile("cards.json"), { cards: [], deleted: [] }, ok);
 }
 
 export function writeCardOverlay<C>(o: CardOverlay<C>) {

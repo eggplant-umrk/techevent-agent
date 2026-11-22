@@ -5,7 +5,7 @@
 // - 声かけ文・主催者への返事の下書きを保存して、承諾済みの依頼を開き直したときにも出す
 // 評価用のデータ（requests.json）と結合テストの動きは変えない（ここは画面用の読み書きだけ）。
 import { originalUrl } from "./originalUrl";
-import { writeJsonAtomic } from "./fileStore";
+import { readJsonSafe, writeJsonAtomic } from "./fileStore";
 import fs from "node:fs";
 import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
@@ -22,12 +22,8 @@ const SAMPLE_FILE = () => process.env.SAMPLE_PROPOSALS_FILE || path.join(process
 const DRAFT_FILE = () => process.env.DRAFTS_FILE || path.join(process.cwd(), "data", "drafts.json");
 
 function readJson<T>(file: string, fallback: T): T {
-  if (!fs.existsSync(file)) return fallback;
-  try {
-    return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
-  } catch {
-    return fallback;
-  }
+  // 壊れていたら、次の書き込みで上書きして消してしまわないように、退けてから空として読む
+  return readJsonSafe<T>(file, fallback, "object");
 }
 function writeJson(file: string, value: unknown) {
   writeJsonAtomic(file, value);

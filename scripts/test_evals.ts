@@ -120,6 +120,20 @@ async function main() {
   check("コードの判定：候補0人と下書きなし", run(["candidates_zero", "no_draft"], { result: { ...good, candidates: [], no_fit: { reasons: ["依頼ではない"], next_checks: [] } } }).every((v) => v === "pass") && run(["candidates_zero"], { result: good })[0] === "fail");
   check("コードの判定：入口で断る・受け付ける", run(["entry_rejected"], {})[0] === "fail" && runChecks({ ...base, input: { kind: "inbox", text: "   " }, checks: ["entry_rejected"] }, {})[0].verdict === "pass");
   check("コードの判定：登録されていない名前は落ちる", run(["nai_hantei"], {})[0] === "fail");
+  // 使われた結果 → ケース（lib/feedbackEval.ts）が使う判定
+  const ids = good.candidates.map((c) => c.employee_id);
+  check("コードの判定：候補に出してはいけない人（not_in_candidates）", run(["not_in_candidates"], { result: good }, { unexpected_ids: ["e999"] })[0] === "pass" && run(["not_in_candidates"], { result: good }, { unexpected_ids: [ids[0]] })[0] === "fail" && run(["not_in_candidates"], {}, { unexpected_ids: ["e999"] })[0] === "unknown");
+  const usage = (expected: string[]) => runChecks({ ...base, source: "usage", origin: { ref: "inb-x" }, checks: ["expected_in_candidates"], params: { expected_ids: expected } }, { result: good })[0].verdict;
+  check("コードの判定：使われた結果のケースでは、よいと付けた人が全員いること（手で作ったケースは、いずれか）", usage([ids[0], ids[1]]) === "pass" && usage([ids[0], "e999"]) === "fail" && run(["expected_in_candidates"], { result: good }, { expected_ids: [ids[0], "e999"] })[0] === "pass");
+  const intake = { event_name: "Backend Craft Night #12", date: "2026-12-10", format: "LT（10分）", theme: null, organizer: "高田", undecided: ["theme"], reasons: {} } as never;
+  const fm = (expected: Record<string, string>, o: EvalOutput = { intake }) => run(["intake_fields_match"], o, { intake_expected: expected })[0];
+  check("コードの判定：人が直した読み取りと合う（intake_fields_match）", fm({ date: "2026-12-10", event_name: "Backend Craft Night ＃12" }) === "pass" && fm({ format: "LT(10分)" }) === "pass" && fm({ organizer: "高田さん" }) === "pass");
+  check("コードの判定：人が直した値と違えば落ちる・読み取りがなければ「分からない」", fm({ date: "2026-12-11" }) === "fail" && fm({ theme: "障害対応" }) === "fail" && fm({ organizer: "田中" }) === "fail" && fm({ date: "2026-12-10" }, {}) === "unknown");
+  const { feedbackToCase } = await import("../lib/feedbackEval");
+  const fb = (patch: Record<string, unknown>) => ({ request_id: "inb-test", target: "candidate", target_id: "e012", verdict: "good", reason_code: "other", note: null, after: null, ...patch }) as never;
+  const converted = feedbackToCase("inb-test", [fb({}), fb({ target_id: "e002", verdict: "bad" }), fb({ target: "intake_field", target_id: "date", verdict: "bad", after: "2026-12-10" })], { text: "依頼です。12月10日にお願いします", channel: "manual", received_at: "2026-11-21T10:00:00+09:00", recorded: { result: good } } as never, new Set<string>());
+  const convProblems = converted.case ? T.evalCaseProblems(converted.case, CHECK_NAMES) : ["ケースにならなかった"];
+  check("使われた結果から変換したケースの判定の名前は、すべて登録されている（形の検査に通る）", convProblems.length === 0 && ["expected_in_candidates", "not_in_candidates", "intake_fields_match"].every((n) => converted.case!.checks.includes(n)), convProblems.join("／") || converted.case?.checks.join(","));
   const reply = "ご連絡ありがとうございます！弊社の" + good.candidates[0].name.split(" ")[0] + "がお力になれそうです。本人に確認して、あらためてご連絡します。";
   check("コードの判定：主催者への返事", run(["organizer_reply_clean"], { result: good, draft: { organizer_reply: reply } })[0] === "pass" && run(["organizer_reply_clean"], { result: good, draft: { organizer_reply: `${reply}年収は900万円です。` } })[0] === "fail");
 

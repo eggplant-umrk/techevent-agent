@@ -75,12 +75,39 @@ export const CHECKS: Record<string, Check> = {
     if (!o.result || o.result.candidates.length) return pass();
     return ok((o.result.no_fit?.reasons.length ?? 0) > 0, "見つからない理由がない");
   },
-  /** params.expected_ids のだれかが候補にいる */
+  /**
+   * params.expected_ids が候補にいる。
+   * 手で作ったケース・試験の一覧は「だれか1人がいれば」（想定候補のいずれか）。
+   * 使われた結果から来たケース（source が usage）は「全員がいること」（人がよいと付けた人は、1人ずつ守る）
+   */
   expected_in_candidates: (c, o) => {
     if (!o.result) return unknown("候補の結果がない");
     const want = (c.params?.expected_ids ?? []) as string[];
     const got = o.result.candidates.map((x) => x.employee_id);
-    return ok(want.some((id) => got.includes(id)), `候補=${got.join(",")} 想定=${want.join(",")}`);
+    const hit = c.source === "usage" ? want.every((id) => got.includes(id)) : want.some((id) => got.includes(id));
+    return ok(want.length > 0 && hit, `候補=${got.join(",")} 想定=${want.join(",")}${c.source === "usage" ? "（全員）" : "（いずれか）"}`);
+  },
+  /** params.unexpected_ids のだれも候補にいない（使われた結果で、人が「違う」と付けた人） */
+  not_in_candidates: (c, o) => {
+    if (!o.result) return unknown("候補の結果がない");
+    const bad = ((c.params?.unexpected_ids ?? []) as string[]).filter((id) => o.result!.candidates.some((x) => x.employee_id === id));
+    return ok(bad.length === 0, bad.length ? `候補にいる：${bad.join(",")}` : "");
+  },
+  /**
+   * 読み取った項目が params.intake_expected（項目 → 人が直した値）と合う（使われた結果で、人が読み取りを直したもの）。
+   * 日程はそのまま比べる。ほかの項目は、空白と全角半角の違いをならして、どちらかがもう片方を含めば合うとみなす
+   */
+  intake_fields_match: (c, o) => {
+    if (!o.intake) return unknown("読み取りの結果がない");
+    const want = (c.params?.intake_expected ?? {}) as Record<string, string>;
+    const got = o.intake as unknown as Record<string, unknown>;
+    const norm = (s: string) => s.normalize("NFKC").replace(/[\s　]/g, "");
+    const bad = Object.entries(want).filter(([k, v]) => {
+      const g = typeof got[k] === "string" ? (got[k] as string) : "";
+      if (k === "date") return g !== v;
+      return !g || !(norm(g).includes(norm(v)) || norm(v).includes(norm(g)));
+    });
+    return ok(bad.length === 0, bad.map(([k, v]) => `${k}：${JSON.stringify(got[k] ?? null)}（人が直した値 ${JSON.stringify(v)}）`).join("／"));
   },
   /** 自信のある候補が先、条件付きには引っかかる点の文 */
   strong_first_and_caveat: (_c, o) => {

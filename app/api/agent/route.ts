@@ -1,5 +1,7 @@
 import { runAgent, type AgentEvent } from "@/lib/agent";
-import { resolveRequest } from "@/lib/requests";
+import { CUSTOM_TEXT_CLOSED, resolveRequest } from "@/lib/requests";
+import { getInboxItem, READ_FAILED_ERROR, rereadIfFailed } from "@/lib/inbox";
+import { extractIntakeWithAgent, KIND_LABEL } from "@/lib/intake";
 import { saveSampleProposal } from "@/lib/board";
 import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
@@ -16,8 +18,21 @@ async function handlePost(req: Request) {
   if (!body || typeof body !== "object" || (body.request_id !== undefined && typeof body.request_id !== "string") || (body.custom_text !== undefined && typeof body.custom_text !== "string")) {
     return Response.json({ error: "送られた内容が読めません" }, { status: 400 });
   }
+  // 貼った文を直接送る道は閉じた（受信箱の関所を通らないため）。会話は受信箱に入れる
+  if (body.custom_text) return Response.json({ error: CUSTOM_TEXT_CLOSED }, { status: 400 });
+  // 読み取りに失敗した受信箱の1件は、候補づくりの前に読み直して関所を通す（依頼ではない・不適切なら止める）
+  if (body.request_id?.startsWith("inb-")) await rereadIfFailed(body.request_id, extractIntakeWithAgent);
   const request = resolveRequest(body);
-  if (!request) return Response.json({ error: "依頼が見つかりません" }, { status: 400 });
+  if (!request) {
+    const it = body.request_id?.startsWith("inb-") ? getInboxItem(body.request_id) : undefined;
+    const why =
+      it?.read_status === "failed"
+        ? `${READ_FAILED_ERROR}。少し待ってからもう一度押してください`
+        : it?.kind && it.kind !== "request"
+          ? `「${KIND_LABEL[it.kind]}」と読んだので、候補は出しません`
+          : "依頼が見つかりません";
+    return Response.json({ error: why }, { status: 400 });
+  }
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({

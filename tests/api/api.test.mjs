@@ -114,6 +114,11 @@ async function main() {
     const chat = await api.addAndWait("先日の勉強会、ありがとうございました！資料もとても分かりやすかったです。またご飯でも行きましょう。");
     check("雑談：受け付けるが、種類は「依頼ではない」", chat.detail?.kind === "not_request", `${chat.detail?.kind} ${chat.detail?.status}`);
     check("雑談：候補を作らない（候補を探すループを呼ばない）", (chat.detail?.result?.candidates ?? []).length === 0 && !fake.calls.slice(c2).some((c) => c.kind === "loop"));
+    // 貼った文を /api/agent・/api/draft に直接送る道は閉じた（受信箱の関所を通らないため）
+    const c2b = fake.calls.length;
+    const directAgent = await api.post("/api/agent", { request_id: "custom-x", custom_text: REQUEST_TEXT });
+    const directDraft = await api.post("/api/draft", { run_id: "x", request_id: "custom-x", custom_text: REQUEST_TEXT, candidate: { employee_id: "e001", theme: "t", reason: "r", evidence_activity_ids: [] } });
+    check("貼った文を直接送る：/api/agent も /api/draft も 400 で断り、API を呼ばない", directAgent.status === 400 && directDraft.status === 400 && /受信箱/.test(directAgent.data?.error ?? "") && fake.calls.length === c2b, `${directAgent.status} ${directDraft.status}`);
 
     // ---- 3. 承諾と取り消し
     console.log("\n━ 承諾と取り消し");

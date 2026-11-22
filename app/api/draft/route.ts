@@ -1,5 +1,5 @@
 import { draftOutreach } from "@/lib/heavy";
-import { resolveRequest } from "@/lib/requests";
+import { CUSTOM_TEXT_CLOSED, resolveRequest } from "@/lib/requests";
 import { draftCandidate, saveDraft } from "@/lib/board";
 import { activities } from "@/lib/data";
 import { runUsd, totalUsd } from "@/lib/usage";
@@ -22,6 +22,8 @@ interface Body {
 async function handlePost(req: Request) {
   const body = (await req.json().catch(() => null)) as Body | null;
   if (!body) return Response.json({ error: "依頼または候補がありません" }, { status: 400 });
+  // 貼った文を直接送る道は閉じた（受信箱の関所を通らないため）
+  if (body.custom_text) return Response.json({ error: CUSTOM_TEXT_CLOSED }, { status: 400 });
   const request = resolveRequest(body);
   // 候補の文（テーマ・理由・根拠）はブラウザから来たものを使わず、保存済みの候補から引き直す
   const candidate = request ? draftCandidate(body, new Set(activities().map((a) => a.id))) : null;

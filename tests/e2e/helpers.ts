@@ -72,10 +72,13 @@ export async function expectListsAligned(page: Page) {
 /** ネタ帳で人を探して開き、その人の記録に承諾が残っているかを見る */
 export async function openPersonInNotebook(page: Page, name: string) {
   await nav(page, "ネタ帳").click();
-  // 人の一覧の見出しは「人 30人」、絞り込むと「人 1 / 30人」
-  const people = page.getByRole("region", { name: /^人 (\d+ \/ )?\d+人$/ });
+  // 人の一覧の見出しは「人」（人数はいちばん上の切り替え「人 30」に出す）。検索は「人」を選んでいるときだけ出る
+  const people = page.getByRole("region", { name: "人", exact: true });
   await expect(people).toBeVisible();
+  await page.getByRole("tab", { name: /^人 \d+$/ }).click();
   await page.getByRole("searchbox", { name: "人を探す" }).fill(name.split(/\s/)[0]);
+  // 絞り込んだときは、一覧の上に「N人に絞っています（解除）」
+  await expect(people.getByRole("status").filter({ hasText: /\d+人に絞っています/ })).toBeVisible();
   const who = new RegExp(`^${name.replace(/\s+/g, "\\s*")}`);
   await people.getByRole("button", { name: who }).first().click();
   await expect(page.getByRole("heading", { name: who }).first()).toBeVisible();

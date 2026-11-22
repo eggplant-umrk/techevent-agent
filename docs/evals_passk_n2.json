@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-22T01:01:21.351Z",
+  "k": 1,
+  "max_usd": 0.4,
+  "spent_usd": 0.1085,
+  "stopped": null,
+  "rows": [
+    {
+      "id": "edge-N2",
+      "title": "正常：リプライのやり取り（あとから日程が決まる）",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 1,
+      "passes": 0,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1085,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": "1月27日（火）",
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [
+              "e020:strong",
+              "e013:conditional",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    }
+  ]
+}

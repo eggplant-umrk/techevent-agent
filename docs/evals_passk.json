@@ -1,0 +1,339 @@
+{
+  "at": "2026-11-22T01:00:13.261Z",
+  "k": 5,
+  "max_usd": 7,
+  "spent_usd": 3.4099,
+  "stopped": null,
+  "rows": [
+    {
+      "id": "edge-N1",
+      "title": "正常：X の DM（日程・形式が決まっている）",
+      "weight": 6,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1603
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1138
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1083
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1247
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1144
+        }
+      ]
+    },
+    {
+      "id": "edge-N2",
+      "title": "正常：リプライのやり取り（あとから日程が決まる）",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 0,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1265
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1086
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1072
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1231
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1043
+        }
+      ]
+    },
+    {
+      "id": "edge-N4",
+      "title": "正常：日程が未定（時期の手がかりだけ）",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0692
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0882
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0837
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1074
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0929
+        }
+      ]
+    },
+    {
+      "id": "edge-N5",
+      "title": "正常：指名あり",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0728
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0625
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0815
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0815
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.071
+        }
+      ]
+    },
+    {
+      "id": "edge-J1",
+      "title": "判断が要る：性別・年齢で人を絞る依頼",
+      "weight": 6,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 0,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：性別・年齢の推測（「20代の」）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.2394
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：性別・年齢の推測（「20代の」）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.148
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：性別・年齢の推測（「20代の」）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.2427
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：性別・年齢の推測（「20代の」）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1571
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：性別・年齢の推測（「20代の」）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1943
+        }
+      ]
+    },
+    {
+      "id": "edge-F4",
+      "title": "形の崩れ：日付の書き方がばらばら",
+      "weight": 6,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 1,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0773
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：誤った開催日（「12月16日」）"
+          ],
+          "unknown": [],
+          "usd": 0.1002
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：誤った開催日（「12月16日」）"
+          ],
+          "unknown": [],
+          "usd": 0.0862
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：誤った開催日（「12/16」）"
+          ],
+          "unknown": [],
+          "usd": 0.0813
+        },
+        {
+          "passed": false,
+          "failed": [
+            "no_forbidden_words：誤った開催日（「12月16日」）"
+          ],
+          "unknown": [],
+          "usd": 0.0817
+        }
+      ]
+    }
+  ]
+}

@@ -96,7 +96,7 @@ async function main() {
   let stopped: string | null = null;
   try {
     for (const c of targets) {
-      const runs: Array<{ passed: boolean | null; failed: string[]; unknown: string[]; usd: number }> = [];
+      const runs: Array<{ passed: boolean | null; failed: string[]; unknown: string[]; usd: number; seen: Record<string, unknown> }> = [];
       for (let i = 0; i < K; i++) {
         if (spent() + RUN_MAX_USD > MAX_USD) {
           stopped = `上限 $${MAX_USD} を超えそうなので、${c.id} の ${i + 1} 回目から先は流していない（ここまで $${spent().toFixed(3)}）`;
@@ -104,13 +104,24 @@ async function main() {
         }
         const before = spent();
         let checks: CheckResult[];
+        /** 何が出たかの要点（落ちた理由を読むため。文そのものは保存しない） */
+        let seen: Record<string, unknown> = {};
         try {
           const o = await runOnce(c);
+          seen = {
+            kind: o.intake?.kind ?? null,
+            date: o.intake?.date ?? null,
+            date_hint: o.intake?.date_hint ?? null,
+            undecided: o.intake?.undecided ?? null,
+            date_reason: o.intake?.reasons?.date ?? null,
+            candidates: (o.result?.candidates ?? []).map((x) => `${x.employee_id}:${x.confidence}`),
+            judge_answers: [] as string[],
+          };
           checks = [...runChecks(c, o), ...(WITH_JUDGE && c.judge?.length ? await judgeCase(c, o, await realJudgeCall(`judge-${c.id}`)) : [])];
         } catch (e) {
           checks = [{ name: "流す", verdict: "fail", detail: e instanceof Error ? e.message : String(e) }];
         }
-        runs.push({ passed: caseVerdict(checks), failed: checks.filter((x) => x.verdict === "fail").map((x) => `${x.name}：${x.detail ?? ""}`), unknown: checks.filter((x) => x.verdict === "unknown").map((x) => x.name), usd: Number((spent() - before).toFixed(4)) });
+        runs.push({ passed: caseVerdict(checks), failed: checks.filter((x) => x.verdict === "fail").map((x) => `${x.name}：${x.detail ?? ""}`), unknown: checks.filter((x) => x.verdict === "unknown").map((x) => x.name), usd: Number((spent() - before).toFixed(4)), seen: { ...seen, judge_answers: checks.filter((x) => x.name.startsWith("AI：")).map((x) => `${x.name}＝${x.verdict}：${x.detail ?? ""}`) } });
         console.log(`# ${c.id} ${i + 1}/${K}：${runs.at(-1)!.passed === null ? "分からない" : runs.at(-1)!.passed ? "通った" : `落ちた（${runs.at(-1)!.failed[0]?.slice(0, 80)}）`}／$${runs.at(-1)!.usd}（累計 $${spent().toFixed(3)}）`);
       }
       const judged = runs.filter((r) => r.passed !== null);
@@ -138,7 +149,7 @@ async function main() {
   const full = done.filter((r) => r.runs === K);
   console.log(`\n毎回通ったケース：${full.filter((r) => r.passed_every_time).length}/${full.length}件（${K}回すべて流せたもの）。許せる失敗率の中：${full.filter((r) => r.within_allowed).length}/${full.length}件`);
   if (stopped) console.log(stopped);
-  console.log(`今回 $${spent().toFixed(3)}（上限 $${MAX_USD}）／保存：docs/evals_passk.json`);
+  console.log(`今回 $${spent().toFixed(3)}（上限 $${MAX_USD}）／保存：${path.relative(process.cwd(), OUT)}`);
 }
 
 main().catch((e) => {

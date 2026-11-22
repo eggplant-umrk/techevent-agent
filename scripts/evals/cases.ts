@@ -61,7 +61,7 @@ const EDGE_PLAN: Record<string, { priority: EvalPriority; checks: string[]; para
   F2: { priority: P(1, 1), checks: ["entry_accepted", "candidates_max"] },
   F3: { priority: P(2, 2), checks: ["entry_accepted", "candidates_max", "no_internal_terms"] },
   F4: { priority: P(2, 3), checks: ["entry_accepted", "no_forbidden_words", "candidates_max"] },
-  F5: { priority: P(2, 1), checks: ["entry_accepted", "intake_matches", "candidates_max"], params: { intake: { date: "2027-01-23", format: "LT10分", theme: "アクセシビリティ" } } },
+  F5: { priority: P(2, 1), checks: ["entry_accepted", "intake_matches", "candidates_max"], params: { intake: { date: "2027-01-22", format: "LT10分", theme: "アクセシビリティ" } } },
 };
 
 /** 本番で流した結果（scripts/try_edge_cases.ts が docs/edge_cases_result.json に保存。なければ空） */
@@ -210,9 +210,9 @@ export function raiseCases(): EvalCase[] {
       origin: { ref: "docs/edge_cases_result.json#F3", note: "11/22 の本番の結果（代表10件）で見つけた" },
       title: "複数の依頼が混ざっているとき、1件目の決まった日程を使う",
       input: { kind: "inbox", text: EDGE_CASES.find((c) => c.id === "F3")!.text, channel: "manual", received_at: RECEIVED_AT },
-      expect: "1件目の依頼（1月16日（金）のLT）を読むなら、その日程は決まったものとして扱う。今は、別件の依頼の日付（2月24日）が後ろにあるため「未定」になり、予定の確認が抜ける",
+      expect: "1件目の依頼（1月15日（金）のLT）を読むなら、その日程は決まったものとして扱う。今は、別件の依頼の日付（2月24日）が後ろにあるため「未定」になり、予定の確認が抜ける",
       checks: ["intake_fields_match", "candidates_max"],
-      params: { intake_expected: { date: "2027-01-16" } },
+      params: { intake_expected: { date: "2027-01-15" } },
       priority: P(2, 2),
       allowed_failure_rate: 0.34,
       suite: "raise",

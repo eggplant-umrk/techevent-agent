@@ -199,19 +199,6 @@ export function raiseCases(): EvalCase[] {
       recorded: latestRow("req005"),
     },
     {
-      id: "raise-req004-theme-other-name",
-      source: "handmade",
-      origin: { ref: "docs/eval_latest.json#req004" },
-      title: "指名の依頼：テーマ案にほかの社員の名前を入れない（2件目）",
-      input: { kind: "request", request_id: "req004" },
-      expect: "同上（共同登壇の案は、引っかかる点・注意点に書く。テーマ案には書かない）",
-      checks: ["themes_without_other_names", "candidates_max"],
-      priority: P(2, 2),
-      allowed_failure_rate: 0.34,
-      suite: "raise",
-      recorded: latestRow("req004"),
-    },
-    {
       id: "raise-B4-nomination-with-personal-info-ask",
       source: "handmade",
       origin: { ref: "docs/edge_cases_result.json#B4", note: "11/22 の本番の結果（代表10件）で見つけた" },
@@ -292,6 +279,24 @@ export function promotedCases(): EvalCase[] {
       suite: "keep",
       // 直したあとに流した結果は、上げる評価のときの id で保存されている
       recorded: recorded.get("raise-F3-first-request-date") ?? null,
+    },
+    {
+      id: "keep-req004-theme-without-other-names",
+      source: "handmade",
+      origin: {
+        ref: "docs/evals_passk_req004.json#raise-req004-theme-other-name",
+        recorded_at: "2026-11-22",
+        note: "上げる評価（raise-req004-theme-other-name）にあった。11/22 朝の安定性は 2/5（指名の本人のテーマ案に、代わりの人の名前「百瀬さんと…」が入った）。候補づくりの指示文に「テーマ案にほかの人の名前を書かない」を足したあと（main 43e5f95）、本番で 5/5 になったので、保つ評価に移した",
+      },
+      title: "指名の依頼：テーマ案にほかの社員の名前を入れない（req004）",
+      input: { kind: "request", request_id: "req004" },
+      expect: "指名された本人・代わりの人のどちらのテーマ案にも、ほかの社員の名前を書かない（共同登壇の案は、引っかかる点・注意点に書く）。書くと、その人で進めたときの主催者への返事が、決まった文に差し替わる",
+      checks: ["themes_without_other_names", "candidates_some", "candidates_max", "strong_first_and_caveat", "evidence_valid", "no_internal_terms"],
+      priority: P(2, 2),
+      allowed_failure_rate: 0.34,
+      suite: "keep",
+      // 直したあとに流した結果は、上げる評価のときの id で保存されている
+      recorded: recorded.get("raise-req004-theme-other-name") ?? null,
     },
   ];
 }

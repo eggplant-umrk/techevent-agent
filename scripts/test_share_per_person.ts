@@ -112,7 +112,7 @@ async function main() {
   // ---- 画面 ----
   const header = read("components/Header.tsx");
   check("画面：見せる用のときだけ、上のほうにその人の残りを小さく出す（「同じ受信箱」は出さない）", header.includes("`あと ${usdText(share.person_remaining_usd)} 分試せます`") && header.includes("{share && share.person_remaining_usd !== null && (") && !header.includes("同じ受信箱"));
-  check("人の見分け方は1つの関数（visitorKeyOf）にまとめる（③の lib/visitor.ts が入ったら差し替える）", read("lib/personBudget.ts").includes("export function visitorKeyOf(req: Request): string") && read("app/api/state/route.ts").includes("visitorKeyOf(req)"));
+  check("人の見分け方は③の lib/visitor.ts を使う（personBudget に自前の決め方を持たない）", read("lib/personBudget.ts").includes("from \"./visitor\"") && !read("lib/personBudget.ts").includes("createHash") && read("app/api/state/route.ts").includes("visitorKeyOf(req)"));
 
   // ---- API を使う窓口は、すべて人ごとに数える ----
   const routes = ["app/api/agent/route.ts", "app/api/draft/route.ts", "app/api/blog-ideas/route.ts", "app/api/inbox/route.ts", "app/api/inbox/[id]/proceed/route.ts", "app/api/events/[id]/analyze/route.ts", "app/api/events/[id]/import/route.ts", "app/api/venues/route.ts", "app/api/venues/draft/route.ts", "app/api/notebook/route.ts"];

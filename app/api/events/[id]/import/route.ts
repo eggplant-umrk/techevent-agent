@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { claudeColumnAsker, importSurveyCsv, saveImport } from "@/lib/surveyCsv";
 import { slotted } from "@/lib/apiSlots";
 import { perPerson } from "@/lib/personBudget";
+import { afterSlot } from "@/lib/shareGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,4 +28,5 @@ async function handlePost(req: Request, { params }: { params: Promise<{ id: stri
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
 // 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
-export const POST = perPerson(slotted(handlePost));
+// 枠を取った直後にもう一度上限を見る（afterSlot。lib/shareGate.ts）
+export const POST = perPerson(slotted(afterSlot(handlePost)));

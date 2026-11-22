@@ -7,12 +7,13 @@
 // - SHARE_PER_PERSON_USD（メンター用の合言葉で入った人は SHARE_MENTOR_USD）：見せる用の1人あたりの上限。超えたらその人だけ止める（lib/personBudget.ts。合計の上限はそのまま）
 import { NextResponse, type NextRequest } from "next/server";
 import { usage } from "@/lib/data";
-import { ACCESS_COOKIE, ACCESS_HEADER, accessToken, checkBudget, checkRequest, codeMatches, shareBudgetUsd, shareMode, spendsApi, spentSince, withoutDebug } from "@/lib/share";
+import { ACCESS_COOKIE, ACCESS_HEADER, accessToken, checkBudget, checkRequest, codeMatches, shareBudgetUsd, shareMode, shareStartedAt, spendsApi, spentSince, withoutDebug } from "@/lib/share";
 import { accessLock, accessSourceKey, noteAccessFailure, noteAccessSuccess } from "@/lib/accessGuard";
-import { checkPerson, checkPool, newPersonId, PERSON_COOKIE, personCookieHeader, personKey, roleOf, visitorKeyOf } from "@/lib/personBudget";
+import { newPersonId, PERSON_COOKIE, personCookieHeader, personKey, visitorKeyOf } from "@/lib/personBudget";
+import { shareBudgetGate } from "@/lib/shareGate";
 
 /** 見せている間の始まり：scripts/serve.mjs が起動時に入れる。直接 next を起動したときは、この入口を最初に読んだとき */
-const STARTED_AT = process.env.SHARE_STARTED_AT || new Date().toISOString();
+const STARTED_AT = shareStartedAt();
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -63,13 +64,10 @@ export function proxy(req: NextRequest) {
       personId = issued = newPersonId();
     }
     if (spendsApi(req.method, pathname)) {
-      // 人の見分け方は visitorKeyOf（③の lib/visitor.ts が入ったら差し替える）。ここで印を付けたときはその印で
-      const role = roleOf(req);
-      // 側ごとの合計の上限（一般側 SHARE_GENERAL_POOL_USD・メンター側 SHARE_MENTOR_POOL_USD）
-      const pool = checkPool(role);
-      if (!pool.ok) return NextResponse.json({ error: pool.error }, { status: pool.status });
-      const per = checkPerson(issued ? personKey(issued) : visitorKeyOf(req), role); // メンターは SHARE_MENTOR_USD まで
-      if (!per.ok) return NextResponse.json({ error: per.error }, { status: per.status });
+      // 合計・側ごと（SHARE_GENERAL_POOL_USD・SHARE_MENTOR_POOL_USD）・1人あたり（メンターは SHARE_MENTOR_USD）の上限（lib/shareGate.ts）。
+      // 人の見分け方は③の lib/visitor.ts。ここで印を付けたときはその印で。窓口が枠を取った直後にも、もう一度同じものを見る
+      const g = shareBudgetGate(req, issued ? personKey(issued) : visitorKeyOf(req));
+      if (!g.ok) return NextResponse.json({ error: g.error }, { status: g.status });
     }
     if (issued) {
       const headers = new Headers(req.headers);

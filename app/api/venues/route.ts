@@ -1,9 +1,11 @@
 // カード → 出し先を探す。作業ログを NDJSON で流す（依頼 → 候補の /api/agent と同じ流し方）
 import { getCardById } from "@/lib/cards";
+import { forClient } from "@/lib/clientView";
 import { findVenues, type VenueEvent } from "@/lib/venues";
 import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
 import { perPerson } from "@/lib/personBudget";
+import { afterSlot } from "@/lib/shareGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,7 +19,7 @@ async function handlePost(req: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      const emit = (e: VenueEvent) => controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
+      const emit = (e: VenueEvent) => controller.enqueue(encoder.encode(JSON.stringify(forClient(e)) + "\n"));
       try {
         await findVenues(cardId, emit);
       } catch (err) {
@@ -32,4 +34,5 @@ async function handlePost(req: Request) {
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
 // 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
-export const POST = perPerson(slotted(handlePost));
+// 枠を取った直後にもう一度上限を見る（afterSlot。lib/shareGate.ts）
+export const POST = perPerson(slotted(afterSlot(handlePost)));

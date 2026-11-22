@@ -6,6 +6,8 @@ import { runUsd, totalUsd } from "@/lib/usage";
 import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
 import { perPerson } from "@/lib/personBudget";
+import { afterSlot } from "@/lib/shareGate";
+import { forClient } from "@/lib/clientView";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +41,7 @@ async function handlePost(req: Request) {
       reason: String(b.reason ?? "").slice(0, 600),
       cautions,
     });
-    return Response.json({ draft: r.value, model: r.model, fell_back: r.fellBack, run_usd: runUsd(b.run_id), total_usd: totalUsd() });
+    return Response.json(forClient({ draft: r.value, model: r.model, fell_back: r.fellBack, run_usd: runUsd(b.run_id), total_usd: totalUsd() })); // 見せる用では合計を返さない
   } catch (err) {
     return Response.json({ error: userErrorText(err, { where: "出し先の下書き" }) }, { status: 500 });
   }
@@ -47,4 +49,5 @@ async function handlePost(req: Request) {
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
 // 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
-export const POST = perPerson(slotted(handlePost));
+// 枠を取った直後にもう一度上限を見る（afterSlot。lib/shareGate.ts）
+export const POST = perPerson(slotted(afterSlot(handlePost)));

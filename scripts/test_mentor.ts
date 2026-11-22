@@ -98,7 +98,7 @@ async function main() {
   while (pb.personSpent(kG) < 6) pb.runAsPerson(kG, () => spend("g"), "general");
   check("メンター：$6 使っても続けられる（上限 $15）", pb.checkPerson(kM, "mentor").ok);
   check("一般：$6 使ったら止まる（上限 $5）", !pb.checkPerson(kG, "general").ok);
-  const ledger = JSON.parse(fs.readFileSync(pb.personUsageFile(), "utf-8")) as Record<string, { role?: string }>;
+  const ledger = (JSON.parse(fs.readFileSync(pb.personUsageFile(), "utf-8")) as { people: Record<string, { role?: string }> }).people;
   check("人ごとの記録に、メンターは role: mentor（一般は付けない）", ledger[kM]?.role === "mentor" && ledger[kG]?.role === undefined);
   check("いまの人の役割（実行の記録に付けるため）：窓口の中では mentor、外では null", pb.runAsPerson(kM, () => pb.currentRole(), "mentor") === "mentor" && pb.currentRole() === null);
 

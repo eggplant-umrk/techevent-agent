@@ -58,7 +58,7 @@ async function main() {
   const api = read("app/_client/api.ts");
   check("送り先は POST /api/feedback（記録の側）", api.includes('post("/api/feedback", input)'));
   check("記録がまだない（404）ときは「まだありません」にする", api.includes("if (res.status === 404) return null;"));
-  check("記録の側（POST /api/feedback）がまだないうちは、ボタンを出さない（404 なら出さない）", api.includes("return res.status !== 404;") && page.includes("requestId: feedbackReady ? feedbackRequestId : null"));
+  check("窓口があるかを GET /api/feedback で確かめない（ブラウザのコンソールに 405 を出さない）", !/safeFetch\("\/api\/feedback", \{ method: "GET" \}\)/.test(api) && api.includes("feedbackReady: async () => true") && page.includes("requestId: feedbackReady ? feedbackRequestId : null") && page.includes("reasons: feedbackReasons"));
 
   // ---- ?mock：手元に残す・見本の記録 ----
   const mock = read("app/_client/mock.ts");

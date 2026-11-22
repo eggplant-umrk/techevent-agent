@@ -19,6 +19,15 @@ export const JOIN_PATH = "/join";
 
 export const shareMode = (): ShareMode => ((process.env.SHARE_MODE ?? "").trim().toLowerCase() === "lan" ? "lan" : "local");
 export const accessCode = () => (process.env.ACCESS_CODE ?? "").trim();
+
+/**
+ * 見せている間の始まり（見せる用を起動した時刻）。scripts/serve.mjs が起動時に SHARE_STARTED_AT に入れる。
+ * 直接 next を起動したときは、このプロセスで初めて読んだとき。合計・側ごと・1人あたりの上限は、どれもこの時刻からの分で数える
+ */
+export function shareStartedAt(): string {
+  const g = globalThis as typeof globalThis & { __netachoShareStartedAt?: string };
+  return (process.env.SHARE_STARTED_AT ?? "").trim() || (g.__netachoShareStartedAt ??= new Date().toISOString());
+}
 /** 合言葉の最短の長さ（scripts/serve.mjs と同じ）。短いと、回数の制限があっても当てられやすい */
 export const MIN_ACCESS_CODE = 12;
 

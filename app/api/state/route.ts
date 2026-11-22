@@ -4,6 +4,7 @@ import { traceAllowed } from "@/lib/traceAccess";
 import { REASON_CODES } from "@/lib/feedback";
 import { shareMode } from "@/lib/share";
 import { perPersonUsd, personRemaining, poolSpent, poolUsd, roleOf, visitorKeyOf } from "@/lib/personBudget";
+import { forClient } from "@/lib/clientView";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,5 +22,6 @@ export function GET(req: Request) {
   const side = pool === null ? null : Math.max(0, pool - poolSpent(role));
   const remaining = mine === null ? side : side === null ? mine : Math.min(mine, side);
   const share = shareMode() === "lan" ? { person_limit_usd: limit, person_remaining_usd: remaining } : null;
-  return Response.json({ models: chooseModels(), pending_employees: pendingEmployees().length, trace_allowed: traceAllowed(req), feedback_reasons: REASON_CODES, share });
+  // 見せる用では、API 代の合計（models.totalUsd）を返さない（lib/clientView.ts）
+  return Response.json(forClient({ models: chooseModels(), pending_employees: pendingEmployees().length, trace_allowed: traceAllowed(req), feedback_reasons: REASON_CODES, share }));
 }

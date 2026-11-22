@@ -2,6 +2,7 @@
 //   npm run eval:from-feedback                          … data/runtime/ の記録から → data/runtime/eval_candidates/
 //   npm run eval:from-feedback -- data/sessions/<日時>   … save:session で写した記録から → <その場所>/eval_candidates/
 //                                                          見せる用の記録（visitors/ がある）なら、人ごとに読んでまとめて出す
+//   npm run eval:from-feedback -- [場所] --role mentor  … メンターの合言葉で入った人の記録（role: "mentor"）だけを選ぶ（general はそれ以外だけ）
 // - API は使わない。個人情報（メール・電話・住所の形、社員の実名以外の人名らしきもの）は落とす（lib/feedbackEval.ts）
 // - リポジトリには入れない（data/runtime/・data/sessions/ は git の対象外）。人が中身を確かめてから、評価のケースとして足す
 // - 形は evalCaseProblems で確かめ、問題のあるものは出さずに理由を出す
@@ -16,7 +17,24 @@ import { writeJsonAtomic } from "../lib/fileStore";
 import { getInboxItem } from "../lib/inbox";
 import { runtimeRoot } from "../lib/runtime";
 
-const arg = process.argv.slice(2).find((a) => !a.startsWith("-"));
+// 引数：[場所] [--role mentor|general]（--role=mentor の形も可）
+const argv = process.argv.slice(2);
+let role: "mentor" | "general" | null = null;
+const positional: string[] = [];
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  const v = a === "--role" ? argv[++i] : a.startsWith("--role=") ? a.slice("--role=".length) : undefined;
+  if (v !== undefined) {
+    if (v !== "mentor" && v !== "general") {
+      console.error(`--role は mentor か general です（今は「${v ?? ""}」）`);
+      process.exit(1);
+    }
+    role = v;
+  } else if (!a.startsWith("-")) positional.push(a);
+}
+const arg = positional[0];
+/** 選ぶ記録：mentor＝メンターの合言葉で入った人の記録だけ／general＝それ以外だけ／指定なし＝全部 */
+const pick = (r: Feedback) => (role === "mentor" ? r.role === "mentor" : role === "general" ? r.role !== "mentor" : true);
 const keep = employeeNameSet(employees().map((e) => e.name));
 
 /** 読む場所：使われた結果・受信箱・サンプルの依頼の結果。prefix は人ごとに読むときのケースの id の頭 */
@@ -68,7 +86,7 @@ for (const s of sources) {
   // 受信箱・サンプルの依頼の結果は、その場所のファイルから読む
   if (s.inbox) process.env.INBOX_FILE = s.inbox;
   if (s.samples) process.env.SAMPLE_PROPOSALS_FILE = s.samples;
-  const rows = readFeedback(s.feedback);
+  const rows = readFeedback(s.feedback).filter(pick);
   total += rows.length;
   const byRequest = new Map<string, Feedback[]>();
   for (const r of rows) byRequest.set(r.request_id, [...(byRequest.get(r.request_id) ?? []), r]);
@@ -90,7 +108,7 @@ for (const s of sources) {
   }
 }
 console.log(
-  `使われた結果 ${total}件（依頼 ${requests}件${sources.length > 1 ? `・${sources.length}人分` : ""}）→ 評価のケースの候補 ${written}件を ${path.relative(process.cwd(), outDir) || outDir} に出しました`,
+  `使われた結果${role === "mentor" ? "（メンターの記録だけ）" : role === "general" ? "（メンター以外の記録だけ）" : ""} ${total}件（依頼 ${requests}件${sources.length > 1 ? `・${sources.length}人分` : ""}）→ 評価のケースの候補 ${written}件を ${path.relative(process.cwd(), outDir) || outDir} に出しました`,
 );
 for (const s of skipped) console.log(`  出さなかった：${s}`);
 if (written) console.log("リポジトリに入れるのは、人が中身（とくに個人情報が残っていないか）を確かめてからにしてください。自動ではコミットしません");

@@ -9,6 +9,7 @@ import path from "node:path";
 import type { AgentEvent } from "./agent";
 import { nowJst } from "./clock";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
+import { currentRole } from "./personBudget";
 import { costUsd } from "./pricing";
 import { runtimeRoot } from "./runtime";
 import { scopedFile } from "./visitorScope";
@@ -29,6 +30,8 @@ export interface TraceStep {
   ok: boolean;
   /** 失敗の種類だけ（timeout・429・529 など）。エラーの本文は残さない */
   error?: string;
+  /** 見せる用でメンターの合言葉で入った人の操作なら "mentor"（①の currentRole から）。一般の人・発表用では付けない */
+  role?: "mentor";
 }
 
 export interface Trace {
@@ -88,7 +91,8 @@ export async function withTrace<T>(requestId: string, fn: () => Promise<T>): Pro
 function push(step: TraceStep) {
   const ctx = als.getStore();
   if (!ctx) return;
-  ctx.trace.steps.push(step);
+  // メンターの操作かはステップごとに付ける（同じ依頼の記録に、別の人の操作が足されることがあるため）
+  ctx.trace.steps.push(currentRole() === "mentor" ? { ...step, role: "mentor" } : step);
   save(ctx); // 途中で止まっても、そこまでの記録は残る
 }
 

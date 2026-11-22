@@ -34,6 +34,8 @@ export interface Feedback {
   /** 直す前と直したあと（edited のとき） */
   before?: string;
   after?: string;
+  /** 見せる用でメンターの合言葉で入った人が付けたものなら "mentor"。窓口が cookie から決める（本文の role は使わない）。ないときは一般 */
+  role?: "mentor";
 }
 
 export const feedbackFile = () => runtimeFile("feedback.jsonl");

@@ -13,6 +13,7 @@ import { checkIntake, intakeHeader, undecidedNote, type IntakeExtractor, type In
 import { resolveNominee, type NomineeExtractor, type NomineeReading } from "./nominee";
 import { runUsd as usageOfRun } from "./usage";
 import { readJsonSafe, writeJsonAtomic } from "./fileStore";
+import { traceEmit, withTrace } from "./trace";
 import { nextStage, progressOf, type Progress, type ProgressStage } from "./progressStage";
 import { userErrorText } from "./userError";
 
@@ -315,8 +316,13 @@ export function registerInbox(input: InboxInput): InboxItem {
  * extractor があれば、先に依頼文から指名を読み取って既存の依頼の形に入れる。
  * 指名の依頼で代わりの候補がいるときは、候補ができた時点で「準備済み」にしてから、代わりの人を推す文を作る
  * （Promise はその文ができてから終わる。状態は pitch_status）。
+ * 実行の記録（lib/trace.ts）を、依頼の id で残す（名前・時間・数・成否だけ）。
  */
-export async function prepare(id: string, runner: Runner, extractor?: IntakeExtractor, pitcher: Pitcher = defaultPitcher): Promise<void> {
+export function prepare(id: string, runner: Runner, extractor?: IntakeExtractor, pitcher: Pitcher = defaultPitcher): Promise<void> {
+  return withTrace(id, () => prepareTraced(id, (request, emit) => runner(request, traceEmit(emit)), extractor, pitcher));
+}
+
+async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtractor, pitcher: Pitcher = defaultPitcher): Promise<void> {
   let it = getInboxItem(id);
   if (!it) return;
   const events: AgentEvent[] = [];

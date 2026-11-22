@@ -1,6 +1,7 @@
 // 聞き返す項目（lib/askBack.ts）を本物の API で確かめる（API代がかかる。読み取りと主催者への返事だけで、候補づくりはしない）。
 //   npx tsx scripts/try_ask_back.ts            … A1・A2・A3（scripts/fixtures/edge_cases.ts）と、?mock 用の X の会話（x2）
 //   npx tsx scripts/try_ask_back.ts A2         … 1件だけ
+//   npx tsx scripts/try_ask_back.ts A1 --reply-only … 読み取りは試験の一覧の偽の読み取り（raw）を使い、主催者への返事だけを本物の API で作る
 // - .env は TRY_ENV_FILE（既定 .env）からこのプロセスにだけ読む。キーの値は表示しない
 // - 上限（TRY_LIMIT_USD、既定 0.3）を超えそうなら、次の呼び出しの前で止める
 // - x2 を流したときは、読み取った項目（足した項目つき）を app/_client/xconv.json の detail.intake に書き戻す（?mock の画面用。候補と下書きは変えない）
@@ -30,10 +31,11 @@ async function main() {
   const { runUsd } = await import("../lib/usage");
 
   const want = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+  const replyOnly = process.argv.includes("--reply-only");
   const x2 = X_CONVERSATIONS.find((c) => c.id === "x2")!;
   const cases = [
-    ...EDGE_CASES.filter((c) => c.group === "聞き返し").map((c) => ({ id: c.id, title: c.title, text: c.text, received_at: "2026-11-21T10:00:00+09:00", mustNot: c.mustNotAppear ?? [], reply: true })),
-    { id: "x2", title: x2.title, text: x2.text, received_at: x2.received_at, mustNot: [] as Array<[string, RegExp]>, reply: false },
+    ...EDGE_CASES.filter((c) => c.group === "聞き返し").map((c) => ({ id: c.id, title: c.title, text: c.text, received_at: "2026-11-21T10:00:00+09:00", mustNot: c.mustNotAppear ?? [], reply: true, fixtureRaw: c.raw ?? null })),
+    { id: "x2", title: x2.title, text: x2.text, received_at: x2.received_at, mustNot: [] as Array<[string, RegExp]>, reply: false, fixtureRaw: null },
   ].filter((c) => !want.length || want.includes(c.id));
 
   const who = employees().find((e) => e.name === "百瀬 結衣")!;
@@ -48,7 +50,7 @@ async function main() {
       break;
     }
     console.log(`\n=== ${c.id} ${c.title}`);
-    const raw = await extractIntakeWithAgent(c.text, runId);
+    const raw = replyOnly && c.fixtureRaw ? c.fixtureRaw : await extractIntakeWithAgent(c.text, runId);
     if (!raw || typeof raw === "string") {
       console.log("読み取れませんでした");
       continue;

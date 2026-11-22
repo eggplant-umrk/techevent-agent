@@ -1,6 +1,8 @@
-// API を使わないテストを、まとめて順に流す（npm test）。
-//   npm test                … scripts/test_*.ts を全部と、結合テスト（scripts/eval.ts all --offline）
-//   npm test -- inbox stage … 名前にその言葉が入るものだけ（結合テストは "eval"）
+// API を使わないテストを、まとめて順に流す。テストの層の並びは docs/testing.md と scripts/test_layers.mjs
+//   npm run test:unit       … ユニット層：scripts/test_*.ts を全部（= node scripts/test_all.mjs --unit）
+//   npm run test:eval       … 評価層：結合テスト（scripts/eval.ts all --offline）と④の保つ評価（scripts/evals/run.ts keep）（= --eval）
+//   node scripts/test_all.mjs … 両方（前の npm test と同じ）
+//   npm run test:unit -- inbox stage … 名前にその言葉が入るものだけ
 // 1つでも失敗（終了コードが0以外）なら、最後に一覧を出して 1 で終わる。途中で止めず、全部流す。
 // API・.env は使わない。各テストは scripts/_isolate.ts で一時フォルダを使うので、data/runtime/ と data/usage.json には書かない。
 import { spawnSync } from "node:child_process";
@@ -15,14 +17,18 @@ if (!fs.existsSync(tsx)) {
 }
 
 const filters = process.argv.slice(2).filter((a) => !a.startsWith("-"));
+const onlyUnit = process.argv.includes("--unit");
+const onlyEval = process.argv.includes("--eval");
 const jobs = [
-  ...fs
+  ...(onlyEval ? [] : fs
     .readdirSync(path.join(root, "scripts"))
     .filter((f) => /^test_.+\.ts$/.test(f))
     .sort()
-    .map((f) => ({ name: f.replace(/\.ts$/, ""), args: [path.join("scripts", f)] })),
+    .map((f) => ({ name: f.replace(/\.ts$/, ""), args: [path.join("scripts", f)] }))),
   // 結合テスト（保存済みの結果をコードで判定。API は使わない）
-  { name: "eval --offline", args: [path.join("scripts", "eval.ts"), "all", "--offline"] },
+  ...(onlyUnit ? [] : [{ name: "eval --offline", args: [path.join("scripts", "eval.ts"), "all", "--offline"] }]),
+  // ④の評価（Evals）のうち API を使わない保つ評価（docs/evals.md）。上げる評価が下がっていないかは scripts/test_evals.ts（ユニット）が見る
+  ...(onlyUnit ? [] : [{ name: "evals keep", args: [path.join("scripts", "evals", "run.ts"), "keep"] }]),
 ].filter((j) => !filters.length || filters.some((w) => j.name.includes(w)));
 
 if (!jobs.length) {

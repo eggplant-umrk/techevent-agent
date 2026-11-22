@@ -15,6 +15,7 @@ import { PROGRESS_ORDER, progressOf } from "@/lib/progressStage";
 const MOCK_PREP_MS = 10000;
 
 import { askBack, CONFIRMING, outreachFacts, requestItems } from "@/lib/askBack";
+import { displayDate } from "@/lib/dateText";
 import proposals from "./proposals.json";
 import postevent from "./postevent.json";
 import venueFixtures from "./venues.json";
@@ -158,7 +159,7 @@ function draftFor(c: Candidate, req: SpeakingRequest | undefined): OutreachDraft
     message: `${c.name.split(" ")[0]}さん
 
 技術広報の〇〇です。突然すみません。
-${ev ? `${ev.date}に開催される「${title}」（${ev.audience}）` : `「${title}」`}で、LayerXから${slot}をいただいています。${sizeLine}
+${ev ? `${displayDate(ev.date, today)}に開催される「${title}」（${ev.audience}）` : `「${title}」`}で、LayerXから${slot}をいただいています。${sizeLine}
 
 ${c.name.split(" ")[0]}さんの取り組みを拝見して、
 「${c.theme}」

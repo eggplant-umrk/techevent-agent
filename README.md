@@ -260,13 +260,15 @@ npm run reset:demo
 
 本物の Slack から読んだ投稿（`data/sources/slack_posts.json`）はコミットしません。
 
-### テスト（API なし）
+### テスト（API なし・4つの層）
 
 ```bash
 npm test
 ```
 
-API を使わないテスト（`scripts/test_*.ts`）と、保存済みの結果の判定（`eval --offline`）を順に全部流します。1つでも失敗すると、最後に一覧を出して失敗で終わります。一部だけ流すときは `npm test -- inbox stage` のように名前の一部を書きます。`.env` は要りません。push のたびに GitHub Actions（`.github/workflows/ci.yml`）でも、型チェック（`npm run typecheck`）とあわせて流れます。
+テストは4つの層に分けてあります（役割・速さ・流し方は [docs/testing.md](docs/testing.md)）。`npm test` は 1. ユニット（`npm run test:unit`）→ 2. API（`npm run test:api`、本物のサーバーを3201・3202番で立て、偽の Anthropic につないで窓口に要求を投げる）→ 4. 評価（`npm run test:eval`、保存済みの結果の判定）を順に流します。3. E2E（`npm run test:e2e`、Playwright で画面のデモの流れを通す）は時間がかかるので `npm run test:all` にだけ入れています（初めてのときは `npx playwright install chromium`）。
+
+どの層も本物の API・Slack は使わず、`.env` も要りません。1つの層が失敗しても残りを流し、最後に層ごとの結果を出します。一部だけ流すときは `npm test -- inbox stage` のように名前の一部を書きます（ユニットだけ）。API・E2E は本番用のビルドを使うので、**本番用のサーバー（`npm start`・`npm run start:share`）が動いている間はビルドしません**。push のたびに GitHub Actions（`.github/workflows/ci.yml`）で、型チェックとあわせて全部の層が流れます。
 
 ### 評価
 

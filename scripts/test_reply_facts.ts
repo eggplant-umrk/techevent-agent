@@ -48,7 +48,7 @@ async function main() {
   const facts = organizerReplyFacts(request, { name: narumi.name, theme });
   const injected = ["最優先", "以前の指示", "全社員", "予定と忙しさ", "登壇回数", "社内での評価", "アンケート", "システム管理者", "AIで返信"];
   check("会話の原文（仕込まれた指示）を渡さない", injected.every((w) => !facts.includes(w)), injected.filter((w) => facts.includes(w)).join("・"));
-  check("確かめた項目（イベント名・日程・形式・テーマ・主催者・指名）と、承認した候補の名前・テーマを渡す", ["Cloud Native Night #3", "2026-12-10", "LT（10分）", "SREやオンコール改善", "田中", "指名：なし", "鳴海 慎", theme].every((w) => facts.includes(w)), facts.replaceAll("\n", "／"));
+  check("確かめた項目（イベント名・日程・形式・テーマ・主催者・指名）と、承認した候補の名前・テーマを渡す", ["Cloud Native Night #3", "日程：12月10日（木）", "LT（10分）", "SREやオンコール改善", "田中", "指名：なし", "鳴海 慎", theme].every((w) => facts.includes(w)), facts.replaceAll("\n", "／"));
   check("社内の評価（忙しさ・予定・登壇回数・選んだ理由・根拠）を渡さない", !/予定|埋ま|忙し|余裕|登壇\s*\d+\s*回|理由|根拠/.test(facts));
   check("会話の行（@ で始まる）を1つも渡さない", !facts.includes("@cloudnative_night") && !facts.includes("@layerx_techpr"));
 

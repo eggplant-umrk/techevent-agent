@@ -212,21 +212,6 @@ export function raiseCases(): EvalCase[] {
       recorded: latestRow("req004"),
     },
     {
-      id: "raise-F3-first-request-date",
-      source: "handmade",
-      origin: { ref: "docs/edge_cases_result.json#F3", note: "11/22 の本番の結果（代表10件）で見つけた" },
-      title: "複数の依頼が混ざっているとき、1件目の決まった日程を使う",
-      input: { kind: "inbox", text: EDGE_CASES.find((c) => c.id === "F3")!.text, channel: "manual", received_at: RECEIVED_AT },
-      expect: "1件目の依頼（1月15日（金）のLT）を読むなら、その日程は決まったものとして扱う。今は、別件の依頼の日付（2月24日）が後ろにあるため「未定」になり、予定の確認が抜ける",
-      checks: ["intake_fields_match", "candidates_max"],
-      params: { intake_expected: { date: "2027-01-15" } },
-      priority: P(2, 2),
-      allowed_failure_rate: 0.34,
-      suite: "raise",
-      // 読み取りを直したあとに流し直した結果があれば、それを使う（なければ 11/22 の代表10件の結果）
-      recorded: recordedRuns().get("raise-F3-first-request-date") ?? saved.get("F3") ?? null,
-    },
-    {
       id: "raise-B4-nomination-with-personal-info-ask",
       source: "handmade",
       origin: { ref: "docs/edge_cases_result.json#B4", note: "11/22 の本番の結果（代表10件）で見つけた" },
@@ -261,6 +246,54 @@ export function raiseCases(): EvalCase[] {
   // 使われた結果から来たケース（③の変換が書く。なければ空）
   const usage = readJson<EvalCase[]>(path.join(root, "scripts", "evals", "cases", "usage.json")) ?? [];
   return [...handmade, ...usage.filter((c) => c.suite === "raise")];
+}
+
+// ---------------------------------------------------------------------------
+// 4. 上げる評価から保つ評価に移したケース（直って、本番で毎回通るようになったもの。docs/evals.md の10）
+//    移すときの決まり：本番で k 回（既定5回）すべて通ったこと。直したあとの結果を保存して材料にすること。移した日と理由を origin.note に書くこと
+// ---------------------------------------------------------------------------
+export function promotedCases(): EvalCase[] {
+  const recorded = recordedRuns();
+  return [
+    {
+      id: "keep-N2-date-decided-later",
+      source: "handmade",
+      origin: {
+        ref: "docs/evals_passk_intake_fix.json#edge-N2",
+        recorded_at: "2026-11-22",
+        note: "11/22 の安定性の評価で 1/5（読み取りの AI が日程を返さず未定になった）。読み取りを直したあと（main b8b8228）、本番で 5/5。上げる側の弱いところとして docs/evals.md の9に書いていたものを、保つ評価に移した",
+      },
+      title: "あとから日程が決まる会話：本番の読み取りで、決まった日程になる",
+      input: { kind: "inbox", text: EDGE_CASES.find((c) => c.id === "N2")!.text, channel: "manual", received_at: RECEIVED_AT },
+      expect: "「1月20日か27日で調整中」のあとに「決まりました！1月27日（水）」と続く会話で、日程が 2027-01-27 に決まる（未定にしない）。候補が出る",
+      checks: ["entry_accepted", "kind_is", "intake_fields_match", "candidates_some", "candidates_max", "strong_first_and_caveat", "evidence_valid", "no_internal_terms"],
+      params: { kind: "request", intake_expected: { date: "2027-01-27" } },
+      priority: P(3, 3),
+      allowed_failure_rate: 0,
+      suite: "keep",
+      // 入力の試験の edge-N2 は偽の読み取りで判定する。こちらは、直したあとに本番で流した結果で判定する
+      recorded: recorded.get("edge-N2") ?? null,
+    },
+    {
+      id: "keep-F3-first-request-date",
+      source: "handmade",
+      origin: {
+        ref: "docs/evals_passk_intake_fix.json#raise-F3-first-request-date",
+        recorded_at: "2026-11-22",
+        note: "11/22 の代表10件で見つけ、上げる評価（raise-F3-first-request-date）に入れた。安定性は 0/5。読み取りを直したあと（main b8b8228）、本番で 5/5 になったので、保つ評価に移した",
+      },
+      title: "複数の依頼が混ざっているとき、1件目の決まった日程を使う",
+      input: { kind: "inbox", text: EDGE_CASES.find((c) => c.id === "F3")!.text, channel: "manual", received_at: RECEIVED_AT },
+      expect: "1件目の依頼（1月15日（金）のLT）を読むなら、その日程は決まったものとして扱う（別件の依頼の日付が後ろにあっても未定にしない）",
+      checks: ["entry_accepted", "kind_is", "intake_fields_match", "candidates_max"],
+      params: { kind: "request", intake_expected: { date: "2027-01-15" } },
+      priority: P(2, 2),
+      allowed_failure_rate: 0.34,
+      suite: "keep",
+      // 直したあとに流した結果は、上げる評価のときの id で保存されている
+      recorded: recorded.get("raise-F3-first-request-date") ?? null,
+    },
+  ];
 }
 
 /** 使われた結果から来たケースのうち、保つ評価に入れるもの */

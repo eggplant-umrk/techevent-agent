@@ -1,8 +1,30 @@
 {
-  "at": "2026-11-22T01:57:56.305Z",
+  "at": "2026-11-22T02:08:19.736Z",
   "keep": 1,
-  "raise": 0.5714285714285714,
-  "raise_cases": 5,
-  "raise_judged": 4,
-  "keep_cases": 43
+  "raise": 0.4,
+  "raise_cases": 4,
+  "raise_judged": 3,
+  "keep_cases": 45,
+  "raise_results": [
+    {
+      "id": "raise-req005-theme-other-name",
+      "weight": 4,
+      "passed": false
+    },
+    {
+      "id": "raise-req004-theme-other-name",
+      "weight": 4,
+      "passed": true
+    },
+    {
+      "id": "raise-B4-nomination-with-personal-info-ask",
+      "weight": 2,
+      "passed": false
+    },
+    {
+      "id": "raise-outreach-natural",
+      "weight": 3,
+      "passed": null
+    }
+  ]
 }

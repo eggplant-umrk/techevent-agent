@@ -66,6 +66,7 @@
     "test:per-person": "tsx scripts/test_share_per_person.ts",
     "test:mentor": "tsx scripts/test_mentor.ts",
     "test:join": "tsx scripts/test_join_link.ts",
+    "test:pools": "tsx scripts/test_share_pools.ts",
     "test:askback": "tsx scripts/test_ask_back.ts",
     "test:replydate": "tsx scripts/test_reply_date.ts",
     "test:intakefix": "tsx scripts/test_intake_fix.ts"

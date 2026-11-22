@@ -3,7 +3,7 @@ import { chooseModels } from "@/lib/usage";
 import { traceAllowed } from "@/lib/traceAccess";
 import { REASON_CODES } from "@/lib/feedback";
 import { shareMode } from "@/lib/share";
-import { perPersonUsd, personRemaining, roleOf, visitorKeyOf } from "@/lib/personBudget";
+import { perPersonUsd, personRemaining, poolSpent, poolUsd, roleOf, visitorKeyOf } from "@/lib/personBudget";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +15,11 @@ export function GET(req: Request) {
   // 役割（メンターなら上限が SHARE_MENTOR_USD）は数えるのに使うだけで、画面には出さない
   const role = roleOf(req);
   const limit = perPersonUsd(role);
-  const share = shareMode() === "lan" ? { person_limit_usd: limit, person_remaining_usd: limit === null ? null : personRemaining(visitorKeyOf(req), role) } : null;
+  // 残りは、その人の残りと、その側（一般・メンター）の合計の残りの小さいほう（側が使い切ったら 0）
+  const mine = limit === null ? null : personRemaining(visitorKeyOf(req), role);
+  const pool = poolUsd(role);
+  const side = pool === null ? null : Math.max(0, pool - poolSpent(role));
+  const remaining = mine === null ? side : side === null ? mine : Math.min(mine, side);
+  const share = shareMode() === "lan" ? { person_limit_usd: limit, person_remaining_usd: remaining } : null;
   return Response.json({ models: chooseModels(), pending_employees: pendingEmployees().length, trace_allowed: traceAllowed(req), feedback_reasons: REASON_CODES, share });
 }

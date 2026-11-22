@@ -66,6 +66,11 @@ async function main() {
   const keep = runKeep();
   check(`保つ評価：点数 ${pct(keep.score)} は 90% 以上（${keep.cases}件。不合格 ${keep.failed}件）`, keep.score !== null && keep.score >= T.KEEP_PASS_RATE && keep.problems.length === 0, [...keep.problems, ...keep.results.filter((r) => r.passed === false).map((r) => `${r.id}：${r.checks.find((c) => c.verdict === "fail")?.name}`)].slice(0, 4).join("／"));
   check("保つ評価は40件以上（結合テスト10件＋入力の試験30件＋使われた結果）", keep.cases >= 40);
+  // 上げる評価から保つ評価に移したケース（docs/evals.md の10）
+  const { promotedCases } = await import("./evals/cases");
+  const promoted = promotedCases();
+  check("移したケース（N2・F3）は保つ評価に入っていて、直したあとの本番の結果で通る", promoted.length >= 2 && promoted.every((c) => c.suite === "keep" && !!c.recorded && !!c.origin?.note && T.evalCaseProblems(c, CHECK_NAMES).length === 0) && promoted.every((c) => keep.results.find((r) => r.id === c.id)?.passed === true), promoted.map((c) => `${c.id}:${keep.results.find((r) => r.id === c.id)?.passed}`).join(" "));
+  check("移したケースは、上げる評価には残っていない（id が重ならない）", !raiseCases().some((c) => /F3-first-request-date|N2-date-decided-later/.test(c.id)) && new Set(keep.results.map((r) => r.id)).size === keep.results.length);
 
   // ---- 3. 上げる評価
   const raise = runRaise();

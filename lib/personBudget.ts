@@ -70,7 +70,8 @@ export { visitorKeyOf };
 
 // ---- 人ごとの金額の記録 ----------------------------------------------------------------------
 
-type Ledger = Record<string, { usd: number; calls: number; last_at: string; role?: "mentor" }>;
+/** usd：その人が使った合計。mentor_usd：そのうちメンターとして使った分（側ごとの上限を数えるため） */
+type Ledger = Record<string, { usd: number; calls: number; last_at: string; role?: "mentor"; mentor_usd?: number }>;
 /** 全員分を1つのファイルで持つので、人ごとに分ける前の見せる用の置き場（③の lib/visitorScope.ts の shareBaseDir()）に置く */
 export const personUsageFile = () => path.join(shareBaseDir(), "person_usage.json");
 const readLedger = (): Ledger => readJsonSafe<Ledger>(personUsageFile(), {}, "object");
@@ -91,6 +92,47 @@ export function checkPerson(key: string, role: VisitorRole = "general"): { ok: t
   return { ok: false, status: 429, error: PERSON_LIMIT_MESSAGE };
 }
 
+// ---- 側ごとの合計の上限（一般側 SHARE_GENERAL_POOL_USD・メンター側 SHARE_MENTOR_POOL_USD） ---------------------
+//   見せる用の合計の上限（SHARE_BUDGET_USD）とは別に、一般の参加者の分とメンター・審査員の分の合計にそれぞれ上限を付ける
+//   （一般の参加者が使い切っても、メンター・審査員は試せる。逆も同じ）。どちらも任意で、空ならその側には付けない
+export const POOL_MESSAGE: Record<VisitorRole, string> = {
+  general: "一般の参加者の分の API 代が上限に届いたので、API を使う操作（候補を出す・下書き・ネタ帳の更新など）を止めています。保存済みの例（?mock）と見るだけの操作は続けられます",
+  mentor: "メンター・審査員の分の API 代が上限に届いたので、API を使う操作（候補を出す・下書き・ネタ帳の更新など）を止めています。保存済みの例（?mock）と見るだけの操作は続けられます",
+};
+
+/** その側の合計の上限（ドル）。見せる用で設定があるときだけ */
+export function poolUsd(role: VisitorRole): number | null {
+  if (shareMode() !== "lan") return null;
+  return usdEnv(role === "mentor" ? "SHARE_MENTOR_POOL_USD" : "SHARE_GENERAL_POOL_USD");
+}
+
+/** その側で使った合計（人ごとの記録から。メンターとして使った分と、それ以外） */
+export function poolSpent(role: VisitorRole): number {
+  let mentor = 0;
+  let all = 0;
+  for (const v of Object.values(readLedger())) {
+    all += v.usd ?? 0;
+    mentor += v.mentor_usd ?? 0;
+  }
+  return role === "mentor" ? mentor : Math.max(0, all - mentor);
+}
+
+/** その側の上限に届いていれば止める理由 */
+export function checkPool(role: VisitorRole): { ok: true } | { ok: false; status: number; error: string } {
+  const limit = poolUsd(role);
+  if (limit === null || poolSpent(role) < limit) return { ok: true };
+  return { ok: false, status: 429, error: POOL_MESSAGE[role] };
+}
+
+/** 側ごとの上限の設定の問題（数でない・0以下）。なければ null */
+export function poolConfigProblem(): string | null {
+  for (const name of ["SHARE_GENERAL_POOL_USD", "SHARE_MENTOR_POOL_USD"]) {
+    const raw = (process.env[name] ?? "").trim();
+    if (raw && !(Number(raw) > 0)) return `${name}（見せる用の側ごとの API 代の上限）は 0 より大きい数にしてください（例：一般 20・メンター 30）`;
+  }
+  return null;
+}
+
 const als = new AsyncLocalStorage<{ key: string; role: VisitorRole }>();
 
 /** いまの人の役割（API を使う窓口の中、裏で続く処理の中も）。外なら null。実行の記録に role を付けるのに使う（③） */
@@ -102,7 +144,15 @@ export function notePersonUsage(costUsd: number): void {
   if (!ctx || shareMode() !== "lan" || !(costUsd > 0)) return;
   const ledger = readLedger();
   const cur = ledger[ctx.key] ?? { usd: 0, calls: 0, last_at: "" };
-  ledger[ctx.key] = { usd: Math.round((cur.usd + costUsd) * 1e6) / 1e6, calls: cur.calls + 1, last_at: new Date().toISOString(), ...(ctx.role === "mentor" ? { role: "mentor" as const } : {}) };
+  const round = (n: number) => Math.round(n * 1e6) / 1e6;
+  const mentorUsd = round((cur.mentor_usd ?? 0) + (ctx.role === "mentor" ? costUsd : 0));
+  ledger[ctx.key] = {
+    usd: round(cur.usd + costUsd),
+    calls: cur.calls + 1,
+    last_at: new Date().toISOString(),
+    ...(ctx.role === "mentor" || cur.role === "mentor" ? { role: "mentor" as const } : {}),
+    ...(mentorUsd > 0 ? { mentor_usd: mentorUsd } : {}),
+  };
   writeJsonAtomic(personUsageFile(), ledger);
 }
 

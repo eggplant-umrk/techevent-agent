@@ -484,3 +484,10 @@ textarea.input { resize: vertical; }
 @media (max-width: 640px) { .pad-list { margin: 0 16px 16px; } }
 /* カジュアル面談の希望：登壇者へ伝える文の下書き（1人分） */
 .ci-draft { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+
+/* 依頼の詳細：未定の項目はたたむ（開けば見られる） */
+.intake-undecided { margin: 4px 0 8px; font-size: 13px; }
+.intake-undecided summary { cursor: pointer; display: flex; align-items: center; gap: 6px; min-height: 32px; }
+.intake-undecided ul { margin: 4px 0 0; color: var(--text-2); }
+/* 「違うと記録済み」の印と取り消し */
+.wrong-done { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }

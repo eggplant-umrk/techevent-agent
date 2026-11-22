@@ -1,6 +1,6 @@
 import { draftOutreach } from "@/lib/heavy";
 import { CUSTOM_TEXT_CLOSED, resolveRequest } from "@/lib/requests";
-import { draftCandidate, saveDraft } from "@/lib/board";
+import { draftCandidate, loadDraft, saveDraft } from "@/lib/board";
 import { activities } from "@/lib/data";
 import { runUsd, totalUsd } from "@/lib/usage";
 import { slotted } from "@/lib/apiSlots";
@@ -49,6 +49,22 @@ async function handlePost(req: Request) {
   } catch (err) {
     return Response.json({ error: userErrorText(err, { where: "下書き" }) }, { status: 500 });
   }
+}
+
+/**
+ * GET /api/draft?request_id=…&employee_id=… → { draft }（保存済みの下書き。なければ draft は null）
+ * 依頼を開き直したときに、前に作った声かけ文・構成案・主催者への返事を出すため。作り直さない（API は使わない）
+ */
+export async function GET(req: Request) {
+  const q = new URL(req.url).searchParams;
+  const requestId = (q.get("request_id") ?? "").slice(0, 120);
+  const employeeId = (q.get("employee_id") ?? "").slice(0, 40);
+  if (!requestId || !employeeId) return Response.json({ error: "request_id と employee_id が要ります" }, { status: 400 });
+  // 保存するときに足した saved_at は返さない
+  const saved = loadDraft(requestId, employeeId) as (Record<string, unknown> & { saved_at?: string }) | null;
+  if (!saved) return Response.json({ draft: null });
+  const { saved_at: _savedAt, ...draft } = saved;
+  return Response.json({ draft });
 }
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429

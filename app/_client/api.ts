@@ -70,6 +70,8 @@ export interface Api {
   updateNotebook(onEvent: (e: NotebookEvent) => void): Promise<void>;
   blogIdeas(): Promise<{ ideas: BlogIdea[]; run_usd: number; total_usd: number }>;
   draft(body: DraftBody): Promise<DraftResponse>;
+  /** 保存済みの下書き（前に作った声かけ文・構成案・主催者への返事）。なければ null。作り直さない（API は使わない） */
+  savedDraft(requestId: string, employeeId: string): Promise<OutreachDraft | null>;
   outcome(body: OutcomeBody): Promise<Card>;
   /** 承諾の取り消し：その依頼の最後の記録（承諾）を1つ戻す */
   undoOutcome(requestId: string, cardId: string): Promise<void>;
@@ -179,6 +181,8 @@ export const realApi: Api = {
   updateNotebook: async (onEvent) => readNdjson(await post("/api/notebook"), onEvent),
   blogIdeas: async () => json(await post("/api/blog-ideas")),
   draft: async (body) => json(await post("/api/draft", body)),
+  savedDraft: async (requestId, employeeId) =>
+    (await json<{ draft: OutreachDraft | null }>(await safeFetch(`/api/draft?request_id=${encodeURIComponent(requestId)}&employee_id=${encodeURIComponent(employeeId)}`))).draft,
   outcome: async (body) => (await json<{ card: Card }>(await post("/api/outcome", body))).card,
   undoOutcome: async (request_id, card_id) => {
     await json(await post("/api/outcome/undo", { request_id, card_id }));

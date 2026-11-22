@@ -18,7 +18,7 @@ test("偽の API：貼る→候補→声かけの下書き→承諾→アーカ�
   await expect(candidates).toBeVisible({ timeout: 60_000 });
   await expect(candidates.getByRole("article").first()).toBeVisible();
   // 読み取った項目が出る（日程・形式は会話から、テーマは偽の API が読まないので未定）
-  await expect(page.getByRole("definition").filter({ hasText: "2026-12-18" })).toBeVisible();
+  await expect(page.getByRole("definition").filter({ hasText: "12月18日（金）" })).toBeVisible(); // 日程は、返事・下書きと同じ形で出す（lib/dateText.ts）
   await expect(inbox.getByRole("button", { name: new RegExp(event) })).toContainText("候補準備済み");
 
   // 声かけの下書き（偽の API の文が入る）→ 承諾

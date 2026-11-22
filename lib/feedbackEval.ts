@@ -6,7 +6,7 @@
 // 判定の名前（checks）は docs/evals.md の例の名前を使う。判定の登録（scripts/evals/checks.ts）ができたら、その名前に合わせる。
 import type { EvalCase, EvalOutput, EvalPriority, JudgeAspect } from "./evalTypes";
 import type { Feedback } from "./feedback";
-import { REASON_CODES } from "./feedback";
+import { activeFeedback, REASON_CODES } from "./feedback";
 
 /** 変換に使う、その依頼のそのときの中身（読むのは呼ぶ側。ここはファイルを読まない） */
 export interface FeedbackSource {
@@ -146,6 +146,8 @@ function painOf(fb: Feedback): 1 | 2 | 3 {
 
 /** その依頼の「使われた結果」を、評価のケース1件にする。作れなければ null（理由つき） */
 export function feedbackToCase(requestId: string, rows: Feedback[], src: FeedbackSource, keepNames: Set<string>): { case: EvalCase | null; skipped?: string } {
+  // 取り消された「違う」は数えない（lib/feedback.ts の activeFeedback）
+  rows = activeFeedback(rows);
   if (!rows.length) return { case: null, skipped: "使われた結果がない" };
   const checks = new Set<string>();
   const params: Record<string, unknown> = {};

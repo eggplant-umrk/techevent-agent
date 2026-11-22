@@ -553,6 +553,9 @@ export interface InboxListItem {
   kind_label?: string | null;
 }
 
+/** 不適切な内容の依頼の、一覧での題名 */
+export const HIDDEN_TITLE = "不適切な内容のため表示しません";
+
 export function listView(it: InboxItem): InboxListItem {
   // 会話からイベント名を読み取れていればそれを、なければ本文の先頭行を出す
   const firstLine = it.intake?.event_name ?? it.text.split(/\r?\n/).find((l) => l.trim()) ?? it.text;
@@ -562,7 +565,8 @@ export function listView(it: InboxItem): InboxListItem {
     status: it.status,
     received_at: it.received_at,
     is_new: !it.opened_at,
-    title: firstLine.length > 70 ? firstLine.slice(0, 69) + "…" : firstLine,
+    // 不適切と読んだ文（暴言など）は、一覧の題名に原文を出さない（依頼を開けば「依頼文を読む」で読める）
+    title: it.kind === "inappropriate" ? HIDDEN_TITLE : firstLine.length > 70 ? firstLine.slice(0, 69) + "…" : firstLine,
     candidate_names: it.result?.candidates.map((c) => c.name) ?? [],
     no_fit: !!it.result && it.result.candidates.length === 0,
     error: it.status === "error" ? it.error : null,

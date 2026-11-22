@@ -23,9 +23,18 @@ const when = (iso: string) => {
 export const sourceLabel = (s: BoardSource) => (s === "slack" ? "Slack" : s === "sample" ? "サンプル" : "貼った会話");
 
 /** 依頼の状態の印（準備中・候補準備済み・声かけ中・承諾済み・辞退）。状態はコードで決めたもの */
-export function StageTag({ stage }: { stage: RequestStage }) {
-  return <Tag tone={STAGE_TONE[stage]}>{STAGE_LABEL[stage]}</Tag>;
+export function StageTag({ stage, kind }: { stage: RequestStage; kind?: BoardListItem["kind"] }) {
+  const label = stageLabelOf(stage, kind);
+  return <Tag tone={label === STAGE_LABEL[stage] ? STAGE_TONE[stage] : "warn"}>{label}</Tag>;
 }
+
+/** 状態の言葉。依頼ではない・不適切と読んだ文は、候補を作っていないので「候補準備済み」とは出さない */
+export function stageLabelOf(stage: RequestStage, kind?: BoardListItem["kind"]): string {
+  if (stage === "ready" && kind === "not_request") return "依頼ではなさそう";
+  if (stage === "ready" && kind === "inappropriate") return "対応しません";
+  return STAGE_LABEL[stage];
+}
+const isRequest = (it: Pick<BoardListItem, "kind">) => (it.kind ?? "request") === "request";
 
 /** 状態に合わせた1行（だれが受けたか・だれに声をかけているか） */
 function stageLine(it: BoardListItem): string {
@@ -33,6 +42,7 @@ function stageLine(it: BoardListItem): string {
   const names = (xs: Array<{ name: string }>) => xs.map((p) => `${p.name}さん`).join("・");
   if (s.stage === "accepted") return `${names(s.accepted_by)}が承諾`;
   if (s.stage === "outreach") return `${names(s.outreach_to)}に声かけ中（返事待ち）`;
+  if (s.stage === "drafting") return `${names(s.drafting_for)}への声かけ文を下書き中（まだ声はかけていません）`;
   if (s.stage === "declined") return `${names(s.declined_by)}が辞退。次の人を選べます`;
   if (s.stage === "new") return "開いて「ネタ帳から候補を出す」を押すと、候補を準備します";
   if (s.stage === "preparing") return progressText(it.progress ?? progressOf("reading"));
@@ -63,10 +73,13 @@ export function Inbox({
 }) {
   const count = (st: RequestStage) => items.filter((x) => x.state.stage === st).length;
   const fresh = items.filter((x) => x.is_new).length;
+  // 依頼ではない・不適切と読んだ文は、候補準備済みに数えない
+  const readyRequests = items.filter((x) => x.state.stage === "ready" && isRequest(x)).length;
   const summary = [
     fresh ? `新しい依頼 ${fresh}件` : "",
     count("outreach") ? `声かけ中 ${count("outreach")}件` : "",
-    count("ready") ? `候補準備済み ${count("ready")}件` : "",
+    readyRequests ? `候補準備済み ${readyRequests}件` : "",
+    count("drafting") ? `下書き中 ${count("drafting")}件` : "",
     count("preparing") ? `準備中 ${count("preparing")}件` : "",
   ]
     .filter(Boolean)
@@ -95,12 +108,12 @@ export function Inbox({
                 type="button"
                 className="inbox-item"
                 aria-current={it.id === openId ? "true" : undefined}
-                aria-label={`${inboxTitle(it)}（${STAGE_LABEL[it.state.stage]}）`}
+                aria-label={`${inboxTitle(it)}（${stageLabelOf(it.state.stage, it.kind)}）`}
                 onClick={() => onOpen(it.id)}
               >
                 <span className="inbox-marks">
                   {it.is_new && <Tag tone="accent">新しい</Tag>}
-                  <StageTag stage={it.state.stage} />
+                  <StageTag stage={it.state.stage} kind={it.kind} />
                   <span className="meta">
                     {it.source !== "sample" && `${sourceLabel(it.source)}・`}
                     {when(it.received_at)}

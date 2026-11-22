@@ -1,6 +1,7 @@
 "use client";
 
-import type { BoardDetail, IntakeField } from "@/app/_client/types";
+import type { BoardDetail } from "@/app/_client/types";
+import { requestItems } from "@/lib/askBack";
 import { md } from "./labels";
 import { inboxTitle, StageTag, sourceLabel } from "./Inbox";
 import { progressOf, progressText, type Progress } from "@/lib/progressStage";
@@ -9,13 +10,8 @@ import { Spinner, Tag } from "./ui";
 /** inbox：受信箱から開いた依頼／custom：手で追加（受信箱に入る）。サンプルの依頼も受信箱に並ぶ（入口は受信箱だけ） */
 export type RequestMode = "custom" | "inbox";
 
-const INTAKE_ROWS: Array<[IntakeField, string]> = [
-  ["event_name", "イベント名"],
-  ["date", "日程"],
-  ["format", "形式"],
-  ["theme", "テーマ"],
-  ["organizer", "主催者"],
-];
+/** 読み取った項目の並び（読めた値と未定。lib/askBack.ts と同じ並びで、主催者への返事・声かけの下書きと食い違わない） */
+const intakeRows = (intake: NonNullable<BoardDetail["intake"]>) => requestItems({ intake }).map((i) => ({ ...i, label: i.key === "organizer" ? "主催者" : i.label }));
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -126,10 +122,10 @@ export function RequestInput({
           )}
           {inbox.intake && (
             <dl className="person-facts intake" aria-label="会話から読み取った項目">
-              {INTAKE_ROWS.map(([f, label]) => (
-                <div key={f} className="intake-row">
-                  <dt>{label}</dt>
-                  <dd>{inbox.intake![f] ?? <Tag tone="warn">未定</Tag>}</dd>
+              {intakeRows(inbox.intake).map((i) => (
+                <div key={i.key} className="intake-row">
+                  <dt>{i.label}</dt>
+                  <dd>{i.value ?? <Tag tone="warn">未定</Tag>}</dd>
                 </div>
               ))}
             </dl>

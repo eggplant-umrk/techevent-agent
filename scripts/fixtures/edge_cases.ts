@@ -1,10 +1,10 @@
-// 受信箱に貼られる入力の試験の一覧（30件）。人物・アカウント・会社・イベントはすべて架空。
+// 受信箱に貼られる入力の試験の一覧（33件）。人物・アカウント・会社・イベントはすべて架空。
 // - docs/edge_cases.md の表はこのファイルから作る（scripts/try_edge_cases.ts --list）
 // - API なしのテスト（scripts/test_edge_cases.ts）と、本番の API で流す代表10件（scripts/try_edge_cases.ts）の両方が読む
 // - 不適切な入力は、試験に要る最小限の言い方にとどめている（実在の人・属性を名指ししない）
 import type { RawIntake } from "../../lib/intake";
 
-export type EdgeGroup = "正常" | "依頼ではない" | "不適切" | "判断が要る" | "指示の仕込み" | "形の崩れ";
+export type EdgeGroup = "正常" | "依頼ではない" | "不適切" | "判断が要る" | "指示の仕込み" | "形の崩れ" | "聞き返し";
 
 export interface EdgeCase {
   id: string;
@@ -266,6 +266,80 @@ export const EDGE_CASES: EdgeCase[] = [
     text: "🎉🎉🎉「フロントエンド🔥祭り」の運営🙋‍♀️山口です✨✨ 1月23日（金）🗓️ 19時〜🕖 LT⚡10分⚡ お願いできる方🙏🙏🙏 いませんか〜？？😆😆 テーマはアクセシビリティ♿️です💪",
     expect: "絵文字を除いても読める項目を読み取る（日程 2027-01-23、LT10分、アクセシビリティ）。引用の照合が絵文字で落ちない",
     raw: { event_name: q("フロントエンド🔥祭り"), date: q("2027-01-23", "1月23日（金）🗓️ 19時〜"), format: q("LT10分", "LT⚡10分⚡"), theme: q("アクセシビリティ", "テーマはアクセシビリティ♿️です"), organizer: q("山口"), nominee: none, date_hint: none },
+  },
+  // ---------------------------------------------------------------- 聞き返し（足した項目：人数・持ち時間など。API なしのテストは scripts/test_ask_back.ts）
+  {
+    id: "A1",
+    group: "聞き返し",
+    title: "人数が書いてある",
+    text: "「Infra Study Tokyo #9」運営の西村です。1月19日（火）19時〜、五反田の会場でLT枠（10分）をお願いできる方を探しています。参加者は50名ほどで、インフラエンジニア2〜5年目の方が中心です。テーマは監視やアラート設計の工夫です。録画はせず、資料は後日公開をお願いしています。",
+    expect: "人数（50名ほど）・持ち時間（10分）・対象者・会場・録画と資料の公開を読み取り、主催者への返事と声かけの下書きに使う。聞き返すのは、書かれていない謝礼・交通費と返事の期限だけ",
+    raw: {
+      event_name: q("Infra Study Tokyo #9"),
+      date: q("2027-01-19", "1月19日（火）19時〜"),
+      format: q("LT（10分）", "LT枠（10分）"),
+      theme: q("監視やアラート設計の工夫"),
+      organizer: q("西村"),
+      nominee: none,
+      date_hint: none,
+      duration: q("10分", "LT枠（10分）"),
+      audience_size: q("50名ほど", "参加者は50名ほど"),
+      audience: q("インフラエンジニア2〜5年目の方が中心"),
+      venue: q("五反田", "五反田の会場"),
+      recording: q("録画なし、資料は後日公開", "録画はせず、資料は後日公開をお願いしています"),
+      reward: none,
+      reply_deadline: none,
+    },
+    expectCandidates: "some",
+  },
+  {
+    id: "A2",
+    group: "聞き返し",
+    title: "人数が書いていない",
+    text: "「Web Perf Night」運営の大野です。2月9日（火）の夜に、フロントエンドの表示速度の話をしていただける方を探しています。ご検討いただけますか？",
+    expect: "人数・持ち時間などは未定のまま（推測で埋めない）。主催者への返事で聞くのは、優先度の高い3つ（持ち時間・人数・対象者）だけ。声かけの下書きには「主催者に確認中」と書く",
+    raw: {
+      event_name: q("Web Perf Night"),
+      date: q("2027-02-09", "2月9日（火）の夜に"),
+      format: none,
+      theme: q("フロントエンドの表示速度", "フロントエンドの表示速度の話"),
+      organizer: q("大野"),
+      nominee: none,
+      date_hint: none,
+      duration: none,
+      audience_size: none,
+      audience: none,
+      venue: none,
+      recording: none,
+      reward: none,
+      reply_deadline: none,
+    },
+    expectCandidates: "some",
+  },
+  {
+    id: "A3",
+    group: "聞き返し",
+    title: "会話にない数字を AI が作った",
+    text: "「Data Eng Meetup #5」運営の久保です。3月3日（水）19時〜、データ基盤の運用の話をLTでお願いできませんか。会場は渋谷で、けっこう大きめの会になりそうです。",
+    expect: "AI が「200名」「10分」「謝礼3万円」と読んでも、数字が会話の一節にない・引用が会話にないので未定にする（理由を残す）。会話にある会場（渋谷）は使う",
+    raw: {
+      event_name: q("Data Eng Meetup #5"),
+      date: q("2027-03-03", "3月3日（水）19時〜"),
+      format: q("LT", "LTでお願いできませんか"),
+      theme: q("データ基盤の運用", "データ基盤の運用の話"),
+      organizer: q("久保"),
+      nominee: none,
+      date_hint: none,
+      duration: q("10分", "LTでお願いできませんか"),
+      audience_size: q("200名", "けっこう大きめの会になりそうです"),
+      audience: none,
+      venue: q("渋谷", "会場は渋谷で"),
+      recording: none,
+      reward: q("謝礼3万円", "謝礼は3万円お支払いします"),
+      reply_deadline: none,
+    },
+    mustNotAppear: [["会話にない人数", /200\s*(?:名|人)/], ["会話にない謝礼", /3\s*万円/]],
+    expectCandidates: "some",
   },
 ];
 

@@ -47,7 +47,10 @@ async function main() {
     check(`[${label}] 渡す項目に、予定の名前・期間（${away.kind} など）がない`, !schedules().some((s) => s.employee_id === emp.id && (user.includes(s.kind) || user.includes(s.from))) && !/出張|休暇|会議|打ち合わせ/.test(user));
     check(`[${label}] 指示文にも、その人の名前は入っていない`, !system.includes(emp.name)); // 予定の文そのものは、決まりの例文（「今後2週間は勤務時間の7割が…」）と同じことがあるので、下の「だれでも同じ」で見る
     systems.push(system);
-    check(`[${label}] 渡すのは9項目だけ`, user.replace(/^# 確かめた項目\n/, "").split("\n").length === 9, user.split("\n").length.toString());
+    // 今までの8項目と、読めた値（持ち時間・人数など。lib/askBack.ts）と、主催者に聞く項目。それ以外の行は渡さない
+    const allowed = /^(イベント名|日程|形式|依頼のテーマ|主催者の名前|指名|進める人（弊社の社員）|話してもらうテーマ案|持ち時間|人数|対象者|会場|録画・資料の公開|謝礼・交通費|返事の期限|主催者に聞く項目)：/;
+    const lines = user.replace(/^# 確かめた項目\n/, "").split("\n");
+    check(`[${label}] 渡すのは決まった項目だけ（8項目・読めた値・主催者に聞く項目）`, lines.length >= 9 && lines.length <= 16 && lines.every((l) => allowed.test(l)), lines.filter((l) => !allowed.test(l)).join(" ／ "));
   }
 
   check("指示文は、だれの返事でも同じ（人ごとの情報を入れていない）", systems.length === 2 && systems[0] === systems[1]);

@@ -37,7 +37,7 @@ async function main() {
   process.env.SHARE_MODE = "lan";
   check("lan で合言葉が空なら、起動を止める理由がある", !!shareConfigProblem()?.includes("ACCESS_CODE"));
   check("lan で合言葉が空なら、どの窓口も使えない（503）", !req({}).ok && (req({}) as { status: number }).status === 503);
-  process.env.ACCESS_CODE = "sakura-2026";
+  process.env.ACCESS_CODE = "sakura-2026-hanami";
   process.env.SHARE_BUDGET_USD = "5"; // lan では上限も必須（scripts/test_share_hardening.ts）
   const lan = (p: Partial<Parameters<typeof checkRequest>[0]>) => req({ host: "192.168.1.20:3000", ...p });
   const noCode = lan({});
@@ -47,7 +47,7 @@ async function main() {
   check("lan：合言葉の入力画面と送り先は開ける", lan({ pathname: "/access" }).ok && lan({ method: "POST", pathname: "/api/access", origin: "http://192.168.1.20:3000" }).ok);
   check("lan：印（cookie）があれば通す", lan({ cookie: accessToken() }).ok && lan({ pathname: "/", cookie: accessToken() }).ok);
   check("lan：違う印は弾く", !lan({ cookie: accessToken("wrong") }).ok);
-  check("lan：同じ端末のスクリプトは X-Access-Code で通す", lan({ host: "127.0.0.1:3000", headerCode: "sakura-2026" }).ok && !lan({ host: "127.0.0.1:3000" }).ok);
+  check("lan：同じ端末のスクリプトは X-Access-Code で通す", lan({ host: "127.0.0.1:3000", headerCode: "sakura-2026-hanami" }).ok && !lan({ host: "127.0.0.1:3000" }).ok);
   check("lan：Host が localhost でも合言葉なしでは通さない（Host は偽れるため）", !lan({ host: "localhost:3000" }).ok);
   const other = lan({ method: "POST", cookie: accessToken(), origin: "http://192.168.1.99:3000" });
   check("lan：Origin が自分のホストと違えば弾く（403）", !other.ok && other.status === 403);
@@ -59,7 +59,7 @@ async function main() {
   const { POST: accessPost } = await import("../app/api/access/route");
   const wrong = await accessPost(new Request("http://192.168.1.20:3000/api/access", { method: "POST", body: JSON.stringify({ code: "nope" }) }));
   check("合言葉が違えば 401", wrong.status === 401 && !wrong.headers.get("set-cookie"));
-  const right = await accessPost(new Request("http://192.168.1.20:3000/api/access", { method: "POST", body: JSON.stringify({ code: "sakura-2026" }) }));
+  const right = await accessPost(new Request("http://192.168.1.20:3000/api/access", { method: "POST", body: JSON.stringify({ code: "sakura-2026-hanami" }) }));
   const cookie = right.headers.get("set-cookie") ?? "";
   check("合言葉が合えば、httpOnly の印を付ける（合言葉そのものは入れない）", right.status === 200 && cookie.startsWith(`${ACCESS_COOKIE}=${accessToken()}`) && /HttpOnly/.test(cookie) && /SameSite=Strict/.test(cookie) && !cookie.includes("sakura"));
 

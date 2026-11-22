@@ -92,7 +92,7 @@ async function main() {
   check("[N7] 英語の依頼でも、引用が会話にあれば項目が決まる", n7.intake.event_name === "Tokyo Fintech Engineering Summit" && n7.intake.organizer === "Emma" && n7.intake.format === "20-minute talk");
   want("N7", "英語の日付（February 18, 2027）を日程として確かめる", n7.intake.date === "2027-02-18", `今は ${n7.intake.date ?? "未定"}（${n7.intake.reasons.date ?? ""}）`);
   const f5 = read("F5");
-  check("[F5] 絵文字が混ざっても、引用の照合が通る（日程・形式・テーマ）", f5.intake.date === "2027-01-23" && f5.intake.format === "LT10分" && f5.intake.theme === "アクセシビリティ", JSON.stringify({ d: f5.intake.date, u: f5.intake.undecided }));
+  check("[F5] 絵文字が混ざっても、引用の照合が通る（日程・形式・テーマ）", f5.intake.date === "2027-01-22" && f5.intake.format === "LT10分" && f5.intake.theme === "アクセシビリティ", JSON.stringify({ d: f5.intake.date, u: f5.intake.undecided }));
 
   // 会話にない引用・作った値は未定になる
   const fake = intakeLib.checkIntake(byId("R1").text, { event_name: { value: "カレー勉強会", quote: "カレー勉強会を開きます" }, date: { value: "2026-12-01", quote: "12月1日" }, format: { value: "LT", quote: "LT" }, theme: { value: "スパイス", quote: "スパイスが効いていて" }, organizer: { value: null, quote: null }, nominee: { value: "百瀬 結衣", quote: "百瀬さんに" }, date_hint: { value: "来週", quote: "来週はラーメン" } }, RECEIVED);
@@ -227,7 +227,7 @@ async function main() {
 
   // ---- 8. 一覧の「出てはいけない言葉」が、試験の文そのものには当たる（見張る言葉が効くこと）
   for (const c of EDGE_CASES.filter((x) => x.mustNotAppear)) {
-    const hit = c.mustNotAppear!.every(([, re]) => re.test(c.text) || ["B4", "J2", "F4", "A3"].includes(c.id)); // A3 は「会話にない数字」を見張るので、入力には当たらない
+    const hit = c.mustNotAppear!.every(([, re]) => re.test(c.text) || ["B4", "J2", "F4", "J1", "A3"].includes(c.id)); // J1 は属性を言い切る文を、A3 は「会話にない数字」を見張るので、入力には当たらない
     check(`[${c.id}] 見張る言葉が、入力の言い回しに当たる`, hit);
   }
 

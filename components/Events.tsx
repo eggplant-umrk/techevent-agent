@@ -331,7 +331,7 @@ function InterviewDraft({ name, initial }: { name: string; initial: string }) {
   const [text, setText] = useState(initial);
   const id = `ci-draft-${name.replace(/\s/g, "")}`;
   return (
-    <div className="pad-list">
+    <div className="ci-draft">
       <label htmlFor={id} className="small strong">
         {name}さんへ
       </label>

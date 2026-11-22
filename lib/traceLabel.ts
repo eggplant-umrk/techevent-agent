@@ -27,10 +27,41 @@ const TOOL_LABEL: Record<string, string> = {
   get_published: "発信済みの記事を読む",
   submit_candidates: "候補を出す",
   submit_venues: "出し先を出す",
+  search_external_events: "社外のイベントを探す",
+  submit_columns: "アンケートの列の意味を出す",
+  submit_survey_analysis: "アンケートのまとめを出す",
+  submit_release_cards: "リリースのネタを出す",
+  // コードの処理
+  date_suggestions: "空いていそうな日を出す",
 };
 
-/** 記録の1行に出す名前。知らない名前は、AI の呼び出しなら「AI の呼び出し」、ほかはそのまま（日本語の名前はそのまま出る） */
+/** 英数字と記号だけの名前（内部の名前）か */
+const INTERNAL_NAME = /^[A-Za-z0-9_.:-]+$/;
+
+/**
+ * 記録の1行に出す名前。
+ * - 知らない名前：AI の呼び出しなら「AI の呼び出し」。ツール・処理は、日本語の名前ならそのまま、
+ *   英数字だけの名前（置き換えが抜けた内部の名前）なら「そのほかのツール」「そのほかの処理」にする（内部の名前を画面に出さない。元の名前は title に残る）
+ */
 export function traceStepLabel(kind: "llm" | "tool" | "code", name: string): string {
   if (kind === "llm") return LLM_LABEL[name] ?? "AI の呼び出し";
-  return TOOL_LABEL[name] ?? name;
+  if (TOOL_LABEL[name]) return TOOL_LABEL[name];
+  if (INTERNAL_NAME.test(name)) return kind === "tool" ? "そのほかのツール" : "そのほかの処理";
+  return name;
+}
+
+/** 置き換えの言葉がある名前か（テストが、ツール・処理の名前の抜けを見つけるのに使う） */
+export const hasTraceLabel = (kind: "llm" | "tool" | "code", name: string): boolean => (kind === "llm" ? name in LLM_LABEL : name in TOOL_LABEL);
+
+/** 失敗の種類（lib/trace.ts の errorKind と、ツールの "failed"）を言葉にする。言葉が要らないものは空（「失敗」だけ出す） */
+export function traceErrorLabel(error: string | null | undefined): string {
+  const e = (error ?? "").trim();
+  if (!e || e === "failed" || e === "error") return "";
+  if (e === "timeout") return "時間切れ";
+  if (e === "aborted") return "途中で止めた";
+  if (e === "connection") return "つながらなかった";
+  if (e === "429") return "混んでいる・上限";
+  if (e === "529") return "AI が混んでいる";
+  if (/^\d{3}$/.test(e)) return `エラー ${e}`;
+  return INTERNAL_NAME.test(e) ? "" : e;
 }

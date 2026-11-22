@@ -4,7 +4,7 @@
 import { useState } from "react";
 import type { Api } from "@/app/_client/api";
 import { durationText, usdText, type RequestTrace } from "@/app/_client/feedback";
-import { traceStepLabel } from "@/lib/traceLabel";
+import { traceErrorLabel, traceStepLabel } from "@/lib/traceLabel";
 
 const KIND_LABEL = { llm: "AI", tool: "ツール", code: "処理" } as const;
 
@@ -78,7 +78,7 @@ function TraceView({ trace, mock }: { trace: RequestTrace; mock: boolean }) {
               <span className="trace-num meta">
                 {durationText(s.ms)}
                 {typeof s.cost_usd === "number" ? `・${usdText(s.cost_usd)}` : ""}
-                {s.ok ? "" : `・失敗${s.error ? `（${s.error}）` : ""}`}
+                {s.ok ? "" : `・失敗${traceErrorLabel(s.error) ? `（${traceErrorLabel(s.error)}）` : ""}`}
               </span>
             </li>
           );

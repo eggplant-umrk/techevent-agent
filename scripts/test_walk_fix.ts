@@ -27,7 +27,7 @@ async function main() {
   const { feedbackToCase, employeeNameSet } = await import("../lib/feedbackEval");
   const board = await import("../lib/board");
   const inbox = await import("../lib/inbox");
-  const { traceStepLabel } = await import("../lib/traceLabel");
+  const { traceStepLabel, hasTraceLabel, traceErrorLabel } = await import("../lib/traceLabel");
   const N = await import("../lib/readyNotice");
   const draftRoute = await import("../app/api/draft/route");
   const { requests } = await import("../lib/data");
@@ -159,11 +159,31 @@ async function main() {
   const wrong = labels.filter(([k, name, want]) => traceStepLabel(k, name) !== want);
   check("記録の名前を、使う人の言葉にする（会話を読む・候補を探す・カードを探す・下書きを作る など）", wrong.length === 0, wrong.map(([, name]) => name).join());
   check("知らない名前：AI の呼び出しは「AI の呼び出し」、日本語の処理の名前はそのまま", traceStepLabel("llm", "claude-opus-5-5") === "AI の呼び出し" && traceStepLabel("code", "日程の候補") === "日程の候補");
+  check("空いていそうな日の処理（date_suggestions）は「空いていそうな日を出す」", traceStepLabel("code", "date_suggestions") === "空いていそうな日を出す");
+  check("置き換えが抜けた内部の名前は、そのまま出さない（そのほかのツール・そのほかの処理）", traceStepLabel("tool", "new_tool_x") === "そのほかのツール" && traceStepLabel("code", "some_step") === "そのほかの処理");
+  // 記録に出る名前を、ソースから全部拾う：ツールの名前（lib の name: "…"）・提出のツール（submit_…）・モックの見本・AI の使い道
+  const libDir = path.join(process.cwd(), "lib");
+  const libSrc = fs.readdirSync(libDir).filter((f) => f.endsWith(".ts")).map((f) => fs.readFileSync(path.join(libDir, f), "utf8")).join("\n");
+  const mockSrc = fs.readFileSync(path.join(process.cwd(), "app", "_client", "mock.ts"), "utf8");
+  const allTools = new Set<string>([
+    ...[...libSrc.matchAll(/name: "([a-z]+_[a-z_]+)"/g)].map((m) => m[1]),
+    ...[...libSrc.matchAll(/"(submit_[a-z_]+)"/g)].map((m) => m[1]),
+    ...[...mockSrc.matchAll(/name: "([a-z]+_[a-z_]+)"/g)].map((m) => m[1]),
+    ...[...mockSrc.matchAll(/add\("(?:tool|code)", "([a-z_]+)"/g)].map((m) => m[1]),
+  ]);
+  const missingTools = [...allTools].filter((name) => !hasTraceLabel("tool", name));
+  check(`ツール・処理の名前（lib 全体とモックの見本の ${allTools.size} 個）に、置き換えの抜けがない`, allTools.size >= 14 && allTools.has("date_suggestions") && allTools.has("search_external_events") && missingTools.length === 0, missingTools.join());
+  const dataSrc = fs.readFileSync(path.join(libDir, "data.ts"), "utf8");
+  const purposes = [...(dataSrc.match(/purpose: ([^;]+);/)?.[1] ?? "").matchAll(/"([a-z_]+)"/g)].map((m) => m[1]);
+  const missingPurposes = purposes.filter((name) => !hasTraceLabel("llm", name));
+  check(`AI の使い道の名前（lib/data.ts の ${purposes.length} 個）に、置き換えの抜けがない`, purposes.length >= 9 && missingPurposes.length === 0, missingPurposes.join());
+  check("失敗の種類も言葉にする（時間切れ・つながらなかった など）。言葉のないものは「失敗」だけ", traceErrorLabel("timeout") === "時間切れ" && traceErrorLabel("connection") === "つながらなかった" && traceErrorLabel("aborted") === "途中で止めた" && traceErrorLabel("429") === "混んでいる・上限" && traceErrorLabel("500") === "エラー 500" && traceErrorLabel("failed") === "" && traceErrorLabel("TypeError") === "" && traceErrorLabel("見本の失敗") === "見本の失敗");
   const toolsSrc = fs.readFileSync(path.join(process.cwd(), "lib", "tools.ts"), "utf8");
   const toolNames = [...toolsSrc.matchAll(/name: "([a-z_]+)"/g)].map((m) => m[1]);
   const noLabel = toolNames.filter((name) => traceStepLabel("tool", name) === name);
   check(`ツールの名前（lib/tools.ts の ${toolNames.length} 個）は、すべて言葉に置き換わる`, toolNames.length >= 8 && noLabel.length === 0, noLabel.join());
-  check("記録の画面は、置き換えた名前を出す", fs.readFileSync(path.join(process.cwd(), "components", "TraceTimeline.tsx"), "utf8").includes("{traceStepLabel(s.kind, s.name)}"));
+  const timeline = fs.readFileSync(path.join(process.cwd(), "components", "TraceTimeline.tsx"), "utf8");
+  check("記録の画面は、置き換えた名前と失敗の言葉を出す（内部の名前をそのまま出さない）", timeline.includes("{traceStepLabel(s.kind, s.name)}") && timeline.includes("traceErrorLabel(s.error)") && !timeline.includes("（${s.error}）"));
 
   // ---- 7・8. 金額と時間の決まり、ネタ帳の更新の文
   const claude = fs.readFileSync(path.join(process.cwd(), "CLAUDE.md"), "utf8");

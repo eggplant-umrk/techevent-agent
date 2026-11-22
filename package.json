@@ -58,7 +58,8 @@
     "test:access": "tsx scripts/test_access_harden.ts",
     "test:feedback-ui": "tsx scripts/test_feedback_ui.ts",
     "test:per-person": "tsx scripts/test_share_per_person.ts",
-    "test:mentor": "tsx scripts/test_mentor.ts"
+    "test:mentor": "tsx scripts/test_mentor.ts",
+    "test:askback": "tsx scripts/test_ask_back.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

@@ -4,6 +4,8 @@
 // 主催者は社外の人。社内の評価に当たる情報（忙しさ・予定の埋まり具合や中身・登壇回数・アンケートの反応・ほかの候補・社内の判断）は書かない。
 // 社内の人には「さん」を付けない（「弊社の〇〇」）。X なので短く。
 
+import { askBackProblems, type ItemKey } from "./askBack";
+
 export const ORGANIZER_REPLY_MAX = 280;
 
 /** 社内の評価・社内の事情に当たる言い方（主催者に見せない） */
@@ -117,6 +119,19 @@ export interface ReplyContext {
   conversation?: string | null;
   /** 返事を作る AI に渡した「確かめた項目」の文 */
   facts?: string | null;
+  /** コードが選んだ、主催者に聞く項目（lib/askBack.ts）。渡したときだけ、その項目を聞いているかを見る */
+  ask?: ItemKey[] | null;
+  /** 未定だが今回は聞かない項目。渡したときだけ、触れていないかを見る */
+  skip?: ItemKey[] | null;
+}
+
+/**
+ * 主催者への返事に書いてよい値か（読めた項目の値を、返事を作る AI に渡す前に見る）。
+ * 連絡先の形・属性を表す言葉・機密や約束の言い方・社内の評価に当たる言い方が入っていれば渡さない（返事に写ると検査に当たるため）
+ */
+export function safeForReply(value: string): boolean {
+  if (contactProblem(value) || attributeProblem(value) || secretOrPromiseProblem(value) || scheduleDetailProblem(value)) return false;
+  return !INTERNAL_EVALUATION.some(([re]) => re.test(value));
 }
 
 /**
@@ -140,6 +155,7 @@ export function organizerReplyProblems(text: string, name: string, otherNames: s
     const copied = copiedFromConversationProblem(t, ctx.conversation, ctx.facts ?? "");
     if (copied) out.push(copied);
   }
+  if (ctx.ask || ctx.skip) out.push(...askBackProblems(t, ctx.ask ?? [], ctx.skip ?? []));
   const family = name.split(/[\s　]/)[0];
   if (!t.includes(family)) out.push(`主催者への返事に、進める人の名前（${family}）がありません`);
   if (new RegExp(`${family}\\s*(さん|様|さま)`).test(t)) out.push(`主催者への返事で社内の人（${family}）に敬称が付いています。「弊社の${family}」のように書く`);
@@ -158,6 +174,7 @@ export function organizerReplyProblems(text: string, name: string, otherNames: s
 /**
  * 検査に通らなかったときの代わりの文（コードで作る。名前・イベント名・テーマだけを使う）。
  * 本人にはまだ確認していないので、確約しない。
+ * undecided：主催者に聞く項目の名前（コードが選んだもの。lib/askBack.ts の askBack。多くて3つ）
  */
 export function fallbackOrganizerReply(p: {
   name: string;

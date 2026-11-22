@@ -40,7 +40,7 @@ LayerX 自律型 AI Agent ハッカソン 2026/11 テーマ3「Techイベント�
 
 ## ディレクトリ構成・技術スタック
 
-MVPの仕様は [docs/spec.md](docs/spec.md)（v0.4：ネタ帳Agent）。保存の入口の一覧は [docs/storage.md](docs/storage.md)、発表のあとと将来の作業は [docs/roadmap.md](docs/roadmap.md)。
+MVPの仕様は [docs/spec.md](docs/spec.md)（v0.4：ネタ帳Agent）。保存の入口の一覧は [docs/storage.md](docs/storage.md)、発表のあとと将来の作業は [docs/roadmap.md](docs/roadmap.md)。発表と質問の答えに使う数字（評価・テスト・費用・安全。出どころと日時つき）は [docs/numbers.md](docs/numbers.md)。
 
 中心は「Agentが育て続けるネタ帳（カード）」で、動きは3つだけ：カードを作る（ネタ帳を更新）／カードから選ぶ（依頼への提案・ブログのネタ）／カードに書き戻す（承認・承諾・辞退・公開）。
 

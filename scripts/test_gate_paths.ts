@@ -64,7 +64,7 @@ async function main() {
       throw new Error("読み取りの API が 500");
     });
     const x = inbox.getInboxItem(failedItem.id)!;
-    check("読み取りに失敗したら「エラー」として止める", x.status === "error" && x.read_status === "failed" && x.error === inbox.READ_FAILED_ERROR, JSON.stringify({ s: x.status, r: x.read_status, e: x.error }));
+    check("読み取りに失敗したら「エラー」として止める", x.status === "error" && x.read_status === "failed" && !!x.error?.startsWith(inbox.READ_FAILED_ERROR), JSON.stringify({ s: x.status, r: x.read_status, e: x.error }));
     check("失敗したものは候補づくりを走らせない", runs === 0 && x.result === null);
     check("失敗したものは候補づくり・下書き・返事に使えない（「もう一度探す」で読み直すまで）", resolveRequest({ request_id: failedItem.id }) === null);
     // 読み取りの手段がないとき（extractor なし）に準備し直しても、依頼として走らせない

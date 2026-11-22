@@ -126,7 +126,7 @@ async function main() {
     },
   );
   const f = inbox.getInboxItem(failing.id)!;
-  check("読み取りに失敗したらエラーとして止める（依頼として候補づくりを走らせない）", f.status === "error" && f.read_status === "failed" && !failingRan && f.result === null && f.error === inbox.READ_FAILED_ERROR);
+  check("読み取りに失敗したらエラーとして止める（依頼として候補づくりを走らせない）", f.status === "error" && f.read_status === "failed" && !failingRan && f.result === null && !!f.error?.startsWith(inbox.READ_FAILED_ERROR));
 
   // ---- 一覧・開いた印
   const list = inbox.listInbox().map(inbox.listView);

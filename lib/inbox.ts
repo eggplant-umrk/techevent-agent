@@ -198,15 +198,17 @@ export async function readIntake(
   receivedAt: string,
   extractor: IntakeExtractor,
   runId: string,
-): Promise<{ nominee: NomineeReading; intake: IntakeReading | null; failure: "refused" | "failed" | null }> {
+): Promise<{ nominee: NomineeReading; intake: IntakeReading | null; failure: "refused" | "failed" | null; why?: string }> {
   const noNominee = (note: string): NomineeReading => ({ name: null, employee_id: null, note });
   try {
     const raw = await extractor(text, runId);
     if (raw === null) return { nominee: noNominee("読み取りの AI がこの内容を扱わなかったため、指名は読んでいません"), intake: null, failure: "refused" };
     if (typeof raw === "string") return { nominee: resolveNominee(raw), intake: null, failure: null };
     return { ...checkIntake(text, raw, receivedAt), failure: null };
-  } catch {
-    return { nominee: noNominee("依頼文を読み取れなかったため、指名は読んでいません"), intake: null, failure: "failed" };
+  } catch (err) {
+    // 理由（時間切れ・混雑など）は使う人向けの文にして残す
+    const why = userErrorText(err, { where: "依頼の読み取り", retryLabel: "もう一度探す", fallback: "読み取りに失敗しました" });
+    return { nominee: noNominee("依頼文を読み取れなかったため、指名は読んでいません"), intake: null, failure: "failed", why };
   }
 }
 
@@ -226,12 +228,12 @@ function stopAsKind(id: string, kind: Exclude<IntakeKind, "request">, kindReason
   }));
 }
 
-/** 読み取りに失敗したことを保存する（エラーとして止める。指名・項目は保存しないので、次は読み直す） */
-function stopAsReadFailure(id: string, events: AgentEvent[]) {
+/** 読み取りに失敗したことを保存する（エラーとして止める。指名・項目は保存しないので、次は読み直す）。why は失敗の理由（時間切れなど） */
+function stopAsReadFailure(id: string, events: AgentEvent[], why?: string) {
   update(id, (x) => ({
     ...x,
     status: "error",
-    error: READ_FAILED_ERROR,
+    error: why ? `${READ_FAILED_ERROR}：${why}` : READ_FAILED_ERROR,
     read_status: "failed",
     nominee: null,
     intake: null,
@@ -251,7 +253,7 @@ export async function rereadIfFailed(id: string, extractor: IntakeExtractor): Pr
   const it = getInboxItem(id);
   if (!it || it.read_status !== "failed") return;
   const r = await readIntake(it.text, it.received_at, extractor, id);
-  if (r.failure === "failed") return;
+  if (r.failure === "failed") return stopAsReadFailure(id, it.events, r.why);
   if (r.failure === "refused") {
     update(id, (x) => ({ ...x, read_status: "refused", nominee: r.nominee, intake: null }));
     return stopAsKind(id, "inappropriate", READ_REFUSED_REASON, it.events);
@@ -395,9 +397,9 @@ async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtra
   update(id, (x) => ({ ...x, progress: progressOf(stage) }));
   try {
     if (extractor && (!it.nominee || it.read_status === "failed")) {
-      const { nominee, intake, failure } = await readIntake(it.text, it.received_at, extractor, id);
+      const { nominee, intake, failure, why } = await readIntake(it.text, it.received_at, extractor, id);
       // 読み取りに失敗したら、依頼として候補づくりに進めない（エラーとして止める）
-      if (failure === "failed") return stopAsReadFailure(id, events);
+      if (failure === "failed") return stopAsReadFailure(id, events, why);
       const read_status = failure === "refused" ? ("refused" as const) : null;
       update(id, (x) => ({ ...x, nominee, intake, read_status }));
       it = { ...it, nominee, intake, read_status };

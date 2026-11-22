@@ -56,6 +56,7 @@
     "eval:from-feedback": "tsx scripts/eval_from_feedback.ts",
     "test:guard": "tsx scripts/test_ui_guard.ts",
     "test:access": "tsx scripts/test_access_harden.ts",
+    "test:feedback-ui": "tsx scripts/test_feedback_ui.ts",
     "test:askback": "tsx scripts/test_ask_back.ts"
   },
   "dependencies": {

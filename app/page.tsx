@@ -36,6 +36,8 @@ import { UnassignedCards } from "@/components/UnassignedCards";
 import { Spinner } from "@/components/ui";
 import { AlternativePitch, Candidates } from "@/components/Proposal";
 import { RequestInput, type RequestMode } from "@/components/RequestInput";
+import { TraceTimeline } from "@/components/TraceTimeline";
+import { FeedbackProvider, type FeedbackInput, type ReasonCodes } from "@/app/_client/feedback";
 
 const msg = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback);
 
@@ -70,6 +72,19 @@ export default function Home() {
   const [cards, setCards] = useState<NotebookCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** 実行の記録の画面を開けるか（見せる用では、この端末からだけ。/api/state の trace_allowed） */
+  const [traceAllowed, setTraceAllowed] = useState(false);
+  /** 使われた結果を送る窓口（記録の側）があるか。?mock は手元に残すので常にある */
+  const [feedbackReady, setFeedbackReady] = useState(false);
+  /** 理由の選択肢（記録の側の REASON_CODES。/api/state から） */
+  const [feedbackReasons, setFeedbackReasons] = useState<ReasonCodes | null>(null);
+  useEffect(() => {
+    let alive = true;
+    api.feedbackReady().then((ok) => alive && setFeedbackReady(ok));
+    return () => {
+      alive = false;
+    };
+  }, [api]);
   /** 同じ文の依頼を貼ったとき：新しく足さずに前の依頼を開いたことを知らせる */
   const [dupNotice, setDupNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
@@ -156,6 +171,8 @@ export default function Home() {
       setModels(s.models);
       setTotalUsd(s.models.totalUsd);
       setPending(s.pending_employees);
+      setTraceAllowed(s.trace_allowed !== false);
+      if (s.feedback_reasons) setFeedbackReasons(s.feedback_reasons);
     } catch {
       /* the header just keeps the last numbers */
     }
@@ -605,13 +622,20 @@ export default function Home() {
   // 承諾済みの人の主催者への返事：いま作った下書きがあればそれ、なければ保存した下書き
   const acceptedReply =
     inbox?.state.accepted_by
-      .map((p) => (draft?.organizer_reply && approvedFor(p.employee_id) ? { name: p.name, text: draft.organizer_reply } : null))
+      .map((p) => (draft?.organizer_reply && approvedFor(p.employee_id) ? { name: p.name, text: draft.organizer_reply, employee_id: p.employee_id } : null))
       .find(Boolean) ?? inbox?.accepted_reply ?? null;
   function approvedFor(employeeId: string) {
     return draftOwner === employeeId;
   }
 
+  // 使われた結果（この候補は違う・下書きを直して使った）を送る先の依頼。受信箱なら開いている1件、サンプルなら候補を出した依頼
+  // 自由入力の依頼（custom）は記録の側に依頼がないので送らない
+  const feedbackRequestId = mode === "inbox" ? inboxId : mode === "custom" ? null : result?.request_id ?? null;
+  // 記録の側（POST /api/feedback）がまだないうちは、ボタンを出さない（requestId を渡さない）
+  const feedbackCtx = { requestId: feedbackReady ? feedbackRequestId : null, reasons: feedbackReasons, send: (input: FeedbackInput) => api.feedback(input) };
+
   const requestPanel = (
+    <FeedbackProvider value={feedbackCtx}>
     <div className="panel" aria-label="依頼パネル">
       {approved ? (
         <Approved
@@ -657,6 +681,10 @@ export default function Home() {
             onProceed={mode === "inbox" && inboxId ? () => void proceedInbox(inboxId) : undefined}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
+            {/* この依頼の記録（AI・ツールの呼び出しの時間の線）。見せる用では、この端末からだけ */}
+            {traceAllowed && feedbackRequestId && !running && (
+              <TraceTimeline key={feedbackRequestId} api={api} requestId={feedbackRequestId} />
+            )}
           </RequestInput>
           {stage === "accepted" && inbox && (
             <AcceptedView
@@ -698,6 +726,7 @@ export default function Home() {
         </>
       )}
     </div>
+    </FeedbackProvider>
   );
 
   return (

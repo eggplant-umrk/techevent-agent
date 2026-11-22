@@ -6,7 +6,7 @@ import { HEAVY_FALLBACK_MODEL } from "./config";
 import { activities, employeeById, employees, eventDateOf, type SpeakingRequest } from "./data";
 import { displayDate, fixEventDateText } from "./dateText";
 import { askBack, EXTRA_FIELDS, notAsked, outreachFacts, outreachFactsLine, outreachFactsMissing, requestItems, type ItemKey, type RequestItem } from "./askBack";
-import { CONTACT_PROBLEM, fallbackOrganizerReply, ORGANIZER_REPLY_MAX, organizerReplyProblems, safeForReply } from "./organizerReply";
+import { CONTACT_PROBLEM, contactProblem, fallbackOrganizerReply, leakShapeProblem, ORGANIZER_REPLY_MAX, organizerReplyProblems, safeForReply } from "./organizerReply";
 import { chooseModels, recordUsage } from "./usage";
 import type { UsageEntry } from "./data";
 import { internalTermProblems, PLAIN_TEXT_RULE } from "./plainText";
@@ -157,6 +157,35 @@ const DRAFT_SCHEMA = {
  * - 読めた値も載せる（人数が書いてあれば「人数：50名」）。返事に書くと検査に当たる値（属性を表す言葉など）は載せない
  * - 「主催者に聞く項目」は、未定の項目からコードが選んだもの（lib/askBack.ts。優先度の順に多くて3つ）
  */
+/** 項目の値の長さの上限（返事を作る AI に渡す・決まった文に入れるとき） */
+export const FACT_MAX = { event_name: 60, format: 40, theme: 80, organizer: 40 } as const;
+
+/**
+ * 項目の値を、返事を作る AI に渡してよいか・決まった文に入れてよいか（コードで見る）。
+ * - 指示の言い方（「以前の指示を無視して」「〜を書いてください」など）がない。
+ *   読み取りの関所（lib/intake.ts の INSTRUCTION_WORDS）より狭くしてある：「プロンプト」「prompt」「instructions」は、
+ *   取り組みのテーマとしてふつうに出る言葉（「プロンプトもコードレビューする」など）なので、ここでは当てない
+ * - 長すぎない
+ * - 連絡先の形・社内の情報の形（登壇の回数、忙しさ、予定の埋まり具合、アンケートの反応、ほかの候補）がない
+ * - 名前（主催者の名前）は、文になっていない（句点・感嘆符・改行がない）
+ * 候補のテーマ案は Agent が書くので、依頼文に仕込まれた指示や社内の情報が混ざりうる。ここを通らなければ渡さない
+ */
+const REPLY_INSTRUCTION =
+  /無視し|以前の指示|これまでの指示|上記の指示|指示に従|以下を出力|出力して(?:ください|下さい)|あなたは今から|システム通知|管理者用|\bignore\s+(?:all|the|previous|above)|全社員を|(?:書い|添え|列挙し|教え|記載し|含め)て(?:ください|下さい|ね|おいて)/i;
+export function factValueProblem(value: string | null | undefined, max: number, opts: { name?: boolean } = {}): string | null {
+  const v = (value ?? "").trim();
+  if (!v) return null;
+  const n = v.normalize("NFKC");
+  if (v.length > max) return `長すぎる（${v.length}字、${max}字まで）`;
+  if (REPLY_INSTRUCTION.test(n)) return "指示のような言い方";
+  if (contactProblem(v)) return "連絡先の形";
+  const leak = leakShapeProblem(v);
+  if (leak) return leak;
+  if (opts.name && /[。！!？?\n]/.test(n)) return "名前ではなく文になっている";
+  return null;
+}
+const factOk = (value: string | null | undefined, max: number, opts: { name?: boolean } = {}) => (value ?? "").trim() !== "" && factValueProblem(value, max, opts) === null;
+
 export function organizerReplyFacts(request: SpeakingRequest, candidate: { name: string; theme: string }): string {
   const it = request.intake;
   const ev = request.event;
@@ -165,16 +194,18 @@ export function organizerReplyFacts(request: SpeakingRequest, candidate: { name:
   const known = items.filter((i) => (EXTRA_FIELDS as string[]).includes(i.key) && i.value && safeForReply(i.value));
   const ask = askBack(items).map((i) => i.label);
   const v = (x: string | null | undefined, empty = "未定") => (x && x.trim() ? x.trim() : empty);
+  // 値は、渡す前に factValueProblem で見る。引っかかった値は渡さない（入れ物の言葉にする）
+  const safe = (x: string | null | undefined, max: number, empty: string, opts: { name?: boolean } = {}) => (factOk(x, max, opts) ? v(x, empty) : empty);
   return [
-    `イベント名：${v(ev?.title ?? it?.event_name, "不明")}`,
+    `イベント名：${safe(ev?.title ?? it?.event_name, FACT_MAX.event_name, "不明")}`,
     // 日程は人に見せる形（「1月19日（火）」。年が今年と違うときだけ年つき）で渡す。曜日はコードで出す（lib/dateText.ts）
     `日程：${v(displayDate(ev?.date ?? it?.date))}`,
-    `形式：${v(ev ? `${ev.format}${ev.duration_min ? `${ev.duration_min}分` : ""}` : it?.format)}`,
-    `依頼のテーマ：${v(request.theme ?? it?.theme, "お任せ")}`,
-    `主催者の名前：${v(request.requester?.contact_name || it?.organizer, "不明")}`,
+    `形式：${safe(ev ? `${ev.format}${ev.duration_min ? `${ev.duration_min}分` : ""}` : it?.format, FACT_MAX.format, "未定")}`,
+    `依頼のテーマ：${safe(request.theme ?? it?.theme, FACT_MAX.theme, "お任せ")}`,
+    `主催者の名前：${safe(request.requester?.contact_name || it?.organizer, FACT_MAX.organizer, "不明", { name: true })}`,
     `指名：${nominee ?? "なし"}`,
     `進める人（弊社の社員）：${candidate.name}`,
-    `話してもらうテーマ案：${candidate.theme}`,
+    `話してもらうテーマ案：${safe(candidate.theme, FACT_MAX.theme, "お任せ")}`,
     ...known.map((i) => `${i.label}：${i.value}`),
     `主催者に聞く項目：${ask.length ? ask.join("・") : "なし"}`,
   ].join("\n");
@@ -229,6 +260,16 @@ export async function draftOrganizerReply(
 - 「主催者に聞く項目」に項目があれば、その項目をすべて、教えてほしいと一言添える。そこにない項目は聞かない（聞く項目はコードが決めています）。「なし」なら何も聞かない
 - 社内の評価に当たる情報は書かない：忙しさ・予定・登壇回数や経験・アンケートの反応・ほかの候補や比較・社内の判断。ほかの社員の名前も書かない
 - ${PLAIN_TEXT_RULE}`;
+  // 候補のテーマ案に、指示の言い方・社内の情報の形・長すぎる文があれば、AI には渡さず、テーマ案を入れない決まった文にする（API は呼ばない）
+  const themeProblem = factValueProblem(candidate.theme, FACT_MAX.theme);
+  if (themeProblem) {
+    return {
+      reply: safeOrganizerReply(request, candidate.name, "", others),
+      note: `テーマ案を主催者への返事に使えなかったため、テーマ案を入れない決まった形の文にしました（${themeProblem}）。テーマは、確かめてから自分の言葉で足してください`,
+      model: "",
+      cost_usd: 0,
+    };
+  }
   const facts = organizerReplyFacts(request, candidate);
   const items = requestItems(request);
   const ask: ItemKey[] = askBack(items).map((i) => i.key);
@@ -337,7 +378,21 @@ ${evidence || "（なし）"}`;
   // なければ作り直さず（重いモデルをもう1回動かさない）、コードが最後に1行足す
   outreach.value = withEventDate(withOutreachFacts(outreach.value, items), eventDate);
   // 主催者への返事は、会話の原文を渡さず、確かめた項目と承認した候補の名前・テーマだけで別に作る
-  const reply = await draftOrganizerReply(runId, request, { employee_id: emp.id, name: emp.name, theme: candidate.theme });
+  // 返事の呼び出しが失敗しても（混雑・時間切れ・壊れた答え）、できた声かけ文は捨てない。返事は決まった文にして、そのことを添える
+  let reply: Awaited<ReturnType<typeof draftOrganizerReply>>;
+  try {
+    reply = await draftOrganizerReply(runId, request, { employee_id: emp.id, name: emp.name, theme: candidate.theme });
+  } catch {
+    const others = employees()
+      .filter((e) => e.id !== emp.id)
+      .map((e) => e.name);
+    reply = {
+      reply: safeOrganizerReply(request, emp.name, candidate.theme, others),
+      note: "主催者への返事を AI で作れなかったため、決まった形の文にしました（声かけ文はそのまま使えます）",
+      model: "",
+      cost_usd: 0,
+    };
+  }
   return {
     ...outreach,
     value: { ...outreach.value, organizer_reply: reply.reply, organizer_reply_note: reply.note },
@@ -347,16 +402,27 @@ ${evidence || "（なし）"}`;
 
 /** 主催者への返事の代わりの文。テーマを入れて検査に通らなければ、テーマなしにする */
 function safeOrganizerReply(request: SpeakingRequest, name: string, theme: string, others: string[]): string {
+  // 決まった文に入れる値（主催者の名前・イベント名・テーマ案）も、入れる前に同じ検査を通す。引っかかった値は入れない
+  const organizer = request.requester?.contact_name || request.intake?.organizer || null;
+  const eventName = request.event?.title ?? request.intake?.event_name ?? null;
   const base = {
     name,
-    organizer: request.requester?.contact_name || request.intake?.organizer || null,
-    eventName: request.event?.title ?? request.intake?.event_name ?? null,
+    organizer: factOk(organizer, FACT_MAX.organizer, { name: true }) ? organizer : null,
+    eventName: factOk(eventName, FACT_MAX.event_name) ? eventName : null,
     // 聞く項目は、AI が書いたときと同じ（コードが選んだもの）
     undecided: askBack(requestItems(request)).map((i) => i.label),
   };
-  const withTheme = fallbackOrganizerReply({ ...base, theme });
-  if (organizerReplyProblems(withTheme, name, others).length === 0) return withTheme;
-  return fallbackOrganizerReply({ ...base, theme: "" });
+  // 言葉の検査は、入れた値（項目の値）を除いてから見る（テーマ案の「負荷」などで落とさない）
+  const factsOf = (t: string) => [`主催者の名前：${base.organizer ?? "不明"}`, `イベント名：${base.eventName ?? "不明"}`, `テーマ案：${t || "お任せ"}`].join("\n");
+  const ok = (text: string, t: string) => organizerReplyProblems(text, name, others, { facts: factsOf(t) }).length === 0;
+  if (theme && factOk(theme, FACT_MAX.theme)) {
+    const withTheme = fallbackOrganizerReply({ ...base, theme });
+    if (ok(withTheme, theme)) return withTheme;
+  }
+  const noTheme = fallbackOrganizerReply({ ...base, theme: "" });
+  if (ok(noTheme, "")) return noTheme;
+  // それでも通らなければ、名前だけの文（主催者の名前・イベント名も入れない）
+  return fallbackOrganizerReply({ name, theme: "", organizer: null, eventName: null, undecided: base.undecided });
 }
 
 /**

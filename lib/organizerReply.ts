@@ -135,6 +135,35 @@ export function safeForReply(value: string): boolean {
 }
 
 /**
+ * 社内の情報の形（項目の値の中にあってはいけないもの）：登壇の回数・経験、忙しさ、予定の埋まり具合、アンケートの反応、ほかの候補。
+ * 項目の値（テーマ案・イベント名など）を、返事を作る AI に渡す前と、決まった文に入れる前に見る。
+ * 「負荷」「人事」「給与」「カード」のような、取り組みの中身としてふつうに出る言葉は入れていない
+ */
+const LEAK_SHAPE =
+  /登壇\s*[0-9０-９]+\s*回|過去\s*[0-9０-９]+\s*回|[0-9０-９]+\s*回(?:の|目の)?(?:登壇|実績|発表)|登壇(?:経験|歴)|初登壇|忙し|多忙|予定(?:が|は|の)?(?:埋ま|詰ま|空い|空き)|埋まり具合|[0-9０-９]+\s*(?:割|%|％)(?:が|は)?(?:予定|埋)|アンケート|満足度|好評|不評|ほかの候補|他の候補|条件付き|社内(?:の|で)?評価/;
+export function leakShapeProblem(value: string): string | null {
+  const m = value.normalize("NFKC").match(LEAK_SHAPE);
+  return m ? `社内の情報の形（「${m[0]}」）` : null;
+}
+
+/** 項目の値として除かない言葉（決まった入れ物の言葉） */
+const PLACEHOLDER_VALUES = new Set(["なし", "未定", "不明", "お任せ"]);
+/**
+ * 返事の文から、確かめた項目の値（「イベント名：〜」の〜）を伏せる。4字以上の値だけ（短い値で文を切り刻まない）。
+ * 言葉の検査（社内の評価・予定・属性・機密・住所や年収）の前に使う。名前・連絡先・会話の写しの検査には使わない
+ */
+export function maskFactValues(text: string, facts: string): string {
+  const values = facts
+    .split(/\n/)
+    .map((line) => line.replace(/^[^：:]*[：:]/, "").trim())
+    .filter((v) => v.length >= 4 && !PLACEHOLDER_VALUES.has(v))
+    .sort((a, b) => b.length - a.length);
+  let out = text;
+  for (const v of values) out = out.split(v).join("□");
+  return out;
+}
+
+/**
  * 主催者への返事の問題（コードで検査）。
  * name：進める社員のフルネーム（「早乙女 蓮」）。otherNames：ほかの社員のフルネーム（比較や名前の漏れを防ぐ）。
  * ctx：会話の原文と確かめた項目（渡したときだけ、会話の写しを見る）
@@ -146,11 +175,15 @@ export function organizerReplyProblems(text: string, name: string, otherNames: s
   if (t.length > ORGANIZER_REPLY_MAX) out.push(`主催者への返事が長すぎます（${t.length}字、${ORGANIZER_REPLY_MAX}字まで）`);
   const contact = contactProblem(t);
   if (contact) out.push(contact);
+  // 言葉の検査は、確かめた項目の値（イベント名・テーマ案など）を除いてから見る。
+  // テーマ案の「負荷」「人事」「給与」のように、項目の値の中の言葉だけで差し替えにしないため。
+  // 項目の値そのものは、渡す前に lib/heavy.ts の factValueOk が見ている（指示の言い方・長さ・連絡先・社内の情報の形）
+  const body = ctx.facts ? maskFactValues(t, ctx.facts) : t;
   for (const [re, what] of INTERNAL_EVALUATION) {
-    const m = t.match(re);
+    const m = body.match(re);
     if (m) out.push(`主催者への返事に${what}が入っています（「${m[0]}」）。社内の評価に当たる情報は書かない`);
   }
-  for (const p of [scheduleDetailProblem(t), attributeProblem(t), secretOrPromiseProblem(t), addressOrSalaryProblem(t)]) if (p) out.push(p);
+  for (const p of [scheduleDetailProblem(body), attributeProblem(body), secretOrPromiseProblem(body), addressOrSalaryProblem(body)]) if (p) out.push(p);
   if (ctx.conversation) {
     const copied = copiedFromConversationProblem(t, ctx.conversation, ctx.facts ?? "");
     if (copied) out.push(copied);

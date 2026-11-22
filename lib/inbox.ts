@@ -432,7 +432,6 @@ async function makePitch(id: string, request: SpeakingRequest, result: ProposalR
   }
 }
 
-/** もう一度探す（画面の「もう一度探す」とは別に、エラーの依頼を準備し直すとき用） */
 /**
  * 「依頼ではない」と読んだ1件を、人が「依頼として進める」で先に進める（AI の読み違いに備える）。
  * 読み取った項目は使わない（未定のまま）。不適切なものは進めない
@@ -448,9 +447,18 @@ export function proceedAsRequest(id: string, runner: Runner, onSettled?: () => v
   return { ok: true };
 }
 
-export function restart(id: string, runner: Runner, extractor?: IntakeExtractor) {
-  update(id, (x) => ({ ...x, status: "processing", started_at: nowJst(), finished_at: null, error: null }));
-  void prepare(id, runner, extractor);
+/**
+ * 画面の「もう一度探す」（準備済み・エラーのどちらからも）。受信箱の1件を準備し直し、結果は受信箱に保存する
+ * （POST /api/inbox/{id}/restart）。候補づくりは裏で続き、終わったら onSettled を呼ぶ（枠を返す）
+ */
+export function restart(id: string, runner: Runner, extractor?: IntakeExtractor, onSettled?: () => void): { ok: true } | { ok: false; error: string } {
+  const it = getInboxItem(id);
+  if (!it) return { ok: false, error: "その依頼は受信箱にありません" };
+  if (it.kind === "inappropriate") return { ok: false, error: "この内容には対応しません" };
+  if (it.status === "processing") return { ok: false, error: "準備中です" };
+  update(id, (x) => ({ ...x, status: "processing", started_at: nowJst(), finished_at: null, error: null, pitch_status: null }));
+  void prepare(id, runner, extractor).finally(() => onSettled?.());
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------

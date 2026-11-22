@@ -31,6 +31,7 @@
     "eval:compare": "tsx scripts/evals/run.ts compare",
     "eval:passk": "tsx scripts/evals/passk.ts",
     "test:replycheck": "tsx scripts/test_reply_check.ts",
+    "test:replyfix": "tsx scripts/test_reply_fix.ts",
     "try:edge": "tsx scripts/try_edge_cases.ts",
     "test:correct": "tsx scripts/test_correctness.ts",
     "reset:demo": "tsx scripts/reset_demo.ts",

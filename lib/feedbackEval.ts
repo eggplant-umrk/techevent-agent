@@ -1,6 +1,7 @@
 // 使われた結果（data/runtime/feedback.jsonl）→ 評価のケースの候補（lib/evalTypes.ts の EvalCase）への変換。
 // - 依頼ごとに1件のケースにまとめる（その依頼に付いた「違う／直した／よい」をまとめて期待する動きにする）
-// - 個人情報を落とす：メール・電話・郵便番号・住所の形、社員の実名以外の人名らしきもの（「◯◯さん」など）、アカウント名（@…）
+// - 個人情報を落とす：メール・電話・郵便番号・住所の形、社員の実名以外の人名らしきもの（「◯◯さん」「山田 太郎さん」など）、
+//   アカウント名（@…・URL の中の x.com/{名前} など）。全角半角は先にそろえてから（NFKC）落とす
 // - 出したケースは人が確かめてからリポジトリに入れる（このファイルは書き出しまで。コミットはしない）
 // 判定の名前（checks）は docs/evals.md の例の名前を使う。判定の登録（scripts/evals/checks.ts）ができたら、その名前に合わせる。
 import type { EvalCase, EvalOutput, EvalPriority, JudgeAspect } from "./evalTypes";
@@ -20,20 +21,72 @@ export interface FeedbackSource {
 // 個人情報を落とす
 // ---------------------------------------------------------------------------
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+// 全角半角は先にそろえる（NFKC。「０９０－１２３４－５６７８」も「090-1234-5678」にしてから落とす）
 const PHONE = /(?:\+81[-\s]?|(?<![\d-]))0\d{1,4}[-‐－−ー\s]?\d{1,4}[-‐－−ー\s]?\d{3,4}(?![\d-])/g;
+/** 「03(1234)5678」の形の電話 */
+const PHONE_PAREN = /(?<!\d)0\d{1,4}\s?\(\d{1,4}\)\s?\d{3,4}(?!\d)/g;
 const POSTAL = /〒\s?\d{3}[-‐－−ー]?\d{4}|(?<![\d-])\d{3}[-‐－−]\d{4}(?![\d-])/g;
 const ADDRESS = /(?:東京都|北海道|(?:京都|大阪)府|[一-龥]{2,3}県)[^\s、。,，()（）「」]{0,20}?[市区町村郡][^\s、。,，()（）「」]{0,30}/g;
 const HANDLE = /(?<![A-Za-z0-9._%+-])@[A-Za-z0-9_]{2,30}/g;
-/** 「◯◯さん」「◯◯様」など、敬称の付いた人名らしきもの（社員の実名は残す） */
-const HONORIFIC = /([一-龥々ぁ-んァ-ヶー]{1,6}|[A-Z][a-z]{1,15}(?:\s[A-Z][a-z]{1,15})?)\s?(さん|様|さま|氏|くん|君|ちゃん|先生)/g;
-/** 「◯◯と申します」 */
-const NAMED = /([一-龥々ぁ-んァ-ヶー]{1,6}|[A-Z][a-z]{1,15})\s?(と申します|と言います)/g;
+/** 「◯◯さん」「◯◯様」など、敬称の付いた人名らしきもの（社員の実名は残す）。「山田 太郎さん」のように姓と名の間に空白があっても、姓ごと落とす */
+const HONORIFIC = /([一-龥々ぁ-んァ-ヶー]{1,6}(?:\s[一-龥々ぁ-んァ-ヶー]{1,6})?|[A-Z][a-z]{1,15}(?:\s[A-Z][a-z]{1,15})?)\s?(さん|様|さま|氏|くん|君|ちゃん|先生)/g;
+/** 「◯◯と申します」（「山田 太郎と申します」も姓ごと） */
+const NAMED = /([一-龥々ぁ-んァ-ヶー]{1,6}(?:\s[一-龥々ぁ-んァ-ヶー]{1,6})?|[A-Z][a-z]{1,15}(?:\s[A-Z][a-z]{1,15})?)\s?(と申します|と言います)/g;
+const URL_RE = /https?:\/\/[^\s<>"'()「」、。]+/g;
+/** URL の道筋の1つ目がアカウント名のサイト（x.com/{名前} など） */
+const ACCOUNT_HOSTS = new Set([
+  "twitter.com", "x.com", "github.com", "gitlab.com", "instagram.com", "facebook.com", "threads.net", "tiktok.com",
+  "qiita.com", "zenn.dev", "note.com", "speakerdeck.com", "slideshare.net", "medium.com", "dev.to", "youtube.com",
+  "b.hatena.ne.jp", "profile.hatena.ne.jp", "atcoder.jp", "wantedly.com", "lapras.com", "mastodon.social",
+]);
+/** アカウント名の前に決まった言葉が入るサイト（linkedin.com/in/{名前} など） */
+const ACCOUNT_PREFIX: Record<string, string[]> = {
+  "linkedin.com": ["in", "pub"],
+  "bsky.app": ["profile"],
+  "connpass.com": ["user"],
+  "atcoder.jp": ["users"],
+  "wantedly.com": ["id"],
+  "youtube.com": ["c", "user", "channel"],
+  "facebook.com": ["people"],
+};
+/** サブドメインがアカウント名のサイト（{名前}.hatenablog.com など） */
+const ACCOUNT_SUFFIX = ["hatenablog.com", "hatenablog.jp", "hateblo.jp", "hatenadiary.jp", "github.io", "substack.com", "medium.com", "tumblr.com", "blogspot.com", "fc2.com", "livedoor.blog", "bsky.social"];
+
+/** URL の中のアカウント名を落とす（イベントのページなどの URL はそのまま） */
+function scrubUrl(url: string): string {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return url;
+  }
+  const host = u.hostname.toLowerCase().replace(/^(www|m|mobile)./, "");
+  const segs = u.pathname.split("/");
+  const sub = ACCOUNT_SUFFIX.find((d) => host.endsWith(`.${d}`) && host !== `www.${d}`);
+  let changed = false;
+  if (sub) {
+    u.hostname = `account.${sub}`;
+    changed = true;
+  }
+  const prefixes = ACCOUNT_PREFIX[host] ?? [];
+  // segs[0] は空（先頭の /）。決まった言葉のあとの1つ、なければ1つ目
+  let i = prefixes.includes(segs[1] ?? "") ? 2 : ACCOUNT_HOSTS.has(host) ? 1 : -1;
+  if (i > 0 && segs[i]) {
+    segs[i] = segs[i].startsWith("@") ? "@account" : "account";
+    u.pathname = segs.join("/");
+    changed = true;
+  }
+  if (!changed) return url;
+  u.search = "";
+  u.hash = "";
+  return `${u.toString()}（アカウント）`;
+}
 
 /** 社員の実名（姓名・姓・名・空白なし）を、残してよい名前の集まりにする */
 export function employeeNameSet(names: string[]): Set<string> {
   const s = new Set<string>();
   for (const n of names) {
-    const t = n.trim();
+    const t = n.normalize("NFKC").trim();
     if (!t) continue;
     s.add(t);
     s.add(t.replace(/\s+/g, ""));
@@ -42,17 +95,21 @@ export function employeeNameSet(names: string[]): Set<string> {
   return s;
 }
 
-/** 文から個人情報を落とす（置きかえる）。社員の実名だけは残す */
+/** 文から個人情報を落とす（置きかえる）。社員の実名だけは残す。全角半角は先にそろえる（NFKC） */
 export function scrubText(text: string, keepNames: Set<string>): string {
-  const keep = (name: string) => keepNames.has(name) || keepNames.has(name.replace(/\s+/g, ""));
+  const keep = (name: string) => keepNames.has(name) || keepNames.has(name.replace(/s+/g, ""));
+  const person = (m: string, name: string, suffix: string) => (keep(name) ? m : `（名前）${suffix}`);
   return text
+    .normalize("NFKC")
+    .replace(URL_RE, scrubUrl)
     .replace(EMAIL, "（メール）")
     .replace(PHONE, "（電話）")
+    .replace(PHONE_PAREN, "（電話）")
     .replace(POSTAL, "（郵便番号）")
     .replace(ADDRESS, "（住所）")
     .replace(HANDLE, "@（アカウント）")
-    .replace(HONORIFIC, (m, name: string, suffix: string) => (keep(name) ? m : `（名前）${suffix}`))
-    .replace(NAMED, (m, name: string, suffix: string) => (keep(name) ? m : `（名前）${suffix}`));
+    .replace(HONORIFIC, person)
+    .replace(NAMED, person);
 }
 
 /** オブジェクトの中の文字列を、すべて落とす。主催者の名前（intake.organizer）は丸ごと落とす */

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { copyText } from "@/lib/copyText";
 import type { NotebookCard } from "@/app/_client/types";
 import { FORMAT_LABEL, STATUS_LABEL } from "./labels";
 
@@ -11,26 +12,51 @@ export function Tag({ tone = "neutral", children }: { tone?: Tone; children: Rea
   return <span className={`tag tag-${tone}`}>{children}</span>;
 }
 
-/** onCopied：コピーできたとき（下書き・返事を「使った」と数えるため） */
+/**
+ * onCopied：コピーできたとき（下書き・返事を「使った」と数えるため。コピーできなかったときは呼ばない）。
+ * コピーは lib/copyText.ts：navigator.clipboard が使えないページ（IP アドレスで開いた http）では、古いやり方に切り替える。
+ * それもだめなときは、文を選んだ欄を出して「Ctrl+C でコピーしてください」と伝える（状態は進めない）
+ */
 export function CopyButton({ text, label = "コピー", primary = false, onCopied }: { text: string; label?: string; primary?: boolean; onCopied?: (text: string) => void }) {
-  const [state, setState] = useState<"idle" | "done" | "fail">("idle");
+  const [state, setState] = useState<"idle" | "done" | "manual">("idle");
+  const [manualText, setManualText] = useState("");
+  const manualRef = useRef<HTMLTextAreaElement>(null);
+  // 手でコピーしてもらうとき：欄が出たら、文を全部選んだ状態にする
+  useEffect(() => {
+    if (state !== "manual") return;
+    manualRef.current?.focus();
+    manualRef.current?.select();
+  }, [state, manualText]);
   return (
-    <button
-      type="button"
-      className={primary ? "btn btn-primary" : "btn"}
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setState("done");
-          onCopied?.(text);
-        } catch {
-          setState("fail");
-        }
-        setTimeout(() => setState("idle"), 2000);
-      }}
-    >
-      {state === "done" ? "コピーしました" : state === "fail" ? "コピーできませんでした。選択してコピーしてください" : label}
-    </button>
+    <>
+      <button
+        type="button"
+        className={primary ? "btn btn-primary" : "btn"}
+        onClick={async () => {
+          if (await copyText(text)) {
+            setState("done");
+            onCopied?.(text);
+            setTimeout(() => setState((s) => (s === "done" ? "idle" : s)), 2000);
+          } else {
+            setManualText(text);
+            setState("manual");
+          }
+        }}
+      >
+        {state === "done" ? "コピーしました" : label}
+      </button>
+      {state === "manual" && (
+        <span className="copy-manual" role="group" aria-label="手でコピーする">
+          <span className="log-line log-warn" role="status">
+            自動でコピーできませんでした。下の文を選んであります。Ctrl+C でコピーしてください
+          </span>
+          <textarea ref={manualRef} className="input" readOnly rows={4} value={manualText} aria-label="コピーする文" onFocus={(e) => e.currentTarget.select()} />
+          <button type="button" className="btn" onClick={() => setState("idle")}>
+            閉じる
+          </button>
+        </span>
+      )}
+    </>
   );
 }
 

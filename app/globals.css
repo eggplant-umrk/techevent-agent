@@ -537,3 +537,7 @@ textarea.input { resize: vertical; }
 .continue-update ul { margin: 4px 0; padding-left: 20px; }
 .continue-previous { margin-top: 4px; }
 .continue-previous summary { cursor: pointer; color: var(--muted); }
+
+/* コピーできなかったとき：文を選んだ欄と「Ctrl+C でコピーしてください」（ボタンの行の下に、幅いっぱいで出す） */
+.copy-manual { flex-basis: 100%; display: grid; gap: 6px; justify-items: start; }
+.copy-manual textarea { width: 100%; }

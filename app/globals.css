@@ -436,3 +436,15 @@ textarea.input { resize: vertical; }
 
 /* 見せる用のときだけ：その人の残り（小さく） */
 .share-remaining { font-size: 11px; color: var(--text-2); white-space: nowrap; }
+
+/* 候補づくりが終わった依頼の知らせ（画面の端。どのタブにいても出す） */
+.notices { position: fixed; right: 16px; bottom: 16px; z-index: 50; display: flex; flex-direction: column; gap: 8px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
+.notice { pointer-events: auto; display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border: 1px solid var(--line-strong); border-left: 4px solid var(--ok); border-radius: var(--radius-sm); background: var(--surface); box-shadow: 0 6px 20px rgba(27, 35, 48, 0.16); font-size: 13px; }
+.notice-text { flex: 1; margin: 0; overflow-wrap: anywhere; }
+.notice-no_fit, .notice-not_request, .notice-stopped { border-left-color: var(--warn); }
+.notice-error { border-left-color: var(--error); }
+@media (prefers-reduced-motion: no-preference) {
+  .notice { animation: notice-in 0.18s ease-out; }
+  @keyframes notice-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+}
+

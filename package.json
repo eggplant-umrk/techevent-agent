@@ -69,7 +69,8 @@
     "test:pools": "tsx scripts/test_share_pools.ts",
     "test:askback": "tsx scripts/test_ask_back.ts",
     "test:replydate": "tsx scripts/test_reply_date.ts",
-    "test:intakefix": "tsx scripts/test_intake_fix.ts"
+    "test:intakefix": "tsx scripts/test_intake_fix.ts",
+    "test:readynotice": "tsx scripts/test_ready_notice.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

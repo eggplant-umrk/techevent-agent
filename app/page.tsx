@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReadyNotices } from "@/components/ReadyNotices";
+import { addNotices, finishedNotices, pageTitle, statusMap, unopenedReadyCount, type ReadyNotice } from "@/lib/readyNotice";
 import { pickApi, realApi, type Api, type StateResponse } from "@/app/_client/api";
 import type {
   AgentEvent,
@@ -117,6 +119,11 @@ export default function Home() {
   const [inboxId, setInboxId] = useState<string | null>(null);
   const [inbox, setInbox] = useState<BoardDetail | null>(null);
   const [adding, setAdding] = useState(false);
+  // 候補づくりが終わった依頼の知らせ（画面の端。どのタブにいても出す）と、前回の一覧の状態
+  const [notices, setNotices] = useState<ReadyNotice[]>([]);
+  const prevStatus = useRef<ReturnType<typeof statusMap> | null>(null);
+  // 終わったあとの結果をまだ見ていない依頼（タブの題名の件数に数える）
+  const [unseenDone, setUnseenDone] = useState<string[]>([]);
 
   // after approval
   const [approved, setApproved] = useState<Candidate | null>(null);
@@ -320,6 +327,36 @@ export default function Home() {
     const t = setInterval(loadInbox, preparing ? 2000 : 4000);
     return () => clearInterval(t);
   }, [apiReady, loadInbox, inboxItems]);
+
+  // 今、画面で見ている依頼（受信箱タブで開いているもの）。ほかのタブにいるときは、開いたままでも「見ていない」として扱う
+  const viewingId = tab === "inbox" && mode === "inbox" ? inboxId : null;
+
+  // 準備中だった依頼が終わったら、画面の端に知らせを出す（今見ている依頼は出さない。最初の読み込みでは出さない）
+  useEffect(() => {
+    if (!inboxLoaded) return;
+    if (prevStatus.current) {
+      const added = finishedNotices(prevStatus.current, inboxItems, viewingId);
+      if (added.length) {
+        setNotices((cur) => addNotices(cur, added));
+        setUnseenDone((cur) => [...new Set([...cur, ...added.map((n) => n.id)])]);
+      }
+    }
+    prevStatus.current = statusMap(inboxItems);
+    // 一覧が変わったときだけ（見ている依頼が変わっただけでは出さない）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inboxItems, inboxLoaded]);
+
+  // 見ている依頼の知らせは消す（「開く」を押した・一覧から開いた・受信箱タブに戻った）
+  useEffect(() => {
+    if (!viewingId) return;
+    setNotices((cur) => (cur.some((n) => n.id === viewingId) ? cur.filter((n) => n.id !== viewingId) : cur));
+    setUnseenDone((cur) => (cur.includes(viewingId) ? cur.filter((id) => id !== viewingId) : cur));
+  }, [viewingId]);
+
+  // ブラウザのタブの題名に、まだ開いていない準備済みの件数を出す（「(1) ネタ帳Agent」。開いたら消える）
+  useEffect(() => {
+    document.title = pageTitle(unopenedReadyCount(inboxItems, viewingId, unseenDone));
+  }, [inboxItems, viewingId, unseenDone]);
 
   // ?inbox={id} で開いたら、その依頼の候補画面を開く
   useEffect(() => {
@@ -740,6 +777,7 @@ export default function Home() {
           {loadError}
         </p>
       )}
+      <ReadyNotices notices={notices} onOpen={(id) => void openInbox(id)} onClose={(id) => setNotices((cur) => cur.filter((n) => n.id !== id))} />
 
       {tab === "inbox" && (
         <main className="main">

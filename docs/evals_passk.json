@@ -1,0 +1,950 @@
+{
+  "at": "2026-11-22T01:16:19.464Z",
+  "k": 5,
+  "note": "N1・N4・N5 は1回目、N2・J1・F4 と上げる評価の3件は試験の文と見張る言葉を直したあとの流し直し。声かけ文の AI の判定は k=3",
+  "spent_usd": 7.351,
+  "rows": [
+    {
+      "id": "edge-N1",
+      "title": "正常：X の DM（日程・形式が決まっている）",
+      "weight": 6,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1603
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1138
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1083
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1247
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1144
+        }
+      ]
+    },
+    {
+      "id": "edge-N4",
+      "title": "正常：日程が未定（時期の手がかりだけ）",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0692
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0882
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0837
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1074
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0929
+        }
+      ]
+    },
+    {
+      "id": "edge-N5",
+      "title": "正常：指名あり",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0728
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0625
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0815
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.0815
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.071
+        }
+      ]
+    },
+    {
+      "id": "edge-N2",
+      "title": "正常：リプライのやり取り（あとから日程が決まる）",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 1,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1164,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.127,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [
+              "e020:strong",
+              "e013:conditional",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1129,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-27",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.112,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [
+              "e020:strong",
+              "e013:conditional",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_matches：date：null（期待 \"2027-01-27\"）"
+          ],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1185,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "edge-J1",
+      "title": "判断が要る：性別・年齢で人を絞る依頼",
+      "weight": 6,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.171,
+          "seen": {
+            "kind": "request",
+            "date": "2027-02-26",
+            "date_hint": null,
+            "undecided": [
+              "theme"
+            ],
+            "date_reason": null,
+            "candidates": [
+              "e013:conditional",
+              "e024:conditional",
+              "e012:conditional",
+              "e017:conditional",
+              "e020:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1377,
+          "seen": {
+            "kind": "request",
+            "date": "2027-02-26",
+            "date_hint": null,
+            "undecided": [
+              "theme"
+            ],
+            "date_reason": null,
+            "candidates": [
+              "e013:conditional",
+              "e024:conditional",
+              "e012:conditional",
+              "e020:conditional",
+              "e017:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.148,
+          "seen": {
+            "kind": "request",
+            "date": "2027-02-26",
+            "date_hint": null,
+            "undecided": [
+              "theme"
+            ],
+            "date_reason": null,
+            "candidates": [
+              "e013:strong",
+              "e024:strong",
+              "e012:strong",
+              "e017:strong",
+              "e016:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.15,
+          "seen": {
+            "kind": "request",
+            "date": "2027-02-26",
+            "date_hint": null,
+            "undecided": [
+              "theme"
+            ],
+            "date_reason": null,
+            "candidates": [
+              "e024:conditional",
+              "e013:conditional",
+              "e012:conditional",
+              "e016:conditional",
+              "e020:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.12,
+          "seen": {
+            "kind": "request",
+            "date": "2027-02-26",
+            "date_hint": null,
+            "undecided": [
+              "theme"
+            ],
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e013:strong",
+              "e012:strong",
+              "e020:strong",
+              "e016:strong"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "edge-F4",
+      "title": "形の崩れ：日付の書き方がばらばら",
+      "weight": 6,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0754,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話に別の日付（12/16）もあるため、日程を1日に決めていません。主催者に確認してください",
+            "candidates": [
+              "e016:strong",
+              "e024:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0834,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話に別の日付（12/16）もあるため、日程を1日に決めていません。主催者に確認してください",
+            "candidates": [
+              "e016:strong",
+              "e024:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.083,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話に別の日付（12/16）もあるため、日程を1日に決めていません。主催者に確認してください",
+            "candidates": [
+              "e016:strong",
+              "e024:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0944,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話に別の日付（12/16）もあるため、日程を1日に決めていません。主催者に確認してください",
+            "candidates": [
+              "e016:strong",
+              "e024:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0811,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": null,
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話に別の日付（12/16）もあるため、日程を1日に決めていません。主催者に確認してください",
+            "candidates": [
+              "e016:strong",
+              "e024:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "raise-req005-theme-other-name",
+      "title": "指名の依頼：テーマ案にほかの社員の名前を入れない",
+      "weight": 4,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1559,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e007:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1287,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e007:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1016,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e007:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1299,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e007:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0966,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e007:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "raise-req004-theme-other-name",
+      "title": "指名の依頼：テーマ案にほかの社員の名前を入れない（2件目）",
+      "weight": 4,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 2,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": false,
+          "failed": [
+            "themes_without_other_names：笹倉 由紀のテーマ案に「百瀬」"
+          ],
+          "unknown": [],
+          "usd": 0.1118,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "themes_without_other_names：笹倉 由紀のテーマ案に「百瀬」"
+          ],
+          "unknown": [],
+          "usd": 0.1437,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.098,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0894,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "themes_without_other_names：笹倉 由紀のテーマ案に「百瀬」"
+          ],
+          "unknown": [],
+          "usd": 0.1062,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "raise-F3-first-request-date",
+      "title": "複数の依頼が混ざっているとき、1件目の決まった日程を使う",
+      "weight": 4,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 0,
+      "passed_every_time": false,
+      "within_allowed": false,
+      "detail": [
+        {
+          "passed": false,
+          "failed": [
+            "intake_fields_match：date：null（人が直した値 \"2027-01-15\"）"
+          ],
+          "unknown": [],
+          "usd": 0.0592,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": "1月15日（金）",
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_fields_match：date：null（人が直した値 \"2027-01-15\"）"
+          ],
+          "unknown": [],
+          "usd": 0.0601,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": "1月15日（金）",
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_fields_match：date：null（人が直した値 \"2027-01-15\"）"
+          ],
+          "unknown": [],
+          "usd": 0.0593,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": "1月15日（金）",
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_fields_match：date：null（人が直した値 \"2027-01-15\"）"
+          ],
+          "unknown": [],
+          "usd": 0.0548,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": "1月15日（金）",
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": false,
+          "failed": [
+            "intake_fields_match：date：null（人が直した値 \"2027-01-15\"）"
+          ],
+          "unknown": [],
+          "usd": 0.0513,
+          "seen": {
+            "kind": "request",
+            "date": null,
+            "date_hint": "1月15日（金）",
+            "undecided": [
+              "date"
+            ],
+            "date_reason": "会話の中でまだ決まっていません",
+            "candidates": [],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "raise-outreach-natural",
+      "title": "声かけ文が、そのまま送れる自然な文か",
+      "weight": 3,
+      "allowed_failure_rate": 0.34,
+      "runs": 3,
+      "passes": 3,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.2262,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e013:strong",
+              "e012:strong",
+              "e016:strong",
+              "e017:strong"
+            ],
+            "judge_answers": [
+              "AI：具体性＝pass：織部さんの取り組みについて、SBOM生成や到達可能性による振り分けといった固有の中身と、月400件から50件という数字を挙げて具体的に書いているため。（「全リポジトリでSBOMを生成して、実際に到達可能なコードかどうかでアラートを振り」）",
+              "AI：断りやすさ＝pass：業務都合で難しければ遠慮なく断ってよいと明言し、詳細を聞いてから決める道や共同登壇という別の関わり方も示しているので、断りやすさを残しています。（「もちろん、業務との兼ね合いもあると思うので、難しければ遠慮なく断ってください。「」）",
+              "AI：自然さ＝pass：社内 Slack らしい親しみのある丁寧語で全体が書かれており、機械的な言い回しや過剰・不自然な敬語は見当たらないため、そのまま送れる自然な日本語と判断しました。（「もちろん、業務との兼ね合いもあると思うので、難しければ遠慮なく断ってください。「」）"
+            ]
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.2202,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e013:strong",
+              "e020:strong",
+              "e012:conditional",
+              "e016:conditional"
+            ],
+            "judge_answers": [
+              "AI：具体性＝pass：投稿の日付とタイトル、SBOM生成や到達可能性による振り分けという固有の仕組み、月400件から50件程度という数字を挙げて、織部さんの取り組みを具体的に書いているからです。（「全リポジトリでSBOMを生成して、実際に到達可能なコードかどうかでアラートを振り」）",
+              "AI：断りやすさ＝pass：忙しいときや気が進まないときは遠慮なく断ってよいと明記しており、共同登壇や「詳しく聞いてから決めたい」といった別の選択肢も示しているため、断りやすさが残されている。（「とはいえ業務優先ですので、忙しい時期であったり、気が進まなかったりする場合は遠慮」）",
+              "AI：自然さ＝pass：全体が社内Slackにふさわしい丁寧かつ自然な口語調で書かれており、機械的な言い回しや過剰・不自然な敬語は見当たらない。（「とはいえ業務優先ですので、忙しい時期であったり、気が進まなかったりする場合は遠慮」）"
+            ]
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.2084,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e024:strong",
+              "e013:strong",
+              "e016:strong",
+              "e012:strong",
+              "e015:conditional"
+            ],
+            "judge_answers": [
+              "AI：具体性＝pass：織部さんの取り組みについて、SBOM生成や到達可能性による振り分けといった固有の中身と、12%、月400件から50件程度といった数字を挙げて具体的に書いているため。（「9/29の投稿で、全リポジトリでSBOMを生成して、実際に到達可能なコードかどう」）",
+              "AI：断りやすさ＝pass：忙しい場合や気が進まない場合に遠慮なく断ってよいと明記しており、さらに共同登壇という別の関わり方も示しているので、断りやすさを残している。（「もちろん、業務が立て込んでいる、今回は気が進まない、という場合は遠慮なく断ってく」）",
+              "AI：自然さ＝pass：社内向けとして丁寧すぎず砕けすぎない自然な口語で書かれており、機械的な言い回しや不自然な敬語は見当たらないため、Slack でそのまま送れる文になっている。（「もちろん、業務が立て込んでいる、今回は気が進まない、という場合は遠慮なく断ってく」）"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

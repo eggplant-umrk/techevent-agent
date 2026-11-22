@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { usageProblem } from "./usageFile";
+import { nowJst } from "./clock";
+import { traceLlm } from "./trace";
 
 let client: Anthropic | null = null;
 
@@ -33,10 +35,21 @@ function withDeadline(target: { create: Create }) {
     const ms = apiTimeoutMs();
     const deadline = AbortSignal.timeout(ms);
     const signal = opts?.signal ? AbortSignal.any([opts.signal, deadline]) : deadline;
-    return original(body, { ...opts, signal }).catch((e: unknown) => {
-      if (deadline.aborted && !opts?.signal?.aborted) throw new ApiTimeoutError(ms);
-      throw e;
-    });
+    // 実行の記録（lib/trace.ts）：モデル名・時間・数・成否だけ。指示文や返事の中身は渡さない
+    const model = String((body as { model?: unknown })?.model ?? "");
+    const at = nowJst();
+    const t0 = Date.now();
+    return original(body, { ...opts, signal }).then(
+      (res) => {
+        traceLlm(model, at, Date.now() - t0, res);
+        return res;
+      },
+      (e: unknown) => {
+        const err = deadline.aborted && !opts?.signal?.aborted ? new ApiTimeoutError(ms) : e;
+        traceLlm(model, at, Date.now() - t0, undefined, err);
+        throw err;
+      },
+    );
   };
 }
 

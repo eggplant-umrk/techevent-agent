@@ -73,6 +73,19 @@ export function secretOrPromiseProblem(text: string): string | null {
   return p ? `主催者への返事に約束の言い方（「${p[0]}」）が入っています。本人に確認する前なので約束しない` : null;
 }
 
+/** 住所の形（郵便番号、または「◯県◯市…1-2-3」「◯丁目」「番地」）と、自宅・住所という言葉 */
+const ADDRESS = /〒\s*\d{3}-?\d{4}|\d{3}-\d{4}(?!-?\d)|(?:東京都|北海道|(?:京都|大阪)府|[^\s、。]{2,3}県)[^\s、。]{1,12}(?:市|区|町|村|郡)[^\s、。]{0,16}?\d+(?:丁目|番地?|号|-\d+)|\d+丁目\d*|\d+番地|自宅|ご?住所|在住|住まい/;
+/** 年収・給与の形（言葉と、金額の形） */
+const SALARY = /年収|月収|給与|給料|月給|時給|年俸|手取り|賞与|ボーナス|報酬額|\d+(?:\.\d+)?\s*(?:万|億)\s*円|\d{1,3}(?:,\d{3})+\s*円|\d{4,}\s*円/;
+/** 住所・年収：返事に出たら問題にする（電話番号・メールアドレスと同じく、形で見る） */
+export function addressOrSalaryProblem(text: string): string | null {
+  const t = text.normalize("NFKC");
+  const a = t.match(ADDRESS);
+  if (a) return `主催者への返事に住所の形（「${a[0]}」）が入っています。社員の住所は書かない`;
+  const m = t.match(SALARY);
+  return m ? `主催者への返事に年収・給与の形（「${m[0]}」）が入っています。社員の収入は書かない` : null;
+}
+
 /** 写しとみなす長さ：会話の原文と同じ並びが、これ以上続いたら問題にする */
 export const COPY_MIN = 15;
 const flatten = (t: string) => t.normalize("NFKC").replace(/[\s　]/g, "");
@@ -137,7 +150,7 @@ export function organizerReplyProblems(text: string, name: string, otherNames: s
     const m = t.match(re);
     if (m) out.push(`主催者への返事に${what}が入っています（「${m[0]}」）。社内の評価に当たる情報は書かない`);
   }
-  for (const p of [scheduleDetailProblem(t), attributeProblem(t), secretOrPromiseProblem(t)]) if (p) out.push(p);
+  for (const p of [scheduleDetailProblem(t), attributeProblem(t), secretOrPromiseProblem(t), addressOrSalaryProblem(t)]) if (p) out.push(p);
   if (ctx.conversation) {
     const copied = copiedFromConversationProblem(t, ctx.conversation, ctx.facts ?? "");
     if (copied) out.push(copied);

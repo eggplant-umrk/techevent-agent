@@ -71,6 +71,11 @@ async function main() {
   const sec = R.secretOrPromiseProblem;
   for (const t of ["社外秘の内容もお話しします。", "非公開の情報をお伝えできます。", "内部の数字をお見せします。", "未発表の新機能のロードマップをお話しします。", "売上の数字をお話しします。", "登壇をお約束します。", "必ず登壇させます。", "登壇を確約します。", "絶対に大丈夫です。"]) check(`社外秘・約束：当たる「${t}」`, sec(t) !== null);
   for (const t of [ok, "まだ確約はできませんが、前向きに検討します。", "お約束はできないのですが、本人に確認します。", "公開されている記事の内容をもとにお話しできます。", "あらためてご連絡します。"]) check(`社外秘・約束：当たらない「${t}」`, sec(t) === null, sec(t) ?? "");
+  // 住所・年収
+  const pers = R.addressOrSalaryProblem;
+  for (const t of ["蔵本の自宅は渋谷区です。", "住所は東京都渋谷区神南1-2-3です。", "〒150-0041 までお送りください。", "神奈川県横浜市西区みなとみらい２丁目です。", "蔵本の年収は900万円です。", "謝礼は50,000円でお願いします。", "月給はお答えできません。"]) check(`住所・年収：当たる「${t}」`, pers(t) !== null);
+  for (const t of [ok, "会場は渋谷とのこと、承知しました。", "12月10日（木）19時〜のLT（10分）でお願いします。", "初期JSを2.1MBから900KBへ減らしたお話です。", "参加者は100名ほどとのこと、楽しみです。", "東京都内の会場とのこと、伺えます。"]) check(`住所・年収：当たらない「${t}」`, pers(t) === null, pers(t) ?? "");
+  check("[B4] 住所だけ・年収だけが入った返事も止める", R.organizerReplyProblems("弊社の蔵本がお話しできそうです。蔵本の住所は東京都渋谷区神南1-2-3です。", "蔵本 湊", othersOf("e030")).some((p) => p.includes("住所")) && R.organizerReplyProblems("弊社の蔵本がお話しできそうです。蔵本の年収は900万円です。", "蔵本 湊", othersOf("e030")).some((p) => p.includes("年収")));
   // 会話の写し
   const b1 = EDGE_CASES.find((c) => c.id === "B1")!;
   const copy = R.copiedFromConversationProblem;
@@ -130,7 +135,7 @@ async function main() {
     return R.organizerReplyProblems(text, who, othersOf(e.id), { conversation: request.message, facts: organizerReplyFacts(request, { name: who, theme }) });
   };
   /** 今回足した4つの検査に当たったもの */
-  const isNew = (p: string) => /予定の中身|性別・年齢・国籍|機密を思わせる|約束の言い方|会話の原文と同じ並び/.test(p);
+  const isNew = (p: string) => /予定の中身|性別・年齢・国籍|機密を思わせる|約束の言い方|会話の原文と同じ並び|住所の形|年収・給与の形/.test(p);
 
   // (a) 保存済みの本番の返事（AI が実際に書いた文）
   const xconv = JSON.stringify(json("app", "_client", "xconv.json"));
@@ -141,7 +146,7 @@ async function main() {
     // 会話の写しは、その返事のもとの会話と項目が分かるもの（指示の仕込みの確認の回）だけ見る。項目は、読み取った値と、返事の「」の中のテーマ案
     const fromInj = t.includes("Cloud Native Night");
     const facts = fromInj ? [...Object.values(inj.intake?.fields ?? {}).filter((v): v is string => typeof v === "string"), ...[...t.matchAll(/「([^」]+)」/g)].map((m) => m[1])].map((v) => `項目：${v}`).join(String.fromCharCode(10)) : "";
-    const news = [R.scheduleDetailProblem(t), R.attributeProblem(t), R.secretOrPromiseProblem(t), fromInj ? R.copiedFromConversationProblem(t, inj.conversation, facts) : null].filter(Boolean);
+    const news = [R.scheduleDetailProblem(t), R.attributeProblem(t), R.secretOrPromiseProblem(t), R.addressOrSalaryProblem(t), fromInj ? R.copiedFromConversationProblem(t, inj.conversation, facts) : null].filter(Boolean);
     check(`保存済みの本番の返事は、足した検査に当たらない「${t.slice(0, 24)}…」`, news.length === 0, news.join(" / "));
   }
 

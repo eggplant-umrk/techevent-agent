@@ -1,0 +1,323 @@
+{
+  "note": "eval:passk --record が書く。ケースごとの、本番で流した最後の1回の結果",
+  "outputs": {
+    "edge-N2": {
+      "status": "ready",
+      "intake": {
+        "event_name": "QA Sprint Talks",
+        "date": "2027-01-27",
+        "date_hint": null,
+        "format": "トーク（20分）",
+        "theme": "テスト自動化",
+        "organizer": "小西",
+        "extra": {
+          "duration": "20分",
+          "audience_size": null,
+          "audience": null,
+          "venue": null,
+          "recording": null,
+          "reward": null,
+          "reply_deadline": null
+        },
+        "extra_reasons": {
+          "audience_size": "会話の中に書かれていません",
+          "audience": "会話の中に書かれていません",
+          "venue": "会話の中に書かれていません",
+          "recording": "会話の中に書かれていません",
+          "reward": "会話の中に書かれていません",
+          "reply_deadline": "会話の中に書かれていません"
+        },
+        "undecided": [],
+        "reasons": {},
+        "kind": "request",
+        "kind_reason": null,
+        "notes": []
+      },
+      "result": {
+        "run_id": "9e177d2d-91d6-485b-a6e6-6f0fcc82e1c1",
+        "request_id": "inb-mwr6pp8r-52a85b",
+        "request_pattern": "theme_specified",
+        "summary": "QA Sprint Talks（2027-01-27、20分トーク）から「テスト自動化」の指定がありました。テスト自動化に自分で手を動かした人を選びました。E2Eテストのflaky対策をした篠宮さんと、AIエージェントの回帰テストをCIで自動化した早乙女さんを自信のある候補にしています。同じテーマで今年すでに社外登壇している千早さんは条件付きで後ろに入れました。",
+        "nominee_assessment": null,
+        "learnings_applied": [],
+        "no_fit": null,
+        "candidates": [
+          {
+            "rank": 1,
+            "employee_id": "e020",
+            "name": "篠宮 悠",
+            "business_unit": "バクラク",
+            "role": "QAエンジニア",
+            "busy_text": "今後2週間は勤務時間の5割が予定で埋まっている",
+            "talk_tag": "初登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "flaky率を週次で可視化し、テストごとの使い捨てテナントでE2Eのflakyを70%減らした話",
+            "reason": "E2Eテストのflaky率を週次で集計して原因を切り分け、テストデータを分ける仕組みでflakyを70%減らした本人で、テスト自動化を安定して運用する話としてQAの聞き手に直接刺さる",
+            "evidence": [
+              {
+                "id": "act026",
+                "type": "weekly_report",
+                "date": "2026-09-18",
+                "title": "週報 9/14-9/18 篠宮",
+                "where": "#weekly-bakuraku-qa",
+                "url": null
+              },
+              {
+                "id": "act082",
+                "type": "github_pr",
+                "date": "2026-10-23",
+                "title": "E2E: テストごとにテナントを分離してflakyを解消",
+                "where": "bakuraku/e2e-tests",
+                "url": null
+              }
+            ],
+            "cautions": [
+              "ネタ帳ではLT向けの分量なので、20分にするには待ち合わせ処理の対策やCI時間との兼ね合いの判断まで話を広げる必要がある",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e020-01",
+            "card": {
+              "card_id": "card-e020-01",
+              "employee_id": "e020",
+              "summary": "E2Eテストのflaky率を週次で集計する仕組みを作り、原因を分析しました。原因の6割は待ち合わせ処理の不備、残りはテストデータの共有でした。テストデータ共有への対策として、テストごとに使い捨てテナントを作る分離を入れ、CI時間+2分と引き換えにflaky率を月初比で70%減らしました。",
+              "themes": [
+                "flaky率を週次で可視化して原因を切り分けたE2Eテスト改善",
+                "テストごとの使い捨てテナントでE2Eのflakyを70%減らした話",
+                "CI時間+2分と引き換えに安定性を取る：E2Eテストデータ分離の判断"
+              ],
+              "evidence_activity_ids": [
+                "act026",
+                "act082"
+              ],
+              "format": "lt",
+              "format_reason": "計測・原因分析・対策・70%減という結果が短くまとまっていて、登壇経験のない本人が最初に話すには5〜10分のLTがちょうどよいため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-23",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:54.244Z",
+              "updated_at": "2026-11-21T05:26:54.244Z",
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          },
+          {
+            "rank": 2,
+            "employee_id": "e013",
+            "name": "早乙女 蓮",
+            "business_unit": "Ai Workforce",
+            "role": "MLエンジニア",
+            "busy_text": "今後2週間は勤務時間の5割が予定で埋まっている",
+            "talk_tag": "初登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 0,
+            "last_talk_date": null,
+            "theme": "AIエージェントのテストをどう自動化するか：LLM-as-a-judgeによる回帰テストをCIに入れる",
+            "reason": "正解ケース200件の回帰テストをCIに組み込み、新モデルへの切り替え判断を1週間から1日に縮めた本人で、テスト自動化とAIエージェントの評価という時流の両方に合う",
+            "evidence": [
+              {
+                "id": "act019",
+                "type": "github_pr",
+                "date": "2026-09-14",
+                "title": "エージェント評価: LLM-as-a-judgeによる回帰テストをCIに追加",
+                "where": "ai-workforce/agent-eval",
+                "url": null
+              },
+              {
+                "id": "act050",
+                "type": "slack_post",
+                "date": "2026-10-06",
+                "title": "評価基盤のおかげでモデル切り替えが1日で終わった",
+                "where": "#ai-workforce-dev",
+                "url": null
+              },
+              {
+                "id": "act073",
+                "type": "design_doc",
+                "date": "2026-10-20",
+                "title": "AIエージェント評価基盤 設計ドキュメント v2",
+                "where": "ai-workforce/design-docs",
+                "url": null
+              }
+            ],
+            "cautions": [
+              "題材はAIエージェントの評価なので、QAの聞き手向けに「非決定的なものをどう自動テストするか」という見せ方に寄せる必要がある",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "strong",
+            "caveat": null,
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e013-01",
+            "card": {
+              "card_id": "card-e013-01",
+              "employee_id": "e013",
+              "summary": "AIエージェントの評価基盤を作り、プロンプトやツール定義を変えたときに過去の正解ケース200件で挙動を自動評価する回帰テストをCIに組み込んだ。判定LLMのブレは3回判定の多数決で抑え、人手評価との一致率は87%。新モデルへの切り替え判断は手動確認で1週間かかっていたのが1日になり、ツール呼び出しの誤りが増えるケースも事前に見つけられた。",
+              "themes": [
+                "LLM-as-a-judgeでAIエージェントの回帰テストをCIに入れる：200件の正解ケースと3回判定の多数決",
+                "モデル切り替えの判断を1週間から1日に：エージェント評価基盤を本番運用して分かったこと",
+                "判定LLMは信用できるか：人手評価との一致率87%の測り方と評価コストの見積もり"
+              ],
+              "evidence_activity_ids": [
+                "act019",
+                "act050",
+                "act073"
+              ],
+              "format": "blog",
+              "format_reason": "設計ドキュメントに評価ケースの管理・判定LLMの選定・一致率の測り方・コストの見積もりまで具体的な中身と数字がそろっていて、登壇経験のない本人がまず文章で出すのに向いているため。",
+              "publication_status": "unpublished",
+              "published_ids": [],
+              "latest_activity_date": "2026-10-20",
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:12:03.817Z",
+              "updated_at": "2026-11-21T05:12:03.817Z",
+              "announcement_activity_ids": [],
+              "pending_themes": [],
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          },
+          {
+            "rank": 3,
+            "employee_id": "e005",
+            "name": "千早 航",
+            "business_unit": "バクラク",
+            "role": "QAエンジニア",
+            "busy_text": "今後2週間は勤務時間の4割が予定で埋まっている",
+            "talk_tag": "半年以内に登壇",
+            "blog_to_lt": false,
+            "past_talk_count": 7,
+            "last_talk_date": "2026-09-26",
+            "theme": "生成AI時代のテスト自動化の投資判断：QAの視点から",
+            "reason": "テスト自動化が得意分野のQAエンジニアで、2026年9月に社外カンファレンスでテスト自動化の投資対効果を話しており、このテーマにぴったり合う",
+            "evidence": [
+              {
+                "id": "act036",
+                "type": "slack_post",
+                "date": "2026-09-27",
+                "title": "外部カンファレンスでQAの話をしてきました",
+                "where": "#tech-pr",
+                "url": null
+              }
+            ],
+            "cautions": [
+              "同じテーマを2026年9月に社外カンファレンスで話しているので、前回と違う切り口（生成AIの影響など）にする必要がある",
+              "手を動かした取り組みの根拠は登壇の報告だけで、新しい中身があるか本人に確認が要る",
+              "ネタ帳の記録は技術広報が未確認"
+            ],
+            "is_alternative_to_nominee": false,
+            "confidence": "conditional",
+            "caveat": "同じテーマで2026年9月に社外登壇済みで、新しい内容を用意できるか確認が要る",
+            "is_nominee": false,
+            "evidence_request_id": null,
+            "card_id": "card-e005-01",
+            "card": {
+              "card_id": "card-e005-01",
+              "employee_id": "e005",
+              "summary": "2026-09に外部カンファレンスで「テスト自動化の投資対効果 2026」を登壇しました。2025年の同じテーマの登壇を2026年版に更新した内容です。懇親会では他社のQAエンジニアと情報交換もしています。",
+              "themes": [
+                "テスト自動化の投資対効果 2026：2025年版から何が変わったか",
+                "生成AI時代のテスト自動化の投資判断：QAの視点から"
+              ],
+              "evidence_activity_ids": [],
+              "format": "blog",
+              "format_reason": "登壇はもう済んでいて資料もあるので、登壇経験7回の本人にとって書きやすく、会場に来られなかった人にも届くブログ版で広げるのが合うためです。",
+              "publication_status": "talked",
+              "published_ids": [
+                "pub035"
+              ],
+              "latest_activity_date": "2026-09-27",
+              "announcement_activity_ids": [
+                "act036"
+              ],
+              "pending_themes": [],
+              "outreach_history": [],
+              "reviewed": false,
+              "reviewed_at": null,
+              "created_at": "2026-11-21T05:26:06.001Z",
+              "updated_at": "2026-11-21T05:26:06.001Z",
+              "edited_fields": [],
+              "evidence_request_ids": [],
+              "reactions": []
+            }
+          }
+        ]
+      },
+      "recorded_at": "2026-11-22T01:55:38.672Z"
+    },
+    "raise-F3-first-request-date": {
+      "status": "ready",
+      "intake": {
+        "event_name": "Kotlin Fest mini",
+        "date": "2027-01-15",
+        "date_hint": null,
+        "format": "LT（10分）",
+        "theme": "サーバーサイド Kotlin",
+        "organizer": "橋本",
+        "extra": {
+          "duration": "10分",
+          "audience_size": null,
+          "audience": null,
+          "venue": null,
+          "recording": null,
+          "reward": null,
+          "reply_deadline": null
+        },
+        "extra_reasons": {
+          "audience_size": "会話の中に書かれていません",
+          "audience": "会話の中に書かれていません",
+          "venue": "会話の中に書かれていません",
+          "recording": "会話の中に書かれていません",
+          "reward": "会話の中に書かれていません",
+          "reply_deadline": "会話の中に書かれていません"
+        },
+        "undecided": [],
+        "reasons": {},
+        "kind": "request",
+        "kind_reason": null,
+        "notes": [
+          "1つの文に複数の依頼が入っていました。1件目だけを進めています。ほかの依頼は別に貼ってください"
+        ]
+      },
+      "result": {
+        "run_id": "2035a707-98c2-4ceb-a304-0918b942a0bc",
+        "request_id": "inb-mwr6s3ub-1e47b1",
+        "request_pattern": "theme_specified",
+        "summary": "Kotlin Fest mini（2027年1月15日、10分のLT）から、テーマを「サーバーサイド Kotlin」と指定した依頼として扱いました。ネタ帳、社内の投稿、得意分野のどれにも Kotlin を使った取り組みが見つからなかったため、候補は出していません。同じメッセージに入っていた別件（AI Agent Builders、2月24日、20分の LLM の評価の話）は、別の依頼として受け付け直してください。",
+        "nominee_assessment": null,
+        "learnings_applied": [],
+        "no_fit": {
+          "reasons": [
+            "ネタ帳と社内の投稿を「Kotlin」「サーバーサイド」「Ktor」「Spring」「JVM」で探したが、該当がなかった",
+            "社員の得意分野にも Kotlin の人がいない（バックエンドの得意言語は Go・Python・TypeScript が中心）",
+            "近いものは猪瀬 りんさんの「バクラク勤怠」スマートフォンアプリ（iOS／Android）だけだが、モバイルアプリの話でサーバーサイドではなく、Kotlin を使ったかどうかも投稿からはわからない",
+            "1つの文に複数の依頼が入っていました。1件目だけを進めています。ほかの依頼は別に貼ってください"
+          ],
+          "next_checks": [
+            "社内に Kotlin でサーバーサイドを書いているチームや、サービス（買収・新規開発を含む）があるか、各事業部のエンジニアリングマネージャーに聞く",
+            "「バクラク勤怠」アプリチームの技術構成（Android 側やバックエンドで Kotlin を使っているか）を猪瀬 りんさんに確かめる。モバイルの Kotlin でもよいか、主催の橋本さんに相談できる",
+            "該当者がいなければ、今回は見送りと主催の橋本さんに返す"
+          ]
+        },
+        "candidates": []
+      },
+      "recorded_at": "2026-11-22T01:57:21.481Z"
+    }
+  }
+}

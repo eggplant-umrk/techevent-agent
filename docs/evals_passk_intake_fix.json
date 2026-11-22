@@ -1,0 +1,213 @@
+{
+  "at": "2026-11-22T01:57:21.484Z",
+  "k": 5,
+  "max_usd": 2,
+  "spent_usd": 1.0006,
+  "stopped": null,
+  "rows": [
+    {
+      "id": "edge-N2",
+      "title": "正常：リプライのやり取り（あとから日程が決まる）",
+      "weight": 9,
+      "allowed_failure_rate": 0,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1771,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-27",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1192,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-27",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.122,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-27",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1327,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-27",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [
+            "organizer_reply_clean"
+          ],
+          "usd": 0.1311,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-27",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [
+              "e020:strong",
+              "e013:strong",
+              "e005:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "raise-F3-first-request-date",
+      "title": "複数の依頼が混ざっているとき、1件目の決まった日程を使う",
+      "weight": 4,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0649,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-15",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0547,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-15",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0657,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-15",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0678,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-15",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0654,
+          "seen": {
+            "kind": "request",
+            "date": "2027-01-15",
+            "date_hint": null,
+            "undecided": [],
+            "date_reason": null,
+            "candidates": [],
+            "judge_answers": []
+          }
+        }
+      ]
+    }
+  ]
+}

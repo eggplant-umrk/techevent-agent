@@ -13,7 +13,7 @@ const LAYERS = {
   unit: { label: "1. ユニット", cmd: ["scripts/test_all.mjs", "--unit"] },
   api: { label: "2. API", cmd: ["tests/api/api.test.mjs"] },
   e2e: { label: "3. E2E", cmd: [path.join("node_modules", "@playwright", "test", "cli.js"), "test"] },
-  // ④の offline の評価が入ったら、ここ（と package.json の test:eval）を差し替える
+  // 結合テスト（eval --offline）と④の保つ評価（eval:keep）。中身は scripts/test_all.mjs の --eval
   eval: { label: "4. 評価", cmd: ["scripts/test_all.mjs", "--eval"] },
 };
 const wanted = args.filter((a) => a in LAYERS);

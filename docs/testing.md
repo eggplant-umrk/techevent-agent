@@ -7,7 +7,7 @@
 | 1. ユニット | `npm run test:unit` | 関数ひとつひとつの決まり（日付の読み方・関所・候補の検証・金額の計算・Slack の受け取りなど）。壊れた場所がすぐ分かる | 約1分（25本） | 多い。API は偽物の関数に差し替え、置き場は一時フォルダ（`scripts/_isolate.ts`） |
 | 2. API | `npm run test:api` | 窓口（`/api/…`）の約束。本物のサーバーに本当に要求を投げて、返り値と置き場（一時フォルダ）の変化を見る | 約2分（ビルド込み）、ビルド済みなら約40秒 | API だけ偽物（偽の Anthropic サーバー）。サーバー・入口（proxy）・保存は本物 |
 | 3. E2E | `npm run test:e2e` | 画面でデモの流れが通ること（貼る → 候補 → 声かけの下書き → 承諾 → アーカイブ → ネタ帳） | 約2分（ビルド込み）、ビルド済みなら約20秒 | API だけ偽物（1本）／`?mock` の画面（1本） |
-| 4. 評価 | `npm run test:eval` | 保存済みの Agent の結果が、守るべき決まり（根拠が実在する・送信しない・候補の情報を Slack に出さない など）を満たすこと | 約5秒 | なし（保存済みの本物の結果をコードで判定） |
+| 4. 評価 | `npm run test:eval` | 保存済みの Agent の結果が、守るべき決まり（根拠が実在する・送信しない・候補の情報を Slack に出さない など）を満たすこと。④の保つ評価が90%以上 | 約10秒 | なし（保存済みの本物の結果をコードで判定） |
 
 まとめて流す命令：
 
@@ -19,7 +19,7 @@
 
 - 1つの層が失敗しても、残りの層は流して、最後に層ごとの結果（○×と秒数）を出します（`scripts/test_layers.mjs`）
 - API 層と E2E 層は本番用のビルド（`next build`）を使います。まとめて流すときは最初に1回だけビルドして使い回します。続けて流すときは `SKIP_BUILD=1` を付けると、すでにある `.next` を使います
-- 4 の評価は、④が作っている offline の評価が入ったら差し替えます（`scripts/test_layers.mjs` の `eval` と `package.json` の `test:eval` の2か所）
+- 4 の評価は、前からの結合テスト（`eval --offline`）と、④の評価（docs/evals.md）のうち API を使わない保つ評価（`eval:keep`）です
 
 ## 1. ユニット
 
@@ -57,7 +57,10 @@
 
 ## 4. 評価
 
-`scripts/eval.ts all --offline`（保存済みの結果の判定、69件）。API を使う評価（`npm run eval`）は別で、お金がかかるのでテストには入れていません。
+- `scripts/eval.ts all --offline`：保存済みの結果の判定（69件）
+- `scripts/evals/run.ts keep`（= `npm run eval:keep`）：④の保つ評価。90% を切ったら失敗
+- ④の上げる評価が main より下がっていないか（`eval:compare`）は `origin/main` と比べる作りで、CI の浅い checkout では比べる相手がないことがあるので、ここには入れていません。`npm run test:evals`（ユニット）が、形・点数の計算・保つ評価・上げる評価が下がっていないことを見ます
+- API を使う評価（`npm run eval`・`npm run eval:passk`・`npm run try:edge`）はお金がかかるので、テストには入れていません
 
 ## 偽の Anthropic（`scripts/testing/fake_anthropic.mjs`）
 

@@ -1,5 +1,5 @@
 # push と pull request のたびに、テストの層をすべて流す（並びと役割は docs/testing.md）。
-#   check：型チェック → 1. ユニット → 4. 評価（offline）
+#   check：型チェック → 1. ユニット → 4. 評価（eval --offline と保つ評価）
 #   api  ：2. API（本物のサーバー＋偽の Anthropic）
 #   e2e  ：3. E2E（Playwright。ブラウザはここで入れる）
 # 本物の API・Slack は使わない。秘密の値（API キー・Slack のトークンなど）も使わない。.env もない状態で動く。
@@ -33,7 +33,7 @@ jobs:
         run: npm run typecheck
       - name: 1. ユニット（scripts/test_*.ts）
         run: npm run test:unit
-      - name: 4. 評価（eval --offline）
+      - name: 4. 評価（eval --offline と保つ評価）
         run: npm run test:eval
 
   api:

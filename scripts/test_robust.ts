@@ -248,19 +248,20 @@ async function main() {
 
     // ---- 6. 「ネタ帳を更新」の二重実行
     const nb = await import("../app/api/notebook/route");
-    const gl = globalThis as typeof globalThis & { __notebookUpdating?: boolean };
-    gl.__notebookUpdating = true;
+    // 動いている更新の印（発表用は全員で1つ "all"。見せる用は人ごと。app/api/notebook/route.ts）
+    const gl = globalThis as typeof globalThis & { __notebookUpdatingKeys?: Set<string> };
+    (gl.__notebookUpdatingKeys ??= new Set()).add("all");
     const busyRes = await nb.POST();
     const busyBody = (await busyRes.json()) as { error: string };
     check("更新が動いている間は、2回目を始めず「更新中です」と返す", busyRes.status === 409 && /ネタ帳を更新中です/.test(busyBody.error), busyBody.error);
     check("2回目は枠を持ったままにしない", slots.busyApiSlots() === 0);
-    gl.__notebookUpdating = false;
+    gl.__notebookUpdatingKeys.delete("all");
     const [a, b] = await Promise.all([nb.POST(), nb.POST()]);
     const kinds = [a, b].map((r) => (r.headers.get("content-type") ?? "").includes("ndjson") ? "更新" : String(r.status));
     check("同時に2回押しても、動くのは1つだけ（もう1つは 409）", kinds.sort().join(",") === "409,更新", kinds.join(","));
     const running = [a, b].find((r) => (r.headers.get("content-type") ?? "").includes("ndjson"))!;
     await running.text();
-    check("更新が終わったら、次の更新を受け付ける", gl.__notebookUpdating === false && slots.busyApiSlots() === 0);
+    check("更新が終わったら、次の更新を受け付ける", !gl.__notebookUpdatingKeys.has("all") && slots.busyApiSlots() === 0);
   } finally {
     for (const r of hanging) r.destroy();
     server.close();

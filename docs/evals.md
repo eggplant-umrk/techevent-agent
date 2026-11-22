@@ -116,7 +116,7 @@ Agent の出来を、ケースの集まりで測ります。ケースの形は `
 | 出どころ | どこに書くか | 手順 |
 | --- | --- | --- |
 | 試験の一覧（入力の形） | `scripts/fixtures/edge_cases.ts` に1件足し、`scripts/evals/cases.ts` の `EDGE_PLAN` に優先度と判定を書く | 足さないと `npm run test:evals` が「優先度と判定が決まっていません」で落ちる |
-| 使われた結果 | `scripts/evals/cases/usage.json`（`EvalCase` の並び。2 の決まりで変換する） | `suite` が `keep` なら保つ評価に、`raise` なら上げる評価に入る。保存する前に `evalCaseProblems` に通す |
+| 使われた結果 | `npm run eval:from-feedback`（`lib/feedbackEval.ts`）が、ケースの候補を `data/runtime/eval_candidates/` に出す（リポジトリには入らない）。人が中身を確かめてから、`scripts/evals/cases/usage.json`（`EvalCase` の並び）に足す | `suite` が `keep` なら保つ評価に、`raise` なら上げる評価に入る。変換が使う判定は `expected_in_candidates`（よいと付けた人が全員いる）・`not_in_candidates`（違うと付けた人がいない）・`intake_fields_match`（人が直した読み取りと合う）。足す前に `evalCaseProblems(ケース, 判定の名前の一覧)` に通す |
 | 本番で失敗したもの・弱いところ | `scripts/evals/cases.ts` の `raiseCases()` に手で書く | 失敗した結果を `recorded` に入れ、落ちる判定を `checks` に書く（まず落ちることを確かめる） |
 | 結合テストの判定 | `scripts/eval.ts` に判定を足す。名前の先頭（`req001 `・`受信箱`・`出し先（…）`・`ネタ帳`・`アンケート`）で、10件のケースのどれかに入る | 新しい先頭の名前を作ったら、`scripts/evals/cases.ts` の `LEGACY_GROUPS` に組を足す（足さないと「どのケースにも入らなかった」で落ちる） |
 | 新しいコードの判定 | `scripts/evals/checks.ts` の `CHECKS` に名前を付けて足す | 材料がないときは `unknown` を返す。`scripts/test_evals.ts` に、通る例と落ちる例を足す |

@@ -1,8 +1,10 @@
 // POST /api/access：合言葉を確かめて、ブラウザに印（cookie、httpOnly）を付ける（SHARE_MODE=lan のときだけ使う）
 //   { code: string } → 200 { ok: true } ／ 401 ／ 429（同じ送り元が続けて間違えたとき・全体の間違いが多いとき。lib/accessGuard.ts）
-import { ACCESS_COOKIE, accessToken, codeMatches, shareMode } from "@/lib/share";
+//   合言葉は2種類：一般（ACCESS_CODE）とメンター用（MENTOR_ACCESS_CODE、任意）。どちらも同じ守り（回数の制限・全体の上限）。
+//   メンター用で入った人には、メンターの印（nb_role）も付ける。返事の形は同じで、役割は画面に出さない
+import { ACCESS_COOKIE, accessToken, codeMatches, MENTOR_COOKIE, mentorCodeMatches, shareMode } from "@/lib/share";
 import { accessLock, accessSourceKey, noteAccessFailure, noteAccessSuccess } from "@/lib/accessGuard";
-import { newPersonId, personCookieHeader, personCookieOf } from "@/lib/personBudget";
+import { mentorCookieHeader, newPersonId, personCookieHeader, personCookieOf } from "@/lib/personBudget";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +17,8 @@ export async function POST(req: Request) {
   if (locked) return Response.json({ error: locked.message }, { status: 429, headers: { "Retry-After": String(Math.ceil(locked.ms / 1000)) } });
   const body = (await req.json().catch(() => null)) as { code?: unknown } | null;
   const code = typeof body?.code === "string" ? body.code : null;
-  if (!codeMatches(code)) {
+  const mentor = mentorCodeMatches(code);
+  if (!mentor && !codeMatches(code)) {
     const nowLocked = noteAccessFailure(key);
     if (nowLocked) return Response.json({ error: nowLocked.message }, { status: 429 });
     return Response.json({ error: "合言葉が違います" }, { status: 401 });
@@ -25,5 +28,7 @@ export async function POST(req: Request) {
   res.headers.append("Set-Cookie", `${ACCESS_COOKIE}=${accessToken()}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${60 * 60 * 12}`);
   // 人ごとの印（1人あたりの API 代の上限を数えるため。合言葉の印は全員同じ値なので別に付ける）。もう持っていれば変えない
   if (!personCookieOf(req.headers.get("cookie"))) res.headers.append("Set-Cookie", personCookieHeader(newPersonId()));
+  // メンターの印：メンター用で入ったら付ける。一般の合言葉で入り直したら外す
+  res.headers.append("Set-Cookie", mentor ? mentorCookieHeader() : `${MENTOR_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`);
   return res;
 }

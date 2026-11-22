@@ -58,7 +58,7 @@ async function main() {
   check("結合テストの判定は69件以上で、すべて10件のケースのどれかに入っている", legacy.length >= 69 && lc.unmatched.length === 0 && lc.cases.length === 10, `${legacy.length}件・入らなかった ${lc.unmatched.length}件`);
   check("読み替えたケースの判定の数の合計＝結合テストの判定の数", lc.results.reduce((n, r) => n + r.checks.length, 0) === legacy.length);
   const edges = edgeCases();
-  check("入力の試験は30件で、すべてに優先度と判定がある", edges.length === 30 && edges.every((c) => c.checks.length > 0 && c.priority.frequency >= 1 && c.priority.pain >= 1));
+  check("入力の試験は33件で、すべてに優先度と判定がある", edges.length === 33 && edges.every((c) => c.checks.length > 0 && c.priority.frequency >= 1 && c.priority.pain >= 1));
   const edgeProblems = edges.flatMap((c) => T.evalCaseProblems(c, CHECK_NAMES));
   check("入力の試験のケースは、形の検査に通る", edgeProblems.length === 0, edgeProblems.slice(0, 2).join("／"));
   check("信頼をなくす失敗（不満 3）のケースは、1回の失敗も許さない", edges.filter((c) => c.priority.pain === 3).every((c) => c.allowed_failure_rate === 0) && edges.some((c) => c.priority.pain === 3));

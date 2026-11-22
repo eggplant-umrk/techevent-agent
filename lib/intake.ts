@@ -4,8 +4,11 @@
 // - 日程が決まっていないときは「日程の手がかり」（「2月か3月」「春ごろ」など、会話にある言い回しそのまま）も読む。
 //   本当に会話にあるかはコードで確かめ、なければ捨てる。期間への変換と空いていそうな日は lib/dateHint.ts（コード）
 // - 確かめられなかった項目は「未定」にして、注意点に書く。推測で埋めない
+// - 足した項目（持ち時間・人数・対象者・会場・録画・資料の公開・謝礼・交通費・返事の期限。lib/askBack.ts）も同じ1回で読む。
+//   引用が会話にあること、値の数字が引用にあることをコードで確かめ、確かめられなければ未定（会話にない数字を作らせない）
 // X には手を出さない（読みにいかない・返信しない）。ここで扱うのは人が貼った文だけ。
 import { getClient } from "./anthropic";
+import { EXTRA_FIELDS, EXTRA_LABEL, EXTRA_MAX, type ExtraField } from "./askBack";
 import { datesInText, decideDate, otherDatesInConversation } from "./dateHint";
 import { resolveNominee, type NomineeReading } from "./nominee";
 import { chooseModels, recordUsage } from "./usage";
@@ -27,7 +30,7 @@ export type Quoted = { value: string | null; quote: string | null };
 export type IntakeKind = "request" | "not_request" | "inappropriate";
 export const KIND_LABEL: Record<IntakeKind, string> = { request: "登壇の依頼", not_request: "依頼ではない", inappropriate: "不適切" };
 
-export type RawIntake = Record<IntakeField, Quoted> & {
+export type RawIntake = Record<IntakeField, Quoted> & Partial<Record<ExtraField, Quoted | null>> & {
   nominee: Quoted;
   date_hint?: Quoted | null;
   /** 種類と理由の一言（古い形の読み取りにはない。ないときは登壇の依頼として扱う） */
@@ -50,7 +53,14 @@ export interface IntakeReading {
   organizer: string | null;
   /** 日程が決まっていないときの時期の手がかり（会話にある言い回しそのまま。会話の中にあることを確かめ済み）。日程が決まっている・手がかりがなければ null */
   date_hint?: string | null;
-  /** 未定（会話の中で決まっていない、または読み取りを確かめられなかった）の項目 */
+  /**
+   * 足した項目（持ち時間・人数・対象者・会場・録画・資料の公開・謝礼・交通費・返事の期限）。確かめられた値、なければ null（未定）。
+   * 足した項目を読んでいない読み取り（古い形）にはない。ないときは、聞き返しも表示もしない
+   */
+  extra?: Record<ExtraField, string | null>;
+  /** 足した項目を未定にした理由（項目ごと、使う人向けの文） */
+  extra_reasons?: Partial<Record<ExtraField, string>>;
+  /** 未定（会話の中で決まっていない、または読み取りを確かめられなかった）の項目。足した項目は入れない（extra の null が未定） */
   undecided: IntakeField[];
   /** 未定にした理由（項目ごと、使う人向けの文） */
   reasons: Partial<Record<IntakeField, string>>;
@@ -118,6 +128,42 @@ export function checkDateHint(text: string, hint: Quoted | null | undefined, dat
   return v;
 }
 
+/** 数字の並び（全角半角をそろえてから） */
+const digitRuns = (s: string): string[] => s.normalize("NFKC").match(/\d+/g) ?? [];
+
+/**
+ * 足した項目の確かめ（コード）。今までの項目と同じく、引用が会話にあるときだけ使う。
+ * さらに、値に出てくる数字はすべて引用の中にあること（「50名」と読んだなら、引用に 50 がある）。会話にない数字を作らせない。
+ * 足した項目が1つもない読み取り（古い形）は null（読んでいない）
+ */
+export function checkExtras(
+  text: string,
+  raw: RawIntake,
+  kind: IntakeKind,
+): { extra: Record<ExtraField, string | null>; reasons: Partial<Record<ExtraField, string>> } | null {
+  if (!EXTRA_FIELDS.some((f) => f in raw)) return null;
+  const reasons: Partial<Record<ExtraField, string>> = {};
+  const one = (f: ExtraField): string | null => {
+    const fail = (why: string) => {
+      reasons[f] = why;
+      return null;
+    };
+    if (kind !== "request") return fail("登壇の依頼として読んでいないため、項目は使いません");
+    const q = raw[f];
+    const v = q?.value?.trim() || null;
+    if (!v) return fail("会話の中に書かれていません");
+    if (!inText(text, q?.quote ?? null)) return fail("読み取った内容が会話の中に見つからないため、確かめられませんでした");
+    const quoteDigits = digitRuns(q!.quote!);
+    const made = digitRuns(v).filter((d) => !quoteDigits.includes(d));
+    if (made.length) return fail(`読み取った${EXTRA_LABEL[f]}の数字（${made.join("・")}）が会話の一節にないため、使いません`);
+    if (INSTRUCTION_WORDS.test(v.normalize("NFKC"))) return fail("指示のような言い方が入っているため、項目として使いません。会話を確認してください");
+    if (v.length > EXTRA_MAX[f]) return fail(`長すぎるため（${EXTRA_MAX[f]}字まで）、項目として使いません。会話を確認してください`);
+    return v;
+  };
+  const extra = Object.fromEntries(EXTRA_FIELDS.map((f) => [f, one(f)])) as Record<ExtraField, string | null>;
+  return { extra, reasons };
+}
+
 /** Agent の読み取りを確かめる（コード）。指名は社員データで照合する */
 export function checkIntake(text: string, raw: RawIntake, receivedAt: string): { intake: IntakeReading; nominee: NomineeReading } {
   const reasons: Partial<Record<IntakeField, string>> = {};
@@ -167,6 +213,7 @@ export function checkIntake(text: string, raw: RawIntake, receivedAt: string): {
   }
   if (d.reason) reasons.date = d.reason;
   if (kind !== "request") reasons.date = "登壇の依頼として読んでいないため、項目は使いません";
+  const extras = checkExtras(text, raw, kind);
   const intake: IntakeReading = {
     event_name,
     date: kind === "request" ? d.date : null,
@@ -174,6 +221,7 @@ export function checkIntake(text: string, raw: RawIntake, receivedAt: string): {
     format,
     theme,
     organizer,
+    ...(extras ? { extra: extras.extra, extra_reasons: extras.reasons } : {}),
     undecided: INTAKE_FIELDS.filter((f) => reasons[f]),
     reasons,
     kind,
@@ -249,6 +297,7 @@ const SCHEMA = {
     organizer: QUOTED,
     nominee: QUOTED,
     date_hint: QUOTED,
+    ...Object.fromEntries(EXTRA_FIELDS.map((f) => [f, QUOTED])),
     kind: {
       type: "object",
       properties: { value: { type: "string", enum: ["request", "not_request", "inappropriate"] }, reason: { type: "string" } },
@@ -259,7 +308,7 @@ const SCHEMA = {
     attribute_filter: { type: "boolean" },
     competitor_comparison: { type: "boolean" },
   },
-  required: ["event_name", "date", "format", "theme", "organizer", "nominee", "date_hint", "kind", "multiple_requests", "attribute_filter", "competitor_comparison"],
+  required: ["event_name", "date", "format", "theme", "organizer", "nominee", "date_hint", ...EXTRA_FIELDS, "kind", "multiple_requests", "attribute_filter", "competitor_comparison"],
   additionalProperties: false,
 };
 
@@ -273,7 +322,7 @@ export const extractIntakeWithAgent: IntakeExtractor = async (text, runId) => {
     model,
     max_tokens: 3000,
     system: `社外から届いた登壇の依頼を読みます。X（DM・リプライ）の会話がそのまま貼られていることが多く、複数のメッセージが続いたり、くだけた言葉だったり、日程や形式があとから決まったりします。
-次の7項目について、会話の中で「決まっている」値と、その根拠になった一節（quote）を返してください。
+次の14項目について、会話の中で「決まっている」値と、その根拠になった一節（quote）を返してください。
 - event_name：イベント名
 - date：開催日（YYYY-MM-DD）。quote には日付を含む一節をそのまま入れる
 - format：形式（LT・トーク・パネルなど、分数が分かれば添える）
@@ -281,6 +330,13 @@ export const extractIntakeWithAgent: IntakeExtractor = async (text, runId) => {
 - organizer：主催者側の人の名前（書かれたとおり。名前がなければ表示名やアカウント名）
 - nominee：登壇者として名前を挙げて指名している LayerX 社内の人（1人。主催者や依頼元の人は含めない）
 - date_hint：開催日が1日に決まっていないときだけ、時期の手がかりになる言い回し（「2月か3月」「春ごろ」「年明けあたり」など）。value には会話にある言い回しをそのまま（短く、言い換えない）、quote にはそれを含む一節。開催日が決まっている、または手がかりがなければ value も quote も null
+- duration：登壇者の持ち時間（「10分」「20分＋質疑5分」など）
+- audience_size：来場・参加の人数や規模（「50名」「100人規模」など）。会話に書かれた数字だけを使う
+- audience：対象者（参加者の層やレベル。「若手のバックエンドエンジニア」「学生向け」など）
+- venue：会場（場所の名前や地域、またはオンライン・ハイブリッド）
+- recording：録画・配信・資料の公開について（「録画あり」「資料は後日公開」「録画なし」など）
+- reward：謝礼・交通費について（「謝礼あり」「交通費は支給」「謝礼なし」など）
+- reply_deadline：返事の期限（「11月末まで」「来週中」など、書かれたとおり）
 あわせて、次も返してください（同じ1回で）。
 - kind：貼られた文の種類。value は次の3つのどれか。reason には理由を一言（20字くらい、原文を写さない）
   - request：登壇・LT・パネル・寄稿などの依頼や相談（日程や項目が未定でもよい）
@@ -293,7 +349,8 @@ export const extractIntakeWithAgent: IntakeExtractor = async (text, runId) => {
 決まり：
 - quote は会話からそのまま抜き出す（言い換えない・要約しない・つなぎ合わせない）
 - あとのメッセージで変わったり決まったりしたら、いちばん新しい内容を使う
-- 決まっていない（調整中・候補が複数・「春ごろ」など）、書かれていない項目は value も quote も null。推測で埋めない`,
+- 決まっていない（調整中・候補が複数・「春ごろ」など）、書かれていない項目は value も quote も null。推測で埋めない
+- 数字（人数・分数・金額・日付）は、会話に書かれているものだけを value に入れる。書かれていない数字を作らない・計算しない`,
     messages: [{ role: "user", content: text }],
     output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
   });

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { Api } from "@/app/_client/api";
 import { withReturn } from "@/app/_client/backLink";
 import type { ColumnInfo, EventDetail, ImportResult, SurveyEvent } from "@/app/_client/types";
-import { ErrorLine, Spinner, Tag } from "./ui";
+import { interviewDraft, rowsLabel } from "@/lib/casualInterview";
+import { CopyButton, ErrorLine, Spinner, Tag } from "./ui";
 
 const ROLE_LABEL: Record<ColumnInfo["role"], string> = {
   timestamp: "タイムスタンプ",
@@ -13,6 +14,7 @@ const ROLE_LABEL: Record<ColumnInfo["role"], string> = {
   comment: "感想",
   want_next: "次に聞きたいテーマ",
   role: "職種",
+  interview: "カジュアル面談の希望",
   personal: "個人情報のため捨てた",
   unread: "読み取れない列（無視）",
 };
@@ -146,6 +148,8 @@ export function EventPanel({ api, id, onChanged }: { api: Api; id: string; onCha
         )}
       </section>
 
+      <CasualInterviewSection d={d} />
+
       {a && (
         <>
           {a.sample && (
@@ -260,6 +264,82 @@ function AttackItem({ text, count }: { text: string; count: number }) {
         </>
       )}
     </li>
+  );
+}
+
+/**
+ * カジュアル面談の希望：合計の人数・登壇ごとの人数・元のスプレッドシートの行番号と、登壇者へ伝える文の下書き（コードで作る）。
+ * 希望した方の名前や連絡先はアプリに保存していない。登壇ごとの満足度や不満はここにも出さない（人数だけ）。下書きは編集とコピーだけで、送信はしない
+ */
+function CasualInterviewSection({ d }: { d: EventDetail }) {
+  const ci = d.casual_interview;
+  if (!d.source) return null;
+  return (
+    <section className="surface pad-lg" aria-labelledby="ci-title">
+      <h2 id="ci-title" className="h2">
+        カジュアル面談の希望
+      </h2>
+      {!ci ? (
+        <p className="meta">このアンケートには、カジュアル面談の希望を聞く質問が見つかりませんでした。</p>
+      ) : (
+        <>
+          <dl className="person-facts">
+            <dt>希望した人</dt>
+            <dd>{ci.total}人</dd>
+            {d.speakers.length > 1 && (
+              <>
+                <dt>登壇ごと</dt>
+                <dd>
+                  <ul className="plain-list small">
+                    {ci.talks.map((t) => (
+                      <li key={t.name}>
+                        {t.name}
+                        {t.title ? `「${t.title}」` : ""}：{t.count}人
+                      </li>
+                    ))}
+                  </ul>
+                  {ci.talks.reduce((n, t) => n + t.count, 0) < ci.total && (
+                    <span className="meta">どの登壇への回答か分からない希望が{ci.total - ci.talks.reduce((n, t) => n + t.count, 0)}人あります</span>
+                  )}
+                </dd>
+              </>
+            )}
+            <dt>元のスプレッドシート</dt>
+            <dd>{ci.rows.length ? rowsLabel(ci.rows) : "希望した回答はありません"}</dd>
+          </dl>
+          <p className="small caveat" role="note">
+            個人情報を守るため、希望した方の名前や連絡先はこのアプリに保存していません。元のスプレッドシートの該当の行で確認してください。
+          </p>
+          {ci.talks.some((t) => t.count > 0) && (
+            <>
+              <h3 className="h4">登壇者へ伝える文の下書き</h3>
+              <p className="meta">ここからは送信しません。直してコピーし、登壇者に伝えてください。</p>
+              {ci.talks
+                .filter((t) => t.count > 0)
+                .map((t) => (
+                  <InterviewDraft key={t.name} name={t.name} initial={interviewDraft({ speakerName: t.name, eventTitle: d.event.title, count: t.count })} />
+                ))}
+            </>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function InterviewDraft({ name, initial }: { name: string; initial: string }) {
+  const [text, setText] = useState(initial);
+  const id = `ci-draft-${name.replace(/\s/g, "")}`;
+  return (
+    <div className="pad-list">
+      <label htmlFor={id} className="small strong">
+        {name}さんへ
+      </label>
+      <textarea id={id} className="input" rows={3} value={text} onChange={(e) => setText(e.target.value)} />
+      <div className="btn-row">
+        <CopyButton text={text} label={`${name}さんへの文をコピー`} />
+      </div>
+    </div>
   );
 }
 

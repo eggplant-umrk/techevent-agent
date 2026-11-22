@@ -952,5 +952,19 @@ export function eventDetail(eventId: string) {
     }),
     /** 取り込みの結果：列の意味（個人情報の列は捨てた・読み取れない列は無視した）と、どの登壇か分からなかった行 */
     source: imp ? { source: imp.source, imported_at: imp.imported_at, rows: imp.rows, columns: imp.columns as ColumnInfo[], unmatched_rows: imp.unmatched_rows } : null,
+    /** カジュアル面談の希望：合計の人数・元のスプレッドシートの行番号・登壇ごとの人数だけ（希望した方の名前・連絡先は持っていない）。
+     *  登壇ごとの満足度や不満は入れない。列が見分けられなかったときは null */
+    casual_interview: imp?.casual_interview
+      ? {
+          header: imp.casual_interview.header,
+          total: imp.casual_interview.total,
+          rows: imp.casual_interview.rows,
+          talks: ev.speaker_ids.map((id) => ({
+            name: employees().find((x) => x.id === id)?.name ?? id,
+            title: imp.talk_titles?.[id] ?? null,
+            count: imp.casual_interview!.by_talk[id] ?? 0,
+          })),
+        }
+      : null,
   };
 }

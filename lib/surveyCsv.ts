@@ -12,8 +12,9 @@ import path from "node:path";
 import { getClient } from "./anthropic";
 import { employeeById, events, type SurveyAnswer } from "./data";
 import { chooseModels, recordUsage } from "./usage";
+import { INTERVIEW_HEADER, interviewAnswer, type CasualInterview } from "./casualInterview";
 
-export type ColumnRole = "timestamp" | "talk" | "rating" | "comment" | "want_next" | "role" | "personal" | "unread";
+export type ColumnRole = "timestamp" | "talk" | "rating" | "comment" | "want_next" | "role" | "interview" | "personal" | "unread";
 
 export interface ColumnInfo {
   index: number;
@@ -41,6 +42,8 @@ export interface SurveyImport {
   unmatched_rows: number[];
   /** 登壇のタイトル（「どの登壇か」の列の「名前「タイトル」」から、コードで取り出す）。登壇者 id → タイトル */
   talk_titles?: Record<string, string>;
+  /** カジュアル面談の希望（lib/casualInterview.ts）。人数と行番号だけで、名前・連絡先は持たない。列が見分けられなければ入れない */
+  casual_interview?: CasualInterview;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,6 +89,8 @@ const KEYWORDS: Array<[ColumnRole, RegExp]> = [
   // 個人を特定できる列。英語の見出し（Name・Company など）、所属・会社、X・Twitter などのアカウントも
   ["personal", /メール|e-?mail|mail\s*address|お名前|氏名|名前|なまえ|フルネーム|ニックネーム|\bname\b|電話|\bphone\b|\btel\b|会社|勤務先|所属|\bcompany\b|\borgani[sz]ation\b|住所|連絡先|アカウント|account|ユーザー名|user\s*name|twitter|(?:^|[^a-z])x\s*(?:[（(][^)）]*[)）])?\s*の?\s*(?:アカウント|id|ユーザー|account|handle)|^\s*x\s*$|sns|github|linkedin|facebook|instagram|connpass/i],
   ["timestamp", /タイムスタンプ|timestamp|回答日時/i],
+  // カジュアル面談の希望（コードだけで決める。Agent には聞かない）
+  ["interview", INTERVIEW_HEADER],
   ["talk", /どの登壇|どの発表|どのセッション|登壇者|セッション名|発表者/],
   ["rating", /満足度|満足|評価|点数|おすすめ度/],
   ["want_next", /次に聞きたい|今後聞きたい|聞きたいテーマ|リクエスト|取り上げてほしい/],
@@ -238,9 +243,17 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
   const answers: SurveyAnswer[] = [];
   const unmatched: number[] = [];
   const titles: Record<string, string> = {};
+  const iInterview = col("interview");
+  const interview: CasualInterview | undefined = iInterview !== undefined ? { header: columns[iInterview].header, total: 0, rows: [], by_talk: {} } : undefined;
   body.forEach((r, i) => {
     const rowNo = i + 2; // スプレッドシートの行番号（1行目は質問文）
     const speaker = iTalk !== undefined ? speakerOf(r[iTalk] ?? "", speakerIds) : speakerIds.length === 1 ? speakerIds[0] : null;
+    // 面談の希望：人数と行番号だけ数える（どの登壇か分からない回答も合計には入れる）
+    if (interview && iInterview !== undefined && interviewAnswer(r[iInterview] ?? "") === "yes") {
+      interview.total++;
+      interview.rows.push(rowNo);
+      if (speaker) interview.by_talk[speaker] = (interview.by_talk[speaker] ?? 0) + 1;
+    }
     if (!speaker) return void unmatched.push(rowNo);
     const title = iTalk !== undefined ? (r[iTalk] ?? "").match(/[「『]([^」』]{2,120})[」』]/)?.[1]?.trim() : undefined;
     if (title && !titles[speaker]) titles[speaker] = title;
@@ -256,7 +269,7 @@ function convert(eventId: string, speakerIds: string[], _width: number, body: st
       role: iRole !== undefined && (r[iRole] ?? "").trim() ? r[iRole].trim() : null,
     });
   });
-  return { event_id: eventId, source, imported_at: nowJst(), rows: body.length, columns, answers, unmatched_rows: unmatched, talk_titles: titles };
+  return { event_id: eventId, source, imported_at: nowJst(), rows: body.length, columns, answers, unmatched_rows: unmatched, talk_titles: titles, ...(interview ? { casual_interview: interview } : {}) };
 }
 
 // ---------------------------------------------------------------------------

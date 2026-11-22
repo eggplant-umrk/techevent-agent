@@ -448,10 +448,46 @@ textarea.input { resize: vertical; }
   @keyframes notice-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 }
 
+
+/* ---------- 箇条書き：点（番号）の左端を、見出し・本文の左端にそろえる ----------
+   既定の点は li の左の外に描かれ、ul の余白が足りないと見出しより左にはみ出す。
+   点を li の中（左の余白）に描き直し、ul の左端＝見出しの左端＝点の左端にする。折り返した行は本文の頭にそろう */
+.plain-list,
+.venue-item .cautions,
+.venue-nofit ul,
+.venue-draft ul,
+.cautions-full ul,
+.theme-list,
+.blog-list,
+.venue-blog ol,
+.venue-draft ol { list-style: none; padding-left: 0; }
+.plain-list > li,
+.venue-item .cautions > li,
+.venue-nofit ul > li,
+.venue-draft ul > li,
+.cautions-full ul > li { position: relative; padding-left: 1em; }
+.plain-list > li::before,
+.venue-item .cautions > li::before,
+.venue-nofit ul > li::before,
+.venue-draft ul > li::before,
+.cautions-full ul > li::before { content: "•"; position: absolute; left: 0; top: 0; }
+.theme-list > li,
+.blog-list > li,
+.venue-blog ol > li,
+.venue-draft ol > li { position: relative; padding-left: 1.6em; }
+.theme-list > li::before,
+.blog-list > li::before,
+.venue-blog ol > li::before,
+.venue-draft ol > li::before { content: counter(list-item) "."; position: absolute; left: 0; top: 0; font-variant-numeric: tabular-nums; }
+/* 見出しの枠（cands-head）の下に直に置く箇条書き（例：次に聞きたいテーマ）は、見出しと同じ左右の余白にする */
+.pad-list { margin: 0 20px 16px; }
+@media (max-width: 640px) { .pad-list { margin: 0 16px 16px; } }
+/* カジュアル面談の希望：登壇者へ伝える文の下書き（1人分） */
+.ci-draft { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+
 /* 依頼の詳細：未定の項目はたたむ（開けば見られる） */
 .intake-undecided { margin: 4px 0 8px; font-size: 13px; }
 .intake-undecided summary { cursor: pointer; display: flex; align-items: center; gap: 6px; min-height: 32px; }
-.intake-undecided ul { margin: 4px 0 0; padding-left: 20px; list-style: disc; color: var(--text-2); }
+.intake-undecided ul { margin: 4px 0 0; color: var(--text-2); }
 /* 「違うと記録済み」の印と取り消し */
 .wrong-done { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-

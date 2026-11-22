@@ -15,7 +15,7 @@
 | 戻す前に記録を写す（使われた結果・実行の記録を残すなら） | `npm run save:session`（見せる用は `npm run save:session -- --share`） | 「…の記録を data/sessions/<日時> に写しました」が出る（戻す前に save:session） |
 | 発表用の画面の操作の結果を片付ける | `npm run reset:demo` | 「初期状態に戻しました」（または「片付けるものはありませんでした」）が出る（消さずに data/runtime-backup/ に退避） |
 | 見せる用の置き場を片付ける | `npm run reset:share` | 同じく「初期状態に戻しました」か「片付けるものはありませんでした」（発表用のデータには触らない） |
-| テストが通る | `npm run test:hardening` と `npm run test:security` と `npx tsx scripts/eval.ts all --offline`（API なしのテストを全部まとめて流すなら `npm test`） | 「すべて合格」が2つと「段階1 結合テスト：69/69」 |
+| テストが通る（本番用のサーバーを起動する前に） | `npm run test:all`（テストの4つの層：ユニット・API・E2E・評価。docs/testing.md。API・Slack は使わない） | 最後の「層ごとの結果」がすべて ○ で「すべての層が合格」。本番用のサーバー（`npm start`・`npm run start:share`）が動いているとビルドを断るので、先に流すか止めてから流す |
 | 開発サーバーを止める | 動かしているターミナルで Ctrl+C | `netstat -ano \| findstr :3000` に LISTENING が出ない（`.next` がぶつからないように） |
 | 本番用のビルド | `npm run build` | 「✓ Compiled successfully」と、一覧に「ƒ Proxy (Middleware)」がある |
 | ボットは1つだけ | PowerShell：`Get-CimInstance Win32_Process -Filter "Name='node.exe'" \| ? CommandLine -like '*slack-bot*' \| Select ProcessId, CommandLine` | 出てくるのが1行だけ（0なら `npm run slack` で起動、2以上なら古いほうを止める） |

@@ -19,15 +19,17 @@
 
 同じ「JSON を読む・書く」が、次の8か所に別々にあります。
 
+行番号は 2026-11-22 時点のものです（コードを直すとずれます。探すときは関数名で探してください）。
+
 | ファイル | 行 | 中身 |
 | --- | --- | --- |
-| `lib/runtime.ts` | 21・25 | `readJsonFile`・`writeJsonFile`（中身が同じなら書かない）。重ねる読み書き（`readOverlay`・`writeOverlay`・`readReplaced`・`writeReplaced`・`writeCardOverlay`）の土台 |
-| `lib/data.ts` | 26・33 | `readJson`・`writeJson`。読んでよいファイル名の一覧（`ALLOWED`）つき。金額の記録だけ書く（183行 `appendUsage`） |
-| `lib/board.ts` | 22・30 | `readJson`・`writeJson`（サンプルの依頼の候補・下書き） |
+| `lib/runtime.ts` | 25・29 | `readJsonFile`・`writeJsonFile`（中身が同じなら書かない）。重ねる読み書き（`readOverlay`・`writeOverlay`・`readReplaced`・`writeReplaced`・`writeCardOverlay`）の土台 |
+| `lib/data.ts` | 28・35 | `readJson`・`writeJson`。読んでよいファイル名の一覧（`ALLOWED`）つき。金額の記録だけ書く（182行 `appendUsage`） |
+| `lib/board.ts` | 27・31 | `readJson`・`writeJson`（サンプルの依頼の候補・下書き） |
 | `lib/moreSources.ts` | 46 | `readJson`（ブログ・Slack の投稿。読むだけ） |
-| `lib/releaseNotes.ts` | 68・71 | `readJson`・`writeJson`（担当者の割り当て・担当者未定のネタ） |
+| `lib/releaseNotes.ts` | 69・72 | `readJson`・`writeJson`（担当者の割り当て・担当者未定のネタ） |
 | `lib/inbox.ts` | `load`・`save`・`update` | 受信箱。直接 `fs` を呼ぶ |
-| `lib/surveys.ts` | 31・581 付近 | アンケートの分析結果・登壇者の記録。直接 `fs` を呼ぶ（6か所） |
+| `lib/surveys.ts` | 220・239・595 | アンケートの分析結果・登壇者の記録。書き込みは `lib/fileStore.ts` の `writeJsonAtomic`、保存済みの見本（docs/survey_latest.json）だけ直接 `fs` で読む |
 | `scripts/slack/sources.ts` | 51・52 | `readJson`・`writeJson`（Slack から読んだ投稿と読んだ位置） |
 
 どれも「全部読む → 直す → 全部書く」で、書き込みは直接の上書きです（一時ファイルに書いて置き換える形ではない。書いている途中で落ちるとファイルが壊れる）。
@@ -36,20 +38,20 @@
 
 | データ | ファイル | 重ね方 | 書く関数（入口） | id の作り方 |
 | --- | --- | --- | --- | --- |
-| カード（ネタ帳） | 元：`data/cards.json`（＋`data/sources/demo-person/cards.json`）／実行時：`data/runtime/cards.json` | 変わったカードだけを重ねる（`lib/runtime.ts` 76行 `writeCardOverlay`） | `lib/cards.ts`：`upsertCard`（265行）・`editCard`（383行）・`resolvePendingTheme`（361行）・`appendOutreach`（432行）・`removeOutreach`（443行）・`patchCard`（146行。アンケートの書き戻し用） | `card-<社員id>-<連番2桁>`。その人のカードの枚数から決める（`nextCardId` 161行） |
+| カード（ネタ帳） | 元：`data/cards.json`（＋`data/sources/demo-person/cards.json`）／実行時：`data/runtime/cards.json` | 変わったカードだけを重ねる（`lib/runtime.ts` 85行 `writeCardOverlay`） | `lib/cards.ts`：`upsertCard`（265行）・`editCard`（383行）・`resolvePendingTheme`（361行）・`appendOutreach`（432行）・`removeOutreach`（443行）・`patchCard`（146行。アンケートの書き戻し用） | `card-<社員id>-<連番2桁>`。その人のカードの枚数から決める（`nextCardId` 161行） |
 | 担当者未定のネタ | 元：`data/unassigned_cards.json`／実行時：同名 | 丸ごと置き換え（`readReplaced`・`writeReplaced`） | `lib/releaseCards.ts`：`saveReleaseItems`（188行）・`assignUnassigned`（349行） | `card-team-<連番2桁>`（183行） |
 | リリースの担当者の割り当て | 元：`data/release_owners.json`／実行時：同名 | キーごとの差分（`readOverlay`・`writeOverlay`） | `lib/releaseNotes.ts`（84行）。呼ぶのは `lib/releaseCards.ts` | リリースノートの id（`rel001`）がキー |
-| ネタ帳の更新の状態 | `notebook_state.json`（社員 id → 日付） | キーごとの差分 | `lib/notebook.ts`（33行） | 社員 id がキー |
+| ネタ帳の更新の状態 | `notebook_state.json`（社員 id → 日付） | キーごとの差分 | `lib/notebook.ts`：`saveState`（32行） | 社員 id がキー |
 | ネタ帳の更新で読んだ記録 | `notebook_progress.json`（社員 id → 読んだ活動の id） | キーごとの差分 | `lib/notebookPrep.ts`：`saveProgress`（172行） | 社員 id がキー |
-| 人の情報（得意分野・意向・NGのテーマ） | `data/runtime/people.json`（元のデータはなし。社員データに重ねる） | 単独 | `lib/people.ts`：`editPerson`（102行） | 社員 id がキー |
-| 受信箱 | `data/inbox.json` | 単独 | `lib/inbox.ts`：`registerInbox`（236行）・`markOpened`（120行）・`prepare`・`restart`（中の `update`） | `inb-<時刻36進>-<乱数6桁>`（226行） |
-| サンプルの依頼の候補 | `data/sample_proposals.json` | 単独 | `lib/board.ts`：`saveSampleProposal`（48行）・`markSampleOpened`（55行） | 依頼 id（`req001`）がキー |
-| 下書き（声かけ文・主催者への返事） | `data/drafts.json` | 単独 | `lib/board.ts`：`saveDraft`（65行） | `<依頼id>:<社員id>` |
-| 金額の記録 | `data/usage.json` | 単独（追記） | `lib/data.ts`：`appendUsage`（183行）。呼ぶのは `lib/usage.ts` の `recordUsage`（12行） | なし（1回の呼び出しが1行。実行の id は `randomUUID`） |
-| アンケートの取り込み | `data/survey_imports/<イベントid>.json` | 単独 | `lib/surveyCsv.ts`：`saveImport`（267行） | 回答 id は `<イベントid>-r<CSVの行番号>`。カジュアル面談の希望は `casual_interview`（人数・行番号・登壇ごとの人数だけ） |
+| 人の情報（得意分野・意向・NGのテーマ） | `data/runtime/people.json`（元のデータはなし。社員データに重ねる） | 単独 | `lib/people.ts`：`editPerson`（101行） | 社員 id がキー |
+| 受信箱 | `data/inbox.json` | 単独 | `lib/inbox.ts`：`registerInbox`（353行）・`markOpened`（156行）・`prepare`・`restart`（中の `update`） | `inb-<時刻36進>-<乱数6桁>`（`newId` 342行） |
+| サンプルの依頼の候補 | `data/sample_proposals.json` | 単独 | `lib/board.ts`：`saveSampleProposal`（50行）・`markSampleOpened`（57行） | 依頼 id（`req001`）がキー |
+| 下書き（声かけ文・主催者への返事） | `data/drafts.json` | 単独 | `lib/board.ts`：`saveDraft`（88行） | `<依頼id>:<社員id>` |
+| 金額の記録 | `data/usage.json` | 単独（追記） | `lib/data.ts`：`appendUsage`（182行）。呼ぶのは `lib/usage.ts` の `recordUsage`（14行） | なし（1回の呼び出しが1行。実行の id は `randomUUID`） |
+| アンケートの取り込み | `data/survey_imports/<イベントid>.json` | 単独 | `lib/surveyCsv.ts`：`saveImport`（282行） | 回答 id は `<イベントid>-r<CSVの行番号>`。カジュアル面談の希望は `casual_interview`（人数・行番号・登壇ごとの人数だけ） |
 | アンケートの分析結果 | `data/survey_analysis.json`（なければ `docs/survey_latest.json` の保存済みの結果で補う） | 単独 | `lib/surveys.ts`（`saveAnalysis`） | イベント id がキー |
-| 登壇者の記録（内部） | `data/talk_records.json` | 単独 | `lib/surveys.ts`：`writeBack`（594行）の中 | `<イベントid>` と社員 id |
-| 社員・活動・イベント・依頼・発信・予定・外部イベント | `data/*.json`、`data/sources/…` | 読むだけ（`DATA_SOURCE`・`DEMO_PERSON`・`MORE_SOURCES`・`RELEASE_NOTES` で材料が変わる） | アプリからは書かない | 活動：`act001`（架空は決め打ち、GitHub は並び順 `scripts/import_github.ts` 295行、デモ用の本人は +200 `lib/demoPerson.ts` 37行）、Slack：`slk<連番3桁>`（`scripts/slack/sources.ts` 140行） |
+| 登壇者の記録（内部） | `data/talk_records.json` | 単独 | `lib/surveys.ts`：`writeBack`（598行）の中 | `<イベントid>` と社員 id |
+| 社員・活動・イベント・依頼・発信・予定・外部イベント | `data/*.json`、`data/sources/…` | 読むだけ（`DATA_SOURCE`・`DEMO_PERSON`・`MORE_SOURCES`・`RELEASE_NOTES` で材料が変わる） | アプリからは書かない | 活動：`act001`（架空は決め打ち、GitHub は並び順 `scripts/import_github.ts` 295行、デモ用の本人は +200 `lib/demoPerson.ts` 38行）、Slack：`slk<連番3桁>`（`scripts/slack/sources.ts` 140行） |
 
 テスト用に、ファイルの場所を環境変数で差し替える入口が本番のコードに入っています：`INBOX_FILE`・`SAMPLE_PROPOSALS_FILE`・`DRAFTS_FILE`・`USAGE_FILE`・`PEOPLE_FILE`・`RELEASE_OWNERS_FILE`・`UNASSIGNED_CARDS_FILE`・`SLACK_POSTS_FILE`・`SURVEY_ANALYSIS_FILE`・`SURVEY_IMPORT_DIR`・`TALK_RECORD_FILE`・`DATA_RUNTIME_DIR`。保存の入口を1つにしたら、差し替えは1か所（置き場所を1つ渡す）で済みます。
 

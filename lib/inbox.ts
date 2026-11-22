@@ -58,6 +58,8 @@ export interface InboxItem {
   kind_reason?: string | null;
   /** 「依頼ではない」と読んだものを、人が「依頼として進める」で先に進めた */
   kind_override?: "request" | null;
+  /** 読み取りの結果：refused＝読み取りの AI が拒否した（不適切として止める）／failed＝読み取りに失敗した（エラーとして止める。依頼としては使わない）。うまく読めたら null・なし */
+  read_status?: "refused" | "failed" | null;
   result: ProposalResult | null;
   /** 作業ログ（画面の「Agentがやったこと」を再現するため） */
   events: AgentEvent[];
@@ -181,26 +183,85 @@ export function inboxRequest(
  * 依頼文（X の会話など）から項目と指名を読み取り、コードで確かめる。
  * 読み取りが古い形（指名の名前だけ）なら指名だけ。失敗したら指名なし（理由を残す）、項目は読まなかったことにする。
  */
+/** 読み取りの AI が拒否したときの理由（不適切として止める） */
+export const READ_REFUSED_REASON = "読み取りの AI がこの内容を扱いませんでした";
+/** 読み取りに失敗したときのエラー（候補づくりは走らせない） */
+export const READ_FAILED_ERROR = "依頼の文を読み取れませんでした（候補づくりはしていません）";
+
+/**
+ * 依頼文を読み取る。failure：refused＝読み取りの AI が拒否した（null が返った）／failed＝失敗した（例外）。
+ * どちらのときも、依頼として候補づくりに進めない（拒否は「不適切」、失敗は「エラー」として止める）。
+ * 古い形の偽物（指名の名前だけの文字列）は今までどおり指名だけ読む
+ */
 export async function readIntake(
   text: string,
   receivedAt: string,
   extractor: IntakeExtractor,
   runId: string,
-): Promise<{ nominee: NomineeReading; intake: IntakeReading | null }> {
+): Promise<{ nominee: NomineeReading; intake: IntakeReading | null; failure: "refused" | "failed" | null; why?: string }> {
+  const noNominee = (note: string): NomineeReading => ({ name: null, employee_id: null, note });
   try {
     const raw = await extractor(text, runId);
-    if (raw === null || typeof raw === "string") return { nominee: resolveNominee(raw), intake: null };
-    return checkIntake(text, raw, receivedAt);
-  } catch {
-    return {
-      nominee: {
-        name: null,
-        employee_id: null,
-        note: "依頼文から指名を読み取れなかったため、指名なしとして扱いました。指名があるかは依頼文で確認してください",
-      },
-      intake: null,
-    };
+    if (raw === null) return { nominee: noNominee("読み取りの AI がこの内容を扱わなかったため、指名は読んでいません"), intake: null, failure: "refused" };
+    if (typeof raw === "string") return { nominee: resolveNominee(raw), intake: null, failure: null };
+    return { ...checkIntake(text, raw, receivedAt), failure: null };
+  } catch (err) {
+    // 理由（時間切れ・混雑など）は使う人向けの文にして残す
+    const why = userErrorText(err, { where: "依頼の読み取り", retryLabel: "もう一度探す", fallback: "読み取りに失敗しました" });
+    return { nominee: noNominee("依頼文を読み取れなかったため、指名は読んでいません"), intake: null, failure: "failed", why };
   }
+}
+
+/** 種類で止めたことを保存する（候補づくりは走らせない） */
+function stopAsKind(id: string, kind: Exclude<IntakeKind, "request">, kindReason: string | null, events: AgentEvent[]) {
+  update(id, (x) => ({
+    ...x,
+    status: "ready",
+    error: null,
+    kind,
+    kind_reason: kindReason,
+    result: null,
+    events,
+    run_usd: usageOfRun(id),
+    finished_at: nowJst(),
+    progress: null,
+  }));
+}
+
+/** 読み取りに失敗したことを保存する（エラーとして止める。指名・項目は保存しないので、次は読み直す）。why は失敗の理由（時間切れなど） */
+function stopAsReadFailure(id: string, events: AgentEvent[], why?: string) {
+  update(id, (x) => ({
+    ...x,
+    status: "error",
+    error: why ? `${READ_FAILED_ERROR}：${why}` : READ_FAILED_ERROR,
+    read_status: "failed",
+    nominee: null,
+    intake: null,
+    result: null,
+    events,
+    run_usd: usageOfRun(id),
+    finished_at: nowJst(),
+    progress: null,
+  }));
+}
+
+/**
+ * 読み取りに失敗した1件を読み直す（画面の「もう一度探す」で /api/agent に来たとき、候補づくりの前に関所を通す）。
+ * 読めたら種類を付ける（依頼ではない・不適切なら止める）。拒否なら不適切。また失敗したら失敗のまま（依頼としては使えない）
+ */
+export async function rereadIfFailed(id: string, extractor: IntakeExtractor): Promise<void> {
+  const it = getInboxItem(id);
+  if (!it || it.read_status !== "failed") return;
+  const r = await readIntake(it.text, it.received_at, extractor, id);
+  if (r.failure === "failed") return stopAsReadFailure(id, it.events, r.why);
+  if (r.failure === "refused") {
+    update(id, (x) => ({ ...x, read_status: "refused", nominee: r.nominee, intake: null }));
+    return stopAsKind(id, "inappropriate", READ_REFUSED_REASON, it.events);
+  }
+  const kind: IntakeKind = r.intake?.kind ?? "request";
+  update(id, (x) => ({ ...x, read_status: null, nominee: r.nominee, intake: r.intake }));
+  if (kind !== "request") return stopAsKind(id, kind, r.intake?.kind_reason ?? null, it.events);
+  update(id, (x) => ({ ...x, kind: "request", kind_reason: null, error: null }));
 }
 
 /** 依頼文から指名を読み取り、社員データで確かめる。読み取れなければ指名なし（理由を残す） */
@@ -335,27 +396,21 @@ async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtra
   let stage: ProgressStage = "reading";
   update(id, (x) => ({ ...x, progress: progressOf(stage) }));
   try {
-    if (extractor && !it.nominee) {
-      const { nominee, intake } = await readIntake(it.text, it.received_at, extractor, id);
-      update(id, (x) => ({ ...x, nominee, intake }));
-      it = { ...it, nominee, intake };
+    if (extractor && (!it.nominee || it.read_status === "failed")) {
+      const { nominee, intake, failure, why } = await readIntake(it.text, it.received_at, extractor, id);
+      // 読み取りに失敗したら、依頼として候補づくりに進めない（エラーとして止める）
+      if (failure === "failed") return stopAsReadFailure(id, events, why);
+      const read_status = failure === "refused" ? ("refused" as const) : null;
+      update(id, (x) => ({ ...x, nominee, intake, read_status }));
+      it = { ...it, nominee, intake, read_status };
     }
-    // 種類で止める（判定は読み取りの AI、止めるのはコード）。依頼ではない・不適切なら候補づくりを走らせない
-    const kind: IntakeKind = it.intake?.kind ?? "request";
+    // 読み取りに失敗したままのもの（読み直す手段がないとき）は、依頼として扱わない
+    if (it.read_status === "failed") return stopAsReadFailure(id, events);
+    // 種類で止める（判定は読み取りの AI、止めるのはコード）。依頼ではない・不適切なら候補づくりを走らせない。
+    // 読み取りの AI が拒否したものは不適切として止める
+    const kind: IntakeKind = it.read_status === "refused" ? "inappropriate" : it.intake?.kind ?? "request";
     if (kind !== "request" && !(kind === "not_request" && it.kind_override === "request")) {
-      update(id, (x) => ({
-        ...x,
-        status: "ready",
-        error: null,
-        kind,
-        kind_reason: it!.intake?.kind_reason ?? null,
-        result: null,
-        events,
-        run_usd: usageOfRun(id),
-        finished_at: nowJst(),
-        progress: null,
-      }));
-      return;
+      return stopAsKind(id, kind, it.read_status === "refused" ? READ_REFUSED_REASON : it.intake?.kind_reason ?? null, events);
     }
     update(id, (x) => ({ ...x, kind: "request", kind_reason: null }));
     const note = it.nominee?.note ?? null;

@@ -6,6 +6,7 @@
 // - 本番用のビルド（next build）を使う。見せる用（合言葉）は scripts/serve.mjs start --share で、本物と同じ入口で立てる
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 
@@ -99,8 +100,19 @@ export function buildApp(fakeUrl) {
  * サーバーを立てて、応答するまで待つ。
  * profile：present（発表用。合言葉なし）／share（見せる用。合言葉・API 代の上限あり）
  */
+/** そのポートが空いているか（127.0.0.1 で一度待ち受けてみる） */
+function portFree(port) {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.once("error", () => resolve(false));
+    srv.listen(Number(port), "127.0.0.1", () => srv.close(() => resolve(true)));
+  });
+}
+
 export async function startApp({ profile = "present", port, fakeUrl, dir, extraEnv = {}, logFile = null }) {
   if (FORBIDDEN_PORTS.has(Number(port))) throw new Error(`${port}番は使いません（発表用・見せる用）`);
+  // すでにそのポートで何かが動いていたら止める（別のセッションのテストのサーバーに要求を投げて、取り違えないように）
+  if (!(await portFree(port))) throw new Error(`${port}番はすでに使われています（別のテストが流れていないか確かめてください。始まりのポートは TEST_API_PORT・E2E_PORT で変えられます）`);
   const env =
     profile === "share"
       ? testEnv(fakeUrl, dir, { SHARE_PORT: String(port), SHARE_BIND_HOST: "127.0.0.1", SHARE_DATA_DIR: dir, ...extraEnv })

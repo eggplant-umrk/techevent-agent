@@ -41,6 +41,32 @@ export async function openArchive(page: Page) {
   await expect(firstEvent).toBeVisible();
   await firstEvent.click();
   await expect(page.getByRole("heading", { name: "登壇", exact: true, level: 3 })).toBeVisible();
+  await expectListsAligned(page);
+}
+
+/**
+ * 箇条書きの点（番号）が、見出しより左にはみ出していないこと。
+ * 点は li の左端に描く作り（app/globals.css の「箇条書き」）なので、各箇条書きの左端が、同じ枠の見出しの左端より左にないかを見る
+ */
+export async function expectListsAligned(page: Page) {
+  const off = await page.evaluate(() => {
+    const out: string[] = [];
+    for (const l of Array.from(document.querySelectorAll("ul, ol"))) {
+      const li = l.querySelector(":scope > li") as HTMLElement | null;
+      if (!li || !li.offsetParent) continue;
+      const before = getComputedStyle(li, "::before").content;
+      const native = getComputedStyle(li).listStyleType !== "none" && getComputedStyle(li).display === "list-item";
+      if (native) out.push(`${l.className || l.tagName}：既定の点のまま（外に描かれる）`);
+      if (!before || before === "none" || before === "normal") continue;
+      const box = l.closest("section");
+      const head = box?.querySelector("h2, h3");
+      if (!head) continue;
+      const dx = l.getBoundingClientRect().left - head.getBoundingClientRect().left;
+      if (dx < -1) out.push(`${l.className || l.tagName}：見出し「${head.textContent?.slice(0, 12)}」より${Math.round(-dx)}px 左`);
+    }
+    return out;
+  });
+  expect(off, off.join(" / ")).toEqual([]);
 }
 
 /** ネタ帳で人を探して開き、その人の記録に承諾が残っているかを見る */

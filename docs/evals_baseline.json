@@ -1,20 +1,15 @@
 {
-  "at": "2026-11-22T02:08:19.736Z",
+  "at": "2026-11-22T03:13:01.055Z",
   "keep": 1,
-  "raise": 0.4,
-  "raise_cases": 4,
-  "raise_judged": 3,
-  "keep_cases": 45,
+  "raise": 0,
+  "raise_cases": 3,
+  "raise_judged": 2,
+  "keep_cases": 46,
   "raise_results": [
     {
       "id": "raise-req005-theme-other-name",
       "weight": 4,
       "passed": false
-    },
-    {
-      "id": "raise-req004-theme-other-name",
-      "weight": 4,
-      "passed": true
     },
     {
       "id": "raise-B4-nomination-with-personal-info-ask",

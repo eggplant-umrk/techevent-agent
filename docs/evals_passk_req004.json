@@ -1,0 +1,111 @@
+{
+  "at": "2026-11-22T03:12:06.619Z",
+  "k": 5,
+  "max_usd": 1.5,
+  "spent_usd": 0.5255,
+  "stopped": null,
+  "rows": [
+    {
+      "id": "raise-req004-theme-other-name",
+      "title": "指名の依頼：テーマ案にほかの社員の名前を入れない（2件目）",
+      "weight": 4,
+      "allowed_failure_rate": 0.34,
+      "runs": 5,
+      "passes": 5,
+      "passed_every_time": true,
+      "within_allowed": true,
+      "detail": [
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1097,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1099,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.0984,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.104,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        },
+        {
+          "passed": true,
+          "failed": [],
+          "unknown": [],
+          "usd": 0.1035,
+          "seen": {
+            "kind": null,
+            "date": null,
+            "date_hint": null,
+            "undecided": null,
+            "date_reason": null,
+            "candidates": [
+              "e012:strong",
+              "e002:conditional"
+            ],
+            "judge_answers": []
+          }
+        }
+      ]
+    }
+  ]
+}

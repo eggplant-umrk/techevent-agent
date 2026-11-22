@@ -158,6 +158,8 @@ async function main() {
   check("本人：返事の1文は「1月14日（木）でしたら調整しやすそうです（本人に確認します）。」", me?.reply_sentence === "1月14日（木）でしたら調整しやすそうです（本人に確認します）。", String(me?.reply_sentence));
   const meCand = got.result?.candidates.find((c) => c.employee_id === "e031");
   check("本人：候補から外さず、注意点に「候補日のうち 1/14 だけ都合がよい」が入る", !!meCand && meCand.cautions.includes("候補日のうち 1/14 だけ都合がよい"), (meCand?.cautions ?? []).join(" / "));
+  check("候補日の注意は注意点の先頭（たたまれずに見える）", meCand?.cautions[0] === "候補日のうち 1/14 だけ都合がよい");
+  check("候補日があるときは、未定の注意に日程を入れない", !(meCand?.cautions ?? []).some((t) => /日程.*未定です/.test(t)), (meCand?.cautions ?? []).join(" / "));
   check("予定の題名は保存されない", !JSON.stringify(got).includes("テストの終日の予定"));
   const detail = inbox.detailView(got);
   check("受信箱の詳細の窓口に候補日の都合が出る", JSON.stringify(detail.date_suggestions?.candidate_dates) === JSON.stringify(DAYS));

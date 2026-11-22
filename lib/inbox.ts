@@ -304,7 +304,8 @@ export function addCandidateDateNotes(result: ProposalResult, dates: DateSuggest
     ...result,
     candidates: result.candidates.map((c) => {
       const n = dates.candidates.find((x) => x.employee_id === c.employee_id)?.candidate_note;
-      return n && !c.cautions.includes(n) ? { ...c, cautions: [...c.cautions, n] } : c;
+      // 日程の調整がこのデモの要なので、注意点の先頭に置く（たたまれずに見える）
+      return n && !c.cautions.includes(n) ? { ...c, cautions: [n, ...c.cautions] } : c;
     }),
   };
 }
@@ -445,10 +446,11 @@ async function prepareTraced(id: string, runner: Runner, extractor?: IntakeExtra
     }
     update(id, (x) => ({ ...x, kind: "request", kind_reason: null }));
     const note = it.nominee?.note ?? null;
-    const undecided = undecidedNote(it.intake);
     // 判断が要る依頼の注意（属性で絞らない・競合の比較・ほかの依頼は別に）は、コードが候補の注意点に足す
     const judgment = it.intake?.notes ?? [];
     const request = inboxRequest(it);
+    // 候補日があるときは、日程を未定の注意に入れない（候補日ごとの都合をコードが注意点に足す）
+    const undecided = undecidedNote(request.candidate_dates && it.intake ? { ...it.intake, undecided: it.intake.undecided.filter((f) => f !== "date") } : it.intake);
     // 代わりの人を推す文は、この中では作らない（準備済みにしてから下で作る）
     const raw = await withPitchLater(() =>
       runner(request, (e) => {

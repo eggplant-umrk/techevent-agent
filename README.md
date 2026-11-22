@@ -28,15 +28,29 @@ LayerX 自律型 AI Agent ハッカソン 2026/11 テーマ3「Tech イベント
 5. **開催後**：アンケートの回答（CSV）を取り込むと、良かった点・改善点・次に聞きたいテーマにまとめる
 6. **ネタ帳に戻る**：反応と「次に聞きたいテーマ」がカードに入り、次の依頼で使われる
 
-画面の画像は [docs/screenshots/readme/](docs/screenshots/readme/) に置きます（名前の決まりは同じフォルダの README.md。画像を置いたら、下の行のコメントを外してください）。
+画面はこうなります（`?mock` で撮ったもの。データは架空です）。10枚すべての一覧は [docs/screenshots/README.md](docs/screenshots/README.md) にあります。
 
-<!-- 画像を置いたら、この行と最後の行を消す
-<img src="docs/screenshots/readme/01-inbox.png" width="720" alt="受信箱：届いた依頼と状態の印">
-<img src="docs/screenshots/readme/03-candidates.png" width="720" alt="依頼の詳細：読み取った項目と、候補・理由・根拠・注意点">
-<img src="docs/screenshots/readme/04-draft.png" width="720" alt="声かけ文・構成案・主催者への返事の下書き">
-<img src="docs/screenshots/readme/06-survey.png" width="720" alt="開催後のアンケートのまとめ">
-<img src="docs/screenshots/readme/07-notebook.png" width="720" alt="ネタ帳：人ごとのカードと打診の記録">
--->
+**1. 受信箱に X の会話を貼ると、項目を読み取る**（読めない項目は「未定」にたたむ）
+
+<img src="docs/screenshots/01_inbox_x_conversation_reading.png" width="720" alt="受信箱：X の会話を貼ったあとの読み取り。読めた項目と、たたまれた「未定 9件」">
+
+**2. 候補を読む**（初登壇の印・理由・注意点・予定の埋まり具合・根拠のリンク）
+
+<img src="docs/screenshots/02_candidates_first_talk_reason_notes.png" width="720" alt="候補：初登壇の印・理由・注意点・忙しさ・根拠のリンク">
+
+**3. 声かけ文と、主催者への返事の下書き**（返事は、未定の項目を聞き返す）
+
+<img src="docs/screenshots/03a_outreach_draft.png" width="720" alt="声かけ文の下書き">
+
+<img src="docs/screenshots/03b_organizer_reply_with_questions.png" width="720" alt="主催者への返事の下書き。日程・持ち時間・テーマの聞き返しつき">
+
+**5. 開催後のアンケート**（改善点は原文のまま。次に聞きたいテーマも出す）
+
+<img src="docs/screenshots/06a_archive_survey_complaints_next_themes.png" width="720" alt="アーカイブ：アンケートの改善点（原文）と次に聞きたいテーマ">
+
+**6. ネタ帳に戻る**（人ごとのネタと、アンケートの「次に聞きたい話」）
+
+<img src="docs/screenshots/07a_notebook_people.png" width="720" alt="ネタ帳：人の一覧と、開いた人のネタ・ブログ・最近の活動">
 
 ## 考え方
 
@@ -77,6 +91,8 @@ flowchart TD
 - **コードの検査の位置**：図の六角形の4か所。AI の呼び出しの前に1つ、後ろに3つあります
 - **画面で確かめられる**：依頼ごとの「この依頼の記録」に、AI とツールを呼んだ順番・時間・金額が出ます
 
+<img src="docs/screenshots/04_request_trace_timeline.png" width="720" alt="「この依頼の記録」：AI とツールの呼び出しの時間の線">
+
 くわしい仕様は [docs/spec.md](docs/spec.md)、保存の入口は [docs/storage.md](docs/storage.md) にあります。
 
 ## 安全とプライバシー
@@ -85,6 +101,9 @@ flowchart TD
 - **Slack は決まった文だけ**：ボットが書くのは、依頼スレッドへの「受け付けました」と、技術広報だけの非公開チャンネルへの「準備できました」の2つ。候補の名前・理由・件数は Slack のどこにも書きません
 - **確かめた項目だけを渡す**：主催者への返事を作る AI には、会話の原文を渡しません。コードで確かめた項目（イベント名・日程・人数など）と、進める人の名前とテーマだけです。会話に指示が仕込まれていても、返事には届きません（確かめた結果は [docs/injection_check.md](docs/injection_check.md)）
 - **関所**：依頼ではない文（雑談・営業）と不適切な文（暴言・個人情報を求めるもの）は、候補づくりを始めずに止めます。不適切な文の原文は、一覧に出しません（入力の試験は [docs/edge_cases.md](docs/edge_cases.md)、いじわるな使い方の試験は [docs/abuse_test.md](docs/abuse_test.md)）
+
+  <img src="docs/screenshots/05_not_a_request_stopped.png" width="720" alt="依頼ではない文を貼って、候補づくりを始めずに止まったところ">
+
 - **個人情報を保存しない**：アンケートの名前・メールの列は、取り込むときに捨てます。カジュアル面談の希望は、人数と行番号だけを残します。カレンダーから読むのは開始・終了・終日かどうかだけで、予定の名前や場所は読みません
 - **見せる用の守り**：会場の人に触ってもらうときは、発表用とは別のサーバー・別のデータの置き場で立てます。合言葉、API 代の上限（全体と1人あたり）、同時に動かす数の上限があり、ネタ帳の更新は止めます
 

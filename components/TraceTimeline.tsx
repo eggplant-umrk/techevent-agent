@@ -1,6 +1,6 @@
 "use client";
 // 「この依頼の記録」：AI の呼び出しとツールの呼び出しを、順番・時間・金額・成否で時間の線に並べる。
-// 開いたときだけ読み込む。見せる用（SHARE_MODE=lan）では、この端末（127.0.0.1）からだけ出す（出すかどうかは呼ぶ側が決める）。
+// 開いたときだけ読み込む。見せる用（SHARE_MODE=lan）でも出す（中身は名前・時間・金額・成否だけ）。
 import { useState } from "react";
 import type { Api } from "@/app/_client/api";
 import { durationText, usdText, type RequestTrace } from "@/app/_client/feedback";

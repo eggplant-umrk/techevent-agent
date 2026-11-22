@@ -7,13 +7,14 @@ import { addToInbox, parseInboxInput } from "@/lib/inbox";
 import { acquireApiSlotWait, apiBusyResponse } from "@/lib/apiSlots";
 import { boardList, findActiveDuplicate } from "@/lib/board";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
+import { perPerson } from "@/lib/personBudget";
 import { extractIntakeWithAgent } from "@/lib/intake";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-export async function POST(req: Request) {
+async function handlePost(req: Request) {
   if (!isLocalRequest(req)) return forbidden();
   const body = await req.json().catch(() => null);
   const parsed = parseInboxInput(body);
@@ -34,6 +35,9 @@ export async function POST(req: Request) {
   const item = addToInbox(parsed.input, (request, emit) => runAgent(request, emit), extractIntakeWithAgent, release);
   return Response.json({ id: item.id });
 }
+
+// 見せる用：使った API 代（裏で続く候補づくりも）を、追加した人に足す（1人あたりの上限。lib/personBudget.ts）
+export const POST = perPerson(handlePost);
 
 export function GET(req: Request) {
   if (!isLocalRequest(req)) return forbidden();

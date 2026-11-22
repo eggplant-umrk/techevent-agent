@@ -21,21 +21,18 @@ async function main() {
   check("受信箱の1件：$0.81・2分18秒", runCostText({ run_usd: 0.81, elapsed_ms: 138_000 }) === "$0.81・2分18秒", String(runCostText({ run_usd: 0.81, elapsed_ms: 138_000 })));
   check("受信箱の1件：分からなければ出さない", runCostText({ run_usd: 0, elapsed_ms: null }) === null);
 
-  // ---- 実行の記録はこの端末（127.0.0.1）からだけ ----
+  // ---- 実行の記録は、発表用でも見せる用でも開ける（中身は名前・時間・金額・成否だけ。11/22 から） ----
   const { traceAllowed } = await import("../lib/traceAccess");
   const req = (host: string, xff?: string) => new Request(`http://${host}/api/state`, { headers: { host, ...(xff ? { "x-forwarded-for": xff } : {}) } });
   delete process.env.SHARE_MODE;
   check("発表用（既定）：記録の画面を開ける", traceAllowed(req("127.0.0.1:3000", "127.0.0.1")));
   process.env.SHARE_MODE = "lan";
-  check("見せる用：この端末（127.0.0.1）からは開ける", traceAllowed(req("127.0.0.1:3100", "127.0.0.1")) && traceAllowed(req("localhost:3100", "::1")));
-  check("見せる用：会場の端末からは開けない", !traceAllowed(req("192.168.1.20:3100", "192.168.1.55")));
-  check("見せる用：送り元が分からないときも開けない", !traceAllowed(req("192.168.1.20:3100")));
-  check("見せる用：Host だけ localhost にしても、送り元が外なら開けない", !traceAllowed(req("127.0.0.1:3100", "192.168.1.55")));
+  check("見せる用：会場の端末からも開ける", traceAllowed(req("192.168.1.20:3100", "192.168.1.55")) && traceAllowed(req("127.0.0.1:3100", "127.0.0.1")));
   process.env.ACCESS_CODE = "test-code-for-feedback";
   process.env.SHARE_BUDGET_USD = "5";
   const { GET: state } = await import("../app/api/state/route");
   const st = (await (await state(req("192.168.1.20:3100", "192.168.1.55"))).json()) as { trace_allowed?: boolean; feedback_reasons?: unknown };
-  check("/api/state が trace_allowed を返す（会場の端末には false）", st.trace_allowed === false);
+  check("/api/state が trace_allowed を返す（見せる用の会場の端末でも true）", st.trace_allowed === true);
   const { REASON_CODES } = await import("../lib/feedback");
   check("/api/state の理由の選択肢は、記録の側の REASON_CODES そのもの", JSON.stringify(st.feedback_reasons) === JSON.stringify(REASON_CODES));
   check("「この候補は違う」の理由は テーマが合わない・忙しい・本人の活動ではない・その他", Object.values(REASON_CODES.candidate).join("・") === "テーマが合わない・忙しい・本人の活動ではない・その他");
@@ -122,7 +119,7 @@ async function main() {
     process.env.SHARE_MODE = "lan";
     process.env.ACCESS_CODE = "test-code-for-feedback";
     process.env.SHARE_BUDGET_USD = "5";
-    check("記録の窓口：見せる用で会場の端末からは 403", (await get(id, "192.168.1.20:3100", "192.168.1.55")).status === 403);
+    check("記録の窓口：見せる用で会場の端末からも開ける", (await get(id, "192.168.1.20:3100", "192.168.1.55")).status === 200);
     check("記録の窓口：見せる用でもこの端末からは開ける", (await get(id, "127.0.0.1:3100", "127.0.0.1")).status === 200);
     delete process.env.SHARE_MODE;
     delete process.env.ACCESS_CODE;

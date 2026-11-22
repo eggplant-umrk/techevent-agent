@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { pickApi, realApi, type Api } from "@/app/_client/api";
+import { pickApi, realApi, type Api, type StateResponse } from "@/app/_client/api";
 import type {
   AgentEvent,
   ArchiveDetail,
@@ -72,12 +72,14 @@ export default function Home() {
   const [cards, setCards] = useState<NotebookCard[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  /** 実行の記録の画面を開けるか（見せる用では、この端末からだけ。/api/state の trace_allowed） */
+  /** 実行の記録の画面を開けるか（/api/state の trace_allowed。見せる用でも開ける） */
   const [traceAllowed, setTraceAllowed] = useState(false);
   /** 使われた結果を送る窓口（記録の側）があるか。?mock は手元に残すので常にある */
   const [feedbackReady, setFeedbackReady] = useState(false);
   /** 理由の選択肢（記録の側の REASON_CODES。/api/state から） */
   const [feedbackReasons, setFeedbackReasons] = useState<ReasonCodes | null>(null);
+  /** 見せる用のときだけ：その人の残り（/api/state の share） */
+  const [shareInfo, setShareInfo] = useState<StateResponse["share"]>(null);
   useEffect(() => {
     let alive = true;
     api.feedbackReady().then((ok) => alive && setFeedbackReady(ok));
@@ -173,6 +175,7 @@ export default function Home() {
       setPending(s.pending_employees);
       setTraceAllowed(s.trace_allowed !== false);
       if (s.feedback_reasons) setFeedbackReasons(s.feedback_reasons);
+      setShareInfo(s.share ?? null);
     } catch {
       /* the header just keeps the last numbers */
     }
@@ -681,7 +684,7 @@ export default function Home() {
             onProceed={mode === "inbox" && inboxId ? () => void proceedInbox(inboxId) : undefined}
           >
             {(log.length > 0 || running) && <AgentSteps log={log} running={running} seconds={seconds} result={result} />}
-            {/* この依頼の記録（AI・ツールの呼び出しの時間の線）。見せる用では、この端末からだけ */}
+            {/* この依頼の記録（AI・ツールの呼び出しの時間の線）。見せる用でも出す */}
             {traceAllowed && feedbackRequestId && !running && (
               <TraceTimeline key={feedbackRequestId} api={api} requestId={feedbackRequestId} />
             )}
@@ -731,7 +734,7 @@ export default function Home() {
 
   return (
     <div className="app">
-      <Header tab={tab} onTab={setTab} debug={debug} runUsd={runUsd} totalUsd={totalUsd} models={models} mock={api.mock} />
+      <Header tab={tab} onTab={setTab} debug={debug} runUsd={runUsd} totalUsd={totalUsd} models={models} mock={api.mock} share={shareInfo} />
       {loadError && (
         <p className="banner banner-error" role="alert">
           {loadError}

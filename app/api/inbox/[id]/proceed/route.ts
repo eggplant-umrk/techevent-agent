@@ -4,11 +4,12 @@ import { runAgent } from "@/lib/agent";
 import { acquireApiSlotWait, apiBusyResponse } from "@/lib/apiSlots";
 import { proceedAsRequest } from "@/lib/inbox";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
+import { perPerson } from "@/lib/personBudget";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+async function handlePost(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!isLocalRequest(req)) return forbidden();
   const { id } = await params;
   // API を使う操作は同時に2件まで（lib/apiSlots.ts。空いていなければ最大60秒待つ）。候補づくりが裏で終わるまで1件分を持つ
@@ -21,3 +22,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   return Response.json({ ok: true });
 }
+
+// 見せる用：使った API 代（裏で続く候補づくりも）を、押した人に足す（1人あたりの上限。lib/personBudget.ts）
+export const POST = perPerson(handlePost);

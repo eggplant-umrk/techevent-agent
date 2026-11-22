@@ -433,3 +433,6 @@ textarea.input { resize: vertical; }
 }
 .trace-kind-code { background: var(--ok-soft); color: var(--ok); }
 .trace-bar-code { background: var(--ok); opacity: 0.6; }
+
+/* 見せる用のときだけ：その人の残り（小さく） */
+.share-remaining { font-size: 11px; color: var(--text-2); white-space: nowrap; }

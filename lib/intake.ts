@@ -121,6 +121,49 @@ export function weekdayMatches(text: string, date: string): boolean {
   return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][dow] === en![1].toLowerCase();
 }
 
+/** 「決まった」ことを伝える言い方（「決まりましたら」「確定しましたら」は、まだ決まっていないので除く） */
+const ANNOUNCED = /(?:決まり|決定し|決定いたし|確定し|確定いたし)ました(?!ら)|(?:決定|確定)です/;
+/** 決まったのが日程ではなさそうな言い方（「会場が決まりました」など）。「決まりました」の直前に見る */
+const ANNOUNCED_OTHER = /(?:会場|場所|テーマ|登壇者|スピーカー|形式|タイトル|名前|名称|スポンサー|人数|定員)(?:が|は|も)[^。!?\n]{0,12}$/;
+/** 決まったあとで、またゆれたことを表す言い方（これがあとの行にあれば、決まった日としない） */
+const UNSETTLED_AFTER = /再調整|変更|延期|中止|やっぱり|未定|調整中|キャンセル|訂正|間違/;
+
+/**
+ * 会話の中の「決まりました」の一節から、決まった日程を読む（コード）。Agent が日程を返さなかったときだけ使う。
+ * - 見るのは、「決まりました」「確定しました」などがある行のうち、いちばん後ろの行（1つのメッセージ）
+ * - その行を一節として checkDate に通す：日付がちょうど1つ・候補や期間でない・その行より後ろに別の日付がない
+ *   （行より前にある候補日は、今までどおり数えない）
+ * - 曜日が書いてあれば、暦と合うこと。その行より後ろに「再調整」「変更」「延期」などがないこと
+ * 当てはまらなければ null（未定のまま、人に返す）
+ */
+export function announcedDate(text: string, receivedAt: string): { date: string; quote: string } | null {
+  const lines = text.split(/\r?\n/);
+  let at = -1;
+  for (let i = 0; i < lines.length; i++) if (ANNOUNCED.test(lines[i].normalize("NFKC"))) at = i;
+  if (at < 0) return null;
+  const quote = lines[at].trim();
+  const n = quote.normalize("NFKC");
+  const word = n.match(ANNOUNCED)!;
+  if (ANNOUNCED_OTHER.test(n.slice(0, word.index))) return null;
+  if (lines.slice(at + 1).some((l) => UNSETTLED_AFTER.test(l.normalize("NFKC")))) return null;
+  const checked = checkDate(text, quote, receivedAt);
+  if (!checked.date || !weekdayMatches(quote, checked.date)) return null;
+  return { date: checked.date, quote };
+}
+
+/** 複数の依頼の区切り：記号だけの行（--- や ===）、または「別件」「もう1件」「2件目」で始まる行 */
+const REQUEST_BREAK = /^[ \t　]*(?:[-=*_─━＝]{3,}[ \t　]*$|別件|もう[1一]件|[2二]件目)/m;
+
+/**
+ * 1件目の依頼の範囲（会話の先頭から、最初の区切りの手前まで）。区切りが見つからなければ会話の全体。
+ * 使うのは、読み取りの AI が「複数の依頼がある」と答えたときだけ（lib/intake.ts の checkIntake）
+ */
+export function firstRequestScope(text: string): string {
+  const m = REQUEST_BREAK.exec(text);
+  if (!m || !text.slice(0, m.index).trim()) return text;
+  return text.slice(0, m.index);
+}
+
 /** 日程の手がかりの確かめ（コード）：言い回しそのものが会話の中にあるときだけ使う（20字まで）。日程が決まっていれば使わない */
 export function checkDateHint(text: string, hint: Quoted | null | undefined, date: string | null): string | null {
   const v = hint?.value?.trim();
@@ -200,14 +243,29 @@ export function checkIntake(text: string, raw: RawIntake, receivedAt: string): {
   const format = plain("format");
   const theme = plain("theme");
   const organizer = plain("organizer");
-  let d = kind === "request" && raw.date?.value ? checkDate(text, raw.date.quote, receivedAt) : { date: null as string | null, reason: "会話の中でまだ決まっていません" as string | null };
-  let hint = kind === "request" ? checkDateHint(text, raw.date_hint, d.date) : null;
+  // 複数の依頼が混ざっているときは、1件目の依頼の範囲の中だけで日付を決める（別件の日付を、開催日の食い違いとして数えない。
+  // 読み取った日程の一節が1件目の範囲になければ、確かめられないので未定）
+  const scope = kind === "request" && raw.multiple_requests ? firstRequestScope(text) : text;
+  let d =
+    kind === "request" && raw.date?.value
+      ? checkDate(scope, raw.date.quote, receivedAt)
+      : { date: null as string | null, reason: "会話の中でまだ決まっていません" as string | null };
+  let hint = kind === "request" ? checkDateHint(scope, raw.date_hint, d.date) : null;
   // Agent が日程を「手がかり」に回しても、手がかりがちょうど1日（期間・候補・「ごろ」でない）で、曜日が書いてあれば合っているなら、決まっているとする
   // （会話に指示の文などが混ざると、Agent が言い切らずに手がかりに回すことがあるため。判定はコード）
   if (!d.date && hint) {
-    const fromHint = checkDate(text, hint, receivedAt);
+    const fromHint = checkDate(scope, hint, receivedAt);
     if (fromHint.date && weekdayMatches(hint, fromHint.date)) {
       d = fromHint;
+      hint = null;
+    }
+  }
+  // Agent が日程を返さなくても、会話の最後のほうに「決まりました」「確定しました」の一節があり、その中の日付が1日に決まり、
+  // 曜日が書いてあれば合っているなら、決まった日とする（あとから日程が決まる会話で、Agent が言い切らないことがあるため。判定はコード）
+  if (!d.date && kind === "request") {
+    const announced = announcedDate(scope, receivedAt);
+    if (announced) {
+      d = { date: announced.date, reason: null };
       hint = null;
     }
   }

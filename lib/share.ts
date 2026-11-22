@@ -29,6 +29,11 @@ export function shareConfigProblem(): string | null {
   if (shareMode() === "lan" && !accessCode()) return "SHARE_MODE=lan のときは .env に ACCESS_CODE（合言葉）を設定してください。合言葉なしでは起動しません";
   if (shareMode() === "lan" && [...accessCode()].length < MIN_ACCESS_CODE)
     return `SHARE_MODE=lan のときは ACCESS_CODE（合言葉）を${MIN_ACCESS_CODE}文字以上にしてください（短いと当てられやすいため）。今の合言葉は短すぎます`;
+  if (shareMode() === "lan")
+    for (const name of ["SHARE_GENERAL_POOL_USD", "SHARE_MENTOR_POOL_USD"]) {
+      const raw = (process.env[name] ?? "").trim();
+      if (raw && !(Number(raw) > 0)) return `${name}（見せる用の側ごとの API 代の上限）は 0 より大きい数にしてください（例：一般 20・メンター 30）`;
+    }
   const mentorProblem = shareMode() === "lan" ? mentorConfigProblem() : null;
   if (mentorProblem) return mentorProblem;
   const perPerson = (process.env.SHARE_PER_PERSON_USD ?? "").trim();

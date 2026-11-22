@@ -28,7 +28,7 @@
 | やること | コマンド | 確かめること |
 | --- | --- | --- |
 | 合言葉を決める | （その日だけの英数字12文字以上。前に使ったものは使わない） | 全員に公開してよい文字列（ほかで使っているパスワードにしない） |
-| 見せる用の設定を書く | `.env` に `ACCESS_CODE=（12文字以上の合言葉。例：netacho-1122-hanami）` と `SHARE_BUDGET_USD=5` と `SHARE_PER_PERSON_USD=5`（1人あたりの上限）。メンターさんにも触ってもらうなら `MENTOR_ACCESS_CODE=（12文字以上・一般と別の合言葉）` と `SHARE_MENTOR_USD=15`。`SHARE_MODE` は書かない。12文字未満だと見せる用は起動しない | `.env` は git に入らない（`git status` に出ない） |
+| 見せる用の設定を書く | `.env` に `ACCESS_CODE=（12文字以上の合言葉。例：netacho-1122-hanami）` と `SHARE_BUDGET_USD=5` と `SHARE_PER_PERSON_USD=5`（1人あたりの上限）。メンターさんにも触ってもらうなら `MENTOR_ACCESS_CODE=（12文字以上・一般と別の合言葉）` と `SHARE_MENTOR_USD=15`。側ごとの合計の上限も付けるなら `SHARE_GENERAL_POOL_USD=20`（一般の参加者の分）と `SHARE_MENTOR_POOL_USD=30`（メンター・審査員の分）。`SHARE_MODE` は書かない。12文字未満だと見せる用は起動しない | `.env` は git に入らない（`git status` に出ない） |
 | 発表用を起動 | ターミナル1：`npm start` | 最初の行が「発表用：http://127.0.0.1:3000 で待ち受けます（この端末からだけ）」 |
 | 見せる用を起動 | ターミナル2：`npm run start:share` | 最初の行が「見せる用（SHARE_MODE=lan）：http://192.168.x.x:3100 …API 代の上限 $5。データは data/runtime-share」。「起動しません」なら合言葉か上限が空 |
 | 見せる用は合言葉なしで入れない | 別の端末で http://192.168.x.x:3100 を開く | 合言葉の入力画面が出る（いきなり受信箱が出たら止めて設定を見直す） |
@@ -44,14 +44,14 @@
 | リンクの守りを知っておく | — | `/join` も合言葉の画面と同じ回数の制限・全体の上限が効く。違う・止められているときは合言葉の画面に移り、理由が出る。移ったあとのアドレスに合言葉は残らない（Referrer-Policy: no-referrer）。合言葉を変えたら、前のリンクは使えなくなる（/share-links で新しいリンクをコピーし直す） |
 | 金額を始める前に控える | `npm run usage -- --share` | 見せる用の今日の金額を控える（上限は起動してからの分で数える） |
 
-見せている間：上限（SHARE_BUDGET_USD）を超えると、候補を出す・分析・下書き・ネタ帳を更新などは止まり、画面に理由が出る。1人あたりの上限（SHARE_PER_PERSON_USD）を超えた人は、その人だけ「この端末で試せる分を使い切りました。保存済みの例（?mock）は引き続き見られます」になる（ほかの人は続けられる）。「ネタ帳を更新」は、1回の見積もりが NOTEBOOK_BUDGET_USD を超えるなら始めず、動いている間の2回目は断る。API を使う操作が同時に2件を超えたときも、少し待つよう理由が出る。見るだけの操作と `?mock` は続けられる。
+見せている間：上限（SHARE_BUDGET_USD）を超えると、候補を出す・分析・下書き・ネタ帳を更新などは止まり、画面に理由が出る。側ごとの合計の上限（SHARE_GENERAL_POOL_USD・SHARE_MENTOR_POOL_USD）に届いた側は、その側だけ止まる（一般の参加者が使い切っても、メンター・審査員は続けられる）。1人あたりの上限（SHARE_PER_PERSON_USD）を超えた人は、その人だけ「この端末で試せる分を使い切りました。保存済みの例（?mock）は引き続き見られます」になる（ほかの人は続けられる）。「ネタ帳を更新」は、1回の見積もりが NOTEBOOK_BUDGET_USD を超えるなら始めず、動いている間の2回目は断る。API を使う操作が同時に2件を超えたときも、少し待つよう理由が出る。見るだけの操作と `?mock` は続けられる。
 
 ## 終わったあと
 
 | やること | コマンド | 確かめること |
 | --- | --- | --- |
 | 見せる用を止める | ターミナル2で Ctrl+C | `netstat -ano \| findstr :3100` に LISTENING が出ない |
-| 合言葉を捨てる | `.env` の `ACCESS_CODE`・`MENTOR_ACCESS_CODE` を消す（`SHARE_BUDGET_USD`・`SHARE_PER_PERSON_USD`・`SHARE_MENTOR_USD` も消す） | `.env` に合言葉が残っていない。次に見せるときは新しい合言葉にする |
+| 合言葉を捨てる | `.env` の `ACCESS_CODE`・`MENTOR_ACCESS_CODE` を消す（`SHARE_BUDGET_USD`・`SHARE_PER_PERSON_USD`・`SHARE_MENTOR_USD`・`SHARE_GENERAL_POOL_USD`・`SHARE_MENTOR_POOL_USD` も消す） | `.env` に合言葉が残っていない。次に見せるときは新しい合言葉にする |
 | 見せる用が起動できなくなったか | `npm run start:share` | 「起動しません：見せる用には .env の ACCESS_CODE（合言葉）が必要です」が出る（合言葉が12文字未満のときは「12文字以上にしてください」） |
 | 使った金額 | `npm run usage -- --share` と `npm run usage` | 見せる用の今日の金額が上限（SHARE_BUDGET_USD）以内。用途ごとの内訳に心当たりがある |
 | 見せる用の置き場を片付ける | `npm run reset:share` | 「初期状態に戻しました」が出る。参加者が触った記録は data/runtime-backup/<日時>/ に残る（要るなら見返す） |

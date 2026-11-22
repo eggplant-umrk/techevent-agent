@@ -87,10 +87,18 @@ if (printOnly) {
   process.exit(0);
 }
 
-const lanIps = Object.values(os.networkInterfaces())
-  .flat()
-  .filter((a) => a && a.family === "IPv4" && !a.internal)
-  .map((a) => a.address);
+// 会場の Wi-Fi らしい順に並べる（lib/shareLinks.ts の lanRank と同じ決め方。/share-links と同じアドレスを出す）：
+// Wi-Fi の名前 → 家庭・会場の LAN の範囲（192.168・10・172.16〜31）→ そのほか → 仮想の口（vEthernet など）と Tailscale（100.64.0.0/10）
+const lanRank = (name, ip) => {
+  const [x, y] = ip.split(".").map(Number);
+  if (/vethernet|virtual|vmware|vbox|wsl|docker|hyper-v|loopback|tailscale|zerotier|utun|tun|tap/i.test(name) || (x === 100 && y >= 64 && y <= 127)) return 3;
+  if (/wi-?fi|wlan|wireless|無線/i.test(name)) return 0;
+  return (x === 192 && y === 168) || x === 10 || (x === 172 && y >= 16 && y <= 31) ? 1 : 2;
+};
+const lanIps = Object.entries(os.networkInterfaces())
+  .flatMap(([name, list]) => (list ?? []).filter((a) => a.family === "IPv4" && !a.internal).map((a) => ({ name, ip: a.address })))
+  .sort((a, b) => lanRank(a.name, a.ip) - lanRank(b.name, b.ip))
+  .map((a) => a.ip);
 console.log(
   shareProfile
     ? `見せる用（SHARE_MODE=lan）：http://${host === "0.0.0.0" ? lanIps[0] ?? host : host}:${port} で待ち受けます。開いた人は合言葉を入れます。API 代の上限 $${env.SHARE_BUDGET_USD}。データは ${path.relative(process.cwd(), env.DATA_RUNTIME_DIR)}`

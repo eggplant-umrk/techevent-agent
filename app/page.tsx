@@ -47,6 +47,11 @@ export default function Home() {
   const [api, setApi] = useState<Api>(realApi);
   const [debug, setDebug] = useState(false);
   const [tab, setTabState] = useState<Tab>("inbox");
+  /** いまのタブ（非同期の処理が終わったときに、その間にタブを切り替えたかを見るため） */
+  const tabRef = useRef<Tab>("inbox");
+  useEffect(() => {
+    tabRef.current = tab;
+  }, [tab]);
 
   // people（ネタ帳タブ）
   const [people, setPeople] = useState<PersonRow[]>([]);
@@ -155,6 +160,7 @@ export default function Home() {
 
   /** タブを切り替える（URL の ?tab= にも残す。受信箱は既定なので付けない） */
   function setTab(t: Tab) {
+    tabRef.current = t; // 押した直後から分かるように（描き直しを待たない）
     setTabState(t);
     const url = new URL(window.location.href);
     if (t === "inbox") url.searchParams.delete("tab");
@@ -511,6 +517,8 @@ export default function Home() {
       const { id, duplicate } = await api.inboxAdd(text);
       setCustomText("");
       await loadInbox();
+      // 追加を待っている間にほかのタブへ移っていたら、受信箱に引き戻さない（追加した依頼は受信箱の一覧に入っている）
+      if (tabRef.current !== "inbox") return;
       await openInbox(id);
       if (duplicate) setDupNotice("同じ依頼がもうあります。前に追加した依頼を開きました");
     } catch (err) {

@@ -166,15 +166,9 @@ export const realApi: Api = {
   feedback: async (input) => {
     await json(await post("/api/feedback", input));
   },
-  // 窓口があれば GET は 405（POST だけの窓口）など、なければ 404。1回だけ確かめる
-  feedbackReady: async () => {
-    try {
-      const res = await safeFetch("/api/feedback", { method: "GET" });
-      return res.status !== 404;
-    } catch {
-      return false;
-    }
-  },
+  // 記録の側（POST /api/feedback）は main に入っているので、窓口を GET で確かめない（405 がブラウザのコンソールに出ていた）。
+  // 理由の選択肢（/api/state の feedback_reasons）が読めたら、ボタンを出す（app/page.tsx）
+  feedbackReady: async () => true,
   trace: async (requestId) => {
     const res = await safeFetch(`/api/traces/${encodeURIComponent(requestId)}`);
     if (res.status === 404) return null; // まだ記録がない（記録の側が入る前も、ここで null）

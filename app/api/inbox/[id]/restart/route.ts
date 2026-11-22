@@ -6,6 +6,7 @@ import { getInboxItem, restart } from "@/lib/inbox";
 import { extractIntakeWithAgent } from "@/lib/intake";
 import { forbidden, isLocalRequest } from "@/lib/localOnly";
 import { perPerson } from "@/lib/personBudget";
+import { shareBudgetGate } from "@/lib/shareGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,12 @@ async function handlePost(req: Request, { params }: { params: Promise<{ id: stri
   // API を使う操作の同時実行の上限（lib/apiSlots.ts。空いていなければ最大60秒待つ）。候補づくりが裏で終わるまで1件分を持つ
   // 取ったあとに保存などが失敗したら（投げたら）、withApiSlotHandoff が枠を必ず返す
   return withApiSlotHandoff(req.signal, (release) => {
+    // 枠を取った直後にもう一度上限を見る（待っている間にほかの人の操作で届いていたら、始めずに返す。lib/shareGate.ts）
+    const gate = shareBudgetGate(req);
+    if (!gate.ok) {
+      release();
+      return Response.json({ error: gate.error }, { status: gate.status });
+    }
     const out = restart(id, (request, emit) => runAgent(request, emit), extractIntakeWithAgent, release);
     if (!out.ok) {
       release();

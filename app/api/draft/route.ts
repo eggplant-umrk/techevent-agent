@@ -7,6 +7,8 @@ import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
 import { withTrace } from "@/lib/trace";
 import { perPerson } from "@/lib/personBudget";
+import { afterSlot } from "@/lib/shareGate";
+import { forClient } from "@/lib/clientView";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,13 +36,14 @@ async function handlePost(req: Request) {
     const r = body.request_id && !body.custom_text ? await withTrace(request.id, make) : await make();
     // 承諾済みの依頼を開き直したときに主催者への返事を出せるよう、下書きを保存する（送信はしない）
     if (body.request_id && !body.custom_text) saveDraft(body.request_id, candidate.employee_id, r.value);
-    return Response.json({
+    // 見せる用では合計（total_usd）を返さない
+    return Response.json(forClient({
       draft: r.value,
       model: r.model,
       fell_back: r.fellBack,
       run_usd: runUsd(body.run_id),
       total_usd: totalUsd(),
-    });
+    }));
   } catch (err) {
     return Response.json({ error: userErrorText(err, { where: "下書き" }) }, { status: 500 });
   }
@@ -48,4 +51,5 @@ async function handlePost(req: Request) {
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
 // 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
-export const POST = perPerson(slotted(handlePost));
+// 枠を取った直後にもう一度上限を見る（afterSlot。lib/shareGate.ts）
+export const POST = perPerson(slotted(afterSlot(handlePost)));

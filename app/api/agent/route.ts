@@ -1,10 +1,12 @@
 import { runAgent, type AgentEvent } from "@/lib/agent";
+import { forClient } from "@/lib/clientView";
 import { resolveRequest } from "@/lib/requests";
 import { saveSampleProposal } from "@/lib/board";
 import { slotted } from "@/lib/apiSlots";
 import { userErrorText } from "@/lib/userError";
 import { traceEmit, withTrace } from "@/lib/trace";
 import { perPerson } from "@/lib/personBudget";
+import { afterSlot } from "@/lib/shareGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +29,7 @@ async function handlePost(req: Request) {
       const emit = (e: AgentEvent) => {
         events.push(e);
         if (e.type === "done") runUsd = e.run_usd;
-        controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
+        controller.enqueue(encoder.encode(JSON.stringify(forClient(e)) + "\n"));
       };
       try {
         // 実行の記録（lib/trace.ts）：依頼の id で残す。その場で書いた依頼（custom_text）は残さない
@@ -49,4 +51,5 @@ async function handlePost(req: Request) {
 
 // API を使う操作は同時に2件まで（lib/apiSlots.ts）。超えたら 429
 // 見せる用：使った API 代を、要求した人に足す（1人あたりの上限。lib/personBudget.ts）
-export const POST = perPerson(slotted(handlePost));
+// 枠を取った直後にもう一度上限を見る（afterSlot。lib/shareGate.ts）
+export const POST = perPerson(slotted(afterSlot(handlePost)));

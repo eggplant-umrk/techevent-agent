@@ -72,7 +72,9 @@ data/usage.json
 # ===== Next.js =====
 next-env.d.ts
 eval-results/
-.claude/
+# Claude Code の設定：リポジトリの決まり（.claude/settings.json）だけを git に入れる。各自の設定（settings.local.json など）は入れない
+.claude/*
+!.claude/settings.json
 data/inbox.json
 
 # アンケート分析の結果と、画面から取り込んだアンケート（個人情報の列は捨てたあと）。?mock は app/_client/postevent.json を使う

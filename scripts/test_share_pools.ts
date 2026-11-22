@@ -47,7 +47,7 @@ async function main() {
   pb.runAsPerson(m1, () => spend("m1"), "mentor");
   const one = pb.personSpent(g1);
   check("一般の人の分は一般側、メンターの分はメンター側に数える", Math.abs(pb.poolSpent("general") - one) < 1e-6 && Math.abs(pb.poolSpent("mentor") - pb.personSpent(m1)) < 1e-6, `一般 $${pb.poolSpent("general").toFixed(2)}・メンター $${pb.poolSpent("mentor").toFixed(2)}`);
-  check("人ごとの記録には、メンターとして使った分（mentor_usd）も残す", (JSON.parse(fs.readFileSync(pb.personUsageFile(), "utf-8")) as Record<string, { mentor_usd?: number }>)[m1]?.mentor_usd === pb.personSpent(m1));
+  check("人ごとの記録には、メンターとして使った分（mentor_usd）も残す", (JSON.parse(fs.readFileSync(pb.personUsageFile(), "utf-8")) as { people: Record<string, { mentor_usd?: number }> }).people[m1]?.mentor_usd === pb.personSpent(m1));
 
   // 一般側を使い切る（2人で分けて使っても、側の合計で止まる）
   while (pb.poolSpent("general") < 3) pb.runAsPerson(pb.poolSpent("general") < 1.5 ? g1 : g2, () => spend("g"), "general");

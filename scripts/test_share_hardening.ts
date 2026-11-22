@@ -37,8 +37,8 @@ async function main() {
   check("lan：合言葉があれば「ネタ帳を更新」も入口を通す", nb.ok);
   check("lan：「ネタ帳を更新」は API を使う操作として、合計の上限と1人あたりの上限の対象", share.spendsApi("POST", "/api/notebook"));
   const nbSrc = fs.readFileSync(path.join("app", "api", "notebook", "route.ts"), "utf-8");
-  check("守り1：動いている間の2回目は 409（二重実行の防止）", nbSrc.includes("if (g.__notebookUpdating) return Response.json({ error: NOTEBOOK_BUSY }, { status: 409 });"));
-  check("守り2：1人あたりの上限で数える（perPerson で包む）", nbSrc.includes("export const POST = perPerson(slotted(handlePost));"));
+  check("守り1：動いている間の2回目は 409（二重実行の防止）", nbSrc.includes("if (updating().has(key)) return Response.json({ error: NOTEBOOK_BUSY }, { status: 409 });"));
+  check("守り2：1人あたりの上限で数える（perPerson で包む）", nbSrc.includes("export const POST = perPerson(slotted(afterSlot(handlePost)));"));
   const nbLib = fs.readFileSync(path.join("lib", "notebook.ts"), "utf-8");
   check("守り3：1回の見積もりが NOTEBOOK_BUDGET_USD を超えるなら始めない・途中で届いたら残りは次回", /const overBudget = estimate > cfg\.budgetUsd;/.test(nbLib) && nbLib.includes("今回の金額が上限"));
   check("lan：ほかの API を使う操作（候補を出す）は止めない", share.checkRequest({ method: "POST", pathname: "/api/agent", host: "192.168.1.20:3100", origin: null, forwardedFor: null, cookie: share.accessToken(), headerCode: null }).ok);
@@ -113,9 +113,9 @@ async function main() {
   check("数は .env の API_MAX_CONCURRENT で変えられる", slots.maxApiSlots() === 1);
   delete process.env.API_MAX_CONCURRENT;
   const routes = ["agent", "notebook", "events/[id]/analyze", "events/[id]/import", "draft", "blog-ideas", "venues", "venues/draft"];
-  const unwrapped = routes.filter((r) => !fs.readFileSync(path.join("app", "api", r, "route.ts"), "utf-8").includes("slotted(handlePost)"));
+  const unwrapped = routes.filter((r) => !fs.readFileSync(path.join("app", "api", r, "route.ts"), "utf-8").includes("slotted(afterSlot(handlePost))"));
   const inboxRoute = fs.readFileSync(path.join("app", "api", "inbox", "route.ts"), "utf-8");
-  check("API を使う窓口はすべて、同時実行の上限を通す（受信箱への追加は候補づくりが終わるまで）", unwrapped.length === 0 && inboxRoute.includes("acquireApiSlotWait(req.signal)") && inboxRoute.includes("extractIntakeWithAgent, release)"), unwrapped.join(","));
+  check("API を使う窓口はすべて、同時実行の上限を通す（受信箱への追加は候補づくりが終わるまで）", unwrapped.length === 0 && inboxRoute.includes("withApiSlotHandoff(req.signal") && inboxRoute.includes("extractIntakeWithAgent, release)"), unwrapped.join(","));
   const inbox = await import("../lib/inbox");
   let settled = 0;
   inbox.addToInbox({ text: "テストの依頼", source: "manual" }, async () => null, undefined, () => settled++);

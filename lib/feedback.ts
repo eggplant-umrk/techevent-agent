@@ -8,7 +8,10 @@ import { nowJst } from "./clock";
 import { runtimeFile } from "./runtime";
 
 export type FeedbackTarget = "candidate" | "draft" | "reply" | "intake_field";
-export type FeedbackVerdict = "wrong" | "edited" | "good";
+/** withdrawn：前に付けた「違う」の取り消し（記録は消さず、取り消しを1行足す） */
+export type FeedbackVerdict = "wrong" | "edited" | "good" | "withdrawn";
+/** 取り消しのときの理由（理由は問わない） */
+export const WITHDRAWN_REASON = "withdrawn";
 
 /** 理由の候補（コードと画面に出す言葉）。対象ごとに決める */
 export const REASON_CODES: Record<FeedbackTarget, Record<string, string>> = {
@@ -52,11 +55,11 @@ export function parseFeedback(body: unknown): { ok: true; value: Omit<Feedback, 
   if (typeof b.target !== "string" || !(b.target in REASON_CODES)) return { ok: false, error: 'target は "candidate"・"draft"・"reply"・"intake_field" のどれかです' };
   const target = b.target as FeedbackTarget;
   if (typeof b.target_id !== "string" || !ID_RE.test(b.target_id)) return { ok: false, error: "target_id がありません（または形が違います）" };
-  if (b.verdict !== "wrong" && b.verdict !== "edited" && b.verdict !== "good") return { ok: false, error: 'verdict は "wrong"・"edited"・"good" のどれかです' };
+  if (b.verdict !== "wrong" && b.verdict !== "edited" && b.verdict !== "good" && b.verdict !== "withdrawn") return { ok: false, error: 'verdict は "wrong"・"edited"・"good"・"withdrawn" のどれかです' };
   const verdict = b.verdict as FeedbackVerdict;
   const codes = REASON_CODES[target];
-  const reason = typeof b.reason_code === "string" ? b.reason_code : verdict === "good" ? GOOD_REASON : "";
-  if (verdict === "good" ? reason !== GOOD_REASON && !(reason in codes) : !(reason in codes)) {
+  const reason = verdict === "withdrawn" ? WITHDRAWN_REASON : typeof b.reason_code === "string" ? b.reason_code : verdict === "good" ? GOOD_REASON : "";
+  if (verdict === "withdrawn" ? false : verdict === "good" ? reason !== GOOD_REASON && !(reason in codes) : !(reason in codes)) {
     return { ok: false, error: `reason_code は ${Object.keys(codes).join("・")} のどれかです` };
   }
   const str = (k: "note" | "before" | "after", max: number): string | undefined | null => {
@@ -116,4 +119,27 @@ export function readFeedback(file = feedbackFile()): Feedback[] {
   }
   if (bad) console.error(`[使われた結果の記録] 読めない行を ${bad}行 飛ばしました（${path.basename(file)}）`);
   return out;
+}
+
+/**
+ * 取り消されていない記録だけにする：「違う」のあとに同じ相手（依頼・対象・対象の id）への取り消し（withdrawn）があれば、
+ * その「違う」と取り消しの行を外す。評価のケースへの変換（lib/feedbackEval.ts）と、画面の印の両方が使う
+ */
+export function activeFeedback(rows: Feedback[]): Feedback[] {
+  const key = (r: Feedback) => `${r.request_id}|${r.target}|${r.target_id}`;
+  const lastWithdrawn = new Map<string, number>();
+  rows.forEach((r, i) => {
+    if (r.verdict === "withdrawn") lastWithdrawn.set(key(r), i);
+  });
+  return rows.filter((r, i) => r.verdict !== "withdrawn" && !(r.verdict === "wrong" && (lastWithdrawn.get(key(r)) ?? -1) > i));
+}
+
+/** その依頼で「違う」と付けられたままの候補（取り消されていないもの。同じ人は最後の理由）。画面の「違うと記録済み」の印に使う */
+export function wrongCandidates(requestId: string, rows: Feedback[] = readFeedback()): Array<{ employee_id: string; reason_code: string; reason: string }> {
+  const last = new Map<string, Feedback>();
+  for (const r of activeFeedback(rows.filter((x) => x.request_id === requestId && x.target === "candidate"))) {
+    if (r.verdict === "wrong") last.set(r.target_id, r);
+    else last.delete(r.target_id); // あとから「よい」と付け直したら、違うの印は外す
+  }
+  return [...last.values()].map((r) => ({ employee_id: r.target_id, reason_code: r.reason_code, reason: REASON_CODES.candidate[r.reason_code] ?? "その他" }));
 }

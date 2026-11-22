@@ -4,6 +4,7 @@
 import { useState } from "react";
 import type { Api } from "@/app/_client/api";
 import { durationText, usdText, type RequestTrace } from "@/app/_client/feedback";
+import { traceStepLabel } from "@/lib/traceLabel";
 
 const KIND_LABEL = { llm: "AI", tool: "ツール", code: "処理" } as const;
 
@@ -69,7 +70,7 @@ function TraceView({ trace, mock }: { trace: RequestTrace; mock: boolean }) {
             <li key={i} className={`trace-row${s.ok ? "" : " trace-fail"}`}>
               <span className={`trace-kind trace-kind-${s.kind}`}>{KIND_LABEL[s.kind]}</span>
               <span className="trace-name" title={s.name}>
-                {s.name}
+                {traceStepLabel(s.kind, s.name)}
               </span>
               <span className="trace-track" aria-hidden="true">
                 <span className={`trace-bar trace-bar-${s.kind}`} style={{ left: `${Math.min(100, start * 100)}%`, width: `${Math.min(100 - start * 100, width * 100)}%` }} />

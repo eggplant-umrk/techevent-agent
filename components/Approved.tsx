@@ -15,10 +15,12 @@ export function Approved({
   draftError,
   draftNote,
   resume = false,
+  outreach = false,
   dateSentence = null,
   onBack,
   onRetryDraft,
   onRecord,
+  onOutreachCopied,
 }: {
   candidate: Candidate;
   draft: OutreachDraft | null;
@@ -27,6 +29,10 @@ export function Approved({
   draftNote: string | null;
   /** 声かけ中の人の返事を記録しに戻ってきた（声かけ文は作り直さない） */
   resume?: boolean;
+  /** もう声をかけた人（声かけ文をコピーした）。まだなら「下書き中」 */
+  outreach?: boolean;
+  /** 声かけ文をコピーしたとき（ここで「声かけ中」にする） */
+  onOutreachCopied?: () => void;
   /** 主催者への返事に入れてよい「空いていそうな日」の1文（日程が未定の依頼で、日が見つかったときだけ） */
   dateSentence?: string | null;
   onBack: () => void;
@@ -42,7 +48,7 @@ export function Approved({
           </button>
         </div>
         <div className="cand-head">
-          <span className="cand-name">{resume ? `${candidate.name}さんに声かけ中` : `${candidate.name}さんで進める`}</span>
+          <span className="cand-name">{resume || outreach ? `${candidate.name}さんに声かけ中` : `${candidate.name}さんで進める`}</span>
           <span className="meta">
             {[candidate.business_unit, candidate.talk_tag ?? `登壇${candidate.past_talk_count}回`, candidate.busy_text].filter((x) => x && String(x).trim()).join("・")}
           </span>
@@ -66,7 +72,7 @@ export function Approved({
           </button>
         </section>
       )}
-      {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} employeeId={candidate.employee_id} />}
+      {draft && <DraftEditor key={candidate.employee_id} draft={draft} note={draftNote} employeeId={candidate.employee_id} outreach={outreach} onCopied={onOutreachCopied} />}
       {draft?.organizer_reply && (
         <OrganizerReply key={`reply-${candidate.employee_id}`} text={draft.organizer_reply} note={draft.organizer_reply_note ?? null} dateSentence={dateSentence} employeeId={candidate.employee_id} />
       )}
@@ -161,7 +167,7 @@ export function AcceptedView({
           ))}
         </ul>
         {st.declined_by.length > 0 && <p className="meta">辞退：{st.declined_by.map((p) => `${p.name}さん`).join("・")}</p>}
-        {undoFor && <p className="meta">取り消すと、承諾の記録を1つ戻して「声かけ中」に戻ります。</p>}
+        {undoFor && <p className="meta">取り消すと、承諾の記録を1つ戻して、承諾の前の状態（「声かけ中」か「下書き中」）に戻ります。</p>}
         <ErrorLine message={undoError} />
         <div className="btn-row">
           <button type="button" className="btn btn-sm" aria-expanded={showOthers} onClick={onToggleOthers}>
@@ -243,7 +249,7 @@ function OrganizerReply({
   );
 }
 
-function DraftEditor({ draft, note, employeeId }: { draft: OutreachDraft; note: string | null; employeeId: string }) {
+function DraftEditor({ draft, note, employeeId, outreach = false, onCopied }: { draft: OutreachDraft; note: string | null; employeeId: string; outreach?: boolean; onCopied?: () => void }) {
   const [subject, setSubject] = useState(draft.subject);
   const [message, setMessage] = useState(draft.message);
   // コピーしたら「使った」として、直していなければ good、直していれば edited を送る（直す前と後の件名＋本文）
@@ -272,7 +278,10 @@ function DraftEditor({ draft, note, employeeId }: { draft: OutreachDraft; note: 
             声かけ文（下書き）
           </h3>
         </div>
-        <p className="meta">自分の言葉に直して、コピーして送ってください（ここからは送信しません）。</p>
+        <p className="meta">
+          自分の言葉に直して、コピーして送ってください（ここからは送信しません）。
+          {outreach ? "声かけ中として記録済みです。" : "コピーすると、この依頼は「声かけ中」になります（それまでは「下書き中」）。"}
+        </p>
         {note && <p className="log-line log-warn">{note}</p>}
         <label className="field">
           <span className="field-label">件名</span>
@@ -283,7 +292,15 @@ function DraftEditor({ draft, note, employeeId }: { draft: OutreachDraft; note: 
           <textarea className="input draft-text" rows={14} value={message} onChange={(e) => setMessage(e.target.value)} />
         </label>
         <div className="btn-row">
-          <CopyButton text={`${subject}\n\n${message}`} label="声かけ文をコピー" primary onCopied={used.onUsed} />
+          <CopyButton
+            text={`${subject}\n\n${message}`}
+            label="声かけ文をコピー"
+            primary
+            onCopied={(t) => {
+              used.onUsed(t);
+              onCopied?.();
+            }}
+          />
           <button
             type="button"
             className="btn"

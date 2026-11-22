@@ -26,6 +26,7 @@ async function handlePost(req: Request) {
     async start(controller) {
       const events: AgentEvent[] = [];
       let runUsd = 0;
+      const startedMs = Date.now();
       const emit = (e: AgentEvent) => {
         events.push(e);
         if (e.type === "done") runUsd = e.run_usd;
@@ -35,7 +36,7 @@ async function handlePost(req: Request) {
         // 実行の記録（lib/trace.ts）：依頼の id で残す。その場で書いた依頼（custom_text）は残さない
         const result = body.custom_text ? await runAgent(request, emit) : await withTrace(request.id, () => runAgent(request, traceEmit(emit)));
         // サンプルの依頼は、出した候補を保存して受信箱の状態を「候補準備済み」にする（受信箱の依頼は受信箱が保存する）
-        if (result && !body.custom_text) saveSampleProposal(request.id, result, events, runUsd);
+        if (result && !body.custom_text) saveSampleProposal(request.id, result, events, runUsd, Date.now() - startedMs);
       } catch (err) {
         // Never echo request headers or config; only the error message.
         emit({ type: "error", message: userErrorText(err, { where: "候補づくり", retryLabel: "もう一度探す" }) });

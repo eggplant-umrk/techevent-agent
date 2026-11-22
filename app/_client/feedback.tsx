@@ -16,8 +16,8 @@ export interface FeedbackInput {
   target: "candidate" | "draft" | "reply";
   /** 社員 id（候補の人・下書きや返事の相手） */
   target_id: string;
-  /** wrong：この候補は違う ／ edited：直してから使った ／ good：直さずに使った */
-  verdict: "wrong" | "edited" | "good";
+  /** wrong：この候補は違う ／ edited：直してから使った ／ good：直さずに使った ／ withdrawn：前に付けた「違う」の取り消し */
+  verdict: "wrong" | "edited" | "good" | "withdrawn";
   /** 理由。good は "good"。コピーで「直して使った」と数えたときは理由を聞かないので "other" */
   reason_code: string;
   note?: string;
@@ -34,6 +34,10 @@ interface FeedbackCtx {
   /** 理由の選択肢（REASON_CODES）。まだ読めていなければ null（ボタンを出さない） */
   reasons: ReasonCodes | null;
   send: (input: FeedbackInput) => Promise<void>;
+  /** 「違う」と記録済みの候補（社員 id → 理由の言葉）。依頼の詳細から来る。読み直しても残る */
+  wrong?: Record<string, string>;
+  /** 送ったあとに、依頼の詳細を読み直す（印を出す・消すため） */
+  refresh?: () => void;
 }
 const Ctx = createContext<FeedbackCtx>({ requestId: null, reasons: null, send: async () => {} });
 export const FeedbackProvider = Ctx.Provider;

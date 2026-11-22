@@ -94,6 +94,8 @@ const xResult = (): Proposal | null => (X_FIXTURE.detail.result ? { ...X_FIXTURE
 const xRequest = (): SpeakingRequest => ({ id: X_ID, message: X_FIXTURE.detail.text, intake: X_FIXTURE.detail.intake ?? undefined });
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** 候補が違う理由の言葉（lib/feedback.ts の REASON_CODES.candidate と同じ。lib/feedback.ts はファイルを読むので画面からは読まない） */
+const MOCK_CANDIDATE_REASONS: Record<string, string> = { theme_mismatch: "テーマが合わない", busy: "忙しい", not_own_activity: "本人の活動ではない", other: "その他" };
 const today = "2026-11-21";
 
 type Overlay = Partial<Card>;
@@ -249,7 +251,19 @@ export function mockApi(real: Api): Api {
         : null;
     // 一覧に小さく出す、かかった金額と時間（モックは記録の見本から）
     const tr = x.status === "ready" ? mockTrace(x.id) : null;
-    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today), event_date: date, run_usd: tr?.total_cost_usd ?? 0, elapsed_ms: tr?.total_ms ?? null };
+    // 下書きが手元にある人（打診の記録がまだなければ「下書き中」）
+    const drafted = [...drafts.keys()].filter((k) => k.startsWith(`${x.id}:`)).map((k) => k.slice(x.id.length + 1)).map((id) => ({ employee_id: id, name: nameOf(id) }));
+    return { ...x, progress, state: requestState(base, recordsFor(x.id, cards, nameOf), date, today, drafted), event_date: date, run_usd: tr?.total_cost_usd ?? 0, elapsed_ms: tr?.total_ms ?? null };
+  }
+  /** 「違う」と付けたままの候補（本物の lib/feedback.ts の wrongCandidates と同じ決め方：あとの取り消しで外す） */
+  function wrongFor(id: string): NonNullable<BoardDetail["wrong_candidates"]> {
+    const last = new Map<string, string>();
+    for (const f of feedbackLog) {
+      if (f.request_id !== id || f.target !== "candidate") continue;
+      if (f.verdict === "wrong") last.set(f.target_id, f.reason_code);
+      else last.delete(f.target_id);
+    }
+    return [...last].map(([employee_id, reason_code]) => ({ employee_id, reason_code, reason: MOCK_CANDIDATE_REASONS[reason_code] ?? "その他" }));
   }
   function acceptedReply(id: string, state: BoardListItem["state"]): BoardDetail["accepted_reply"] {
     for (const p of state.accepted_by) {
@@ -463,7 +477,7 @@ export function mockApi(real: Api): Api {
       if (!it) throw new Error("その依頼は受信箱にありません");
       const st = withState(it);
       const textOf = id === X_ID ? X_FIXTURE.detail.text : inboxTexts.get(id) ?? requests.find((r) => r.id === id)?.message ?? it.title;
-      const extra = { state: st.state, event_date: st.event_date, accepted_reply: acceptedReply(id, st.state), event_urls: eventUrlsIn(textOf) };
+      const extra = { state: st.state, event_date: st.event_date, accepted_reply: acceptedReply(id, st.state), event_urls: eventUrlsIn(textOf), wrong_candidates: wrongFor(id) };
       if (id === X_ID) {
         const result = xResult();
         return { ...X_FIXTURE.detail, ...extra, is_new: it.is_new, result, events: result ? eventsFor(result, id, X_FIXTURE.run_usd).map(([e]) => e) : [] } as BoardDetail;
@@ -584,6 +598,10 @@ export function mockApi(real: Api): Api {
         }));
       total += 0.02;
       return { ideas, run_usd: 0.02, total_usd: total };
+    },
+    async savedDraft(requestId, employeeId) {
+      await wait(100);
+      return drafts.get(`${requestId}:${employeeId}`) ?? null;
     },
     async draft(body): Promise<DraftResponse> {
       await wait(900);

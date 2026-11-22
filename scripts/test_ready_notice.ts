@@ -17,7 +17,7 @@ const item = (id: string, status: NoticeSource["status"], extra: Partial<NoticeS
 // ---- 1. 決まった文
 check("候補ができた：「○○の候補を準備できました」", noticeFor(item("a", "ready", { title: "Backend Craft Night #12" }))?.text === "Backend Craft Night #12の候補を準備できました");
 check("依頼ではなさそう：「○○は依頼ではなさそうです」", noticeFor(item("a", "ready", { title: "今日のランチ", kind: "not_request" }))?.text === "今日のランチは依頼ではなさそうです");
-check("不適切：「○○は止めました」", noticeFor(item("a", "ready", { title: "Dev Party", kind: "inappropriate" }))?.text === "Dev Partyは止めました");
+check("不適切：止めたことだけを伝え、原文（題名）は出さない", noticeFor(item("a", "ready", { title: "Dev Party", kind: "inappropriate" }))?.text === "貼った会話は止めました（不適切な内容のため）");
 check("エラー：「○○の候補づくりに失敗しました」", noticeFor(item("a", "error", { title: "QA Sprint Talks" }))?.text === "QA Sprint Talksの候補づくりに失敗しました");
 check("合う候補なし：候補ができたとは言わない", noticeFor(item("a", "ready", { title: "Mock Night", no_fit: true }))?.text === "Mock Nightの準備が終わりました（合う候補は見つかりませんでした）");
 check("種類：ready・no_fit・not_request・stopped・error", ["ready", "no_fit", "not_request", "stopped", "error"].join() === [item("a", "ready"), item("a", "ready", { no_fit: true }), item("a", "ready", { kind: "not_request" }), item("a", "ready", { kind: "inappropriate" }), item("a", "error")].map((x) => noticeFor(x)?.kind).join());

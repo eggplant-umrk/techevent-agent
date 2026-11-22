@@ -6,12 +6,18 @@ import { ACTIVITY_LABEL } from "./labels";
 import { CopyButton, Tag } from "./ui";
 import { FEEDBACK_DONE, useFeedback } from "@/app/_client/feedback";
 
+/** 候補に付ける印：下書き中（下書きを作っただけ）・声かけ中・辞退・承諾 */
+export type CandidateMark = "drafting" | "outreach" | "declined" | "accepted";
+
 /**
  * 「この候補は違う」：押すと理由を選ぶ（テーマが合わない・忙しい・本人の活動ではない・その他＋ひとこと）。
  * 選んだらすぐ送り、「次からの評価に使います」と小さく出す。確認の窓は出さない。ほかの操作はそのまま使える。
  */
 function WrongCandidate({ employeeId }: { employeeId: string }) {
-  const { requestId, reasons, send } = useFeedback();
+  const { requestId, reasons, send, wrong, refresh } = useFeedback();
+  /** いま付けた理由の言葉（詳細を読み直すまでのあいだ出す） */
+  const [justSent, setJustSent] = useState<string | null>(null);
+  const [withdrawn, setWithdrawn] = useState(false);
   const [open, setOpen] = useState(false);
   const [other, setOther] = useState(false);
   const [note, setNote] = useState("");
@@ -23,13 +29,40 @@ function WrongCandidate({ employeeId }: { employeeId: string }) {
   const submit = (reason: string) => {
     setState("sending");
     send({ request_id: requestId, target: "candidate", target_id: employeeId, verdict: "wrong", reason_code: reason, ...(reason === "other" && note.trim() ? { note: note.trim().slice(0, 200) } : {}) })
-      .then(() => setState("sent"))
+      .then(() => {
+        setJustSent(reasons?.candidate[reason] ?? "その他");
+        setWithdrawn(false);
+        setState("sent");
+        refresh?.();
+      })
       .catch(() => setState("fail"));
   };
-  if (state === "sent")
+  /** 取り消し：記録は消さず、取り消しを1行足す（lib/feedback.ts の withdrawn） */
+  const withdraw = () => {
+    setState("sending");
+    send({ request_id: requestId, target: "candidate", target_id: employeeId, verdict: "withdrawn", reason_code: "withdrawn" })
+      .then(() => {
+        setJustSent(null);
+        setWithdrawn(true);
+        setOpen(false);
+        setOther(false);
+        setState("idle");
+        refresh?.();
+      })
+      .catch(() => setState("fail"));
+  };
+  // 記録済みの印：依頼の詳細（読み直しても残る）か、いま付けたもの。取り消した直後は、詳細を読み直すまで出さない
+  const recorded = withdrawn ? null : justSent ?? wrong?.[employeeId] ?? null;
+  if (recorded)
     return (
-      <span className="meta feedback-note" role="status">
-        {FEEDBACK_DONE}
+      <span className="wrong-done">
+        <span className="meta feedback-note" role="status">
+          違うと記録済み（{recorded}）{state === "sent" ? `・${FEEDBACK_DONE}` : ""}
+        </span>
+        <button type="button" className="link" disabled={state === "sending"} onClick={withdraw}>
+          取り消す
+        </button>
+        {state === "fail" && <span className="meta warn-text">取り消せませんでした</span>}
       </span>
     );
   if (!open)
@@ -83,7 +116,7 @@ export function Candidates({
   onApprove: (c: Candidate) => void;
   onOpenCard: (cardId: string, evidenceId?: string) => void;
   /** 依頼の状態から付ける、その人の印（声かけ中・辞退・承諾）。社員id → 印 */
-  marks?: Record<string, "outreach" | "declined" | "accepted">;
+  marks?: Record<string, CandidateMark>;
   /** 日程が未定の依頼で、候補ごとの空いていそうな日（lib/dateSuggest.ts。コードで計算） */
   dates?: DateSuggestions | null;
   /** 依頼のイベント名（指名の根拠を「○○の依頼（指名）」と出すため。内部の id は出さない） */
@@ -112,7 +145,8 @@ export function Candidates({
   );
 }
 
-const MARK: Record<"outreach" | "declined" | "accepted", { label: string; tone: "accent" | "warn" | "ok" }> = {
+const MARK: Record<CandidateMark, { label: string; tone: "accent" | "warn" | "ok" | "neutral" }> = {
+  drafting: { label: "下書き中", tone: "neutral" },
   outreach: { label: "声かけ中", tone: "accent" },
   declined: { label: "辞退", tone: "warn" },
   accepted: { label: "承諾", tone: "ok" },
@@ -128,7 +162,7 @@ function CandidateRow({
   disabled,
 }: {
   c: Candidate;
-  mark?: "outreach" | "declined" | "accepted";
+  mark?: CandidateMark;
   /** 空いていそうな日（日程が未定の依頼のときだけ。undefined なら出さない、null なら「予定は不明」） */
   free?: DateSuggestions["candidates"][number] | null;
   requestTitle?: string | null;
@@ -201,7 +235,7 @@ function CandidateRow({
       )}
       <div className="btn-row">
         <button type="button" className={`btn btn-sm${mark ? "" : " btn-primary"}`} onClick={onApprove} disabled={disabled || mark === "declined"}>
-          {mark === "outreach" ? "返事を記録する" : "この人で進める"}
+          {mark === "outreach" ? "返事を記録する" : mark === "drafting" ? "下書きを開く" : "この人で進める"}
         </button>
         {c.card_id && (
           <button type="button" className="btn btn-sm" onClick={() => onOpenCard()}>

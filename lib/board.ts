@@ -12,6 +12,7 @@ import { byTimeDesc, nowJst, todayJst } from "./clock";
 import path from "node:path";
 import type { AgentEvent, ProposalResult } from "./agent";
 import { inboxEventDate } from "./archive";
+import { wrongCandidates } from "./feedback";
 import { loadCards } from "./cards";
 import { activities, employeeById, requests } from "./data";
 import type { OutreachDraft } from "./heavy";
@@ -37,6 +38,8 @@ interface SavedProposal {
   result: ProposalResult;
   events: AgentEvent[];
   run_usd: number;
+  /** 候補づくりにかかった時間（ms）。前に保存した結果にはない */
+  elapsed_ms?: number | null;
   saved_at: string;
   opened_at: string | null;
   /** 見せる用で人の場所を作ったときに入れた、保存済みの結果（lib/visitorScope.ts）。自分で出し直すと消える */
@@ -47,10 +50,10 @@ const loadSamples = () => readJson<Record<string, SavedProposal>>(SAMPLE_FILE(),
 export const isSampleRequest = (id: string) => requests().some((r) => r.id === id);
 
 /** 画面で候補を出したら保存する（サンプルの依頼だけ。受信箱の依頼は受信箱が保存する） */
-export function saveSampleProposal(requestId: string, result: ProposalResult, events: AgentEvent[], runUsd: number) {
+export function saveSampleProposal(requestId: string, result: ProposalResult, events: AgentEvent[], runUsd: number, elapsedMs: number | null = null) {
   if (!isSampleRequest(requestId)) return;
   const all = loadSamples();
-  all[requestId] = { result, events, run_usd: runUsd, saved_at: nowJst(), opened_at: all[requestId]?.opened_at ?? null };
+  all[requestId] = { result, events, run_usd: runUsd, elapsed_ms: elapsedMs, saved_at: nowJst(), opened_at: all[requestId]?.opened_at ?? null };
   writeJson(SAMPLE_FILE(), all);
 }
 
@@ -119,12 +122,23 @@ export interface BoardDetail extends Omit<InboxDetail, "source"> {
   seeded_note?: string | null;
   /** 会話（依頼文）の中にあるイベントの告知ページの URL（connpass など。lib/eventUrls.ts でコードが取り出す） */
   event_urls: string[];
+  /** 「この候補は違う」と付けたままの候補（取り消していないもの）。画面の「違うと記録済み（理由）」の印に使う */
+  wrong_candidates?: Array<{ employee_id: string; reason_code: string; reason: string }>;
 }
 
 const nameOf = (id: string) => employeeById(id)?.name ?? id;
 
+/** その依頼で、下書きが保存されている人（「下書き中」の判定に使う。打診の記録がある人は requestState が外す） */
+function draftedFor(requestId: string): Array<{ employee_id: string; name: string }> {
+  const prefix = `${requestId}:`;
+  return Object.keys(readJson<Record<string, unknown>>(DRAFT_FILE(), {}))
+    .filter((k) => k.startsWith(prefix))
+    .map((k) => k.slice(prefix.length))
+    .map((id) => ({ employee_id: id, name: nameOf(id) }));
+}
+
 function stateOf(requestId: string, base: "new" | "processing" | "ready" | "error", eventDate: string | null): RequestState {
-  return requestState(base, recordsFor(requestId, loadCards(), nameOf), eventDate, todayJst());
+  return requestState(base, recordsFor(requestId, loadCards(), nameOf), eventDate, todayJst(), draftedFor(requestId));
 }
 
 function sampleList(): BoardListItem[] {
@@ -147,7 +161,8 @@ function sampleList(): BoardListItem[] {
         permalink: null,
         state: stateOf(r.id, s ? "ready" : "new", date),
         run_usd: requestCostUsd(r.id) ?? s?.run_usd ?? 0,
-        elapsed_ms: null,
+        // 候補づくりにかかった時間（受信箱の依頼と同じく、候補ができるまで。下書きの時間は入れない）
+        elapsed_ms: typeof s?.elapsed_ms === "number" && s.elapsed_ms >= 0 ? s.elapsed_ms : null,
         event_date: date,
       };
     });
@@ -211,7 +226,7 @@ function withEvidenceUrls<T extends { result: ProposalResult | null }>(d: T): T 
 
 export function boardDetail(id: string): BoardDetail | null {
   const d = boardDetailRaw(id);
-  return d ? withEvidenceUrls(d) : null;
+  return d ? { ...withEvidenceUrls(d), wrong_candidates: wrongCandidates(id) } : null;
 }
 
 function boardDetailRaw(id: string): BoardDetail | null {

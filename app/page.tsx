@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReadyNotices } from "@/components/ReadyNotices";
+import type { CandidateMark } from "@/components/Proposal";
 import { addNotices, finishedNotices, pageTitle, statusMap, unopenedReadyCount, type ReadyNotice } from "@/lib/readyNotice";
 import { pickApi, realApi, type Api, type StateResponse } from "@/app/_client/api";
 import type {
@@ -407,7 +408,13 @@ export default function Home() {
           setRunUsd(e.run_usd);
           setTotalUsd(e.total_usd);
         }
-        if (e.type === "done") setNbLog((l) => [...l, { text: `完了：新規${e.created}・更新${e.updated}・確認済み${e.kept}（${usd(e.run_usd)}）`, tone: "info" }]);
+        if (e.type === "done")
+          // 新しい活動がなければ、数字を並べずにそう伝える（最初の「新しい活動はありません」の行と重ねない）
+          setNbLog((l) =>
+            e.created + e.updated + e.kept === 0
+              ? [...l.filter((x) => x.text !== "新しい活動はありません"), { text: "新しい活動はありませんでした", tone: "info" }]
+              : [...l, { text: `完了：新規${e.created}・更新${e.updated}・確認済み${e.kept}（${usd(e.run_usd)}）`, tone: "info" }],
+          );
       });
     } catch (err) {
       setNbLog((l) => [...l, { text: `更新できませんでした（${msg(err, "不明なエラー")}）。もう一度押してください。`, tone: "error" }]);
@@ -615,26 +622,53 @@ export default function Home() {
   async function approve(c: Candidate) {
     if (!result) return;
     window.scrollTo({ top: 0, behavior: "smooth" });
-    // 声かけ中の人：もう一度承認は記録せず、返事（承諾・辞退）を記録する画面だけを出す
-    if (inbox?.state.outreach_to.some((p) => p.employee_id === c.employee_id)) {
-      setApproved(c);
-      setApprovedCardId(cardOf(c));
+    const isOutreach = inbox?.state.outreach_to.some((p) => p.employee_id === c.employee_id) ?? false;
+    setResume(false);
+    setDraftError(null);
+    setApproved(c);
+    setApprovedCardId(cardOf(c));
+    // 前に作った下書き（声かけ文・構成案・主催者への返事）がサーバーに保存されていれば、それを出す。作り直さない
+    const savedFor = mode === "inbox" ? inboxId : null;
+    if (savedFor) {
+      setDraft(null);
+      setDraftNote(null);
+      const saved = await api.savedDraft(savedFor, c.employee_id).catch(() => null);
+      if (saved) {
+        setDraft(saved);
+        setDraftOwner(c.employee_id);
+        return;
+      }
+    }
+    // 声かけ中の人で、保存した下書きがないとき（前の版で作ったものなど）：返事を記録する画面だけを出す
+    if (isOutreach) {
       setDraft(null);
       setResume(true);
       return;
     }
-    setResume(false);
-    setApproved(c);
+    // 下書きを作るだけ。まだ声はかけていないので、打診の記録は付けない（依頼は「下書き中」になる。lib/requestStage.ts）
+    await makeDraft(c);
+    if (inboxId) void refreshInbox(inboxId);
+  }
+
+  /** 声かけ文をコピーしたとき：ここで「承認」（声をかけた）を記録して、依頼を「声かけ中」にする。同じ人には1回だけ */
+  const outreachSent = useRef(new Set<string>());
+  async function markOutreach() {
+    if (!approved || !result) return;
+    const id = approved.employee_id;
+    const key = `${result.request_id}:${id}`;
+    if (outreachSent.current.has(key)) return;
+    if (inbox?.state.outreach_to.some((p) => p.employee_id === id) || inbox?.state.accepted_by.some((p) => p.employee_id === id)) return;
+    outreachSent.current.add(key);
     try {
-      const card = await api.outcome({ ...requestRef(), request_id: result.request_id, card_id: c.card_id, result: "approved", candidate: candBody(c) });
+      const card = await api.outcome({ ...requestRef(), request_id: result.request_id, card_id: approvedCardId ?? approved.card_id, result: "approved", candidate: candBody(approved) });
       setApprovedCardId(card.card_id);
       loadCards();
       loadPeople();
       if (inboxId) void refreshInbox(inboxId);
     } catch (err) {
-      setDraftError(`承認を記録できませんでした（${msg(err, "不明なエラー")}）。`);
+      outreachSent.current.delete(key);
+      setDraftError(`「声かけ中」を記録できませんでした（${msg(err, "不明なエラー")}）。コピーはできています。`);
     }
-    await makeDraft(c);
   }
 
   async function record(r: OutreachResult, reason?: DeclineReason) {
@@ -663,8 +697,9 @@ export default function Home() {
   /** 主催者への返事に入れてよい「空いていそうな日」の1文（日程が未定の依頼で、その人の日が見つかったときだけ） */
   const dateSentenceFor = (employeeId: string) =>
     mode === "inbox" ? inbox?.date_suggestions?.candidates.find((c) => c.employee_id === employeeId)?.reply_sentence ?? null : null;
-  const marks: Record<string, "outreach" | "declined" | "accepted"> = {};
+  const marks: Record<string, CandidateMark> = {};
   for (const p of inbox?.state.declined_by ?? []) marks[p.employee_id] = "declined";
+  for (const p of inbox?.state.drafting_for ?? []) marks[p.employee_id] = "drafting";
   for (const p of inbox?.state.outreach_to ?? []) marks[p.employee_id] = "outreach";
   for (const p of inbox?.state.accepted_by ?? []) marks[p.employee_id] = "accepted";
   // 承諾済みの人の主催者への返事：いま作った下書きがあればそれ、なければ保存した下書き
@@ -680,7 +715,17 @@ export default function Home() {
   // 自由入力の依頼（custom）は記録の側に依頼がないので送らない
   const feedbackRequestId = mode === "inbox" ? inboxId : mode === "custom" ? null : result?.request_id ?? null;
   // 記録の側（POST /api/feedback）がまだないうちは、ボタンを出さない（requestId を渡さない）
-  const feedbackCtx = { requestId: feedbackReady ? feedbackRequestId : null, reasons: feedbackReasons, send: (input: FeedbackInput) => api.feedback(input) };
+  // 「違う」と記録済みの候補（依頼の詳細から。読み直しても残る）と、送ったあとの読み直し
+  const wrongMarks = Object.fromEntries((mode === "inbox" ? inbox?.wrong_candidates ?? [] : []).map((w) => [w.employee_id, w.reason]));
+  const feedbackCtx = {
+    requestId: feedbackReady ? feedbackRequestId : null,
+    reasons: feedbackReasons,
+    send: (input: FeedbackInput) => api.feedback(input),
+    wrong: wrongMarks,
+    refresh: () => {
+      if (mode === "inbox" && inboxId) void refreshInbox(inboxId);
+    },
+  };
 
   const requestPanel = (
     <FeedbackProvider value={feedbackCtx}>
@@ -693,6 +738,8 @@ export default function Home() {
           draftError={draftError}
           draftNote={draftNote}
           resume={resume}
+          outreach={marks[approved.employee_id] === "outreach"}
+          onOutreachCopied={() => void markOutreach()}
           dateSentence={dateSentenceFor(approved.employee_id)}
           onBack={() => {
             setApproved(null);

@@ -2,6 +2,7 @@
 
 import type { BoardDetail } from "@/app/_client/types";
 import { requestItems } from "@/lib/askBack";
+import { displayDate } from "@/lib/dateText";
 import { md } from "./labels";
 import { inboxTitle, StageTag, sourceLabel } from "./Inbox";
 import { progressOf, progressText, type Progress } from "@/lib/progressStage";
@@ -11,7 +12,45 @@ import { Spinner, Tag } from "./ui";
 export type RequestMode = "custom" | "inbox";
 
 /** 読み取った項目の並び（読めた値と未定。lib/askBack.ts と同じ並びで、主催者への返事・声かけの下書きと食い違わない） */
-const intakeRows = (intake: NonNullable<BoardDetail["intake"]>) => requestItems({ intake }).map((i) => ({ ...i, label: i.key === "organizer" ? "主催者" : i.label }));
+// 日程は、主催者への返事・声かけの下書きと同じ形（「1月28日（木）」。年が今年と違うときだけ年つき）で出す
+const intakeRows = (intake: NonNullable<BoardDetail["intake"]>) =>
+  requestItems({ intake }).map((i) => ({ ...i, label: i.key === "organizer" ? "主催者" : i.label, value: i.key === "date" && i.value ? displayDate(i.value) : i.value }));
+
+/**
+ * 会話から読み取った項目。読めた項目を並べ、未定の項目は「未定 7件（主催者に聞き返します）」にたたむ（開けば見られる）
+ */
+function IntakeRows({ intake }: { intake: NonNullable<BoardDetail["intake"]> }) {
+  const rows = intakeRows(intake);
+  const known = rows.filter((i) => i.value !== null);
+  const undecided = rows.filter((i) => i.value === null);
+  return (
+    <>
+      {known.length > 0 && (
+        <dl className="person-facts intake" aria-label="会話から読み取った項目">
+          {known.map((i) => (
+            <div key={i.key} className="intake-row">
+              <dt>{i.label}</dt>
+              <dd>{i.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {undecided.length > 0 && (
+        <details className="intake-undecided">
+          <summary>
+            <Tag tone="warn">未定 {undecided.length}件</Tag>
+            <span className="meta">（主催者に聞き返します）</span>
+          </summary>
+          <ul className="plain-list small" aria-label="未定の項目">
+            {undecided.map((i) => (
+              <li key={i.key}>{i.label}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </>
+  );
+}
 
 const when = (iso: string) => {
   const d = new Date(iso);
@@ -90,7 +129,7 @@ export function RequestInput({
       {mode === "inbox" && inbox && (
         <div className="req-summary">
           <p className="meta inbox-marks">
-            {st && <StageTag stage={st.stage} />}
+            {st && <StageTag stage={st.stage} kind={inbox.kind} />}
             <span>
               受信箱{inbox.source !== "sample" ? `・${sourceLabel(inbox.source)}` : ""}・{when(inbox.received_at)}
               {inbox.event_date ? `・開催 ${md(inbox.event_date)}` : ""}
@@ -104,6 +143,7 @@ export function RequestInput({
           <h3 className="req-title">{st ? inboxTitle({ title: inbox.title, state: st }) : inbox.title}</h3>
           {st && st.accepted_by.length > 0 && <p className="small strong">{st.accepted_by.map((p) => `${p.name}さん`).join("・")}が承諾</p>}
           {st && st.stage === "outreach" && <p className="small muted-strong">{st.outreach_to.map((p) => `${p.name}さん`).join("・")}に声かけ中（返事待ち）</p>}
+          {st && st.stage === "drafting" && <p className="small muted-strong">{st.drafting_for.map((p) => `${p.name}さん`).join("・")}への声かけ文を下書き中（まだ声はかけていません）</p>}
           {st && st.stage === "declined" && <p className="small muted-strong">{st.declined_by.map((p) => `${p.name}さん`).join("・")}が辞退。次の人を選べます</p>}
           {inbox.nominee_name && <p className="small muted-strong">指名：{inbox.nominee_name}さん（依頼文から読み取り）</p>}
           {inbox.event_urls?.length > 0 && (
@@ -120,17 +160,9 @@ export function RequestInput({
               <span className="meta">（依頼文から読み取り）</span>
             </p>
           )}
-          {inbox.intake && (
-            <dl className="person-facts intake" aria-label="会話から読み取った項目">
-              {intakeRows(inbox.intake).map((i) => (
-                <div key={i.key} className="intake-row">
-                  <dt>{i.label}</dt>
-                  <dd>{i.value ?? <Tag tone="warn">未定</Tag>}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-          <details className="req-message" open={!compact}>
+          {/* 依頼ではない・不適切と読んだ文には、読み取った項目を並べない（全部「未定」になるだけなので） */}
+          {inbox.intake && (inbox.kind ?? "request") === "request" && <IntakeRows intake={inbox.intake} />}
+          <details className="req-message" open={!compact && inbox.kind !== "inappropriate"}>
             <summary>依頼文を読む</summary>
             <p className="pre small">{inbox.text}</p>
           </details>

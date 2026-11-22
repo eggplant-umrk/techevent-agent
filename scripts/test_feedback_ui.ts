@@ -50,7 +50,7 @@ async function main() {
   const proposal = read("components/Proposal.tsx");
   check("候補のカードに「この候補は違う」（確認の窓は出さない）", proposal.includes("<WrongCandidate employeeId={c.employee_id} />") && !/confirm\(|window\.confirm|<dialog/.test(proposal));
   const approved = read("components/Approved.tsx");
-  check("声かけの下書きをコピーしたら good／edited を送る", approved.includes('useUsedFeedback("draft"') && approved.includes('label="声かけ文をコピー" primary onCopied={used.onUsed}'));
+  check("声かけの下書きをコピーしたら good／edited を送る", approved.includes('useUsedFeedback("draft"') && approved.includes('label="声かけ文をコピー"') && approved.includes("used.onUsed(t);")); // コピーのときに「声かけ中」の記録もする（onCopied）ので、形が変わった
   check("主催者への返事をコピーしたら good／edited を送る", approved.includes('useUsedFeedback("reply"') && approved.includes('label="返事をコピー" primary onCopied={used.onUsed}'));
   check("送ったあとの一言は、下書きにも返事にも出す", (approved.match(/used\.note && \(/g) ?? []).length === 2);
   const fbSrc = read("app/_client/feedback.tsx");

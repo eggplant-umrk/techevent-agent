@@ -11,6 +11,8 @@ export interface NoticeSource {
   is_new?: boolean;
   no_fit?: boolean;
   kind?: "request" | "not_request" | "inappropriate";
+  /** 依頼の状態（lib/requestStage.ts）。「候補を出す前」（new）の例の依頼は、準備済みに数えない */
+  state?: { stage?: string };
 }
 
 export type NoticeKind = "ready" | "no_fit" | "not_request" | "stopped" | "error";
@@ -51,7 +53,8 @@ export function noticeFor(it: NoticeSource): ReadyNotice | null {
   const name = noticeName(it.title);
   if (it.status === "error") return { id: it.id, kind: "error", text: `${name}の候補づくりに失敗しました` };
   if (it.kind === "not_request") return { id: it.id, kind: "not_request", text: `${name}は依頼ではなさそうです` };
-  if (it.kind === "inappropriate") return { id: it.id, kind: "stopped", text: `${name}は止めました` };
+  // 不適切と読んだ文は、原文（題名）を出さない
+  if (it.kind === "inappropriate") return { id: it.id, kind: "stopped", text: "貼った会話は止めました（不適切な内容のため）" };
   if (it.no_fit) return { id: it.id, kind: "no_fit", text: `${name}の準備が終わりました（合う候補は見つかりませんでした）` };
   return { id: it.id, kind: "ready", text: `${name}の候補を準備できました` };
 }
@@ -84,7 +87,9 @@ export function addNotices(current: ReadyNotice[], added: ReadyNotice[]): ReadyN
  * - unseen：準備中に一度開いたが、終わったあとの結果をまだ見ていない依頼（貼ってすぐ別のタブに移ったとき）
  */
 export function unopenedReadyCount(items: NoticeSource[], openId: string | null, unseen: readonly string[] = []): number {
-  return items.filter((it) => it.id !== openId && it.status !== "processing" && ((it.status === "ready" && it.is_new === true) || unseen.includes(it.id))).length;
+  return items.filter(
+    (it) => it.id !== openId && it.status !== "processing" && it.state?.stage !== "new" && ((it.status === "ready" && it.is_new === true) || unseen.includes(it.id)),
+  ).length;
 }
 
 /** タブの題名：「(1) ネタ帳Agent」。0件なら「ネタ帳Agent」 */

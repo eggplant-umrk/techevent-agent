@@ -86,7 +86,8 @@ export function computedCautions(employeeId: string, request: SpeakingRequest, c
   if (eventDate) {
     const hit = schedules().find((s) => s.employee_id === employeeId && s.from <= eventDate && s.to >= eventDate);
     if (hit) out.push(`予定が重なる（${hit.kind} ${hit.from}〜${hit.to}）`);
-  } else {
+  } else if (!request.candidate_dates?.length) {
+    // 会話に候補日の一覧がある依頼では足さない（候補日ごとの都合「候補日のうち 1/14 だけ都合がよい」をコードが足すため。lib/inbox.ts）
     out.push("日程が未定なので、予定が重ならないかは日程が決まったら確認");
   }
   const card = cardId ? getCardById(cardId) : undefined;

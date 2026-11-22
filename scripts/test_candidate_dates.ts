@@ -113,6 +113,12 @@ async function main() {
   check("読み取った項目と元の会話はそのまま続く", req.message.includes("【会話から読み取った項目") && req.message.includes("【元の会話】") && req.message.endsWith(CONV));
 
   // ---- 5. 受信箱：候補日ごとの都合が保存され、候補の注意点に入る（本人の iCal：12/14〜18 に終日の予定）
+  // ---- 4b. コードが足す注意点（lib/proposalPrep.ts の computedCautions）
+  const { computedCautions } = await import("../lib/proposalPrep");
+  const UNDECIDED = "日程が未定なので、予定が重ならないかは日程が決まったら確認";
+  check("候補日の一覧がある依頼では、「日程が未定なので…」を足さない", !computedCautions("e001", req, null).includes(UNDECIDED), computedCautions("e001", req, null).join(" / "));
+  check("候補日がなく日程が未定の依頼では、今までどおり「日程が未定なので…」を足す", computedCautions("e001", noDates, null).includes(UNDECIDED), computedCautions("e001", noDates, null).join(" / "));
+
   console.log("\n━ 5. 受信箱と本人の予定（DEMO_PERSON）");
   const ics = [
     "BEGIN:VCALENDAR",
